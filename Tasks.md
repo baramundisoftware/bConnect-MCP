@@ -24,7 +24,7 @@
 | Phase 6 | bconnect-endpoints-mcp (V2.0 Server 1) | 4 | ✅ Complete |
 | Phase 7 | Version Awareness & Type Generation (26R1) | 5 | ✅ Complete |
 | Phase 8 | Shared Server Template & ADR Update | 3 | ✅ Complete |
-| Phase 9 | bconnect-activedirectory-mcp | 4 | 🟡 Upcoming (HIGH) |
+| Phase 9 | bconnect-activedirectory-mcp | 4 | ✅ Complete |
 | Phase 10 | bconnect-assets-mcp | 4 | 🟡 Upcoming (HIGH) |
 | Phase 11 | bconnect-compliance-mcp (26R1 only) | 4 | 🟡 Upcoming (HIGH) |
 | Phase 12 | bconnect-defensecontrol-mcp | 4 | 🟡 Upcoming (HIGH) |
@@ -376,7 +376,7 @@
 
 ---
 
-## 🟡 Upcoming — Phase 9: bconnect-activedirectory-mcp
+## ✅ Complete — Phase 9: bconnect-activedirectory-mcp
 
 **Priority**: HIGH
 **Depends on**: Phase 8 complete (template ready, 26R1 types generated)
@@ -385,13 +385,13 @@
 
 ---
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-activedirectory-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-activedirectory-mcp/` with full scaffold; copy `activedirectory.ts` module + 26R1 generated types; `npm install` succeeds
+- [x] 🟢 **[INFRA] Scaffold bconnect-activedirectory-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-activedirectory-mcp/` with full scaffold; copy `activedirectory.ts` module + 26R1 generated types; `npm install` succeeds
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns all ~16 activedirectory-mcp tools** *(TestEngineer)* — deliverable: `bconnect-activedirectory-mcp/__tests__/server.test.ts`; assert `listTools()` contains all AD tool names and excludes tools from any other domain; `npm test` → **FAILS** (index.ts not yet created)
+- [x] 🔴 **[TEST] Write assertion: listTools() returns all ~16 activedirectory-mcp tools** *(TestEngineer)* — deliverable: `bconnect-activedirectory-mcp/__tests__/server.test.ts`; assert `listTools()` contains all AD tool names and excludes tools from any other domain; `npm test` → **FAILS** (index.ts not yet created)
 
-- [ ] 🟢 **[IMPL] Create src/index.ts registering activedirectory tools** *(Developer)* — deliverable: `bconnect-activedirectory-mcp/src/index.ts`; server name `bconnect-activedirectory-mcp`; registers all tools from `activedirectory.ts`; `npm test` → PASSES
+- [x] 🟢 **[IMPL] Create src/index.ts registering activedirectory tools** *(Developer)* — deliverable: `bconnect-activedirectory-mcp/src/index.ts`; server name `bconnect-activedirectory-mcp`; registers all tools from `activedirectory.ts`; `npm test` → PASSES
 
-- [ ] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~16; no cross-server tool leakage; no `any` types in module file
+- [x] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~16; no cross-server tool leakage; no `any` types in module file
 
 ---
 
