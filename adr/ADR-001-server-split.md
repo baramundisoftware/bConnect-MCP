@@ -27,21 +27,30 @@ prefix and `-mcp` suffix) defines the server name and package name.
 
 This produces **13 servers for the 26R1 release** (12 V2.0 servers + 1 V1.1 legacy server):
 
-| Server name | OpenAPI spec file | Ops in spec | Est. tools | Releases |
+| Server name | 25R2 spec file | 26R1 spec file | Est. tools | Releases |
 |---|---|---|---|---|
-| `bconnect-activedirectory-mcp` | `activedirectory.json` | 16 | ~16 | 25R2 + 26R1 |
-| `bconnect-assets-mcp` | `assets.json` | 26 | ~26 | 25R2 + 26R1 |
-| `bconnect-compliance-mcp` | `compliance.json` | 8 | ~8 | **26R1 only** |
-| `bconnect-defensecontrol-mcp` | `defensecontrol.json` | 13 | ~13 | 25R2 + 26R1 |
-| `bconnect-endpoints-mcp` | `endpoints.json` | 87 | ~50 | 25R2 + 26R1 |
-| `bconnect-jobs-mcp` | `jobs.json` | 34 | ~25 | 25R2 + 26R1 |
-| `bconnect-operatingsystems-mcp` | `operatingsystems.json` | 9 | ~9 | 25R2 + 26R1 |
-| `bconnect-servermanagement-mcp` | `servermanagement.json` | 30 | ~30 | 25R2 + 26R1 |
-| `bconnect-software-mcp` | `software.json` | 19 | ~12 | 25R2 + 26R1 |
-| `bconnect-universaldynamicgroups-mcp` | `universaldynamicgroups.json` | 6 | ~6 | **26R1 only** |
-| `bconnect-updatemanagement-mcp` | `updatemanagement.json` | 3 | ~3 | 25R2 + 26R1 |
-| `bconnect-variables-mcp` | `variables.json` | 13 | ~13 | 25R2 + 26R1 |
-| `bconnect-v11-mcp` | *(V1.1 legacy, no spec file)* | — | ~23 | 25R2 + 26R1 |
+| `bconnect-activedirectory-mcp` | `bConnect_ActiveDirectory.json` | `activedirectory.json` | ~16 | 25R2 + 26R1 |
+| `bconnect-assets-mcp` | `bConnect_Assets.json` | `assets.json` | ~26 | 25R2 + 26R1 |
+| `bconnect-compliance-mcp` | *(not present)* | `compliance.json` | ~8 | **26R1 only** |
+| `bconnect-defensecontrol-mcp` | `bConnect_DefenseControl.json` | `defensecontrol.json` | ~13 | 25R2 + 26R1 |
+| `bconnect-endpoints-mcp` | `bConnect_Endpoints.json` | `endpoints.json` | ~50 | 25R2 + 26R1 |
+| `bconnect-jobs-mcp` | `bConnect_Jobs.json` | `jobs.json` | ~25 | 25R2 + 26R1 |
+| `bconnect-operatingsystems-mcp` | `bConnect_OperatingSystems.json` | `operatingsystems.json` | ~9 | 25R2 + 26R1 |
+| `bconnect-servermanagement-mcp` | `bConnect_ServerManagement.json` | `servermanagement.json` | ~30 | 25R2 + 26R1 |
+| `bconnect-software-mcp` | `bConnect_Software.json` | `software.json` | ~12 | 25R2 + 26R1 |
+| `bconnect-universaldynamicgroups-mcp` | *(not present)* | `universaldynamicgroups.json` | ~6 | **26R1 only** |
+| `bconnect-updatemanagement-mcp` | `bConnect_UpdateManagement.json` | `updatemanagement.json` | ~3 | 25R2 + 26R1 |
+| `bconnect-variables-mcp` | `bConnect_Variables.json` | `variables.json` | ~13 | 25R2 + 26R1 |
+| `bconnect-v11-mcp` | *(V1.1 legacy, no spec file)* | *(V1.1 legacy, no spec file)* | ~23 | 25R2 + 26R1 |
+
+**Spec filename convention change between releases:**
+- **25R2**: `bConnect_PascalCase.json` (e.g. `bConnect_ActiveDirectory.json`)
+- **26R1**: `lowercase.json` (e.g. `activedirectory.json`)
+
+The server name is derived from the **26R1 lowercase filename** (without extension, with `bconnect-`
+prefix and `-mcp` suffix). When loading the 25R2 spec for type generation or version-conditional
+logic, implementations must map using the table above — never assume the filename matches the
+server name directly.
 
 `bconnect-endpoints-mcp` is the **reference implementation** — built in Phase 6, it already follows
 the pattern all subsequent servers must replicate.
