@@ -29,7 +29,7 @@
 | Phase 11 | bconnect-compliance-mcp (26R1 only) | 4 | ✅ Complete |
 | Phase 12 | bconnect-defensecontrol-mcp | 4 | ✅ Complete |
 | Phase 13 | bconnect-jobs-mcp | 4 | 🟡 Upcoming (HIGH) |
-| Phase 14 | bconnect-operatingsystems-mcp | 4 | 🟡 Upcoming (MEDIUM) |
+| Phase 14 | bconnect-operatingsystems-mcp | 4 | ✅ Complete |
 | Phase 15 | bconnect-servermanagement-mcp | 4 | 🟡 Upcoming (HIGH) |
 | Phase 16 | bconnect-software-mcp | 4 | 🟡 Upcoming (HIGH) |
 | Phase 17 | bconnect-universaldynamicgroups-mcp (26R1 only) | 4 | 🟡 Upcoming (HIGH) |
@@ -473,7 +473,7 @@
 
 ---
 
-## 🟡 Upcoming — Phase 14: bconnect-operatingsystems-mcp
+## ✅ Complete — Phase 14: bconnect-operatingsystems-mcp
 
 **Priority**: MEDIUM
 **Depends on**: Phase 8 complete
@@ -482,13 +482,13 @@
 
 ---
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-operatingsystems-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-operatingsystems-mcp/` with full scaffold; copy `operatingsystems.ts` + 26R1 types; `npm install` succeeds
+- [x] 🟢 **[INFRA] Scaffold bconnect-operatingsystems-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-operatingsystems-mcp/` with full scaffold; copy `operatingsystems.ts` + 26R1 types; `npm install` succeeds
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns ~9 operatingsystems-mcp tools** *(TestEngineer)* — deliverable: `bconnect-operatingsystems-mcp/__tests__/server.test.ts`; `npm test` → **FAILS**
+- [x] 🔴 **[TEST] Write assertion: listTools() returns ~9 operatingsystems-mcp tools** *(TestEngineer)* — deliverable: `bconnect-operatingsystems-mcp/__tests__/server.test.ts`; `npm test` → **FAILS**
 
-- [ ] 🟢 **[IMPL] Create src/index.ts registering operatingsystems tools** *(Developer)* — deliverable: `bconnect-operatingsystems-mcp/src/index.ts`; server name `bconnect-operatingsystems-mcp`; `npm test` → PASSES
+- [x] 🟢 **[IMPL] Create src/index.ts registering operatingsystems tools** *(Developer)* — deliverable: `bconnect-operatingsystems-mcp/src/index.ts`; server name `bconnect-operatingsystems-mcp`; `npm test` → PASSES
 
-- [ ] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~9
+- [x] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~9
 
 ---
 
