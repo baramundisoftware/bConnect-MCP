@@ -37,7 +37,7 @@
 | Phase 19 | bconnect-variables-mcp | 4 | ✅ Complete |
 | Phase 20 | bconnect-v11-mcp (V1.1 Legacy) | 5 | ⏸️ Postponed |
 | Phase 21 | Distribution (Windows .exe + Docker) | 8 | ✅ Complete |
-| Phase 22 | Documentation (all servers) | 1 | 🟡 Upcoming (MEDIUM) |
+| Phase 22 | Documentation (all servers) | 1 | ✅ Complete |
 
 ---
 
@@ -637,7 +637,7 @@
 
 ---
 
-- [ ] 📚 **[DOCS] Write README.md for each new server and update root project documentation** *(DocumentationSpecialist)* — deliverable: one `README.md` per server directory (purpose, tool list with R/W annotations, env vars, quick-start, release compatibility); root `README.md` updated with 13-server architecture table, `BCONNECT_RELEASE` usage guide, and compatibility matrix (25R2 ↔ 26R1 server coverage); `CLAUDE.md` updated with correct tool count (196+) and per-server module assignments; `CHANGELOG.md` created with `## [26.1.0]` entry; `CONTRIBUTING.md` updated with bMS-aligned version scheme rules; no doc references the old 5-server grouping
+- [x] 📚 **[DOCS] Write README.md for each new server and update root project documentation** *(DocumentationSpecialist)* — deliverable: one `README.md` per server directory (purpose, tool list with R/W annotations, env vars, quick-start, release compatibility); root `README.md` updated with 13-server architecture table, `BCONNECT_RELEASE` usage guide, and compatibility matrix (25R2 ↔ 26R1 server coverage); `CLAUDE.md` updated with correct tool count (196+) and per-server module assignments; `CHANGELOG.md` created with `## [26.1.0]` entry; `CONTRIBUTING.md` updated with bMS-aligned version scheme rules; no doc references the old 5-server grouping
 
 ---
 
