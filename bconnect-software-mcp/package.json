@@ -1,7 +1,7 @@
 {
   "name": "bconnect-software-mcp",
   "version": "26.1.0",
-  "description": "MCP server for baramundi bConnect Software — installed software inventory and software bundle management",
+  "description": "MCP server for baramundi bConnect Software \u2014 installed software inventory and software bundle management",
   "type": "module",
   "main": "build/index.js",
   "bin": "build/index.js",
@@ -14,6 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "inspector": "npx @modelcontextprotocol/inspector node build/index.js",
     "pkg": "pkg . --targets node20-win-x64 --output dist/bconnect-software-mcp.exe --compress GZip",
+    "pkg:win": "pkg . --targets node20-win-x64 --output dist/bconnect-software-mcp.exe --compress GZip",
     "pkg:all": "pkg . --targets node20-win-x64,node20-linux-x64,node20-macos-x64 --compress GZip"
   },
   "pkg": {

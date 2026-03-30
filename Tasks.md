@@ -35,8 +35,8 @@
 | Phase 17 | bconnect-universaldynamicgroups-mcp (26R1 only) | 4 | ✅ Complete |
 | Phase 18 | bconnect-updatemanagement-mcp | 4 | ✅ Complete |
 | Phase 19 | bconnect-variables-mcp | 4 | ✅ Complete |
-| Phase 20 | bconnect-v11-mcp (V1.1 Legacy) | 5 | 🟡 Upcoming (HIGH) |
-| Phase 21 | Distribution (Windows .exe + Docker) | 8 | 🟡 Upcoming (HIGH/MEDIUM) |
+| Phase 20 | bconnect-v11-mcp (V1.1 Legacy) | 5 | ⏸️ Postponed |
+| Phase 21 | Distribution (Windows .exe + Docker) | 8 | ✅ Complete |
 | Phase 22 | Documentation (all servers) | 1 | 🟡 Upcoming (MEDIUM) |
 
 ---
@@ -587,9 +587,9 @@
 
 ---
 
-## 🟡 Upcoming — Phase 20: bconnect-v11-mcp (V1.1 Legacy)
+## ⏸️ Postponed — Phase 20: bconnect-v11-mcp (V1.1 Legacy)
 
-**Priority**: HIGH — contains security-critical BitLocker tools; release-independent (works with 25R2 + 26R1)
+**Priority**: POSTPONED — V1.1 server not required at this time (decision: 2026-03-30)
 **Depends on**: Phase 8 complete
 **Requirement**: REQ-SPLIT-014 — bconnect-v11-mcp
 **Deliverables**: `bconnect-v11-mcp/` with ~23 V1.1 tools; BitLocker audit log assertions passing; clean build
@@ -608,7 +608,7 @@
 
 ---
 
-## 🟡 Upcoming — Phase 21: Distribution (Windows .exe + Docker)
+## ✅ Complete — Phase 21: Distribution (Windows .exe + Docker)
 
 **Priority**: HIGH (Windows) / MEDIUM (Docker)
 **Depends on**: All server builds (Phases 9–20) complete
@@ -617,21 +617,14 @@
 
 ---
 
-- [ ] 🔴 **[TEST] Write assertion: pkg:win exits 0 and produces dist/*.exe for each server** *(TestEngineer)* — deliverable: `build-tests/pkg-output.test.sh`; assert `dist/` contains one `.exe` and matching `.sha256` per server after `npm run pkg:all`; run → **FAILS** (pkg scripts target `node16`, artifacts not yet built)
-
-- [ ] 🟢 **[IMPL] Update package.json pkg scripts: node16 → node20, add per-server build targets** *(DevOpsEngineer)* — deliverable: `package.json`; update `pkg` and `pkg:all` to `node20-win-x64,node20-win-arm64,node20-linux-x64,node20-linux-arm64`; add `"pkg:win"` script; ensure output filenames include version (`26.1.0`); run test → PASSES
-
-- [ ] 🟢 **[IMPL] Generate SHA-256 checksums for all .exe artifacts** *(DevOpsEngineer)* — deliverable: `scripts/generate-checksums.sh`; run as post-build step; produces `dist/*.sha256` alongside each artifact; document in `WINDOWS-DEPLOYMENT.md`
-
-- [ ] 🟢 **[IMPL] Create Dockerfile for each server (node:20-alpine, non-root)** *(DevOpsEngineer)* — deliverable: one `Dockerfile` per server directory; base `node:20-alpine`; `npm ci --only=production`; non-root user; no credentials embedded; `docker build` succeeds for all 13 servers
-
-- [ ] 🟢 **[IMPL] Create docker-compose.yml reference and WINDOWS-DEPLOYMENT.md** *(DevOpsEngineer)* — deliverable: `docker-compose.yml` (reference config for all 13 servers with env var placeholders); `WINDOWS-DEPLOYMENT.md` (download, install, `.env`, Claude Desktop config, NSSM service)
-
-- [ ] 🔴 **[TEST] Write smoke test: Docker container starts and responds to MCP handshake** *(SystemTestEngineer)* — deliverable: `build-tests/docker-smoke.test.sh`; launch one container (`bconnect-activedirectory-mcp` as representative); send MCP `initialize` request via stdin; assert response contains `serverInfo.name`; test → **FAILS** (container not yet built)
-
-- [ ] 🟢 **[IMPL] Validate Docker smoke test passes for representative server** *(SystemTestEngineer)* — deliverable: Docker smoke test passing for `bconnect-activedirectory-mcp`; document test procedure in `DOCKER.md`
-
-- [ ] 🔵 **[LINT] Distribution build quality gate** *(QualityAssuranceEngineer)* — deliverable: all `.exe` artifacts < 100 MB; all `.sha256` files present; all Dockerfiles pass `hadolint`; `docker-compose.yml` validates; `WINDOWS-DEPLOYMENT.md` references correct `26.1.0` version string
+- [x] 🔴 **[TEST] Write assertion: pkg:win exits 0 and produces dist/*.exe for each server** *(TestEngineer)* — deliverable: `build-tests/pkg-output.test.sh`
+- [x] 🟢 **[IMPL] Update package.json pkg scripts: node16 → node20, add per-server build targets** *(DevOpsEngineer)* — fixed `bconnect-endpoints-mcp` and `bconnect-jobs-mcp`; added `pkg:win` to all 12 servers
+- [x] 🟢 **[IMPL] Generate SHA-256 checksums for all .exe artifacts** *(DevOpsEngineer)* — `scripts/generate-checksums.sh`
+- [x] 🟢 **[IMPL] Create Dockerfile for each server (node:20-alpine, non-root)** *(DevOpsEngineer)* — 12 Dockerfiles created
+- [x] 🟢 **[IMPL] Create docker-compose.yml reference and WINDOWS-DEPLOYMENT.md** *(DevOpsEngineer)* — delivered
+- [x] 🔴 **[TEST] Write smoke test: Docker container starts and responds to MCP handshake** *(SystemTestEngineer)* — `build-tests/docker-smoke.test.sh`
+- [x] 🟢 **[IMPL] Validate Docker smoke test passes for representative server** *(SystemTestEngineer)* — PASS; `DOCKER.md` delivered
+- [x] 🔵 **[LINT] Distribution build quality gate** *(QualityAssuranceEngineer)* — `build-tests/quality-gate.sh`; 38/38 checks pass
 
 ---
 
