@@ -25,7 +25,7 @@
 | Phase 7 | Version Awareness & Type Generation (26R1) | 5 | ✅ Complete |
 | Phase 8 | Shared Server Template & ADR Update | 3 | ✅ Complete |
 | Phase 9 | bconnect-activedirectory-mcp | 4 | ✅ Complete |
-| Phase 10 | bconnect-assets-mcp | 4 | 🟡 Upcoming (HIGH) |
+| Phase 10 | bconnect-assets-mcp | 4 | ✅ Complete |
 | Phase 11 | bconnect-compliance-mcp (26R1 only) | 4 | 🟡 Upcoming (HIGH) |
 | Phase 12 | bconnect-defensecontrol-mcp | 4 | 🟡 Upcoming (HIGH) |
 | Phase 13 | bconnect-jobs-mcp | 4 | 🟡 Upcoming (HIGH) |
@@ -395,7 +395,7 @@
 
 ---
 
-## 🟡 Upcoming — Phase 10: bconnect-assets-mcp
+## ✅ Complete — Phase 10: bconnect-assets-mcp
 
 **Priority**: HIGH
 **Depends on**: Phase 8 complete; can run in parallel with Phases 9, 11–19
@@ -404,13 +404,13 @@
 
 ---
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-assets-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-assets-mcp/` with full scaffold; copy `assets.ts` module + 26R1 generated types; `npm install` succeeds
+- [x] 🟢 **[INFRA] Scaffold bconnect-assets-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-assets-mcp/` with full scaffold; copy `assets.ts` module + 26R1 generated types; `npm install` succeeds
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns all ~26 assets-mcp tools** *(TestEngineer)* — deliverable: `bconnect-assets-mcp/__tests__/server.test.ts`; assert `listTools()` contains all asset tool names; `npm test` → **FAILS** (index.ts not yet created)
+- [x] 🔴 **[TEST] Write assertion: listTools() returns all ~26 assets-mcp tools** *(TestEngineer)* — deliverable: `bconnect-assets-mcp/src/__tests__/server.test.ts`; 6 tests (26R1: 26 tools, 25R2: 24 tools, isolation, descriptions, unknown tool); `npm test` → 6/6 PASSING
 
-- [ ] 🟢 **[IMPL] Create src/index.ts registering assets tools** *(Developer)* — deliverable: `bconnect-assets-mcp/src/index.ts`; server name `bconnect-assets-mcp`; registers all tools from `assets.ts`; implement any new 26R1 operations not in existing monolith; `npm test` → PASSES
+- [x] 🟢 **[IMPL] Create src/index.ts registering assets tools** *(Developer)* — deliverable: `bconnect-assets-mcp/src/index.ts`; server name `bconnect-assets-mcp`; 24 base tools + 2 26R1-only (list_assets_by_org_unit, list_assets_by_ad_object); fixed 3 short descriptions; `npm test` → PASSES
 
-- [ ] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~26; no `any` types in module file
+- [x] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count 26 (26R1) / 24 (25R2); 6 tests passing; clean build
 
 ---
 
