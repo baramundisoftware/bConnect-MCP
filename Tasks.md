@@ -28,10 +28,10 @@
 | Phase 10 | bconnect-assets-mcp | 4 | ✅ Complete |
 | Phase 11 | bconnect-compliance-mcp (26R1 only) | 4 | ✅ Complete |
 | Phase 12 | bconnect-defensecontrol-mcp | 4 | ✅ Complete |
-| Phase 13 | bconnect-jobs-mcp | 4 | 🟡 Upcoming (HIGH) |
+| Phase 13 | bconnect-jobs-mcp | 4 | ✅ Complete |
 | Phase 14 | bconnect-operatingsystems-mcp | 4 | ✅ Complete |
 | Phase 15 | bconnect-servermanagement-mcp | 4 | ✅ Complete |
-| Phase 16 | bconnect-software-mcp | 4 | 🟡 Upcoming (HIGH) |
+| Phase 16 | bconnect-software-mcp | 4 | ✅ Complete |
 | Phase 17 | bconnect-universaldynamicgroups-mcp (26R1 only) | 4 | 🟡 Upcoming (HIGH) |
 | Phase 18 | bconnect-updatemanagement-mcp | 4 | 🟡 Upcoming (MEDIUM) |
 | Phase 19 | bconnect-variables-mcp | 4 | 🟡 Upcoming (HIGH) |
@@ -511,22 +511,22 @@
 
 ---
 
-## 🟡 Upcoming — Phase 16: bconnect-software-mcp
+## ✅ Complete — Phase 16: bconnect-software-mcp
 
 **Priority**: HIGH — significantly expanded in 26R1 (4 → 19 operations)
 **Depends on**: Phase 8 complete
 **Requirement**: REQ-SPLIT-010 — bconnect-software-mcp
-**Deliverables**: `bconnect-software-mcp/` with ~12 tools; 26R1 typed (19 spec ops); net-new tool implementations for 15 new 26R1 operations; clean build
+**Deliverables**: `bconnect-software-mcp/` with 19 tools (4 in 25R2 / 19 in 26R1); clean build; 9 tests passing
 
 ---
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-software-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-software-mcp/` with full scaffold; copy existing `software.ts` + 26R1 types; `npm install` succeeds
+- [x] 🟢 **[INFRA] Scaffold bconnect-software-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-software-mcp/` with full scaffold; `software.ts` module + 26R1 types; `npm install` succeeds
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns ~12 software-mcp tools including new 26R1 ops** *(TestEngineer)* — deliverable: `bconnect-software-mcp/__tests__/server.test.ts`; assert new 26R1 tool names are present (derived from `software.json` operationIds); `npm test` → **FAILS**
+- [x] 🔴 **[TEST] Write assertion: listTools() returns software-mcp tools** *(TestEngineer)* — deliverable: `src/__tests__/server.test.ts`; 9 tests covering 25R2 (4 tools) and 26R1 (19 tools); `npm test` → 9/9 PASSING
 
-- [ ] 🟢 **[IMPL] Implement 26R1 software module expansion and register tools in src/index.ts** *(Developer)* — deliverable: `bconnect-software-mcp/src/modules/software.ts` (expanded from 4 to ~12 tools covering new 26R1 operations); `src/index.ts` registering all tools; server name `bconnect-software-mcp`; `npm test` → PASSES
+- [x] 🟢 **[IMPL] Implement software module and register tools in src/index.ts** *(Developer)* — deliverable: `src/modules/software.ts` (19 methods); `src/index.ts` with 4 installed-software + 15 26R1-only bundle/folder tools; `npm test` → PASSES
 
-- [ ] 🔵 **[LINT] npm run build + 26R1 expansion check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~12; confirm 4 original tools still present alongside new ones
+- [x] 🔵 **[LINT] npm run build + 26R1 expansion check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; 25R2=4 tools / 26R1=19 tools; clean build
 
 ---
 
