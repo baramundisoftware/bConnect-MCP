@@ -30,7 +30,7 @@
 | Phase 12 | bconnect-defensecontrol-mcp | 4 | ✅ Complete |
 | Phase 13 | bconnect-jobs-mcp | 4 | 🟡 Upcoming (HIGH) |
 | Phase 14 | bconnect-operatingsystems-mcp | 4 | ✅ Complete |
-| Phase 15 | bconnect-servermanagement-mcp | 4 | 🟡 Upcoming (HIGH) |
+| Phase 15 | bconnect-servermanagement-mcp | 4 | ✅ Complete |
 | Phase 16 | bconnect-software-mcp | 4 | 🟡 Upcoming (HIGH) |
 | Phase 17 | bconnect-universaldynamicgroups-mcp (26R1 only) | 4 | 🟡 Upcoming (HIGH) |
 | Phase 18 | bconnect-updatemanagement-mcp | 4 | 🟡 Upcoming (MEDIUM) |
@@ -492,7 +492,7 @@
 
 ---
 
-## 🟡 Upcoming — Phase 15: bconnect-servermanagement-mcp
+## ✅ Complete — Phase 15: bconnect-servermanagement-mcp
 
 **Priority**: HIGH
 **Depends on**: Phase 8 complete
@@ -501,13 +501,13 @@
 
 ---
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-servermanagement-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-servermanagement-mcp/` with full scaffold; copy `servermanagement.ts` + 26R1 types; `npm install` succeeds
+- [x] 🟢 **[INFRA] Scaffold bconnect-servermanagement-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-servermanagement-mcp/` with full scaffold; copy `servermanagement.ts` + 26R1 types; `npm install` succeeds
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns all ~30 servermanagement-mcp tools** *(TestEngineer)* — deliverable: `bconnect-servermanagement-mcp/__tests__/server.test.ts`; `npm test` → **FAILS**
+- [x] 🔴 **[TEST] Write assertion: listTools() returns all ~30 servermanagement-mcp tools** *(TestEngineer)* — deliverable: `bconnect-servermanagement-mcp/__tests__/server.test.ts`; `npm test` → **FAILS**
 
-- [ ] 🟢 **[IMPL] Create src/index.ts registering servermanagement tools** *(Developer)* — deliverable: `bconnect-servermanagement-mcp/src/index.ts`; server name `bconnect-servermanagement-mcp`; implement 5 new 26R1 operations; `npm test` → PASSES
+- [x] 🟢 **[IMPL] Create src/index.ts registering servermanagement tools** *(Developer)* — deliverable: `bconnect-servermanagement-mcp/src/index.ts`; server name `bconnect-servermanagement-mcp`; implement 5 new 26R1 operations; `npm test` → PASSES
 
-- [ ] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~30
+- [x] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~30
 
 ---
 
