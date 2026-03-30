@@ -27,7 +27,7 @@
 | Phase 9 | bconnect-activedirectory-mcp | 4 | ✅ Complete |
 | Phase 10 | bconnect-assets-mcp | 4 | ✅ Complete |
 | Phase 11 | bconnect-compliance-mcp (26R1 only) | 4 | ✅ Complete |
-| Phase 12 | bconnect-defensecontrol-mcp | 4 | 🟡 Upcoming (HIGH) |
+| Phase 12 | bconnect-defensecontrol-mcp | 4 | ✅ Complete |
 | Phase 13 | bconnect-jobs-mcp | 4 | 🟡 Upcoming (HIGH) |
 | Phase 14 | bconnect-operatingsystems-mcp | 4 | 🟡 Upcoming (MEDIUM) |
 | Phase 15 | bconnect-servermanagement-mcp | 4 | 🟡 Upcoming (HIGH) |
@@ -433,22 +433,22 @@
 
 ---
 
-## 🟡 Upcoming — Phase 12: bconnect-defensecontrol-mcp
+## ✅ Complete — Phase 12: bconnect-defensecontrol-mcp
 
 **Priority**: HIGH
 **Depends on**: Phase 8 complete; can run in parallel with Phases 9–11, 13–19
 **Requirement**: REQ-SPLIT-005 — bconnect-defensecontrol-mcp
-**Deliverables**: `bconnect-defensecontrol-mcp/` with ~13 tools; 26R1 typed (13 ops vs 11 in 25R2); clean build; isolation test passing
+**Deliverables**: `bconnect-defensecontrol-mcp/` with 13 tools; 26R1 typed (13 ops vs 11 in 25R2); clean build; isolation test passing
 
 ---
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-defensecontrol-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-defensecontrol-mcp/` with full scaffold; copy `defensecontrol.ts` + 26R1 generated types; `npm install` succeeds
+- [x] 🟢 **[INFRA] Scaffold bconnect-defensecontrol-mcp from template** *(DevOpsEngineer)* — scaffolded; copied defensecontrol.ts module + 26R1 types; extended module with getBitLockerSecrets + updateBitLockerPin (26R1)
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns all ~13 defensecontrol-mcp tools** *(TestEngineer)* — deliverable: `bconnect-defensecontrol-mcp/__tests__/server.test.ts`; `npm test` → **FAILS**
+- [x] 🔴 **[TEST] Write assertion: listTools() returns all 13 defensecontrol-mcp tools** *(TestEngineer)* — `src/__tests__/server.test.ts` with 5 tests; RED confirmed before index.ts
 
-- [ ] 🟢 **[IMPL] Create src/index.ts registering defensecontrol tools** *(Developer)* — deliverable: `bconnect-defensecontrol-mcp/src/index.ts`; server name `bconnect-defensecontrol-mcp`; implement 2 new 26R1 operations; `npm test` → PASSES
+- [x] 🟢 **[IMPL] Create src/index.ts registering defensecontrol tools** *(Developer)* — 11 base tools + 2 26R1-only (get_bitlocker_secrets, update_bitlocker_pin); `npm test` → 5/5 PASSING
 
-- [ ] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~13; no `any` types
+- [x] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — 0 TypeScript errors; 13 tools (26R1) / 11 tools (25R2); clean build
 
 ---
 
