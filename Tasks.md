@@ -32,7 +32,7 @@
 | Phase 14 | bconnect-operatingsystems-mcp | 4 | ✅ Complete |
 | Phase 15 | bconnect-servermanagement-mcp | 4 | ✅ Complete |
 | Phase 16 | bconnect-software-mcp | 4 | ✅ Complete |
-| Phase 17 | bconnect-universaldynamicgroups-mcp (26R1 only) | 4 | 🟡 Upcoming (HIGH) |
+| Phase 17 | bconnect-universaldynamicgroups-mcp (26R1 only) | 4 | ✅ Complete |
 | Phase 18 | bconnect-updatemanagement-mcp | 4 | 🟡 Upcoming (MEDIUM) |
 | Phase 19 | bconnect-variables-mcp | 4 | 🟡 Upcoming (HIGH) |
 | Phase 20 | bconnect-v11-mcp (V1.1 Legacy) | 5 | 🟡 Upcoming (HIGH) |
@@ -530,22 +530,22 @@
 
 ---
 
-## 🟡 Upcoming — Phase 17: bconnect-universaldynamicgroups-mcp *(26R1 only)*
+## ✅ Complete — Phase 17: bconnect-universaldynamicgroups-mcp *(26R1 only)*
 
 **Priority**: HIGH — new module, no existing implementation
 **Depends on**: Phase 8 complete; 26R1 types required
 **Requirement**: REQ-SPLIT-011 — bconnect-universaldynamicgroups-mcp
-**Deliverables**: `bconnect-universaldynamicgroups-mcp/` with ~6 tools; net-new module from `universaldynamicgroups.json`; clean build
+**Deliverables**: `bconnect-universaldynamicgroups-mcp/` with 6 tools (26R1 only, 0 in 25R2); clean build; 6 tests passing
 
 ---
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns ~6 universaldynamicgroups-mcp tools** *(TestEngineer)* — deliverable: `bconnect-universaldynamicgroups-mcp/__tests__/server.test.ts`; assert tool names match `universaldynamicgroups.json` operationIds; `npm test` → **FAILS**
+- [x] 🔴 **[TEST] Write assertion: listTools() returns 6 universaldynamicgroups-mcp tools** *(TestEngineer)* — deliverable: `src/__tests__/server.test.ts`; 6 tests; 25R2=0 tools gate; `npm test` → 6/6 PASSING
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-universaldynamicgroups-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-universaldynamicgroups-mcp/` with full scaffold + 26R1 UDG types; `npm install` succeeds
+- [x] 🟢 **[INFRA] Scaffold bconnect-universaldynamicgroups-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-universaldynamicgroups-mcp/` with full scaffold + 26R1 UDG types; `npm install` succeeds
 
-- [ ] 🟢 **[IMPL] Implement UDG module and register tools in src/index.ts** *(Developer)* — deliverable: `src/modules/universaldynamicgroups.ts` + `src/index.ts`; server name `bconnect-universaldynamicgroups-mcp`; `npm test` → PASSES
+- [x] 🟢 **[IMPL] Implement UDG module and register tools in src/index.ts** *(Developer)* — deliverable: `src/modules/universaldynamicgroups.ts` (6 methods) + `src/index.ts`; server name `bconnect-universaldynamicgroups-mcp`; `npm test` → PASSES
 
-- [ ] 🔵 **[LINT] npm run build + 26R1-only gate check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~6; document 26R1-only restriction in server README
+- [x] 🔵 **[LINT] npm run build + 26R1-only gate check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; 26R1=6 tools / 25R2=0 tools; clean build
 
 ---
 
