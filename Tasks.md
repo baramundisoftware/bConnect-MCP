@@ -33,8 +33,8 @@
 | Phase 15 | bconnect-servermanagement-mcp | 4 | ✅ Complete |
 | Phase 16 | bconnect-software-mcp | 4 | ✅ Complete |
 | Phase 17 | bconnect-universaldynamicgroups-mcp (26R1 only) | 4 | ✅ Complete |
-| Phase 18 | bconnect-updatemanagement-mcp | 4 | 🟡 Upcoming (MEDIUM) |
-| Phase 19 | bconnect-variables-mcp | 4 | 🟡 Upcoming (HIGH) |
+| Phase 18 | bconnect-updatemanagement-mcp | 4 | ✅ Complete |
+| Phase 19 | bconnect-variables-mcp | 4 | ✅ Complete |
 | Phase 20 | bconnect-v11-mcp (V1.1 Legacy) | 5 | 🟡 Upcoming (HIGH) |
 | Phase 21 | Distribution (Windows .exe + Docker) | 8 | 🟡 Upcoming (HIGH/MEDIUM) |
 | Phase 22 | Documentation (all servers) | 1 | 🟡 Upcoming (MEDIUM) |
@@ -549,41 +549,41 @@
 
 ---
 
-## 🟡 Upcoming — Phase 18: bconnect-updatemanagement-mcp
+## ✅ Complete — Phase 18: bconnect-updatemanagement-mcp
 
 **Priority**: MEDIUM
 **Depends on**: Phase 8 complete
 **Requirement**: REQ-SPLIT-012 — bconnect-updatemanagement-mcp
-**Deliverables**: `bconnect-updatemanagement-mcp/` with ~3 tools; clean build; isolation test passing
+**Deliverables**: `bconnect-updatemanagement-mcp/` with 3 tools; clean build; 5 tests passing
 
 ---
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-updatemanagement-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-updatemanagement-mcp/` with full scaffold; copy `updatemanagement.ts` + 26R1 types; `npm install` succeeds
+- [x] 🟢 **[INFRA] Scaffold bconnect-updatemanagement-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-updatemanagement-mcp/` scaffolded; `updatemanagement.ts` module + 26R1 types; `npm install` succeeds
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns ~3 updatemanagement-mcp tools** *(TestEngineer)* — deliverable: `bconnect-updatemanagement-mcp/__tests__/server.test.ts`; `npm test` → **FAILS**
+- [x] 🔴 **[TEST] Write assertion: listTools() returns 3 updatemanagement-mcp tools** *(TestEngineer)* — deliverable: `src/__tests__/server.test.ts`; 5 tests; `npm test` → 5/5 PASSING
 
-- [ ] 🟢 **[IMPL] Create src/index.ts registering updatemanagement tools** *(Developer)* — deliverable: `bconnect-updatemanagement-mcp/src/index.ts`; server name `bconnect-updatemanagement-mcp`; `npm test` → PASSES
+- [x] 🟢 **[IMPL] Create src/index.ts registering updatemanagement tools** *(Developer)* — deliverable: `src/index.ts`; server name `bconnect-updatemanagement-mcp`; list/get/update WindowsEndpoints; `npm test` → PASSES
 
-- [ ] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~3
+- [x] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count 3; clean build
 
 ---
 
-## 🟡 Upcoming — Phase 19: bconnect-variables-mcp
+## ✅ Complete — Phase 19: bconnect-variables-mcp
 
 **Priority**: HIGH
 **Depends on**: Phase 8 complete
 **Requirement**: REQ-SPLIT-013 — bconnect-variables-mcp
-**Deliverables**: `bconnect-variables-mcp/` with ~13 tools; clean build; isolation test passing
+**Deliverables**: `bconnect-variables-mcp/` with 13 tools; clean build; 5 tests passing
 
 ---
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-variables-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-variables-mcp/` with full scaffold; copy `variables.ts` + 26R1 types; `npm install` succeeds
+- [x] 🟢 **[INFRA] Scaffold bconnect-variables-mcp from template** *(DevOpsEngineer)* — deliverable: `bconnect-variables-mcp/` scaffolded; `variables.ts` module + 26R1 types; `npm install` succeeds
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns ~13 variables-mcp tools** *(TestEngineer)* — deliverable: `bconnect-variables-mcp/__tests__/server.test.ts`; `npm test` → **FAILS**
+- [x] 🔴 **[TEST] Write assertion: listTools() returns 13 variables-mcp tools** *(TestEngineer)* — deliverable: `src/__tests__/server.test.ts`; 5 tests; `npm test` → 5/5 PASSING
 
-- [ ] 🟢 **[IMPL] Create src/index.ts registering variables tools** *(Developer)* — deliverable: `bconnect-variables-mcp/src/index.ts`; server name `bconnect-variables-mcp`; `npm test` → PASSES
+- [x] 🟢 **[IMPL] Create src/index.ts registering variables tools** *(Developer)* — deliverable: `src/index.ts`; server name `bconnect-variables-mcp`; 13 tools covering definitions (CRUD) + instances (read/update, 5 scoped variants); `npm test` → PASSES
 
-- [ ] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~13
+- [x] 🔵 **[LINT] npm run build + tool isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count 13; clean build
 
 ---
 
