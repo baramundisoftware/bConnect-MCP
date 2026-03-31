@@ -38,6 +38,7 @@
 | Phase 20 | bconnect-v11-mcp (V1.1 Legacy) | 5 | ⏸️ Postponed |
 | Phase 21 | Distribution (Windows .exe + Docker) | 8 | ✅ Complete |
 | Phase 22 | Documentation (all servers) | 1 | ✅ Complete |
+| Phase 23 | Security Audit Remediation | 4 | 🟡 Upcoming (HIGH) |
 
 ---
 
@@ -638,6 +639,21 @@
 ---
 
 - [x] 📚 **[DOCS] Write README.md for each new server and update root project documentation** *(DocumentationSpecialist)* — deliverable: one `README.md` per server directory (purpose, tool list with R/W annotations, env vars, quick-start, release compatibility); root `README.md` updated with 13-server architecture table, `BCONNECT_RELEASE` usage guide, and compatibility matrix (25R2 ↔ 26R1 server coverage); `CLAUDE.md` updated with correct tool count (196+) and per-server module assignments; `CHANGELOG.md` created with `## [26.1.0]` entry; `CONTRIBUTING.md` updated with bMS-aligned version scheme rules; no doc references the old 5-server grouping
+
+---
+
+## 🟡 Upcoming — Phase 23: Security Audit Remediation
+
+**Priority**: HIGH
+**Depends on**: Phase 22 complete
+**Source**: IT security audit 2026-03-31
+
+---
+
+- [ ] 🔐 **[SEC] Rotate bConnect credentials and remove `.env` from working tree** *(SecurityEngineer)* — the local `.env` contains `Administrator`/`baramundi-2008` and `NODE_TLS_REJECT_UNAUTHORIZED=0`; rotate credentials, replace with a secrets manager or vault reference, confirm file has never been committed (`git log --all -- .env`)
+- [ ] 🔐 **[SEC] Configure TLS certificate verification for all deployments** *(SecurityEngineer)* — install internal CA cert, set `BCONNECT_CA_CERT_PATH` in all server configs, remove `NODE_TLS_REJECT_UNAUTHORIZED=0` from every `.env` and deployment script
+- [ ] 🔐 **[SEC] Enable audit logging and rate limiting defaults for sensitive servers** *(SecurityEngineer)* — set `BCONNECT_AUDIT_LEVEL=info` and `BCONNECT_RATE_LIMIT_ENABLED=true` in the `.env.example` and deployment docs for `bconnect-servermanagement-mcp` and `bconnect-defensecontrol-mcp`
+- [ ] 🧹 **[CHORE] Remove unused `limiter` npm package** *(Developer)* — `limiter` is listed as a production dependency but the codebase uses its own `rate-limiter.ts`; remove from all `package.json` files that include it
 
 ---
 
