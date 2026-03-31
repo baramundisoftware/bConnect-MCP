@@ -40,7 +40,7 @@
 | Phase 22 | Documentation (all servers) | 1 | ✅ Complete |
 | Phase 23 | Security Audit Remediation | 4 | ✅ Complete |
 | Phase 24 | Complete bconnect-endpoints-mcp (+17 tools) | 5 | ✅ Complete |
-| Phase 25 | bconnect-groups-mcp (new server, 27 tools) | 5 | 📋 Planned (MEDIUM) |
+| Phase 25 | bconnect-groups-mcp (new server, 27 tools) | 5 | ✅ Complete |
 | Phase 26 | Complete bconnect-jobs-mcp (+9 tools) | 4 | ✅ Complete |
 
 ---
@@ -686,7 +686,7 @@ the `endpoints.json` spec is 100% covered (95/95 endpoints).
 
 ---
 
-## 📋 Planned — Phase 25: bconnect-groups-mcp (new server — 27 tools)
+## ✅ Complete — Phase 25: bconnect-groups-mcp (new server — 27 tools)
 
 **Priority**: MEDIUM — completes 100% coverage of `endpoints.json` group-scoped queries; only needed for fleet reporting workflows
 **Depends on**: Phase 8 complete (server template available)
@@ -711,15 +711,11 @@ This means the module can use a single generic method with parameters for group 
 
 ---
 
-- [ ] 🟢 **[INFRA] Scaffold bconnect-groups-mcp from server template** *(DevOpsEngineer)* — deliverable: `bconnect-groups-mcp/` with `package.json` (name: `bconnect-groups-mcp`, version: `26.1.0`), `tsconfig.json`, `.env.example`, copy of `bconnect-client.ts` + `parameter-validator.ts` + `rate-limiter.ts` + `audit-logger.ts`; `npm install` succeeds
-
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns 27 groups-mcp tools** *(TestEngineer)* — deliverable: `bconnect-groups-mcp/src/__tests__/server.test.ts`; assert all 27 tool names present; assert no tools from endpoints CRUD, jobs, assets, or any other domain; assert all tools are read-only (no WARNING in descriptions); assert 25R2 vs 26R1 count identical (all group queries exist in both releases); `npm test` → **FAILS**
-
-- [ ] 🟢 **[IMPL] Create groups module and register 27 tools** *(Developer)* — deliverable: `src/modules/groups.ts` — implement generic `listEndpointsByGroup(groupType, groupId, endpointType, params)` method; register 27 tools in `src/index.ts`: 5 by logical group (Android, iOS, Linux, Mac, Network) + 7 by static group + 2 by dynamic group + 7 by UDG + 6 by AD user; each tool has specific name, description, and inputSchema with `{groupType}Id` (GUID) + standard pagination; `npm test` → PASSES
-
-- [ ] 🟢 **[IMPL] Add input validation rules for 27 group tools** *(Developer)* — deliverable: `src/utils/mcp-tool-validation-rules.ts`; GUID validation for `staticGroupId`, `dynamicGroupId`, `universalDynamicGroupId`, `adUserId`, `logicalGroupId`; pagination range validation (PageSize 1–1000); `npm test` → PASSES
-
-- [ ] 🔵 **[LINT] npm run build + tool count + isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count = 27; no write operations; no tools from any other domain; confirm server name `bconnect-groups-mcp` in MCP handshake
+- [x] 🟢 **[INFRA] Scaffold bconnect-groups-mcp from server template** *(DevOpsEngineer)*
+- [x] 🔴 **[TEST] Write assertion: listTools() returns 27 groups-mcp tools** *(TestEngineer)*
+- [x] 🟢 **[IMPL] Create groups module and register 27 tools** *(Developer)*
+- [x] 🟢 **[IMPL] Add input validation rules for 27 group tools** *(Developer)*
+- [x] 🔵 **[LINT] npm run build + tool count + isolation check** *(QualityAssuranceEngineer)* — 0 TypeScript errors; listTools() = 27; all read-only; server name bconnect-groups-mcp ✅
 
 ---
 
