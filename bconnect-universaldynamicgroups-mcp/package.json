@@ -1,7 +1,7 @@
 {
   "name": "bconnect-universaldynamicgroups-mcp",
   "version": "26.1.0",
-  "description": "MCP server for baramundi bConnect Universal Dynamic Groups \u2014 read-only access to UDG definitions and folder structure (26R1 only)",
+  "description": "MCP server for baramundi bConnect Universal Dynamic Groups — read-only access to UDG definitions and folder structure (26R1 only)",
   "type": "module",
   "main": "build/index.js",
   "bin": "build/index.js",
@@ -42,7 +42,6 @@
     "axios": "^1.7.0",
     "axios-retry": "^4.5.0",
     "dotenv": "^16.4.0",
-    "limiter": "^3.0.0",
     "node-cache": "^5.1.2",
     "winston": "^3.18.3"
   },

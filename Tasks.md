@@ -1,9 +1,9 @@
 # Tasks — bConnect-MCP Project
 
 **Created**: 2026-03-22
-**Updated**: 2026-03-30 (Requirements re-architected: file-based server split, 25R2/26R1 version awareness)
-**Source**: Requirements.md (reviewed 2026-03-30)
-**Scope**: Project-level — all modules, server infrastructure, production hardening, per-spec-file server split (12 V2.0 + 1 V1.1), MCP_Deployment suite installer, Docker images, Linux/Ubuntu deployment
+**Updated**: 2026-03-31 (100% 26R1 API coverage target: +17 endpoints, +27 groups server, +9 jobs)
+**Source**: Requirements.md (reviewed 2026-03-31)
+**Scope**: Project-level — all modules, server infrastructure, production hardening, per-spec-file server split (13 V2.0 + 1 V1.1), MCP_Deployment suite installer, Docker images, Linux/Ubuntu deployment
 
 ---
 
@@ -38,7 +38,10 @@
 | Phase 20 | bconnect-v11-mcp (V1.1 Legacy) | 5 | ⏸️ Postponed |
 | Phase 21 | Distribution (Windows .exe + Docker) | 8 | ✅ Complete |
 | Phase 22 | Documentation (all servers) | 1 | ✅ Complete |
-| Phase 23 | Security Audit Remediation | 4 | 🟡 Upcoming (HIGH) |
+| Phase 23 | Security Audit Remediation | 4 | ✅ Complete |
+| Phase 24 | Complete bconnect-endpoints-mcp (+17 tools) | 5 | 📋 Planned (HIGH) |
+| Phase 25 | bconnect-groups-mcp (new server, 27 tools) | 5 | 📋 Planned (MEDIUM) |
+| Phase 26 | Complete bconnect-jobs-mcp (+9 tools) | 4 | 📋 Planned (MEDIUM) |
 
 ---
 
@@ -62,10 +65,10 @@
 #### ✅ COMPLETE (MCP_Deployment Phase 2 — 2026-03-24)
 - [x] **Phase 2: Claude Code & Ubuntu Linux Config** — `configure-claude-code-ubuntu.sh` delivered; `install-claude-desktop-ubuntu.sh` updated to official .deb; ARM64 limitation in `INSTALL-ON-UBUNTU.md`
 
-#### 🟡 UPCOMING (MCP_Deployment — blocked on REQ-SPLIT-001, now 13 servers not 5)
-- [ ] **Phase 3: Multi-Executable Build Pipeline** — 13 standalone `.exe` via pkg node20-win-x64; blocked on bConnect-MCP Phases 9–20
-- [ ] **Phase 4: Dockerfiles Per Server + Registry** — 13 Dockerfiles (node:20-alpine, non-root), `build-docker-images.sh`, `ADR-003`; blocked on Phases 9–20
-- [ ] **Phase 5: Suite Inno Setup Installer** — `bconnect-mcp-suite-setup.iss` with component selection (12 V2.0 + 1 V1.1); blocked on Phase 3
+#### 🟡 UPCOMING (MCP_Deployment — blocked on REQ-SPLIT-001, now 14 servers not 5)
+- [ ] **Phase 3: Multi-Executable Build Pipeline** — 14 standalone `.exe` via pkg node20-win-x64; blocked on bConnect-MCP Phases 24–26
+- [ ] **Phase 4: Dockerfiles Per Server + Registry** — 14 Dockerfiles (node:20-alpine, non-root), `build-docker-images.sh`, `ADR-003`; blocked on Phases 24–26
+- [ ] **Phase 5: Suite Inno Setup Installer** — `bconnect-mcp-suite-setup.iss` with component selection (13 V2.0 + 1 V1.1); blocked on Phase 3
 - [ ] **Phase 6: Linux Suite Installation Scripts** — `install-suite.sh`, `uninstall-suite.sh`, 13× systemd units; blocked on Phase 3
 - [ ] **Phase 7: Docker MCP Integration on Linux** — `configure-docker-mcp-ubuntu.sh`, 13× Docker systemd units; blocked on Phase 4
 - [ ] **Phase 8: Claude Desktop Auto-Config in Installer** — Fix `CreateClaudeConfig` Pascal; blocked on Phase 5
@@ -642,7 +645,7 @@
 
 ---
 
-## 🟡 Upcoming — Phase 23: Security Audit Remediation
+## ✅ Completed — Phase 23: Security Audit Remediation
 
 **Priority**: HIGH
 **Depends on**: Phase 22 complete
@@ -650,22 +653,122 @@
 
 ---
 
-- [ ] 🔐 **[SEC] Rotate bConnect credentials and remove `.env` from working tree** *(SecurityEngineer)* — the local `.env` contains `Administrator`/`baramundi-2008` and `NODE_TLS_REJECT_UNAUTHORIZED=0`; rotate credentials, replace with a secrets manager or vault reference, confirm file has never been committed (`git log --all -- .env`)
-- [ ] 🔐 **[SEC] Configure TLS certificate verification for all deployments** *(SecurityEngineer)* — install internal CA cert, set `BCONNECT_CA_CERT_PATH` in all server configs, remove `NODE_TLS_REJECT_UNAUTHORIZED=0` from every `.env` and deployment script
-- [ ] 🔐 **[SEC] Enable audit logging and rate limiting defaults for sensitive servers** *(SecurityEngineer)* — set `BCONNECT_AUDIT_LEVEL=info` and `BCONNECT_RATE_LIMIT_ENABLED=true` in the `.env.example` and deployment docs for `bconnect-servermanagement-mcp` and `bconnect-defensecontrol-mcp`
-- [ ] 🧹 **[CHORE] Remove unused `limiter` npm package** *(Developer)* — `limiter` is listed as a production dependency but the codebase uses its own `rate-limiter.ts`; remove from all `package.json` files that include it
+- [x] 🔐 **[SEC] Rotate bConnect credentials and remove `.env` from working tree** *(SecurityEngineer)* — replaced real creds with placeholders; confirmed `.env` never committed (`git log` clean); removed `NODE_TLS_REJECT_UNAUTHORIZED=0`; added `BCONNECT_CA_CERT_PATH` guidance
+- [x] 🔐 **[SEC] Configure TLS certificate verification for all deployments** *(SecurityEngineer)* — `BCONNECT_CA_CERT_PATH` added to root `.env` and all 12 `.env.example` files; `NODE_TLS_REJECT_UNAUTHORIZED=0` is comment-only in all files
+- [x] 🔐 **[SEC] Enable audit logging and rate limiting defaults for sensitive servers** *(SecurityEngineer)* — `bconnect-defensecontrol-mcp` and `bconnect-servermanagement-mcp` `.env.example` now default to `BCONNECT_AUDIT_LEVEL=info` and `BCONNECT_RATE_LIMIT_ENABLED=true`; created missing `.env.example` for 7 servers
+- [x] 🧹 **[CHORE] Remove unused `limiter` npm package** *(Developer)* — removed from all 13 `package.json` files; builds pass (0 TypeScript errors)
+
+---
+
+## 📋 Planned — Phase 24: Complete bconnect-endpoints-mcp (+17 tools → 100% non-group coverage)
+
+**Priority**: HIGH — adds fleet visibility for Android/iOS/Network/Unmanaged, fixes MaintenanceWindow read asymmetry, adds EntraID (26R1)
+**Depends on**: Phase 6 complete (endpoints server exists with 48 tools)
+**Requirement**: REQ-SPLIT-006 — bconnect-endpoints-mcp (updated 2026-03-31)
+**Deliverables**:
+- 17 new tools added to `bconnect-endpoints-mcp/src/index.ts`
+- Module methods added to `src/modules/endpoints.ts`
+- Input validation rules for all 17 new tools
+- Tests for all new tools
+- `listTools()` count increases from 48 → 65
+
+**Context**: These 17 tools complete all non-group-scoped endpoints from `endpoints.json`. Group-scoped
+queries (27 endpoints) are handled separately by `bconnect-groups-mcp` (Phase 25). After Phase 24 + 25,
+the `endpoints.json` spec is 100% covered (95/95 endpoints).
+
+---
+
+- [ ] 🔴 **[TEST] Write assertion: listTools() returns 65 endpoints tools (48 existing + 17 new)** *(TestEngineer)* — deliverable: update `bconnect-endpoints-mcp/src/__tests__/server.test.ts`; assert new tool names: `list_android_endpoints`, `get_android_endpoint`, `list_ios_endpoints`, `get_ios_endpoint`, `create_ios_endpoint`, `update_ios_endpoint`, `delete_ios_endpoint`, `list_network_endpoints`, `get_network_endpoint`, `list_unmanaged_endpoints`, `get_unmanaged_endpoint`, `delete_unmanaged_endpoint`, `get_maintenance_window_for_endpoint`, `get_maintenance_window_for_logical_group`, `get_entra_id_data`, `link_entra_id_data`, `unlink_entra_id_data`; assert 26R1-only tools gated (unmanaged, EntraID); `npm test` → **FAILS**
+
+- [ ] 🟢 **[IMPL] Add 17 endpoint tools — module methods + tool registration** *(Developer)* — deliverable: `src/modules/endpoints.ts` — add methods: `getAndroidEndpoints()`, `getAndroidEndpoint()`, `getIosEndpoints()`, `getIosEndpoint()`, `createIosEndpoint()`, `updateIosEndpoint()`, `deleteIosEndpoint()`, `getNetworkEndpoints()`, `getNetworkEndpoint()`, `getUnmanagedEndpoints()` (26R1), `getUnmanagedEndpoint()` (26R1), `deleteUnmanagedEndpoint()` (26R1), `getMaintenanceWindowForEndpoint()`, `getMaintenanceWindowForLogicalGroup()`, `getEntraIdData()` (26R1), `linkEntraIdData()` (26R1), `unlinkEntraIdData()` (26R1); register all 17 in `src/index.ts` with descriptions and inputSchemas; `npm test` → PASSES
+
+- [ ] 🟢 **[IMPL] Add input validation rules for 17 new tools** *(Developer)* — deliverable: `src/utils/mcp-tool-validation-rules.ts`; add GUID validation for `id`, `endpointId`, `logicalGroupId`, `deviceId`; validate `endpointData`/`updateData` objects for iOS CRUD; `npm test` → PASSES
+
+- [ ] 🔴 **[TEST] Write E2E tests for new endpoint tools** *(TestEngineer)* — deliverable: update `src/__tests__/server.test.ts` or new test file; MSW handlers for all 17 new routes; test happy-path for each; `npm test` → PASSES
+
+- [ ] 🔵 **[LINT] npm run build + tool count verification** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count = 65 (26R1) / 56 (25R2, no unmanaged/EntraID); all write tools have WARNING in description; all IDs validated as GUID
+
+---
+
+## 📋 Planned — Phase 25: bconnect-groups-mcp (new server — 27 tools)
+
+**Priority**: MEDIUM — completes 100% coverage of `endpoints.json` group-scoped queries; only needed for fleet reporting workflows
+**Depends on**: Phase 8 complete (server template available)
+**Requirement**: REQ-SPLIT-015 — bconnect-groups-mcp (new, 2026-03-31)
+**Deliverables**:
+- `bconnect-groups-mcp/` — new server directory with full scaffold
+- `src/index.ts` registering 27 read-only tools
+- `src/modules/groups.ts` — module with 27 methods (all GET, all following same pattern)
+- Input validation rules (GUID for all group/user IDs)
+- Tests asserting tool isolation and count
+- Clean build (0 TypeScript errors)
+
+**Context**: This is a pragmatic cross-spec server. All 27 endpoints live in `endpoints.json` but are
+"list {endpoint type} by {group type}" queries. Extracting them saves ~5,000 tokens of context for
+admins who don't need group-based reporting. See `MCP_Tool_Size_Analysis.md` Section 6 for rationale.
+
+**Pattern**: All 27 tools follow the same HTTP pattern:
+```
+GET /v2.0/{GroupType}/{groupId}/{EndpointType}?SearchQuery=&Page=&PageSize=&OrderBy=
+```
+This means the module can use a single generic method with parameters for group type and endpoint type.
+
+---
+
+- [ ] 🟢 **[INFRA] Scaffold bconnect-groups-mcp from server template** *(DevOpsEngineer)* — deliverable: `bconnect-groups-mcp/` with `package.json` (name: `bconnect-groups-mcp`, version: `26.1.0`), `tsconfig.json`, `.env.example`, copy of `bconnect-client.ts` + `parameter-validator.ts` + `rate-limiter.ts` + `audit-logger.ts`; `npm install` succeeds
+
+- [ ] 🔴 **[TEST] Write assertion: listTools() returns 27 groups-mcp tools** *(TestEngineer)* — deliverable: `bconnect-groups-mcp/src/__tests__/server.test.ts`; assert all 27 tool names present; assert no tools from endpoints CRUD, jobs, assets, or any other domain; assert all tools are read-only (no WARNING in descriptions); assert 25R2 vs 26R1 count identical (all group queries exist in both releases); `npm test` → **FAILS**
+
+- [ ] 🟢 **[IMPL] Create groups module and register 27 tools** *(Developer)* — deliverable: `src/modules/groups.ts` — implement generic `listEndpointsByGroup(groupType, groupId, endpointType, params)` method; register 27 tools in `src/index.ts`: 5 by logical group (Android, iOS, Linux, Mac, Network) + 7 by static group + 2 by dynamic group + 7 by UDG + 6 by AD user; each tool has specific name, description, and inputSchema with `{groupType}Id` (GUID) + standard pagination; `npm test` → PASSES
+
+- [ ] 🟢 **[IMPL] Add input validation rules for 27 group tools** *(Developer)* — deliverable: `src/utils/mcp-tool-validation-rules.ts`; GUID validation for `staticGroupId`, `dynamicGroupId`, `universalDynamicGroupId`, `adUserId`, `logicalGroupId`; pagination range validation (PageSize 1–1000); `npm test` → PASSES
+
+- [ ] 🔵 **[LINT] npm run build + tool count + isolation check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count = 27; no write operations; no tools from any other domain; confirm server name `bconnect-groups-mcp` in MCP handshake
+
+---
+
+## 📋 Planned — Phase 26: Complete bconnect-jobs-mcp (+9 tools → 100% coverage)
+
+**Priority**: MEDIUM — adds folder navigation, kiosk release context queries, and group-scoped job instances
+**Depends on**: Phase 13 complete (jobs server exists with 25 tools)
+**Requirement**: REQ-SPLIT-007 — bconnect-jobs-mcp (updated 2026-03-31)
+**Deliverables**:
+- 9 new tools added to `bconnect-jobs-mcp/src/index.ts`
+- Module methods added to `src/modules/jobs.ts`
+- Input validation rules for all 9 new tools
+- Tests for all new tools
+- `listTools()` count increases from 25 → 34
+
+**Context**: After Phase 26, the `jobs.json` spec is 100% covered (34/34 endpoints). The 9 missing tools
+fall into three categories: folder navigation (3), kiosk releases by context (4), job instances by group (2).
+
+---
+
+- [ ] 🔴 **[TEST] Write assertion: listTools() returns 34 jobs tools (25 existing + 9 new)** *(TestEngineer)* — deliverable: update `bconnect-jobs-mcp/src/__tests__/server.test.ts`; assert new tool names: `list_job_folders`, `get_job_folder`, `list_job_subfolders`, `list_kiosk_releases_by_job_definition`, `list_kiosk_releases_by_endpoint`, `list_kiosk_releases_by_ad_object`, `list_kiosk_releases_by_logical_group`, `list_job_instances_by_static_group`, `list_job_instances_by_dynamic_group`; `npm test` → **FAILS**
+
+- [ ] 🟢 **[IMPL] Add 9 jobs tools — module methods + tool registration** *(Developer)* — deliverable: `src/modules/jobs.ts` — add methods: `getJobFolders()`, `getJobFolder()`, `getJobSubfolders()`, `getKioskReleasesByJobDefinition()`, `getKioskReleasesByEndpoint()`, `getKioskReleasesByAdObject()`, `getKioskReleasesByLogicalGroup()`, `getJobInstancesByStaticGroup()`, `getJobInstancesByDynamicGroup()`; register in `src/index.ts` with descriptions and inputSchemas; `npm test` → PASSES
+
+- [ ] 🟢 **[IMPL] Add input validation rules for 9 new tools** *(Developer)* — deliverable: `src/utils/mcp-tool-validation-rules.ts`; GUID validation for `folderId`, `jobDefinitionId`, `endpointId`, `adObjectId`, `logicalGroupId`, `staticGroupId`, `dynamicGroupId`; `npm test` → PASSES
+
+- [ ] 🔵 **[LINT] npm run build + tool count verification** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count = 34; all new read-only tools have no WARNING prefix; all IDs validated as GUID
 
 ---
 
 ## 📝 Planning Notes
 
-Key decisions recorded during planning (2026-03-30):
+Key decisions recorded during planning:
 
+**2026-03-30 — Architecture decisions:**
 - **File-based split over functional grouping**: Each OpenAPI spec file maps to one MCP server. This is a cleaner domain model than the old grouping (e.g., jobs+servermanagement+variables) and avoids arbitrary decisions about which modules belong together.
 - **26R1 as primary target**: All new servers default to 26R1 types. The `BCONNECT_RELEASE=25R2` env var gates out the two 26R1-only servers (compliance, universaldynamicgroups).
-- **Phase 7 is the blocker**: Nothing in Phases 9–20 can start until 26R1 types are generated and the version barrel is in place.
-- **Phase 13 (jobs-mcp) replaces old Phase 7**: The previous in-progress `bconnect-jobs-mcp` bundled three spec files (jobs+servermanagement+variables). It must be rebuilt as a jobs-only server per the new architecture.
 - **V1.1 server is release-independent**: `bconnect-v11-mcp` does not use OpenAPI types and works identically against both 25R2 and 26R1 bConnect instances.
 - **REQ-AUTH-002 (API Key Auth) deferred**: Neither 25R2 nor 26R1 specs define API key authentication — only `basicAuth`. This requirement is blocked on a future bConnect release.
 - **MCP_Deployment phases 3–10 remain blocked**: Still requires all split servers to be complete before multi-executable installer and Docker registry work can proceed.
+
+**2026-03-31 — 100% coverage target and groups server:**
+- **100% 26R1 V2.0 API coverage**: Target is 264/264 endpoints covered across 13 V2.0 servers. Currently at 224/264 (83%). Phases 24–26 close the gap.
+- **Pragmatic groups server (REQ-SPLIT-015)**: The 27 "list endpoints by group type" endpoints from `endpoints.json` are extracted into a dedicated `bconnect-groups-mcp` server. This is a deliberate exception to the one-spec-one-server rule — it keeps the endpoints server lean (~6,600 tokens) for daily use while making group queries available on demand (~5,000 tokens). See `MCP_Tool_Size_Analysis.md` for full rationale.
+- **Context efficiency over completeness — unless both are possible**: The analysis showed that 33 "convenience alias" tools could be skipped to save ~12K tokens. Instead, we chose to implement them in a separate server (groups) so that context-sensitive admins skip it, while completeness-focused admins can opt in. Best of both worlds.
+- **Phases 24–26 can run in parallel**: Phase 24 (endpoints +17) and Phase 26 (jobs +9) modify existing servers. Phase 25 (groups, 27 tools) creates a new server. All three are independent.
+- **After Phase 26**: The bConnect 26R1 V2.0 API is 100% exposed via MCP. Only the V1.1 legacy server (Phase 20, postponed) remains for full API surface coverage.
 
