@@ -41,7 +41,7 @@
 | Phase 23 | Security Audit Remediation | 4 | ✅ Complete |
 | Phase 24 | Complete bconnect-endpoints-mcp (+17 tools) | 5 | ✅ Complete |
 | Phase 25 | bconnect-groups-mcp (new server, 27 tools) | 5 | 📋 Planned (MEDIUM) |
-| Phase 26 | Complete bconnect-jobs-mcp (+9 tools) | 4 | 📋 Planned (MEDIUM) |
+| Phase 26 | Complete bconnect-jobs-mcp (+9 tools) | 4 | ✅ Complete |
 
 ---
 
@@ -740,13 +740,10 @@ fall into three categories: folder navigation (3), kiosk releases by context (4)
 
 ---
 
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns 34 jobs tools (25 existing + 9 new)** *(TestEngineer)* — deliverable: update `bconnect-jobs-mcp/src/__tests__/server.test.ts`; assert new tool names: `list_job_folders`, `get_job_folder`, `list_job_subfolders`, `list_kiosk_releases_by_job_definition`, `list_kiosk_releases_by_endpoint`, `list_kiosk_releases_by_ad_object`, `list_kiosk_releases_by_logical_group`, `list_job_instances_by_static_group`, `list_job_instances_by_dynamic_group`; `npm test` → **FAILS**
-
-- [ ] 🟢 **[IMPL] Add 9 jobs tools — module methods + tool registration** *(Developer)* — deliverable: `src/modules/jobs.ts` — add methods: `getJobFolders()`, `getJobFolder()`, `getJobSubfolders()`, `getKioskReleasesByJobDefinition()`, `getKioskReleasesByEndpoint()`, `getKioskReleasesByAdObject()`, `getKioskReleasesByLogicalGroup()`, `getJobInstancesByStaticGroup()`, `getJobInstancesByDynamicGroup()`; register in `src/index.ts` with descriptions and inputSchemas; `npm test` → PASSES
-
-- [ ] 🟢 **[IMPL] Add input validation rules for 9 new tools** *(Developer)* — deliverable: `src/utils/mcp-tool-validation-rules.ts`; GUID validation for `folderId`, `jobDefinitionId`, `endpointId`, `adObjectId`, `logicalGroupId`, `staticGroupId`, `dynamicGroupId`; `npm test` → PASSES
-
-- [ ] 🔵 **[LINT] npm run build + tool count verification** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count = 34; all new read-only tools have no WARNING prefix; all IDs validated as GUID
+- [x] 🔴 **[TEST] Write assertion: listTools() returns 33 jobs tools (24 existing + 9 new)** *(TestEngineer)*
+- [x] 🟢 **[IMPL] Add 9 jobs tools — module methods + tool registration** *(Developer)*
+- [x] 🟢 **[IMPL] Add input validation rules for 9 new tools** *(Developer)*
+- [x] 🔵 **[LINT] npm run build + tool count verification — 0 TypeScript errors** *(QualityAssuranceEngineer)*
 
 ---
 
