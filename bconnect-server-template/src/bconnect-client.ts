@@ -505,15 +505,15 @@ export class BConnectClient {
         case 429:
           throw new Error("Rate limit exceeded. Please try again later.");
         case 500:
-          throw new Error(`bConnect API error: ${JSON.stringify(message)}`);
+          throw new Error("bConnect API returned an internal server error.");
         default:
-          throw new Error(`API error (${status}): ${JSON.stringify(message)}`);
+          throw new Error(`bConnect API error (HTTP ${status}).`);
       }
     } else if (error.request) {
-      // Request made but no response received
+      // Request made but no response received — do not expose internal hostname
       throw new Error(
-        `Cannot connect to bConnect API at ${this.config.baseUrl}. ` +
-        "Check network connectivity and API availability."
+        "Cannot connect to the bConnect API. " +
+        "Check network connectivity and BCONNECT_BASE_URL configuration."
       );
     } else {
       // Error in request configuration

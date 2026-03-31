@@ -12,7 +12,7 @@ import { RateLimiter, RateLimitError, RateLimiterConfig } from "./utils/rate-lim
 import { AuditLogger, AuditLevel, AuditLogEntry } from "./utils/audit-logger.js";
 import { ResponseCache } from "./utils/response-cache.js";
 import { BatchOperations, BatchOperation, BatchExecutionResult, createBatchOperations } from "./utils/batch-operations.js";
-import { ServerManagementModule } from './modules/servermanagement.js';
+import { AssetsModule } from './modules/assets.js';
 
 export interface BConnectConfig {
   baseUrl: string;
@@ -79,7 +79,7 @@ export class BConnectClient {
   private responseCache: ResponseCache | null = null;
   private batchOperations: BatchOperations | null = null;
 
-  public serverManagement: ServerManagementModule;
+  public assets: AssetsModule;
 
   constructor(config: BConnectConfig) {
     this.config = config;
@@ -338,7 +338,7 @@ export class BConnectClient {
     }
 
     // Initialize domain module
-    this.serverManagement = new ServerManagementModule(this.client);
+    this.assets = new AssetsModule(this.client);
 
     // Setup error handling and rate limit headers interceptor for V2.0 client
     this.client.interceptors.response.use(

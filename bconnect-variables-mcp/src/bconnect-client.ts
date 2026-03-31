@@ -12,7 +12,7 @@ import { RateLimiter, RateLimitError, RateLimiterConfig } from "./utils/rate-lim
 import { AuditLogger, AuditLevel, AuditLogEntry } from "./utils/audit-logger.js";
 import { ResponseCache } from "./utils/response-cache.js";
 import { BatchOperations, BatchOperation, BatchExecutionResult, createBatchOperations } from "./utils/batch-operations.js";
-import { VariablesModule } from "./modules/variables.js";
+import { VariablesModule } from './modules/variables.js';
 
 export interface BConnectConfig {
   baseUrl: string;
@@ -337,6 +337,9 @@ export class BConnectClient {
       });
     }
 
+    // Initialize domain module
+    this.variables = new VariablesModule(this.client);
+
     // Setup error handling and rate limit headers interceptor for V2.0 client
     this.client.interceptors.response.use(
       (response) => {
@@ -451,7 +454,8 @@ export class BConnectClient {
       }
     );
 
-    this.variables = new VariablesModule(this.client);
+    // TODO: Initialize V2.0 module
+    // Example: this.domain = new DomainModule(this.client);
   }
 
   /**
@@ -504,15 +508,15 @@ export class BConnectClient {
         case 429:
           throw new Error("Rate limit exceeded. Please try again later.");
         case 500:
-          throw new Error(`bConnect API error: ${JSON.stringify(message)}`);
+          throw new Error("bConnect API returned an internal server error.");
         default:
-          throw new Error(`API error (${status}): ${JSON.stringify(message)}`);
+          throw new Error(`bConnect API error (HTTP ${status}).`);
       }
     } else if (error.request) {
-      // Request made but no response received
+      // Request made but no response received — do not expose internal hostname
       throw new Error(
-        `Cannot connect to bConnect API at ${this.config.baseUrl}. ` +
-        "Check network connectivity and API availability."
+        "Cannot connect to the bConnect API. " +
+        "Check network connectivity and BCONNECT_BASE_URL configuration."
       );
     } else {
       // Error in request configuration
@@ -525,7 +529,8 @@ export class BConnectClient {
    */
   async testConnection(): Promise<boolean> {
     try {
-      await this.variables.getVariableDefinitions({ PageSize: 1 });
+      // TODO: Replace with a lightweight call to the domain's list endpoint
+      await this.client.get('/');
       return true;
     } catch (error) {
       console.error("Connection test failed:", error);

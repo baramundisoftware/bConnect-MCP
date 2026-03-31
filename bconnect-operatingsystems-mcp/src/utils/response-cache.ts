@@ -224,9 +224,16 @@ export class ResponseCache {
   invalidateByPattern(pattern: RegExp): number {
     let count = 0;
     for (const key of this.cache.keys()) {
-      // Extract URL from key (format: METHOD:URL:PARAMS)
-      const parts = key.split(':');
-      const url = parts.length > 1 ? parts[1] : '';
+      // Extract URL from key (format: METHOD:URL:PARAMS_JSON)
+      // URL may contain ':' (e.g. https://host:port/path). params are always
+      // JSON.stringify(object) so they start with '{', or empty string.
+      // Find method/URL boundary (first ':') and URL/params boundary (last ':{' or trailing ':').
+      const methodEnd = key.indexOf(':');
+      if (methodEnd === -1) continue;
+      const paramsColonIdx = key.lastIndexOf(':{');
+      const url = paramsColonIdx > methodEnd
+        ? key.slice(methodEnd + 1, paramsColonIdx)
+        : key.slice(methodEnd + 1).replace(/:$/, '');
       if (pattern.test(url)) {
         this.cache.delete(key);
         count++;
