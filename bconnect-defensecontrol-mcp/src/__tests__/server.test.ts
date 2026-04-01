@@ -2,22 +2,21 @@
  * bconnect-defensecontrol-mcp — server isolation test
  *
  * Verifies that:
- * 1. createServer() starts and lists all 13 expected defensecontrol tools
- * 2. No tools from other domains are registered
- * 3. Unknown tool calls return MethodNotFound
+ * 1. createServer() starts and lists all 11 expected defensecontrol tools (25R2)
+ * 2. In 26R1 mode, 2 additional BitLocker tools are added (13 total)
+ * 3. No tools from other domains are registered
+ * 4. Unknown tool calls return MethodNotFound
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
 
-const EXPECTED_TOOLS = [
-  // BitLocker
+const EXPECTED_TOOLS_25R2 = [
+  // BitLocker (25R2)
   'list_bitlocker_windows_endpoints',
   'get_bitlocker_windows_endpoint',
-  'get_bitlocker_secrets',
-  'update_bitlocker_pin',
   // Local Admin
   'get_local_admin_accounts',
   'patch_local_admin_user_credentials',
@@ -32,6 +31,11 @@ const EXPECTED_TOOLS = [
   'get_defender_windows_endpoint',
 ];
 
+const EXPECTED_TOOLS_26R1_ONLY = [
+  'get_bitlocker_secrets',
+  'update_bitlocker_pin',
+];
+
 async function startServer() {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -42,18 +46,39 @@ async function startServer() {
   return { client };
 }
 
+afterEach(() => {
+  delete process.env.BCONNECT_RELEASE;
+});
+
 describe('bconnect-defensecontrol-mcp', () => {
-  it('lists exactly 13 defensecontrol tools', async () => {
+  it('lists exactly 11 defensecontrol tools in 25R2 mode', async () => {
+    const { client } = await startServer();
+    const { tools } = await client.listTools();
+    expect(tools).toHaveLength(11);
+  });
+
+  it('registers all expected tool names (25R2)', async () => {
+    const { client } = await startServer();
+    const { tools } = await client.listTools();
+    const names = tools.map((t) => t.name);
+    for (const expected of EXPECTED_TOOLS_25R2) {
+      expect(names).toContain(expected);
+    }
+  });
+
+  it('lists exactly 13 defensecontrol tools in 26R1 mode', async () => {
+    process.env.BCONNECT_RELEASE = '26R1';
     const { client } = await startServer();
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(13);
   });
 
-  it('registers all expected tool names', async () => {
+  it('registers 26R1-only tools when BCONNECT_RELEASE=26R1', async () => {
+    process.env.BCONNECT_RELEASE = '26R1';
     const { client } = await startServer();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
-    for (const expected of EXPECTED_TOOLS) {
+    for (const expected of [...EXPECTED_TOOLS_25R2, ...EXPECTED_TOOLS_26R1_ONLY]) {
       expect(names).toContain(expected);
     }
   });

@@ -1,107 +1,88 @@
 # bconnect-software-mcp
 
-MCP server for the baramundi bConnect **Software** API. Query installed software inventory and manage software bundle definitions in your baramundi Management Suite.
+Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
-## Tools (19 — 6 read, 13 write)
+**Domain:** Software inventory and deployment — installed Windows software inventory and software bundle management  
+**Tools:** 4 (19 in 26R1 mode)
 
-### Installed Software Inventory
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_installed_windows_software` | R | List all installed software across Windows endpoints |
-| `list_installed_software_by_endpoint` | R | List installed software on a specific endpoint |
-| `list_installed_software_by_logical_group` | R | List installed software for a logical group |
-| `list_installed_software_by_dynamic_group` | R | List installed software for a dynamic group |
-
-### Software Bundles
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_software_bundles` | R | List all software bundles |
-| `get_software_bundle` | R | Get a specific software bundle by ID |
-| `create_software_bundle` | W | Create a new software bundle |
-| `delete_software_bundle` | W | Delete a software bundle |
-
-### Bundle Applications
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_bundle_applications` | R | List all bundle applications |
-| `list_bundle_applications_by_bundle` | R | List applications in a specific bundle |
-| `add_application_to_bundle` | W | Add an application to a bundle |
-| `delete_bundle_application` | W | Remove an application from a bundle |
-| `replace_application_in_bundle` | W | Replace an application in a bundle |
-
-### Bundle Folders
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_bundle_folders` | R | List all bundle folders |
-| `get_bundle_folder` | R | Get a bundle folder by ID |
-| `list_bundle_folders_by_folder` | R | List subfolders of a bundle folder |
-| `create_bundle_folder` | W | Create a new bundle folder |
-| `update_bundle_folder` | W | Update a bundle folder |
-| `delete_bundle_folder` | W | Delete a bundle folder |
-
-## Release Compatibility
-
-| bMS Release | Supported |
-|-------------|-----------|
-| 25R2 | ✅ (installed software inventory tools) |
-| 26R1 | ✅ (all tools, including bundle management) |
-
-> Bundle management tools (create/delete bundles, manage applications) require 26R1. Set `BCONNECT_RELEASE=25R2` to restrict to inventory-only tools.
-
-## Configuration
-
-```env
-BCONNECT_BASE_URL=https://your-bms-server.example.com/bconnect
-BCONNECT_USERNAME=your-username
-BCONNECT_PASSWORD=your-password
-
-# Optional: CA certificate for TLS verification
-BCONNECT_CA_CERT_PATH=/path/to/ca.pem
-
-# Optional: bMS release version (25R2 or 26R1, default: 26R1)
-BCONNECT_RELEASE=26R1
-
-# Optional: rate limiting
-BCONNECT_RATE_LIMIT_ENABLED=false
-BCONNECT_RATE_LIMIT_MAX_REQUESTS=100
-BCONNECT_RATE_LIMIT_WINDOW_MS=60000
-
-# Optional: audit logging (none | info | verbose)
-BCONNECT_AUDIT_LEVEL=none
-```
+---
 
 ## Quick Start
 
-```bash
-npm install
-npm run build
-node build/index.js
+```env
+BCONNECT_BASE_URL=https://<your-bms-server>:444/bconnect
+BCONNECT_USERNAME=mcp-reader
+BCONNECT_PASSWORD=<password>
+BCONNECT_REJECT_UNAUTHORIZED=true
+# Optional: BCONNECT_RELEASE=26R1   (enables additional tools for baramundi 2026 R1)
+# Optional: AUDIT_LOG_LEVEL=write   (all / write / security / none)
 ```
 
-## Claude Desktop Integration
+```bash
+# Run directly (development)
+cd bconnect-software-mcp
+npm install && npm run build
+node build/index.js
 
-```json
+# Claude Code / Claude Desktop entry (~/.claude.json or claude_desktop_config.json):
 {
   "mcpServers": {
     "bconnect-software": {
       "command": "node",
-      "args": ["/path/to/bconnect-software-mcp/build/index.js"],
+      "args": ["/opt/bconnect-mcp-suite/bconnect-software-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server.example.com/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password"
+        "BCONNECT_BASE_URL": "https://bms-server:444/bconnect",
+        "BCONNECT_USERNAME": "mcp-reader",
+        "BCONNECT_PASSWORD": "<password>"
       }
     }
   }
 }
 ```
 
-## Testing
+---
 
-```bash
-npm test
-```
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_installed_windows_software` | List all installed Windows software across all endpoints |
+| `list_installed_software_by_endpoint` | List installed software on a specific endpoint |
+| `list_installed_software_by_logical_group` | List installed software for a logical group's endpoints |
+| `list_installed_software_by_dynamic_group` | List installed software for a Universal Dynamic Group |
+| `list_software_bundles` | **(26R1)** List all software bundles in baramundi |
+| `get_software_bundle` | **(26R1)** Get details of a specific software bundle |
+| `create_software_bundle` | **(26R1)** Create a new software bundle |
+| `delete_software_bundle` | **(26R1)** Delete a software bundle by GUID |
+| `list_bundle_applications` | **(26R1)** List all bundle applications |
+| `list_bundle_applications_by_bundle` | **(26R1)** List applications within a specific bundle |
+| `add_application_to_bundle` | **(26R1)** Add an application to a bundle |
+| `delete_bundle_application` | **(26R1)** Remove an application from a bundle |
+| `replace_application_in_bundle` | **(26R1)** Replace an application in a bundle |
+| `list_bundle_folders` | **(26R1)** List all bundle folders |
+| `get_bundle_folder` | **(26R1)** Get details of a specific bundle folder |
+| `list_bundle_folders_by_folder` | **(26R1)** List sub-folders within a bundle folder |
+| `create_bundle_folder` | **(26R1)** Create a new bundle folder |
+| `delete_bundle_folder` | **(26R1)** Delete a bundle folder by GUID |
+| `update_bundle_folder` | **(26R1)** Update a bundle folder via JSON Patch |
+
+> Tools marked **(26R1)** require `BCONNECT_RELEASE=26R1` and baramundi Management Suite 2026 R1 or later.
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BCONNECT_BASE_URL` | Yes | — | bConnect REST API base URL |
+| `BCONNECT_USERNAME` | Yes | — | API username |
+| `BCONNECT_PASSWORD` | Yes | — | API password |
+| `BCONNECT_REJECT_UNAUTHORIZED` | No | `true` | Set `false` to allow self-signed TLS |
+| `BCONNECT_RELEASE` | No | `25R2` | Set `26R1` to enable additional tools |
+| `AUDIT_LOG_LEVEL` | No | `write` | `all` / `write` / `security` / `none` |
+
+---
+
+## Part of the Suite
+
+This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).

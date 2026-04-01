@@ -1,115 +1,99 @@
 # bconnect-jobs-mcp
 
-MCP server for the baramundi bConnect **Jobs** API. Manage job definitions, job instances, folder organization, group assignments, and kiosk releases in your baramundi Management Suite.
+Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
-## Tools (24 — 8 read, 16 write)
+**Domain:** Deployment jobs and task execution — job definitions, job instances, folders, kiosk releases, and group assignment  
+**Tools:** 33
 
-### Job Definitions
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_job_definitions` | R | List all job definitions |
-| `get_job_definition` | R | Get a specific job definition by ID |
-| `list_job_definitions_by_folder` | R | List job definitions in a folder |
-
-### Job Instances
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_job_instances` | R | List all job instances |
-| `get_job_instance` | R | Get a specific job instance by ID |
-| `list_endpoint_job_instances` | R | List job instances for a specific endpoint |
-| `list_job_instances_by_definition` | R | List instances for a job definition |
-| `list_job_instances_by_logical_group` | R | List job instances for a logical group |
-| `create_job_instance` | W | Create a new job instance |
-| `start_job_instance` | W | Start a job instance |
-| `stop_job_instance` | W | Stop a running job instance |
-| `resume_job_instance` | W | Resume a paused job instance |
-| `delete_job_instance` | W | Delete a job instance |
-
-### Job Folders
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `create_job_folder` | W | Create a job definition folder |
-| `update_job_folder` | W | Rename or move a job folder |
-| `delete_job_folder` | W | Delete a job folder |
-
-### Job Assignments
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `assign_job_to_logical_group` | W | Assign a job to a logical group |
-| `assign_job_to_static_group` | W | Assign a job to a static group |
-| `assign_job_to_dynamic_group` | W | Assign a job to a dynamic group |
-| `assign_job_to_universal_dynamic_group` | W | Assign a job to a universal dynamic group |
-
-### Kiosk Releases
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_kiosk_releases` | R | List all kiosk releases |
-| `get_kiosk_release` | R | Get a specific kiosk release |
-| `create_kiosk_release` | W | Create a new kiosk release |
-| `withdraw_kiosk_release` | W | Withdraw a kiosk release |
-
-## Release Compatibility
-
-| bMS Release | Supported |
-|-------------|-----------|
-| 25R2 | ✅ |
-| 26R1 | ✅ |
-
-## Configuration
-
-```env
-BCONNECT_BASE_URL=https://your-bms-server.example.com/bconnect
-BCONNECT_USERNAME=your-username
-BCONNECT_PASSWORD=your-password
-
-# Optional: CA certificate for TLS verification
-BCONNECT_CA_CERT_PATH=/path/to/ca.pem
-
-# Optional: bMS release version (25R2 or 26R1, default: 26R1)
-BCONNECT_RELEASE=26R1
-
-# Optional: rate limiting
-BCONNECT_RATE_LIMIT_ENABLED=false
-BCONNECT_RATE_LIMIT_MAX_REQUESTS=100
-BCONNECT_RATE_LIMIT_WINDOW_MS=60000
-
-# Optional: audit logging (none | info | verbose)
-BCONNECT_AUDIT_LEVEL=none
-```
+---
 
 ## Quick Start
 
-```bash
-npm install
-npm run build
-node build/index.js
+```env
+BCONNECT_BASE_URL=https://<your-bms-server>:444/bconnect
+BCONNECT_USERNAME=mcp-reader
+BCONNECT_PASSWORD=<password>
+BCONNECT_REJECT_UNAUTHORIZED=true
+# Optional: AUDIT_LOG_LEVEL=write   (all / write / security / none)
 ```
 
-## Claude Desktop Integration
+```bash
+# Run directly (development)
+cd bconnect-jobs-mcp
+npm install && npm run build
+node build/index.js
 
-```json
+# Claude Code / Claude Desktop entry (~/.claude.json or claude_desktop_config.json):
 {
   "mcpServers": {
     "bconnect-jobs": {
       "command": "node",
-      "args": ["/path/to/bconnect-jobs-mcp/build/index.js"],
+      "args": ["/opt/bconnect-mcp-suite/bconnect-jobs-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server.example.com/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password"
+        "BCONNECT_BASE_URL": "https://bms-server:444/bconnect",
+        "BCONNECT_USERNAME": "mcp-reader",
+        "BCONNECT_PASSWORD": "<password>"
       }
     }
   }
 }
 ```
 
-## Testing
+---
 
-```bash
-npm test
-```
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_job_definitions` | List all job definitions in baramundi |
+| `get_job_definition` | Get details of a specific job definition by GUID |
+| `list_job_instances` | List all job instances (execution history) |
+| `get_job_instance` | Get details of a specific job instance by GUID |
+| `list_endpoint_job_instances` | List all job instances for a specific endpoint |
+| `list_job_instances_by_definition` | List all instances of a specific job definition |
+| `list_job_instances_by_logical_group` | List job instances for a logical group's endpoints |
+| `list_job_definitions_by_folder` | List job definitions within a specific folder |
+| `create_job_instance` | Create a new job instance (trigger a deployment) |
+| `start_job_instance` | Start a paused job instance |
+| `stop_job_instance` | Stop a running job instance |
+| `resume_job_instance` | Resume a stopped job instance |
+| `delete_job_instance` | Delete a job instance by GUID |
+| `create_job_folder` | Create a new job folder |
+| `update_job_folder` | Update an existing job folder via JSON Patch |
+| `delete_job_folder` | Delete a job folder by GUID |
+| `assign_job_to_logical_group` | Assign a job definition to a logical group |
+| `assign_job_to_static_group` | Assign a job definition to a static group |
+| `assign_job_to_dynamic_group` | Assign a job definition to a dynamic group |
+| `assign_job_to_universal_dynamic_group` | Assign a job definition to a universal dynamic group |
+| `create_kiosk_release` | Create a new kiosk release for a job definition |
+| `withdraw_kiosk_release` | Withdraw an existing kiosk release |
+| `list_kiosk_releases` | List all kiosk releases in baramundi |
+| `get_kiosk_release` | Get details of a specific kiosk release |
+| `list_job_folders` | List all top-level job folders |
+| `get_job_folder` | Get details of a specific job folder by GUID |
+| `list_job_subfolders` | List sub-folders within a specific job folder |
+| `list_kiosk_releases_by_job_definition` | List kiosk releases for a specific job definition |
+| `list_kiosk_releases_by_endpoint` | List kiosk releases available to a specific endpoint |
+| `list_kiosk_releases_by_ad_object` | List kiosk releases available to an AD object |
+| `list_kiosk_releases_by_logical_group` | List kiosk releases available to a logical group |
+| `list_job_instances_by_static_group` | List job instances for a static group's endpoints |
+| `list_job_instances_by_dynamic_group` | List job instances for a dynamic group's endpoints |
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BCONNECT_BASE_URL` | Yes | — | bConnect REST API base URL |
+| `BCONNECT_USERNAME` | Yes | — | API username |
+| `BCONNECT_PASSWORD` | Yes | — | API password |
+| `BCONNECT_REJECT_UNAUTHORIZED` | No | `true` | Set `false` to allow self-signed TLS |
+| `BCONNECT_RELEASE` | No | `25R2` | Set `26R1` to enable additional tools |
+| `AUDIT_LOG_LEVEL` | No | `write` | `all` / `write` / `security` / `none` |
+
+---
+
+## Part of the Suite
+
+This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).

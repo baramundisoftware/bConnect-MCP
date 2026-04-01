@@ -1,71 +1,76 @@
 # bconnect-compliance-mcp
 
-MCP server for the baramundi bConnect **Compliance** API. Read compliance rule violations, CVE vulnerabilities, and mobile device rule data from your baramundi Management Suite.
+Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
-> **Requires bConnect 26R1 or later.** This server does not work with 25R2 deployments.
+**Domain:** Compliance rules, CVE vulnerabilities, and mobile device rule violations (requires baramundi 2026 R1)  
+**Tools:** 7
 
-## Tools (8 — all read)
+> **Note:** This server requires baramundi Management Suite 2026 R1 or later. The compliance API does not exist in 25R2.
 
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_detected_rule_violations` | R | List all detected compliance rule violations |
-| `list_detected_rule_violations_for_endpoint` | R | List rule violations for a specific endpoint |
-| `list_detected_vulnerabilities` | R | List all detected CVE vulnerabilities |
-| `list_detected_vulnerabilities_for_endpoint` | R | List CVE vulnerabilities for a specific endpoint |
-| `list_mobile_device_rules` | R | List all mobile device compliance rules |
-| `get_mobile_device_rule` | R | Get a specific mobile device rule by ID |
-| `list_vulnerabilities` | R | List all known CVE vulnerabilities in the database |
-| `get_vulnerability` | R | Get details for a specific CVE vulnerability |
-
-## Release Compatibility
-
-| bMS Release | Supported |
-|-------------|-----------|
-| 25R2 | ❌ (compliance API not available) |
-| 26R1 | ✅ |
-
-## Configuration
-
-```env
-BCONNECT_BASE_URL=https://your-bms-server.example.com/bconnect
-BCONNECT_USERNAME=your-username
-BCONNECT_PASSWORD=your-password
-
-# Optional: CA certificate for TLS verification
-BCONNECT_CA_CERT_PATH=/path/to/ca.pem
-
-# Optional: audit logging (none | info | verbose)
-BCONNECT_AUDIT_LEVEL=none
-```
+---
 
 ## Quick Start
 
-```bash
-npm install
-npm run build
-node build/index.js
+```env
+BCONNECT_BASE_URL=https://<your-bms-server>:444/bconnect
+BCONNECT_USERNAME=mcp-reader
+BCONNECT_PASSWORD=<password>
+BCONNECT_REJECT_UNAUTHORIZED=true
+# Optional: AUDIT_LOG_LEVEL=write   (all / write / security / none)
 ```
 
-## Claude Desktop Integration
+```bash
+# Run directly (development)
+cd bconnect-compliance-mcp
+npm install && npm run build
+node build/index.js
 
-```json
+# Claude Code / Claude Desktop entry (~/.claude.json or claude_desktop_config.json):
 {
   "mcpServers": {
     "bconnect-compliance": {
       "command": "node",
-      "args": ["/path/to/bconnect-compliance-mcp/build/index.js"],
+      "args": ["/opt/bconnect-mcp-suite/bconnect-compliance-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server.example.com/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password"
+        "BCONNECT_BASE_URL": "https://bms-server:444/bconnect",
+        "BCONNECT_USERNAME": "mcp-reader",
+        "BCONNECT_PASSWORD": "<password>"
       }
     }
   }
 }
 ```
 
-## Testing
+---
 
-```bash
-npm test
-```
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_detected_rule_violations` | List all compliance rule violations across endpoints |
+| `list_detected_rule_violations_for_endpoint` | List compliance violations for a specific endpoint |
+| `list_detected_vulnerabilities` | List all detected CVE vulnerabilities across endpoints |
+| `list_detected_vulnerabilities_for_endpoint` | List CVE vulnerabilities for a specific endpoint |
+| `list_mobile_device_rules` | List all mobile device compliance rules |
+| `get_mobile_device_rule` | Get details of a specific mobile device rule |
+| `list_vulnerabilities` | List all CVEs in the baramundi vulnerability library |
+| `get_vulnerability` | Get details of a specific CVE by GUID |
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BCONNECT_BASE_URL` | Yes | — | bConnect REST API base URL |
+| `BCONNECT_USERNAME` | Yes | — | API username |
+| `BCONNECT_PASSWORD` | Yes | — | API password |
+| `BCONNECT_REJECT_UNAUTHORIZED` | No | `true` | Set `false` to allow self-signed TLS |
+| `BCONNECT_RELEASE` | No | `25R2` | Set `26R1` to enable additional tools |
+| `AUDIT_LOG_LEVEL` | No | `write` | `all` / `write` / `security` / `none` |
+
+---
+
+## Part of the Suite
+
+This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).

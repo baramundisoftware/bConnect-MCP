@@ -1,153 +1,133 @@
 # bconnect-endpoints-mcp
 
-MCP server for the baramundi bConnect **Endpoints** API. Full lifecycle management of Windows, Linux, macOS, Android, iOS, industrial, and network endpoints — including logical groups and maintenance windows.
+Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
-## Tools (47 — 14 read, 33 write)
+**Domain:** Managed endpoints — Windows, Linux, macOS, Android, iOS, network, and industrial devices  
+**Tools:** 58 (64 in 26R1 mode)
 
-### General Endpoints
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_endpoints` | R | List all endpoints |
-| `get_endpoint` | R | Get a specific endpoint by ID |
-| `search_endpoints` | R | Search endpoints by criteria |
-| `delete_endpoint` | W | Delete any endpoint by ID |
-
-### Windows Endpoints
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_windows_endpoints` | R | List all Windows endpoints |
-| `get_windows_endpoint` | R | Get a Windows endpoint by ID |
-| `create_windows_endpoint` | W | Create a new Windows endpoint |
-| `update_windows_endpoint` | W | Update a Windows endpoint |
-| `delete_windows_endpoint` | W | Delete a Windows endpoint |
-| `start_windows_enrollment` | W | Start Windows endpoint enrollment |
-| `trigger_intune_installation` | W | Trigger Intune installation on an endpoint |
-
-### Linux Endpoints
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_linux_endpoints` | R | List all Linux endpoints |
-| `get_linux_endpoint` | R | Get a Linux endpoint by ID |
-| `create_linux_endpoint` | W | Create a new Linux endpoint |
-| `update_linux_endpoint` | W | Update a Linux endpoint |
-| `delete_linux_endpoint` | W | Delete a Linux endpoint |
-
-### macOS Endpoints
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_mac_endpoints` | R | List all macOS endpoints |
-| `get_mac_endpoint` | R | Get a macOS endpoint by ID |
-| `create_mac_endpoint` | W | Create a new macOS endpoint |
-| `update_mac_endpoint` | W | Update a macOS endpoint |
-| `delete_mac_endpoint` | W | Delete a macOS endpoint |
-| `start_mac_enrollment` | W | Start macOS enrollment |
-
-### Android / iOS Endpoints
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `start_android_enrollment` | W | Start Android enrollment |
-| `create_android_endpoint` | W | Create an Android endpoint |
-| `update_android_endpoint` | W | Update an Android endpoint |
-| `delete_android_endpoint` | W | Delete an Android endpoint |
-| `start_ios_enrollment` | W | Start iOS enrollment |
-
-### Industrial & Network Endpoints
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `create_industrial_endpoint` | W | Create an industrial endpoint |
-| `update_industrial_endpoint` | W | Update an industrial endpoint |
-| `delete_industrial_endpoint` | W | Delete an industrial endpoint |
-| `create_network_endpoint` | W | Create a network endpoint |
-| `update_network_endpoint` | W | Update a network endpoint |
-| `delete_network_endpoint` | W | Delete a network endpoint |
-
-### Logical Groups
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_logical_groups` | R | List all logical groups |
-| `get_logical_group` | R | Get a logical group by ID |
-| `list_group_endpoints` | R | List endpoints in a logical group |
-| `list_endpoints_by_logical_group` | R | List all endpoints in a group |
-| `list_windows_endpoints_by_logical_group` | R | List Windows endpoints in a group |
-| `create_logical_group` | W | Create a new logical group |
-| `update_logical_group` | W | Update a logical group |
-| `delete_logical_group` | W | Delete a logical group |
-
-### Maintenance Windows
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `create_maintenance_window_for_endpoint` | W | Create a maintenance window for an endpoint |
-| `update_maintenance_window_for_endpoint` | W | Update a maintenance window for an endpoint |
-| `delete_maintenance_window_for_endpoint` | W | Delete a maintenance window from an endpoint |
-| `create_maintenance_window_for_logical_group` | W | Create a maintenance window for a logical group |
-| `update_maintenance_window_for_logical_group` | W | Update a maintenance window for a logical group |
-| `delete_maintenance_window_for_logical_group` | W | Delete a maintenance window from a logical group |
-
-## Release Compatibility
-
-| bMS Release | Supported |
-|-------------|-----------|
-| 25R2 | ✅ |
-| 26R1 | ✅ |
-
-## Configuration
-
-```env
-BCONNECT_BASE_URL=https://your-bms-server.example.com/bconnect
-BCONNECT_USERNAME=your-username
-BCONNECT_PASSWORD=your-password
-
-# Optional: CA certificate for TLS verification
-BCONNECT_CA_CERT_PATH=/path/to/ca.pem
-
-# Optional: bMS release version (25R2 or 26R1, default: 26R1)
-BCONNECT_RELEASE=26R1
-
-# Optional: rate limiting
-BCONNECT_RATE_LIMIT_ENABLED=false
-BCONNECT_RATE_LIMIT_MAX_REQUESTS=100
-BCONNECT_RATE_LIMIT_WINDOW_MS=60000
-
-# Optional: audit logging (none | info | verbose)
-BCONNECT_AUDIT_LEVEL=none
-```
+---
 
 ## Quick Start
 
-```bash
-npm install
-npm run build
-node build/index.js
+```env
+BCONNECT_BASE_URL=https://<your-bms-server>:444/bconnect
+BCONNECT_USERNAME=mcp-reader
+BCONNECT_PASSWORD=<password>
+BCONNECT_REJECT_UNAUTHORIZED=true
+# Optional: BCONNECT_RELEASE=26R1   (enables additional tools for baramundi 2026 R1)
+# Optional: AUDIT_LOG_LEVEL=write   (all / write / security / none)
 ```
 
-## Claude Desktop Integration
+```bash
+# Run directly (development)
+cd bconnect-endpoints-mcp
+npm install && npm run build
+node build/index.js
 
-```json
+# Claude Code / Claude Desktop entry (~/.claude.json or claude_desktop_config.json):
 {
   "mcpServers": {
     "bconnect-endpoints": {
       "command": "node",
-      "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
+      "args": ["/opt/bconnect-mcp-suite/bconnect-endpoints-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server.example.com/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password"
+        "BCONNECT_BASE_URL": "https://bms-server:444/bconnect",
+        "BCONNECT_USERNAME": "mcp-reader",
+        "BCONNECT_PASSWORD": "<password>"
       }
     }
   }
 }
 ```
 
-## Testing
+---
 
-```bash
-npm test
-```
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_endpoints` | List all managed endpoints across all OS types |
+| `get_endpoint` | Get details of a specific endpoint by GUID |
+| `search_endpoints` | Search endpoints by name or other criteria |
+| `list_windows_endpoints` | List all managed Windows endpoints |
+| `get_windows_endpoint` | Get details of a specific Windows endpoint |
+| `list_logical_groups` | List all logical groups |
+| `get_logical_group` | Get details of a specific logical group |
+| `list_group_endpoints` | List endpoints belonging to a group |
+| `list_linux_endpoints` | List all managed Linux endpoints |
+| `list_mac_endpoints` | List all managed macOS endpoints |
+| `get_linux_endpoint` | Get details of a specific Linux endpoint |
+| `get_mac_endpoint` | Get details of a specific macOS endpoint |
+| `list_endpoints_by_logical_group` | List all endpoints in a logical group |
+| `list_windows_endpoints_by_logical_group` | List Windows endpoints in a logical group |
+| `list_android_endpoints` | List all managed Android endpoints |
+| `get_android_endpoint` | Get details of a specific Android endpoint |
+| `list_ios_endpoints` | List all managed iOS endpoints |
+| `get_ios_endpoint` | Get details of a specific iOS endpoint |
+| `start_android_enrollment` | Start enrollment for an Android device |
+| `start_ios_enrollment` | Start enrollment for an iOS device |
+| `create_android_endpoint` | Create a new Android endpoint record |
+| `update_android_endpoint` | Update an existing Android endpoint |
+| `delete_android_endpoint` | Delete an Android endpoint by GUID |
+| `create_ios_endpoint` | Create a new iOS endpoint record |
+| `update_ios_endpoint` | Update an existing iOS endpoint |
+| `delete_ios_endpoint` | Delete an iOS endpoint by GUID |
+| `create_windows_endpoint` | Create a new Windows endpoint record |
+| `update_windows_endpoint` | Update an existing Windows endpoint |
+| `delete_windows_endpoint` | Delete a Windows endpoint by GUID |
+| `start_windows_enrollment` | Start enrollment for a Windows device |
+| `trigger_intune_installation` | Trigger an Intune installation on an endpoint |
+| `create_linux_endpoint` | Create a new Linux endpoint record |
+| `update_linux_endpoint` | Update an existing Linux endpoint |
+| `delete_linux_endpoint` | Delete a Linux endpoint by GUID |
+| `create_mac_endpoint` | Create a new macOS endpoint record |
+| `update_mac_endpoint` | Update an existing macOS endpoint |
+| `delete_mac_endpoint` | Delete a macOS endpoint by GUID |
+| `start_mac_enrollment` | Start enrollment for a macOS device |
+| `create_logical_group` | Create a new logical group |
+| `update_logical_group` | Update an existing logical group |
+| `delete_logical_group` | Delete a logical group by GUID |
+| `get_maintenance_window_for_endpoint` | Get the maintenance window for an endpoint |
+| `create_maintenance_window_for_endpoint` | Create a maintenance window for an endpoint |
+| `update_maintenance_window_for_endpoint` | Update a maintenance window for an endpoint |
+| `delete_maintenance_window_for_endpoint` | Delete a maintenance window for an endpoint |
+| `get_maintenance_window_for_logical_group` | Get the maintenance window for a logical group |
+| `create_maintenance_window_for_logical_group` | Create a maintenance window for a logical group |
+| `update_maintenance_window_for_logical_group` | Update a maintenance window for a logical group |
+| `delete_maintenance_window_for_logical_group` | Delete a maintenance window for a logical group |
+| `create_industrial_endpoint` | Create a new industrial endpoint (PLC, SCADA) |
+| `update_industrial_endpoint` | Update an existing industrial endpoint |
+| `delete_industrial_endpoint` | Delete an industrial endpoint by GUID |
+| `list_network_endpoints` | List all network endpoints (switches, routers, printers) |
+| `get_network_endpoint` | Get details of a specific network endpoint |
+| `create_network_endpoint` | Create a new network endpoint |
+| `update_network_endpoint` | Update an existing network endpoint |
+| `delete_network_endpoint` | Delete a network endpoint by GUID |
+| `delete_endpoint` | Delete any endpoint by GUID (generic delete) |
+| `list_unmanaged_endpoints` | **(26R1)** List all unmanaged detected endpoints |
+| `get_unmanaged_endpoint` | **(26R1)** Get details of an unmanaged endpoint |
+| `delete_unmanaged_endpoint` | **(26R1)** Delete an unmanaged endpoint record |
+| `get_entra_id_data` | **(26R1)** Get Microsoft EntraID data for an endpoint |
+| `link_entra_id_data` | **(26R1)** Link an EntraID device to a baramundi endpoint |
+| `unlink_entra_id_data` | **(26R1)** Unlink EntraID data from an endpoint |
+
+> Tools marked **(26R1)** require `BCONNECT_RELEASE=26R1` and baramundi Management Suite 2026 R1 or later.
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BCONNECT_BASE_URL` | Yes | — | bConnect REST API base URL |
+| `BCONNECT_USERNAME` | Yes | — | API username |
+| `BCONNECT_PASSWORD` | Yes | — | API password |
+| `BCONNECT_REJECT_UNAUTHORIZED` | No | `true` | Set `false` to allow self-signed TLS |
+| `BCONNECT_RELEASE` | No | `25R2` | Set `26R1` to enable additional tools |
+| `AUDIT_LOG_LEVEL` | No | `write` | `all` / `write` / `security` / `none` |
+
+---
+
+## Part of the Suite
+
+This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).

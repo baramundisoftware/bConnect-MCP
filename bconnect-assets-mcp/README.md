@@ -1,97 +1,95 @@
 # bconnect-assets-mcp
 
-MCP server for the baramundi bConnect **Assets** API. Manage asset inventory, asset types, and stock folders in your baramundi Management Suite.
+Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
-## Tools (26 — 7 read, 19 write)
+**Domain:** Asset inventory — assets, asset types, and asset stock/type folders  
+**Tools:** 22 (24 in 26R1 mode)
 
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_assets` | R | List all assets |
-| `get_asset` | R | Get a specific asset by ID |
-| `create_asset` | W | Create a new asset |
-| `update_asset` | W | Update an existing asset |
-| `delete_asset` | W | Delete an asset |
-| `list_assets_in_asset_stock` | R | List assets in a stock folder |
-| `list_assets_by_logical_group` | R | List assets assigned to a logical group |
-| `list_assets_by_windows_endpoint` | R | List assets assigned to a Windows endpoint |
-| `list_assets_by_org_unit` | R | List assets filtered by OU |
-| `list_assets_by_ad_object` | R | List assets linked to an AD object |
-| `list_asset_stock_folders` | R | List asset stock folders |
-| `get_asset_stock_folder` | R | Get a stock folder by ID |
-| `create_asset_stock_folder` | W | Create a new stock folder |
-| `update_asset_stock_folder` | W | Update a stock folder |
-| `delete_asset_stock_folder` | W | Delete a stock folder |
-| `list_asset_stock_subfolders` | R | List subfolders of a stock folder |
-| `list_asset_type_folders` | R | List asset type folders |
-| `get_asset_type_folder` | R | Get an asset type folder by ID |
-| `create_asset_type_folder` | W | Create an asset type folder |
-| `update_asset_type_folder` | W | Update an asset type folder |
-| `delete_asset_type_folder` | W | Delete an asset type folder |
-| `list_asset_type_subfolders` | R | List subfolders of an asset type folder |
-| `list_asset_types` | R | List all asset types |
-| `get_asset_type` | R | Get a specific asset type by ID |
-| `create_asset_type` | W | Create a new asset type |
-| `delete_asset_type` | W | Delete an asset type |
-
-## Release Compatibility
-
-| bMS Release | Supported |
-|-------------|-----------|
-| 25R2 | ✅ (core tools) |
-| 26R1 | ✅ (all tools) |
-
-> Some asset type management tools require 26R1. Set `BCONNECT_RELEASE=25R2` to restrict to 25R2-compatible tools.
-
-## Configuration
-
-```env
-BCONNECT_BASE_URL=https://your-bms-server.example.com/bconnect
-BCONNECT_USERNAME=your-username
-BCONNECT_PASSWORD=your-password
-
-# Optional: CA certificate for TLS verification
-BCONNECT_CA_CERT_PATH=/path/to/ca.pem
-
-# Optional: bMS release version (25R2 or 26R1, default: 26R1)
-BCONNECT_RELEASE=26R1
-
-# Optional: rate limiting
-BCONNECT_RATE_LIMIT_ENABLED=false
-BCONNECT_RATE_LIMIT_MAX_REQUESTS=100
-BCONNECT_RATE_LIMIT_WINDOW_MS=60000
-
-# Optional: audit logging (none | info | verbose)
-BCONNECT_AUDIT_LEVEL=none
-```
+---
 
 ## Quick Start
 
-```bash
-npm install
-npm run build
-node build/index.js
+```env
+BCONNECT_BASE_URL=https://<your-bms-server>:444/bconnect
+BCONNECT_USERNAME=mcp-reader
+BCONNECT_PASSWORD=<password>
+BCONNECT_REJECT_UNAUTHORIZED=true
+# Optional: BCONNECT_RELEASE=26R1   (enables additional tools for baramundi 2026 R1)
+# Optional: AUDIT_LOG_LEVEL=write   (all / write / security / none)
 ```
 
-## Claude Desktop Integration
+```bash
+# Run directly (development)
+cd bconnect-assets-mcp
+npm install && npm run build
+node build/index.js
 
-```json
+# Claude Code / Claude Desktop entry (~/.claude.json or claude_desktop_config.json):
 {
   "mcpServers": {
     "bconnect-assets": {
       "command": "node",
-      "args": ["/path/to/bconnect-assets-mcp/build/index.js"],
+      "args": ["/opt/bconnect-mcp-suite/bconnect-assets-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server.example.com/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password"
+        "BCONNECT_BASE_URL": "https://bms-server:444/bconnect",
+        "BCONNECT_USERNAME": "mcp-reader",
+        "BCONNECT_PASSWORD": "<password>"
       }
     }
   }
 }
 ```
 
-## Testing
+---
 
-```bash
-npm test
-```
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_assets` | List all assets in baramundi |
+| `create_asset` | Create a new asset |
+| `get_asset` | Get details of a specific asset by GUID |
+| `update_asset` | Update asset fields via JSON Patch |
+| `delete_asset` | Permanently delete an asset by GUID |
+| `list_assets_in_asset_stock` | List assets in the asset stock container |
+| `list_assets_by_logical_group` | List assets assigned to a logical group's endpoints |
+| `list_assets_by_windows_endpoint` | List assets assigned to a specific Windows endpoint |
+| `list_asset_stock_folders` | List all asset stock folders |
+| `create_asset_stock_folder` | Create a new asset stock folder |
+| `get_asset_stock_folder` | Get details of a specific asset stock folder |
+| `update_asset_stock_folder` | Update an asset stock folder via JSON Patch |
+| `delete_asset_stock_folder` | Permanently delete an asset stock folder |
+| `list_asset_stock_subfolders` | List child folders within an asset stock folder |
+| `list_asset_type_folders` | List all asset type folders |
+| `create_asset_type_folder` | Create a new asset type folder |
+| `get_asset_type_folder` | Get details of a specific asset type folder |
+| `update_asset_type_folder` | Update an asset type folder via JSON Patch |
+| `delete_asset_type_folder` | Permanently delete an asset type folder |
+| `list_asset_type_subfolders` | List child folders within an asset type folder |
+| `list_asset_types` | List all asset types defined in baramundi |
+| `create_asset_type` | Create a new asset type |
+| `get_asset_type` | Get details of a specific asset type by GUID |
+| `delete_asset_type` | Permanently delete an asset type by GUID |
+| `list_assets_by_org_unit` | **(26R1)** List assets for endpoints within an OU |
+| `list_assets_by_ad_object` | **(26R1)** List assets assigned to an AD object |
+
+> Tools marked **(26R1)** require `BCONNECT_RELEASE=26R1` and baramundi Management Suite 2026 R1 or later.
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BCONNECT_BASE_URL` | Yes | — | bConnect REST API base URL |
+| `BCONNECT_USERNAME` | Yes | — | API username |
+| `BCONNECT_PASSWORD` | Yes | — | API password |
+| `BCONNECT_REJECT_UNAUTHORIZED` | No | `true` | Set `false` to allow self-signed TLS |
+| `BCONNECT_RELEASE` | No | `25R2` | Set `26R1` to enable additional tools |
+| `AUDIT_LOG_LEVEL` | No | `write` | `all` / `write` / `security` / `none` |
+
+---
+
+## Part of the Suite
+
+This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).

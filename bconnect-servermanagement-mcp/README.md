@@ -1,122 +1,99 @@
 # bconnect-servermanagement-mcp
 
-MCP server for the baramundi bConnect **Server Management** API. Manage the baramundi Management Server, microservices, security groups, access rights, API keys, and MSW cleanup operations.
+Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
-## Tools (30 — 17 read, 13 write)
+**Domain:** Server management — management server info, microservices, security groups/profiles, object permissions, and infrastructure components  
+**Tools:** 25 (30 in 26R1 mode)
 
-### Server & Infrastructure
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `get_management_server` | R | Get management server info and status |
-| `restart_management_server` | W | Schedule a management server restart |
-| `cancel_scheduled_restart` | W | Cancel a scheduled restart |
-| `get_gateway` | R | Get gateway configuration |
-| `get_dip_status` | R | Get DIP (Data Integration Platform) status |
-| `get_vpn_appliance` | R | Get VPN appliance configuration |
-| `list_cloud_connectors` | R | List cloud connectors |
-| `list_pxe_relays` | R | List PXE relay servers |
-
-### Microservices
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_microservices` | R | List all microservices |
-| `get_microservice` | R | Get a specific microservice by ID |
-| `start_microservice` | W | Start a microservice |
-| `stop_microservice` | W | Stop a microservice |
-| `restart_microservice` | W | Restart a microservice |
-
-### Security Groups & Profiles
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `list_security_groups` | R | List all security groups |
-| `get_security_group` | R | Get a security group by ID |
-| `create_security_group` | W | Create a new security group |
-| `update_security_group` | W | Update a security group |
-| `delete_security_group` | W | Delete a security group |
-| `list_security_profiles` | R | List all security profiles |
-| `get_security_profile` | R | Get a security profile by ID |
-| `create_security_profile` | W | Create a new security profile |
-| `update_security_profile` | W | Update a security profile |
-| `delete_security_profile` | W | Delete a security profile |
-
-### Access Rights & API Keys
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `get_access_rights` | R | Get access rights for an object |
-| `update_object_permission` | W | Update permissions on an object |
-| `list_api_keys` | R | List all API keys |
-
-### MSW Cleanup
-
-| Tool | R/W | Description |
-|------|-----|-------------|
-| `simulate_msw_cleanup` | W | Simulate MSW cleanup (dry run) |
-| `msw_cleanup` | W | Execute MSW cleanup |
-| `list_download_jobs` | R | List download jobs |
-| `get_download_job` | R | Get a specific download job |
-
-## Release Compatibility
-
-| bMS Release | Supported |
-|-------------|-----------|
-| 25R2 | ✅ (core tools) |
-| 26R1 | ✅ (all tools, including API keys and MSW cleanup) |
-
-## Configuration
-
-```env
-BCONNECT_BASE_URL=https://your-bms-server.example.com/bconnect
-BCONNECT_USERNAME=your-username
-BCONNECT_PASSWORD=your-password
-
-# Optional: CA certificate for TLS verification
-BCONNECT_CA_CERT_PATH=/path/to/ca.pem
-
-# Optional: bMS release version (25R2 or 26R1, default: 26R1)
-BCONNECT_RELEASE=26R1
-
-# Optional: rate limiting
-BCONNECT_RATE_LIMIT_ENABLED=false
-BCONNECT_RATE_LIMIT_MAX_REQUESTS=100
-BCONNECT_RATE_LIMIT_WINDOW_MS=60000
-
-# Recommended: audit logging for server management operations
-BCONNECT_AUDIT_LEVEL=info
-```
+---
 
 ## Quick Start
 
-```bash
-npm install
-npm run build
-node build/index.js
+```env
+BCONNECT_BASE_URL=https://<your-bms-server>:444/bconnect
+BCONNECT_USERNAME=mcp-reader
+BCONNECT_PASSWORD=<password>
+BCONNECT_REJECT_UNAUTHORIZED=true
+# Optional: BCONNECT_RELEASE=26R1   (enables additional tools for baramundi 2026 R1)
+# Optional: AUDIT_LOG_LEVEL=write   (all / write / security / none)
 ```
 
-## Claude Desktop Integration
+```bash
+# Run directly (development)
+cd bconnect-servermanagement-mcp
+npm install && npm run build
+node build/index.js
 
-```json
+# Claude Code / Claude Desktop entry (~/.claude.json or claude_desktop_config.json):
 {
   "mcpServers": {
     "bconnect-servermanagement": {
       "command": "node",
-      "args": ["/path/to/bconnect-servermanagement-mcp/build/index.js"],
+      "args": ["/opt/bconnect-mcp-suite/bconnect-servermanagement-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server.example.com/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password",
-        "BCONNECT_AUDIT_LEVEL": "info"
+        "BCONNECT_BASE_URL": "https://bms-server:444/bconnect",
+        "BCONNECT_USERNAME": "mcp-reader",
+        "BCONNECT_PASSWORD": "<password>"
       }
     }
   }
 }
 ```
 
-## Testing
+---
 
-```bash
-npm test
-```
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `get_management_server` | Get baramundi Management Server info and status |
+| `get_gateway` | Get Gateway configuration and status |
+| `get_dip_status` | Get status of all Distribution and Inventory Points |
+| `get_vpn_appliance` | Get VPN Appliance configuration and status |
+| `list_microservices` | List all registered microservices |
+| `get_microservice` | Get details of a specific microservice by GUID |
+| `start_microservice` | Start a specific microservice |
+| `stop_microservice` | Stop a specific microservice |
+| `restart_microservice` | Restart a specific microservice |
+| `list_cloud_connectors` | List all configured Cloud Connectors |
+| `list_pxe_relays` | List all configured PXE Relay servers |
+| `list_security_groups` | List all security groups in baramundi |
+| `get_security_group` | Get details of a specific security group |
+| `create_security_group` | Create a new security group |
+| `update_security_group` | Update a security group via JSON Patch |
+| `delete_security_group` | Delete a security group by GUID |
+| `list_security_profiles` | List all security profiles in baramundi |
+| `get_security_profile` | Get details of a specific security profile |
+| `create_security_profile` | Create a new security profile |
+| `update_security_profile` | Update a security profile via JSON Patch |
+| `delete_security_profile` | Delete a security profile by GUID |
+| `get_access_rights` | Get object permissions for a specific object |
+| `update_object_permission` | Update object permissions via JSON Patch |
+| `restart_management_server` | Restart the baramundi Management Server |
+| `cancel_scheduled_restart` | Cancel a scheduled server restart |
+| `list_api_keys` | **(26R1)** List all API keys configured in baramundi |
+| `simulate_msw_cleanup` | **(26R1)** Simulate an MSW cleanup operation (dry run) |
+| `msw_cleanup` | **(26R1)** Execute an MSW cleanup on the DIP |
+| `list_download_jobs` | **(26R1)** List all download jobs |
+| `get_download_job` | **(26R1)** Get details of a specific download job |
+
+> Tools marked **(26R1)** require `BCONNECT_RELEASE=26R1` and baramundi Management Suite 2026 R1 or later.
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BCONNECT_BASE_URL` | Yes | — | bConnect REST API base URL |
+| `BCONNECT_USERNAME` | Yes | — | API username |
+| `BCONNECT_PASSWORD` | Yes | — | API password |
+| `BCONNECT_REJECT_UNAUTHORIZED` | No | `true` | Set `false` to allow self-signed TLS |
+| `BCONNECT_RELEASE` | No | `25R2` | Set `26R1` to enable additional tools |
+| `AUDIT_LOG_LEVEL` | No | `write` | `all` / `write` / `security` / `none` |
+
+---
+
+## Part of the Suite
+
+This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).
