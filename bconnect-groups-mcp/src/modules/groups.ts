@@ -38,6 +38,14 @@ type IndustrialEndpointsByStaticGroup = paths["/v2.0/StaticGroups/{staticGroupId
 type EndpointsByDynamicGroup         = paths["/v2.0/DynamicGroups/{dynamicGroupId}/Endpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type WindowsEndpointsByDynamicGroup  = paths["/v2.0/DynamicGroups/{dynamicGroupId}/WindowsEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 
+// AD User response types
+type EndpointsByADUser               = paths["/v2.0/ADUsers/{adUserId}/Endpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type AndroidEndpointsByADUser        = paths["/v2.0/ADUsers/{adUserId}/AndroidEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type IosEndpointsByADUser            = paths["/v2.0/ADUsers/{adUserId}/IosEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type LinuxEndpointsByADUser          = paths["/v2.0/ADUsers/{adUserId}/LinuxEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type MacEndpointsByADUser            = paths["/v2.0/ADUsers/{adUserId}/MacEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type WindowsEndpointsByADUser        = paths["/v2.0/ADUsers/{adUserId}/WindowsEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+
 // Universal Dynamic Group response types
 type EndpointsByUDG                  = paths["/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/Endpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type AndroidEndpointsByUDG           = paths["/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/AndroidEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
@@ -204,6 +212,38 @@ export class GroupsModule {
 
   async getIndustrialEndpointsByUDG(universalDynamicGroupId: string, params?: GroupQueryParams): Promise<IndustrialEndpointsByUDG> {
     const response = await this.client.get<IndustrialEndpointsByUDG>(`${this.basePath}/UniversalDynamicGroups/${universalDynamicGroupId}/IndustrialEndpoints`, { params });
+    return response.data;
+  }
+
+  // ── AD User ───────────────────────────────────────────────────────────────
+
+  async getEndpointsByADUser(adUserId: string, params?: GroupQueryParams): Promise<EndpointsByADUser> {
+    const response = await this.client.get<EndpointsByADUser>(`${this.basePath}/ADUsers/${adUserId}/Endpoints`, { params });
+    return response.data;
+  }
+
+  async getAndroidEndpointsByADUser(adUserId: string, params?: GroupQueryParams): Promise<AndroidEndpointsByADUser> {
+    const response = await this.client.get<AndroidEndpointsByADUser>(`${this.basePath}/ADUsers/${adUserId}/AndroidEndpoints`, { params });
+    return response.data;
+  }
+
+  async getIosEndpointsByADUser(adUserId: string, params?: GroupQueryParams): Promise<IosEndpointsByADUser> {
+    const response = await this.client.get<IosEndpointsByADUser>(`${this.basePath}/ADUsers/${adUserId}/IosEndpoints`, { params });
+    return response.data;
+  }
+
+  async getLinuxEndpointsByADUser(adUserId: string, params?: GroupQueryParams): Promise<LinuxEndpointsByADUser> {
+    const response = await this.client.get<LinuxEndpointsByADUser>(`${this.basePath}/ADUsers/${adUserId}/LinuxEndpoints`, { params });
+    return response.data;
+  }
+
+  async getMacEndpointsByADUser(adUserId: string, params?: GroupQueryParams): Promise<MacEndpointsByADUser> {
+    const response = await this.client.get<MacEndpointsByADUser>(`${this.basePath}/ADUsers/${adUserId}/MacEndpoints`, { params });
+    return response.data;
+  }
+
+  async getWindowsEndpointsByADUser(adUserId: string, params?: GroupQueryParams): Promise<WindowsEndpointsByADUser> {
+    const response = await this.client.get<WindowsEndpointsByADUser>(`${this.basePath}/ADUsers/${adUserId}/WindowsEndpoints`, { params });
     return response.data;
   }
 }

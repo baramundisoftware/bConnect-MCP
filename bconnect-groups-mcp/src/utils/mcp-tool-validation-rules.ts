@@ -1,7 +1,7 @@
 /**
  * MCP Tool Validation Rules — bconnect-groups-mcp
  *
- * Input validation rules for all 27 group-scoped endpoint query tools.
+ * Input validation rules for all 33 group-scoped endpoint query tools.
  */
 
 import { ValidationRule, CommonRules } from './parameter-validator.js';
@@ -48,4 +48,12 @@ export const GroupsRules = {
   listNetworkEndpointsByUDG:           (): ValidationRule[] => [CommonRules.guid('universalDynamicGroupId'),  ...paginationRules()],
   listWindowsEndpointsByUDG:           (): ValidationRule[] => [CommonRules.guid('universalDynamicGroupId'),  ...paginationRules()],
   listIndustrialEndpointsByUDG:        (): ValidationRule[] => [CommonRules.guid('universalDynamicGroupId'),  ...paginationRules()],
+
+  // ── AD User (6) ───────────────────────────────────────────────────────────
+  listEndpointsByADUser:               (): ValidationRule[] => [CommonRules.guid('adUserId'),                 ...paginationRules()],
+  listAndroidEndpointsByADUser:        (): ValidationRule[] => [CommonRules.guid('adUserId'),                 ...paginationRules()],
+  listIosEndpointsByADUser:            (): ValidationRule[] => [CommonRules.guid('adUserId'),                 ...paginationRules()],
+  listLinuxEndpointsByADUser:          (): ValidationRule[] => [CommonRules.guid('adUserId'),                 ...paginationRules()],
+  listMacEndpointsByADUser:            (): ValidationRule[] => [CommonRules.guid('adUserId'),                 ...paginationRules()],
+  listWindowsEndpointsByADUser:        (): ValidationRule[] => [CommonRules.guid('adUserId'),                 ...paginationRules()],
 };

@@ -6,7 +6,7 @@
  * A Model Context Protocol server that provides group-scoped endpoint queries
  * for the baramundi bConnect REST API.
  *
- * All 27 tools are read-only GET operations following the pattern:
+ * All 33 tools are read-only GET operations following the pattern:
  *   GET /v2.0/{GroupType}/{groupId}/{EndpointType}
  */
 
@@ -198,6 +198,37 @@ export function createServer(): { server: Server } {
           name: "list_industrial_endpoints_by_universal_dynamic_group",
           description: "List industrial endpoints belonging to a universal dynamic group. Returns paginated industrial endpoint list.",
           inputSchema: { type: "object", properties: { ...udgIdProp, ...paginationProperties }, required: ["universalDynamicGroupId"] }
+        },
+        // ── AD User (6) ────────────────────────────────────────────────────
+        {
+          name: "list_endpoints_by_ad_user",
+          description: "List all endpoints associated with a specific AD user. Returns paginated list of endpoints the user is related to.",
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+        },
+        {
+          name: "list_android_endpoints_by_ad_user",
+          description: "List Android endpoints associated with a specific AD user. Returns paginated list of Android devices.",
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+        },
+        {
+          name: "list_ios_endpoints_by_ad_user",
+          description: "List iOS endpoints associated with a specific AD user. Returns paginated list of iOS devices.",
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+        },
+        {
+          name: "list_linux_endpoints_by_ad_user",
+          description: "List Linux endpoints associated with a specific AD user. Returns paginated list of Linux devices.",
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+        },
+        {
+          name: "list_mac_endpoints_by_ad_user",
+          description: "List macOS endpoints associated with a specific AD user. Returns paginated list of Mac devices.",
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+        },
+        {
+          name: "list_windows_endpoints_by_ad_user",
+          description: "List Windows endpoints associated with a specific AD user. Returns paginated list of Windows devices.",
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
         },
       ]
     };
@@ -403,6 +434,49 @@ export function createServer(): { server: Server } {
           validateOrThrow(args, GroupsRules.listIndustrialEndpointsByUDG());
           const client = getClient();
           const data = await client.groups.getIndustrialEndpointsByUDG((args as any).universalDynamicGroupId, params);
+          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        }
+
+        // ── AD User ──────────────────────────────────────────────────────────
+        case "list_endpoints_by_ad_user": {
+          validateOrThrow(args, GroupsRules.listEndpointsByADUser());
+          const client = getClient();
+          const data = await client.groups.getEndpointsByADUser((args as any).adUserId, params);
+          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        }
+
+        case "list_android_endpoints_by_ad_user": {
+          validateOrThrow(args, GroupsRules.listAndroidEndpointsByADUser());
+          const client = getClient();
+          const data = await client.groups.getAndroidEndpointsByADUser((args as any).adUserId, params);
+          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        }
+
+        case "list_ios_endpoints_by_ad_user": {
+          validateOrThrow(args, GroupsRules.listIosEndpointsByADUser());
+          const client = getClient();
+          const data = await client.groups.getIosEndpointsByADUser((args as any).adUserId, params);
+          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        }
+
+        case "list_linux_endpoints_by_ad_user": {
+          validateOrThrow(args, GroupsRules.listLinuxEndpointsByADUser());
+          const client = getClient();
+          const data = await client.groups.getLinuxEndpointsByADUser((args as any).adUserId, params);
+          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        }
+
+        case "list_mac_endpoints_by_ad_user": {
+          validateOrThrow(args, GroupsRules.listMacEndpointsByADUser());
+          const client = getClient();
+          const data = await client.groups.getMacEndpointsByADUser((args as any).adUserId, params);
+          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+        }
+
+        case "list_windows_endpoints_by_ad_user": {
+          validateOrThrow(args, GroupsRules.listWindowsEndpointsByADUser());
+          const client = getClient();
+          const data = await client.groups.getWindowsEndpointsByADUser((args as any).adUserId, params);
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 

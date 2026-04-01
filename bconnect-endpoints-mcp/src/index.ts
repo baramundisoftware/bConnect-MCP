@@ -734,6 +734,8 @@ export function createServer(): { server: Server } {
         { name: "update_maintenance_window_for_logical_group", description: "Update a maintenance window for a logical group. WARNING: Modifies existing maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" }, maintenanceWindowData: { type: "object" } }, required: ["id", "maintenanceWindowData"] } },
         { name: "delete_maintenance_window_for_logical_group", description: "Delete a maintenance window for a logical group. WARNING: Permanently deletes maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         // Industrial & network endpoints (Phase 24: added GET for network)
+        { name: "list_industrial_endpoints", description: "List all industrial endpoints (PLCs, SCADA systems, etc.) managed by baramundi. Returns a paged list.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: { type: "number" }, PageSize: { type: "number" }, OrderBy: { type: "string" } } } },
+        { name: "get_industrial_endpoint", description: "Get details of a specific industrial endpoint by its GUID.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Industrial endpoint ID (GUID)" } }, required: ["id"] } },
         { name: "create_industrial_endpoint", description: "Create a new industrial endpoint (PLC, SCADA, etc.). WARNING: Creates a new endpoint.", inputSchema: { type: "object", properties: { endpointData: { type: "object" } }, required: ["endpointData"] } },
         { name: "update_industrial_endpoint", description: "Update an existing industrial endpoint. WARNING: Modifies endpoint properties.", inputSchema: { type: "object", properties: { id: { type: "string" }, updateData: { type: "object" } }, required: ["id", "updateData"] } },
         { name: "delete_industrial_endpoint", description: "Delete an industrial endpoint. WARNING: Permanently deletes the endpoint.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
@@ -1145,6 +1147,17 @@ export function createServer(): { server: Server } {
           validateOrThrow(args, EndpointsRules.deleteMaintenanceWindowForLogicalGroup());
           await bconnect.endpoints.deleteMaintenanceWindowForLogicalGroup(args!.id as string);
           return { content: [{ type: "text", text: `Maintenance window for logical group ${args!.id} deleted successfully` }] };
+        }
+
+        case "list_industrial_endpoints": {
+          const result = await bconnect.endpoints.listIndustrialEndpoints(args || {});
+          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        }
+
+        case "get_industrial_endpoint": {
+          if (!args?.id) throw new McpError(ErrorCode.InvalidParams, "id is required");
+          const result = await bconnect.endpoints.getIndustrialEndpoint(args.id as string);
+          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "create_industrial_endpoint": {

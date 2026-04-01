@@ -3,7 +3,7 @@
 **Created**: 2026-03-22
 **Updated**: 2026-03-31 (100% 26R1 API coverage target: +17 endpoints, +27 groups server, +9 jobs)
 **Source**: Requirements.md (reviewed 2026-03-31)
-**Scope**: Project-level — all modules, server infrastructure, production hardening, per-spec-file server split (13 V2.0 + 1 V1.1), MCP_Deployment suite installer, Docker images, Linux/Ubuntu deployment
+**Scope**: Project-level — all modules, server infrastructure, production hardening, per-spec-file server split (13 V2.0), MCP_Deployment suite installer, Docker images, Linux/Ubuntu deployment
 
 ---
 
@@ -13,7 +13,6 @@
 |-------|-------|-------|--------|
 | C1 | MCP Server Core Infrastructure | 9 | ✅ Complete |
 | C2 | V2.0 API Modules (10 modules) | 30 | ✅ Complete |
-| C3 | V1.1 API Modules (6 modules) | 18 | ✅ Complete |
 | C4 | Documentation & Known Issues Search | 6 | ✅ Complete |
 | C5 | Testing Infrastructure & Input Validation | 12 | ✅ Complete |
 | Phase 1 | SSL/TLS Production Hardening | 6 | ✅ Complete |
@@ -35,7 +34,6 @@
 | Phase 17 | bconnect-universaldynamicgroups-mcp (26R1 only) | 4 | ✅ Complete |
 | Phase 18 | bconnect-updatemanagement-mcp | 4 | ✅ Complete |
 | Phase 19 | bconnect-variables-mcp | 4 | ✅ Complete |
-| Phase 20 | bconnect-v11-mcp (V1.1 Legacy) | 5 | ⏸️ Postponed |
 | Phase 21 | Distribution (Windows .exe + Docker) | 8 | ✅ Complete |
 | Phase 22 | Documentation (all servers) | 1 | ✅ Complete |
 | Phase 23 | Security Audit Remediation | 4 | ✅ Complete |
@@ -68,7 +66,7 @@
 #### 🟡 UPCOMING (MCP_Deployment — blocked on REQ-SPLIT-001, now 14 servers not 5)
 - [ ] **Phase 3: Multi-Executable Build Pipeline** — 14 standalone `.exe` via pkg node20-win-x64; blocked on bConnect-MCP Phases 24–26
 - [ ] **Phase 4: Dockerfiles Per Server + Registry** — 14 Dockerfiles (node:20-alpine, non-root), `build-docker-images.sh`, `ADR-003`; blocked on Phases 24–26
-- [ ] **Phase 5: Suite Inno Setup Installer** — `bconnect-mcp-suite-setup.iss` with component selection (13 V2.0 + 1 V1.1); blocked on Phase 3
+- [ ] **Phase 5: Suite Inno Setup Installer** — `bconnect-mcp-suite-setup.iss` with component selection (13 V2.0); blocked on Phase 3
 - [ ] **Phase 6: Linux Suite Installation Scripts** — `install-suite.sh`, `uninstall-suite.sh`, 13× systemd units; blocked on Phase 3
 - [ ] **Phase 7: Docker MCP Integration on Linux** — `configure-docker-mcp-ubuntu.sh`, 13× Docker systemd units; blocked on Phase 4
 - [ ] **Phase 8: Claude Desktop Auto-Config in Installer** — Fix `CreateClaudeConfig` Pascal; blocked on Phase 5
@@ -90,7 +88,7 @@
 - [x] **[IMPL] Audit logging class** — `src/utils/audit-logger.ts`: levels `all/write/security/none`, `[SECURITY AUDIT]` prefix; 16 unit tests *(SecurityArchitect)*
 - [x] **[IMPL] Response caching class** — LRU cache with TTL, auto-invalidation on writes, `X-Cache` headers; 24 unit tests *(Developer)*
 - [x] **[IMPL] Batch operations class** — concurrent API calls with configurable limits, exponential backoff, progress callbacks; 20 unit tests *(Developer)*
-- [x] **[IMPL] Dual client architecture** — `src/bconnect-client.ts`: V2.0 + V1.1 sub-clients sharing auth, retry, and error handling; V1.1 base path auto-derived *(SoftwareArchitect)*
+- [x] **[IMPL] HTTP client architecture** — `src/bconnect-client.ts`: V2.0 client with auth, retry, and error handling *(SoftwareArchitect)*
 
 ---
 
@@ -118,28 +116,6 @@
 - [x] **[IMPL] OpenAPI type generation** — `src/generated/*-types.ts`: 10 type files generated from `openapi-specs/*.json` *(Developer)*
 - [x] **[LINT] V2.0 build quality** — Clean TypeScript build (0 errors), 86.35% coverage maintained *(QualityAssuranceEngineer)*
 
----
-
-## ✅ Completed — C3: V1.1 API Modules (6 modules, 23 tools)
-
-**Requirement**: All V1.1 module sections in Requirements.md
-
-- [x] **[IMPL] Compliance Violations V1.1** — `src/modules/complianceviolations-v1.ts`: 3 tools (3R); CVE, MDM policy, industrial violations; reference V1.1 integration pattern *(Developer)*
-- [x] **[TEST] Compliance Violations E2E** — `src/__tests__/e2e/v1.1/complianceviolations.e2e.test.ts`: 8 tests passing *(TestEngineer)*
-- [x] **[IMPL] BitLocker Secrets V1.1** — `src/modules/bitlocker-v1.ts`: 5 tools (5R); recovery keys, TPM passwords, PINs; all access audit-logged with `[SECURITY AUDIT]` prefix *(SecurityArchitect)*
-- [x] **[TEST] BitLocker E2E** — `src/__tests__/e2e/v1.1/bitlocker.e2e.test.ts`: 15 tests passing *(TestEngineer)*
-- [x] **[IMPL] Apple VPP V1.1** — `src/modules/vpp-v1.ts`: 7 tools (2R + 5W); VPP users, license assignment/revocation *(Developer)*
-- [x] **[TEST] VPP E2E** — `src/__tests__/e2e/v1.1/vpp.e2e.test.ts`: 17 tests passing *(TestEngineer)*
-- [x] **[IMPL] SSH Server V1.1** — `src/modules/ssh-v1.ts`: 1 tool (1R); SSH port, version, host key fingerprints for Linux/Unix endpoints *(Developer)*
-- [x] **[TEST] SSH E2E** — `src/__tests__/e2e/v1.1/ssh.e2e.test.ts`: 3 tests passing *(TestEngineer)*
-- [x] **[IMPL] Setup Integrity V1.1** — `src/modules/setup-integrity-v1.ts`: 2 tools (2R); SHA-256 hashes of Bfcrx and Management Agent setup files *(SecurityArchitect)*
-- [x] **[TEST] Setup Integrity E2E** — `src/__tests__/e2e/v1.1/setupintegrity.e2e.test.ts`: 2 tests passing *(TestEngineer)*
-- [x] **[IMPL] Detailed Inventory V1.1** — `src/modules/inventory-v1.ts`: 5 tools (5R); file, WMI, custom, hardware, SNMP scans *(Developer)*
-- [x] **[TEST] Inventory E2E** — `src/__tests__/e2e/v1.1/inventory.e2e.test.ts`: 15 tests passing *(TestEngineer)*
-- [x] **[LINT] V1.1 build quality** — Clean build, all V1.1 modules integrated into `BConnectClient.v1Client` *(QualityAssuranceEngineer)*
-
----
-
 ## ✅ Completed — C4: Documentation & Known Issues Search
 
 **Requirement**: Documentation Search and Known Issues Search sections in Requirements.md
@@ -155,9 +131,9 @@
 
 **Requirement**: REQ-SRV-004, all module test coverage
 
-- [x] **[IMPL] MSW (Mock Service Worker) infrastructure** — `src/__tests__/setup/handlers.ts` + `src/__tests__/mocks/handlers.ts`: V2.0 + V1.1 mock handlers for all 16 modules *(SystemTestEngineer)*
-- [x] **[TEST] Integration test suite** — 95 tests across 9 files; all 10 V2.0 + 6 V1.1 modules covered; 1.38s execution *(TestEngineer)*
-- [x] **[TEST] E2E test suite** — 209 tests: 149 V2.0 (10 files) + 60 V1.1 (6 files); 100% pass rate; 3.38s execution *(SystemTestEngineer)*
+- [x] **[IMPL] MSW (Mock Service Worker) infrastructure** — `src/__tests__/setup/handlers.ts` + `src/__tests__/mocks/handlers.ts`: V2.0 mock handlers for all 10 modules *(SystemTestEngineer)*
+- [x] **[TEST] Integration test suite** — tests across multiple files; all V2.0 modules covered *(TestEngineer)*
+- [x] **[TEST] E2E test suite** — V2.0 E2E tests; 100% pass rate *(SystemTestEngineer)*
 - [x] **[TEST] Unit test suite** — 510 unit tests (494 passing, 16 skipped); 86.35% code coverage *(TestEngineer)*
 - [x] **[IMPL] Input validation rules** — `src/utils/mcp-tool-validation-rules.ts`: 186/186 case statements validated (GUID, pagination, enums, ranges, required fields) *(Developer)*
 - [x] **[TEST] Validator tests** — `src/utils/__tests__/parameter-validator.test.ts`: 40 tests, 100% pass rate *(TestEngineer)*
@@ -591,27 +567,6 @@
 
 ---
 
-## ⏸️ Postponed — Phase 20: bconnect-v11-mcp (V1.1 Legacy)
-
-**Priority**: POSTPONED — V1.1 server not required at this time (decision: 2026-03-30)
-**Depends on**: Phase 8 complete
-**Requirement**: REQ-SPLIT-014 — bconnect-v11-mcp
-**Deliverables**: `bconnect-v11-mcp/` with ~23 V1.1 tools; BitLocker audit log assertions passing; clean build
-
----
-
-- [ ] 🟢 **[INFRA] Scaffold bconnect-v11-mcp from template (no OpenAPI types — V1.1 is manually typed)** *(DevOpsEngineer)* — deliverable: `bconnect-v11-mcp/` with scaffold; `.env.example` sets `BCONNECT_AUDIT_LEVEL=security` as recommended default; copy all 6 V1.1 modules; `npm install` succeeds
-
-- [ ] 🔴 **[TEST] Write assertion: listTools() returns all ~23 V1.1 tools** *(TestEngineer)* — deliverable: `bconnect-v11-mcp/__tests__/server.test.ts`; assert all tool names end in `_v1`; assert no V2.0 tools present; `npm test` → **FAILS**
-
-- [ ] 🔴 **[TEST] Write security assertion: BitLocker tools emit [SECURITY AUDIT] log entries** *(SecurityArchitect)* — deliverable: `bconnect-v11-mcp/__tests__/security/bitlocker-audit.test.ts`; mock `audit-logger`; assert `get_bitlocker_recovery_keys_v1`, `get_tpm_owner_passwords_v1`, `get_bitlocker_pins_v1` each trigger audit log with `[SECURITY AUDIT]` prefix; `npm test` → **FAILS**
-
-- [ ] 🟢 **[IMPL] Create src/index.ts registering all V1.1 tools with audit logging** *(Developer)* — deliverable: `bconnect-v11-mcp/src/index.ts`; server name `bconnect-v11-mcp`; register all 6 V1.1 modules; wire AuditLogger to CallTool handler; `npm test` → PASSES (both server and BitLocker audit assertions)
-
-- [ ] 🔵 **[LINT] npm run build + security audit check** *(QualityAssuranceEngineer)* — deliverable: 0 TypeScript errors; `listTools()` count ~23; grep confirms `[SECURITY AUDIT]` in BitLocker handler paths
-
----
-
 ## ✅ Complete — Phase 21: Distribution (Windows .exe + Docker)
 
 **Priority**: HIGH (Windows) / MEDIUM (Docker)
@@ -750,7 +705,6 @@ Key decisions recorded during planning:
 **2026-03-30 — Architecture decisions:**
 - **File-based split over functional grouping**: Each OpenAPI spec file maps to one MCP server. This is a cleaner domain model than the old grouping (e.g., jobs+servermanagement+variables) and avoids arbitrary decisions about which modules belong together.
 - **26R1 as primary target**: All new servers default to 26R1 types. The `BCONNECT_RELEASE=25R2` env var gates out the two 26R1-only servers (compliance, universaldynamicgroups).
-- **V1.1 server is release-independent**: `bconnect-v11-mcp` does not use OpenAPI types and works identically against both 25R2 and 26R1 bConnect instances.
 - **REQ-AUTH-002 (API Key Auth) deferred**: Neither 25R2 nor 26R1 specs define API key authentication — only `basicAuth`. This requirement is blocked on a future bConnect release.
 - **MCP_Deployment phases 3–10 remain blocked**: Still requires all split servers to be complete before multi-executable installer and Docker registry work can proceed.
 
@@ -759,5 +713,5 @@ Key decisions recorded during planning:
 - **Pragmatic groups server (REQ-SPLIT-015)**: The 27 "list endpoints by group type" endpoints from `endpoints.json` are extracted into a dedicated `bconnect-groups-mcp` server. This is a deliberate exception to the one-spec-one-server rule — it keeps the endpoints server lean (~6,600 tokens) for daily use while making group queries available on demand (~5,000 tokens). See `MCP_Tool_Size_Analysis.md` for full rationale.
 - **Context efficiency over completeness — unless both are possible**: The analysis showed that 33 "convenience alias" tools could be skipped to save ~12K tokens. Instead, we chose to implement them in a separate server (groups) so that context-sensitive admins skip it, while completeness-focused admins can opt in. Best of both worlds.
 - **Phases 24–26 can run in parallel**: Phase 24 (endpoints +17) and Phase 26 (jobs +9) modify existing servers. Phase 25 (groups, 27 tools) creates a new server. All three are independent.
-- **After Phase 26**: The bConnect 26R1 V2.0 API is 100% exposed via MCP. Only the V1.1 legacy server (Phase 20, postponed) remains for full API surface coverage.
+- **After Phase 26**: The bConnect 26R1 V2.0 API is 100% exposed via MCP.
 

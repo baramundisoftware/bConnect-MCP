@@ -79,7 +79,9 @@ type IosEndpointsList = paths["/v2.0/IosEndpoints"]["get"]["responses"]["200"]["
 type NetworkEndpointGet = paths["/v2.0/NetworkEndpoints/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 type NetworkEndpointsList = paths["/v2.0/NetworkEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 
-// Type aliases for Industrial Endpoint WRITE operations - Phase 3
+// Type aliases for Industrial Endpoint operations
+type IndustrialEndpointsList = paths["/v2.0/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type IndustrialEndpointGet = paths["/v2.0/IndustrialEndpoints/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 type IndustrialEndpointForCreation = paths["/v2.0/IndustrialEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type IndustrialEndpoint = paths["/v2.0/IndustrialEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
 type IndustrialEndpointUpdate = paths["/v2.0/IndustrialEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
@@ -568,7 +570,7 @@ export class EndpointsModule {
    * Update a maintenance window for an endpoint
    */
   async updateMaintenanceWindowForEndpoint(id: string, maintenanceWindowData: MaintenanceWindowData): Promise<void> {
-    await this.client.put(
+    await this.client.patch(
       `${this.basePath}/Endpoints/${id}/MaintenanceWindow`,
       maintenanceWindowData
     );
@@ -598,7 +600,7 @@ export class EndpointsModule {
    * Update a maintenance window for a logical group
    */
   async updateMaintenanceWindowForLogicalGroup(id: string, maintenanceWindowData: MaintenanceWindowData): Promise<void> {
-    await this.client.put(
+    await this.client.patch(
       `${this.basePath}/LogicalGroups/${id}/MaintenanceWindow`,
       maintenanceWindowData
     );
@@ -616,6 +618,27 @@ export class EndpointsModule {
   // ============================================================================
   // INDUSTRIAL ENDPOINT WRITE OPERATIONS - Phase 3
   // ============================================================================
+
+  /**
+   * List all industrial endpoints
+   */
+  async listIndustrialEndpoints(params?: EndpointsQueryParams): Promise<IndustrialEndpointsList> {
+    const response = await this.client.get<IndustrialEndpointsList>(
+      `${this.basePath}/IndustrialEndpoints`,
+      { params }
+    );
+    return response.data;
+  }
+
+  /**
+   * Get a specific industrial endpoint by ID
+   */
+  async getIndustrialEndpoint(id: string): Promise<IndustrialEndpointGet> {
+    const response = await this.client.get<IndustrialEndpointGet>(
+      `${this.basePath}/IndustrialEndpoints/${id}`
+    );
+    return response.data;
+  }
 
   /**
    * Create a new industrial endpoint

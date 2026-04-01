@@ -431,5 +431,16 @@ export class JobsModule {
     );
     return response.data;
   }
+
+  /**
+   * Get job instances for a specific universal dynamic group
+   */
+  async getJobInstancesByUniversalDynamicGroup(universalDynamicGroupId: string, params?: JobsQueryParams): Promise<unknown> {
+    const response = await this.client.get<unknown>(
+      `${this.basePath}/UniversalDynamicGroups/${universalDynamicGroupId}/JobInstances`,
+      { params }
+    );
+    return response.data;
+  }
 }
 

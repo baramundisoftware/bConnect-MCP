@@ -477,6 +477,7 @@ export function createServer(): { server: Server } {
         // Phase 26: Job instances by group
         { name: "list_job_instances_by_static_group", description: "List all job instances for endpoints in a specific static group. Returns a paged list of job execution history for the group.", inputSchema: { type: "object", properties: { staticGroupId: { type: "string", description: "Static group ID (GUID)" }, Page: { type: "number" }, PageSize: { type: "number" } }, required: ["staticGroupId"] } },
         { name: "list_job_instances_by_dynamic_group", description: "List all job instances for endpoints in a specific dynamic group. Returns a paged list of job execution history for the group.", inputSchema: { type: "object", properties: { dynamicGroupId: { type: "string", description: "Dynamic group ID (GUID)" }, Page: { type: "number" }, PageSize: { type: "number" } }, required: ["dynamicGroupId"] } },
+        { name: "list_job_instances_by_universal_dynamic_group", description: "List all job instances for endpoints in a specific universal dynamic group. Returns a paged list of job execution history for the group.", inputSchema: { type: "object", properties: { universalDynamicGroupId: { type: "string", description: "Universal dynamic group ID (GUID)" }, Page: { type: "number" }, PageSize: { type: "number" } }, required: ["universalDynamicGroupId"] } },
 
       ]
     };
@@ -760,6 +761,12 @@ export function createServer(): { server: Server } {
         case "list_job_instances_by_dynamic_group": {
           validateOrThrow(args, JobsRules.listJobInstancesByGroup('dynamicGroupId'));
           const result = await bconnect.jobs.getJobInstancesByDynamicGroup(args!.dynamicGroupId as string, args || {});
+          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        }
+
+        case "list_job_instances_by_universal_dynamic_group": {
+          validateOrThrow(args, JobsRules.listJobInstancesByGroup('universalDynamicGroupId'));
+          const result = await bconnect.jobs.getJobInstancesByUniversalDynamicGroup(args!.universalDynamicGroupId as string, args || {});
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
