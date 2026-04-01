@@ -524,6 +524,31 @@ export function createServer(): { server: Server } {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
+    // ── Write-operation gate (REQ-SRV-012) ───────────────────────────────────
+    const WRITE_TOOLS = new Set<string>([
+    "create_asset",
+    "update_asset",
+    "delete_asset",
+    "create_asset_stock_folder",
+    "update_asset_stock_folder",
+    "delete_asset_stock_folder",
+    "create_asset_type_folder",
+    "update_asset_type_folder",
+    "delete_asset_type_folder",
+    "create_asset_type",
+    "delete_asset_type",
+    ]);
+    if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
+      return {
+        content: [{
+          type: "text" as const,
+          text: `Write operation '${name}' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.`
+        }],
+        isError: true
+      };
+    }
+
+
     // Lazily create BConnect client — allows server instantiation in tests without real credentials.
     const getBconnect = (): BConnectClient => {
       dotenv.config();
@@ -803,6 +828,37 @@ export function createServer(): { server: Server } {
 // ─── Entry point ────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
+  
+
+  
+  // Startup connectivity check (REQ-SRV-013)
+  dotenv.config();
+  {
+    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms-win22srv:444/bconnect";
+    const _startupUser = process.env.BCONNECT_USERNAME;
+    const _startupPass = process.env.BCONNECT_PASSWORD;
+    if (!_startupUser || !_startupPass) {
+      console.error("bconnect-assets-mcp: BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
+      process.exit(1);
+    }
+    const _caCertPath = process.env.BCONNECT_CA_CERT_PATH;
+    const _caCert = _caCertPath ? fs.readFileSync(_caCertPath, "utf8") : undefined;
+    const _startupClient = new BConnectClient({
+      baseUrl: _startupUrl,
+      username: _startupUser,
+      password: _startupPass,
+      rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
+      ...(_caCert && { ca: _caCert }),
+    });
+    console.error(`bconnect-assets-mcp: verifying bConnect API connectivity...`);
+    const _connected = await _startupClient.testConnection();
+    if (!_connected) {
+      console.error(`bconnect-assets-mcp: cannot reach bConnect API at ${_startupUrl}. Check BCONNECT_BASE_URL, credentials, and network.`);
+      process.exit(1);
+    }
+    console.error(`bconnect-assets-mcp: API connectivity verified.`);
+  }
+
   const { server } = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);

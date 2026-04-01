@@ -488,6 +488,33 @@ export function createServer(): { server: Server } {
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
+    // ── Write-operation gate (REQ-SRV-012) ───────────────────────────────────
+    const WRITE_TOOLS = new Set<string>([
+    "create_job_instance",
+    "start_job_instance",
+    "stop_job_instance",
+    "resume_job_instance",
+    "delete_job_instance",
+    "create_job_folder",
+    "update_job_folder",
+    "delete_job_folder",
+    "assign_job_to_logical_group",
+    "assign_job_to_static_group",
+    "assign_job_to_dynamic_group",
+    "assign_job_to_universal_dynamic_group",
+    "create_kiosk_release",
+    ]);
+    if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
+      return {
+        content: [{
+          type: "text" as const,
+          text: `Write operation '${name}' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.`
+        }],
+        isError: true
+      };
+    }
+
+
     // Lazily create BConnect client only when a tool is actually called.
     // This allows the server to be instantiated in tests without real credentials.
     const getBconnect = (): BConnectClient => {
@@ -849,6 +876,16 @@ async function main() {
 
   // Verify client is initialised (unused var kept for side-effect)
   void bconnect;
+
+  
+  // Startup connectivity check (REQ-SRV-013)
+  console.error(`bconnect-jobs-mcp: verifying bConnect API connectivity...`);
+  const connected = await bconnect.testConnection();
+  if (!connected) {
+    console.error(`bconnect-jobs-mcp: cannot reach bConnect API at ${baseUrl}. Check BCONNECT_BASE_URL, credentials, and network.`);
+    process.exit(1);
+  }
+  console.error(`bconnect-jobs-mcp: API connectivity verified.`);
 
   const { server } = createServer();
   const transport = new StdioServerTransport();

@@ -18,6 +18,7 @@ import {
   ErrorCode,
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
+import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
 import { validateOrThrow } from "./utils/parameter-validator.js";
@@ -508,6 +509,37 @@ async function main() {
     console.error("  BCONNECT_USERNAME  — bConnect API username");
     console.error("  BCONNECT_PASSWORD  — bConnect API password");
     process.exit(1);
+  }
+
+  
+
+  
+  // Startup connectivity check (REQ-SRV-013)
+  dotenv.config();
+  {
+    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms-win22srv:444/bconnect";
+    const _startupUser = process.env.BCONNECT_USERNAME;
+    const _startupPass = process.env.BCONNECT_PASSWORD;
+    if (!_startupUser || !_startupPass) {
+      console.error("bconnect-groups-mcp: BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
+      process.exit(1);
+    }
+    const _caCertPath = process.env.BCONNECT_CA_CERT_PATH;
+    const _caCert = _caCertPath ? fs.readFileSync(_caCertPath, "utf8") : undefined;
+    const _startupClient = new BConnectClient({
+      baseUrl: _startupUrl,
+      username: _startupUser,
+      password: _startupPass,
+      rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
+      ...(_caCert && { ca: _caCert }),
+    });
+    console.error(`bconnect-groups-mcp: verifying bConnect API connectivity...`);
+    const _connected = await _startupClient.testConnection();
+    if (!_connected) {
+      console.error(`bconnect-groups-mcp: cannot reach bConnect API at ${_startupUrl}. Check BCONNECT_BASE_URL, credentials, and network.`);
+      process.exit(1);
+    }
+    console.error(`bconnect-groups-mcp: API connectivity verified.`);
   }
 
   const { server } = createServer();
