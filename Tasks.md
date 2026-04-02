@@ -40,6 +40,7 @@
 | Phase 24 | Complete bconnect-endpoints-mcp (+17 tools) | 5 | ✅ Complete |
 | Phase 25 | bconnect-groups-mcp (new server, 27 tools) | 5 | ✅ Complete |
 | Phase 26 | Complete bconnect-jobs-mcp (+9 tools) | 4 | ✅ Complete |
+| Phase 27 | bMS-Aligned Version Numbering (REQ-VER-001) | 6 | 🔵 Backlog |
 
 ---
 
@@ -695,6 +696,44 @@ fall into three categories: folder navigation (3), kiosk releases by context (4)
 - [x] 🟢 **[IMPL] Add 9 jobs tools — module methods + tool registration** *(Developer)*
 - [x] 🟢 **[IMPL] Add input validation rules for 9 new tools** *(Developer)*
 - [x] 🔵 **[LINT] npm run build + tool count verification — 0 TypeScript errors** *(QualityAssuranceEngineer)*
+
+---
+
+## 🔵 Backlog — Phase 27: bMS-Aligned Version Numbering (REQ-VER-001)
+
+**Priority**: HIGH
+**Depends on**: All phases complete (Phases 1–26 done ✅)
+**Requirement**: REQ-VER-001 — bMS-Aligned Package Version Numbering
+**Design review**: Approved 2026-04-03
+
+**Deliverables**:
+- All 13 `bconnect-*-mcp/package.json`: `"version"` bumped from `"1.0.0"` → `"26.1.0"`
+- All 13 `bconnect-*-mcp/src/index.ts`: server version constant updated to `"26.1.0"`
+- All 13 `bconnect-*-mcp/README.md`: compatibility matrix section added
+- `CHANGELOG.md` (new, root): initial entry at `26.1.0` with all 13 servers listed
+- `Requirements.md`: REQ-SRV-011 marked COMPLETED (already implemented in Phases 7–26)
+- All 13 servers build clean (`npm run build` exits 0) after changes
+
+**Acceptance criteria**:
+- `"version": "26.1.0"` in all 13 package.json
+- MCP handshake `serverInfo.version` reports `"26.1.0"` for all servers
+- Compatibility matrix in every README documents: `26.1.0` → bMS 2026R1, `25.2.0` → bMS 2025R2
+- `CHANGELOG.md` exists at root with `## [26.1.0] — 2026-04-03` header listing all 13 servers and tool counts
+- All existing vitest suites continue to pass (no regressions)
+
+---
+
+- [ ] 🟢 **[IMPL] Bump version in all 13 package.json to 26.1.0** *(DevOpsEngineer)* — `"version": "1.0.0"` → `"26.1.0"` in each `bconnect-*-mcp/package.json`
+
+- [ ] 🟢 **[IMPL] Update version constant in all 13 src/index.ts to 26.1.0** *(Developer)* — wherever `serverInfo.version` or equivalent version string is set; must match package.json
+
+- [ ] 📚 **[DOCS] Add compatibility matrix to all 13 server README.md files** *(TechWriter)* — standard table: MCP version | Supported bMS release | Notes; use template consistent across all servers
+
+- [ ] 📚 **[DOCS] Create root CHANGELOG.md at 26.1.0** *(TechWriter)* — `## [26.1.0] — 2026-04-03` with all 13 servers listed, tool counts, and summary of Phase 24–26 additions
+
+- [ ] 📚 **[HOUSEKEEPING] Mark REQ-SRV-011 as COMPLETED in Requirements.md** *(Developer)* — version awareness implemented in Phases 7–26; status header update only
+
+- [ ] 🔵 **[LINT] Build verification — all 13 servers** *(QualityAssuranceEngineer)* — `npm run build` exits 0 for each server; all vitest suites pass; `npm test` green across all 13
 
 ---
 
