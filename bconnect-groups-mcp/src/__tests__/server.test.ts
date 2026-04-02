@@ -1,8 +1,8 @@
 /**
  * Server tool registration tests for bconnect-groups-mcp
  *
- * Asserts that listTools() returns exactly 27 group-scoped endpoint query tools.
- * All tools are read-only GET operations — no write tools should be present.
+ * Asserts that listTools() returns exactly 33 group-scoped endpoint query tools.
+ * 27 group-type queries + 6 ADUser queries. All tools are read-only GET operations.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -42,6 +42,13 @@ const GROUPS_TOOLS = [
   'list_network_endpoints_by_universal_dynamic_group',
   'list_windows_endpoints_by_universal_dynamic_group',
   'list_industrial_endpoints_by_universal_dynamic_group',
+  // AD User queries (6) — Phase 25 addition
+  'list_endpoints_by_ad_user',
+  'list_android_endpoints_by_ad_user',
+  'list_ios_endpoints_by_ad_user',
+  'list_linux_endpoints_by_ad_user',
+  'list_mac_endpoints_by_ad_user',
+  'list_windows_endpoints_by_ad_user',
 ] as const;
 
 // Tools from other servers that must NOT be present
@@ -69,9 +76,9 @@ async function getToolNames(): Promise<string[]> {
 
 describe('bconnect-groups-mcp server', () => {
   describe('listTools()', () => {
-    it('returns exactly 27 group-scoped tools', async () => {
+    it('returns exactly 33 group-scoped tools (27 group-type + 6 ADUser)', async () => {
       const toolNames = await getToolNames();
-      expect(toolNames).toHaveLength(27);
+      expect(toolNames).toHaveLength(33);
     });
 
     it('contains all expected groups tools', async () => {

@@ -679,7 +679,9 @@ async function main(): Promise<void> {
   process.stderr.write("bconnect-activedirectory-mcp started\n");
 }
 
-main().catch((error) => {
-  process.stderr.write(`Fatal error: ${(error as Error).message}\n`);
-  process.exit(1);
-});
+if (!process.env.VITEST) {
+  main().catch((error) => {
+    process.stderr.write(`Fatal error: ${(error as Error).message}\n`);
+    process.exit(1);
+  });
+}

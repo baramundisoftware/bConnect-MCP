@@ -55,6 +55,7 @@ const JOBS_TOOLS = [
   // Phase 26: Job instances by group
   'list_job_instances_by_static_group',
   'list_job_instances_by_dynamic_group',
+  'list_job_instances_by_universal_dynamic_group',
 ] as const;
 
 const ALL_EXPECTED_TOOLS: string[] = [...JOBS_TOOLS];
@@ -273,7 +274,7 @@ describe('bconnect-jobs-mcp server — tool registration', () => {
       }
     });
 
-    it('returns exactly 33 tools (jobs module only)', async () => {
+    it('returns exactly 34 tools (jobs module only)', async () => {
       const toolNames = await getToolNames();
 
       expect(toolNames).toHaveLength(ALL_EXPECTED_TOOLS.length);

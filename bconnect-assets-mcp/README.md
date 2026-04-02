@@ -93,3 +93,16 @@ node build/index.js
 ## Part of the Suite
 
 This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).
+
+---
+
+## Compatibility
+
+| MCP server version | Supported bMS release | bConnect API | Notes |
+|--------------------|-----------------------|--------------|-------|
+| `26.1.0` | baramundi Management Suite 2026R1 | V2.0 | Current — full tool set |
+| `25.2.0` *(planned)* | baramundi Management Suite 2025R2 | V2.0 | Subset of tools (25R2 spec) |
+| `1.0.0` (legacy) | ≤25R2 (unspecified) | V2.0 | Pre-versioning-scheme release |
+
+> Version scheme: `<bMS-year-2digit>.<bMS-release-number>.<mcp-patch>`
+> Example: `26.1.0` targets bMS 2026R1; patch-only fixes increment the last digit.

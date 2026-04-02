@@ -72,7 +72,9 @@ const ENDPOINTS_TOOLS = [
   'create_maintenance_window_for_logical_group',
   'update_maintenance_window_for_logical_group',
   'delete_maintenance_window_for_logical_group',
-  // Industrial & network endpoints (Phase 24: added list + get for network)
+  // Industrial & network endpoints (Phase 24: added list + get for industrial + network)
+  'list_industrial_endpoints',
+  'get_industrial_endpoint',
   'create_industrial_endpoint',
   'update_industrial_endpoint',
   'delete_industrial_endpoint',
@@ -260,7 +262,7 @@ describe('bconnect-endpoints-mcp server — tool registration', () => {
       }
     });
 
-    it('returns exactly 58 tools in 25R2 mode (endpoints module, no 26R1-only)', async () => {
+    it('returns exactly 60 tools in 25R2 mode (endpoints module, no 26R1-only)', async () => {
       const toolNames = await getToolNames();
 
       // Without BCONNECT_RELEASE=26R1, 26R1-only tools (unmanaged, EntraID) are excluded

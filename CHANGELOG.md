@@ -8,28 +8,38 @@ The version scheme follows **baramundi Management Suite year.release.patch** for
 
 ---
 
-## [26.1.0] — 2026-03-31
+## [26.1.0] — 2026-04-03
 
 ### Added
 
-**12 domain-specific MCP servers** replacing the previous single-server architecture:
+**13 domain-specific MCP servers** replacing the previous single-server architecture.
+100% coverage of the bConnect 26R1 V2.0 API (264/264 endpoints).
 
-| Server | Tools | bMS |
-|--------|-------|-----|
-| bconnect-endpoints-mcp | 47 | 25R2 + 26R1 |
-| bconnect-servermanagement-mcp | 30 | 25R2 + 26R1 |
-| bconnect-assets-mcp | 26 | 25R2 + 26R1 |
-| bconnect-jobs-mcp | 24 | 25R2 + 26R1 |
-| bconnect-software-mcp | 19 | 25R2 + 26R1 |
-| bconnect-activedirectory-mcp | 16 | 25R2 + 26R1 |
-| bconnect-variables-mcp | 13 | 25R2 + 26R1 |
-| bconnect-defensecontrol-mcp | 13 | 25R2 + 26R1 |
-| bconnect-operatingsystems-mcp | 9 | 25R2 + 26R1 |
-| bconnect-compliance-mcp | 8 | 26R1 only |
-| bconnect-universaldynamicgroups-mcp | 6 | 26R1 only |
-| bconnect-updatemanagement-mcp | 3 | 25R2 + 26R1 |
+| Server | Tools (26R1) | Tools (25R2) | bMS |
+|--------|:---:|:---:|-----|
+| bconnect-endpoints-mcp | 64 | 58 | 25R2 + 26R1 |
+| bconnect-servermanagement-mcp | 30 | 30 | 25R2 + 26R1 |
+| bconnect-assets-mcp | 26 | 24 | 25R2 + 26R1 |
+| bconnect-groups-mcp | 27 | 27 | 25R2 + 26R1 |
+| bconnect-jobs-mcp | 34 | 34 | 25R2 + 26R1 |
+| bconnect-software-mcp | 19 | 19 | 25R2 + 26R1 |
+| bconnect-activedirectory-mcp | 17 | 17 | 25R2 + 26R1 |
+| bconnect-variables-mcp | 12 | 12 | 25R2 + 26R1 |
+| bconnect-defensecontrol-mcp | 13 | 11 | 25R2 + 26R1 |
+| bconnect-operatingsystems-mcp | 9 | 9 | 25R2 + 26R1 |
+| bconnect-compliance-mcp | 8 | — | 26R1 only |
+| bconnect-universaldynamicgroups-mcp | 6 | — | 26R1 only |
+| bconnect-updatemanagement-mcp | 3 | 3 | 25R2 + 26R1 |
+| **Total** | **268** | **244** | |
 
-**Total: 212 tools** (106 read, 106 write)
+**268 tools in 26R1 configuration** (244 when targeting 25R2)
+
+**Gap closure** (Phases 24–26 — 2026-04-01 to 2026-04-03):
+- `bconnect-endpoints-mcp`: +17 tools (Android, iOS, Network, Unmanaged endpoints, EntraID, Industrial)
+- `bconnect-groups-mcp`: new 13th server — 27 group-scoped read-only endpoint queries
+- `bconnect-jobs-mcp`: +9 tools (folder navigation, kiosk-release context queries, group-scoped instances)
+
+**bMS-aligned versioning** (Phase 27 — 2026-04-03): all 13 servers bumped from `1.0.0` → `26.1.0`.
 
 **26R1 type generation**: All servers use TypeScript types generated from 26R1 OpenAPI specs. A `BCONNECT_RELEASE` environment variable gates 26R1-only operations when connecting to a 25R2 instance.
 

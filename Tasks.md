@@ -40,7 +40,7 @@
 | Phase 24 | Complete bconnect-endpoints-mcp (+17 tools) | 5 | ✅ Complete |
 | Phase 25 | bconnect-groups-mcp (new server, 27 tools) | 5 | ✅ Complete |
 | Phase 26 | Complete bconnect-jobs-mcp (+9 tools) | 4 | ✅ Complete |
-| Phase 27 | bMS-Aligned Version Numbering (REQ-VER-001) | 6 | 🔵 Backlog |
+| Phase 27 | bMS-Aligned Version Numbering (REQ-VER-001) | 6 | ✅ Complete |
 
 ---
 
@@ -699,7 +699,7 @@ fall into three categories: folder navigation (3), kiosk releases by context (4)
 
 ---
 
-## 🔵 Backlog — Phase 27: bMS-Aligned Version Numbering (REQ-VER-001)
+## ✅ Complete — Phase 27: bMS-Aligned Version Numbering (REQ-VER-001)
 
 **Priority**: HIGH
 **Depends on**: All phases complete (Phases 1–26 done ✅)
@@ -723,17 +723,17 @@ fall into three categories: folder navigation (3), kiosk releases by context (4)
 
 ---
 
-- [ ] 🟢 **[IMPL] Bump version in all 13 package.json to 26.1.0** *(DevOpsEngineer)* — `"version": "1.0.0"` → `"26.1.0"` in each `bconnect-*-mcp/package.json`
+- [x] 🟢 **[IMPL] Bump version in all 13 package.json to 26.1.0** *(DevOpsEngineer)* — `"version": "1.0.0"` → `"26.1.0"` in each `bconnect-*-mcp/package.json`
 
-- [ ] 🟢 **[IMPL] Update version constant in all 13 src/index.ts to 26.1.0** *(Developer)* — wherever `serverInfo.version` or equivalent version string is set; must match package.json
+- [x] 🟢 **[IMPL] Update version constant in all 13 src/index.ts to 26.1.0** *(Developer)* — wherever `serverInfo.version` or equivalent version string is set; must match package.json
 
-- [ ] 📚 **[DOCS] Add compatibility matrix to all 13 server README.md files** *(TechWriter)* — standard table: MCP version | Supported bMS release | Notes; use template consistent across all servers
+- [x] 📚 **[DOCS] Add compatibility matrix to all 13 server README.md files** *(TechWriter)* — standard table: MCP version | Supported bMS release | Notes; use template consistent across all servers
 
-- [ ] 📚 **[DOCS] Create root CHANGELOG.md at 26.1.0** *(TechWriter)* — `## [26.1.0] — 2026-04-03` with all 13 servers listed, tool counts, and summary of Phase 24–26 additions
+- [x] 📚 **[DOCS] Create root CHANGELOG.md at 26.1.0** *(TechWriter)* — `## [26.1.0] — 2026-04-03` with all 13 servers listed, tool counts, and summary of Phase 24–26 additions
 
-- [ ] 📚 **[HOUSEKEEPING] Mark REQ-SRV-011 as COMPLETED in Requirements.md** *(Developer)* — version awareness implemented in Phases 7–26; status header update only
+- [x] 📚 **[HOUSEKEEPING] Mark REQ-SRV-011 as COMPLETED in Requirements.md** *(Developer)* — version awareness implemented in Phases 7–26; status header update only
 
-- [ ] 🔵 **[LINT] Build verification — all 13 servers** *(QualityAssuranceEngineer)* — `npm run build` exits 0 for each server; all vitest suites pass; `npm test` green across all 13
+- [x] 🔵 **[LINT] Build verification — all 13 servers** *(QualityAssuranceEngineer)* — `npm run build` exits 0 for each server; all vitest suites pass; `npm test` green across all 13
 
 ---
 

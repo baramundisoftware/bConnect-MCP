@@ -36,7 +36,7 @@ export function createServer(): { server: Server } {
   const server = new Server(
     {
       name: "bconnect-endpoints-mcp",
-      version: "1.0.0"
+      version: "26.1.0"
     },
     {
       capabilities: {
