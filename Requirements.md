@@ -41,8 +41,8 @@ add it; the 90% who don't, save ~5K tokens of context.
 **Description**: The server shall identify itself with a fixed name and version in the MCP handshake.
 
 **Implementation**:
-- Server name: `bconnect-mcp-server`
-- Server version: `1.0.0`
+- Server name: per-domain (e.g. `bconnect-endpoints-mcp`, `bconnect-jobs-mcp`, …)
+- Server version: `26.1.0` (bMS-aligned scheme per REQ-VER-001)
 - MCP SDK: `@modelcontextprotocol/sdk`
 - Capabilities advertised: `{ tools: {} }`
 
