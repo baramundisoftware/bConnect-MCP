@@ -862,12 +862,12 @@ async function main(): Promise<void> {
   const { server } = createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  process.stderr.write("bconnect-assets-mcp started\n");
+  console.error("bconnect-assets-mcp started");
 }
 
 if (!process.env.VITEST) {
   main().catch((error) => {
-    process.stderr.write(`Fatal error: ${(error as Error).message}\n`);
+    console.error("Fatal error:", error);
     process.exit(1);
   });
 }
