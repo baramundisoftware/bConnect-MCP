@@ -1,0 +1,147 @@
+baramundi Management Suite 2024 R1
+Release Notes - English Version
+Release Date: March 15, 2024
+
+================================================================================
+WHAT'S NEW IN 2024 R1
+================================================================================
+
+NEW FEATURES
+
+1. bConnect REST API v2.0
+   - Complete rewrite of REST API with OpenAPI 2.0 documentation
+   - New endpoints: Jobs, Assets, Active Directory, Variables
+   - Improved authentication: OAuth 2.0 support
+   - Breaking changes from v1.1 (see migration guide)
+
+2. Enhanced BitLocker Management
+   - Automatic recovery key backup to Management Server
+   - Self-service recovery key retrieval via Kiosk
+   - BitLocker compliance monitoring and reporting
+   - Support for hardware encryption (eDrive)
+
+3. Apple VPP Integration
+   - iOS and macOS app deployment via Volume Purchase Program
+   - Automatic app license assignment and revocation
+   - App usage tracking and license reclaim
+   - Support for Apple Business Manager integration
+
+4. Cloud Management Gateway (CMG)
+   - Internet-based endpoint management (no VPN required)
+   - Supports remote workers and mobile devices
+   - End-to-end encryption for all communication
+   - Load balancing and failover support
+
+5. Windows 11 23H2 Support
+   - Full support for Windows 11 23H2 features
+   - Enhanced hardware inventory (TPM 2.0, secure boot)
+   - Windows Autopilot integration improvements
+   - Windows Update for Business integration
+
+IMPROVEMENTS
+
+1. Performance Optimizations
+   - 40% faster job execution engine
+   - 60% reduction in database size (optimized indexes)
+   - Improved console responsiveness (lazy loading)
+   - Reduced network bandwidth usage for large deployments
+
+2. User Interface Enhancements
+   - Modernized Management Console (dark mode support)
+   - Improved search with fuzzy matching
+   - Customizable dashboard widgets
+   - Accessibility improvements (WCAG 2.1 AA compliance)
+
+3. Reporting Enhancements
+   - 15 new built-in report templates
+   - Custom report builder (drag-and-drop)
+   - Scheduled report delivery via email
+   - Export to Excel, PDF, CSV, JSON
+
+4. Endpoint Inventory
+   - Extended hardware inventory (GPU, RAM speed, NVMe drives)
+   - Software inventory includes Microsoft Store apps
+   - Custom inventory via WMI/Registry queries
+   - Inventory delta detection (only changes reported)
+
+5. Patch Management
+   - Support for Microsoft Edge (Chromium) updates
+   - Third-party patch catalog expanded (250+ applications)
+   - Patch approval workflows with multi-stage approvals
+   - Patch rollback capability for failed updates
+
+BUG FIXES
+
+1. Fixed: Job execution stuck at 99% (KB#2024-001)
+2. Fixed: Agent service crashes on Windows Server 2019 (KB#2024-003)
+3. Fixed: Incorrect software inventory for macOS 14 Sonoma (KB#2024-007)
+4. Fixed: Management Console freezes with > 10,000 endpoints (KB#2024-012)
+5. Fixed: bConnect API returns HTTP 500 for large result sets (KB#2024-018)
+6. Fixed: LDAP sync fails with Active Directory 2022 (KB#2024-022)
+7. Fixed: Software uninstall leaves registry keys (KB#2024-029)
+8. Fixed: Endpoint groups not updating dynamically (KB#2024-035)
+9. Fixed: PDF reports missing special characters (KB#2024-041)
+10. Fixed: Network scan discovers duplicate endpoints (KB#2024-048)
+
+KNOWN ISSUES
+
+1. Cloud Management Gateway may timeout with > 1,000 concurrent connections
+   Workaround: Increase CMG instance count or reduce endpoint polling frequency
+   Resolution: Planned for 2024 R2
+
+2. macOS 14 Sonoma endpoints report incorrect battery health
+   Workaround: Use Apple System Information for accurate data
+   Resolution: Fix available in 2024 R1 Update 1
+
+3. bConnect API v2.0: Variables endpoint returns empty result for large datasets
+   Workaround: Use pagination with PageSize <= 100
+   Resolution: Planned for 2024 R1 Update 2
+
+SYSTEM REQUIREMENTS
+
+Server:
+- Windows Server 2019 / 2022
+- SQL Server 2019 / 2022
+- 8 GB RAM (16 GB recommended)
+- 100 GB disk space (SSD recommended)
+
+Endpoints:
+- Windows 10 21H2+ / Windows 11
+- macOS 12 Monterey / 13 Ventura / 14 Sonoma
+- Linux: Ubuntu 20.04+, RHEL 8+, SUSE 15+
+- iOS 15+ / iPadOS 15+
+- Android 10+
+
+MIGRATION NOTES
+
+Upgrading from 2023 R2:
+1. Backup database before upgrade
+2. Review breaking changes in bConnect API v2.0
+3. Test API integrations in staging environment
+4. Allow 2-4 hours downtime for database migration
+5. Update Agents to 2024 R1 version (backward compatible)
+
+Breaking Changes:
+- bConnect API v1.1 endpoints deprecated (still functional, removed in 2025 R1)
+- PowerShell module v2.x requires .NET Framework 4.8+
+- Legacy report format removed (migrate to new format)
+- Job execution timeout increased from 1 hour to 4 hours default
+
+DOCUMENTATION
+
+- Installation Guide: https://docs.baramundi.com/2024r1/installation
+- Migration Guide: https://docs.baramundi.com/2024r1/migration
+- API Documentation: https://bms-server/bconnect/docs/
+- Release Notes (Full): https://docs.baramundi.com/2024r1/release-notes
+- Known Issues: https://support.baramundi.com/kb/2024r1-known-issues
+
+SUPPORT
+
+- Technical Support: support@baramundi.com
+- Community Forum: https://forum.baramundi.com
+- Knowledge Base: https://support.baramundi.com/kb
+- Training: https://www.baramundi.com/training
+
+================================================================================
+(c) 2024 baramundi software GmbH. All rights reserved.
+================================================================================

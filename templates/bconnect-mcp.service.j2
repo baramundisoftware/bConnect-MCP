@@ -1,0 +1,27 @@
+[Unit]
+Description=bConnect MCP Server
+Documentation=https://github.com/modelcontextprotocol
+After=network.target
+
+[Service]
+Type=simple
+User={{ mcp_user }}
+WorkingDirectory={{ mcp_install_dir }}
+Environment="BCONNECT_API_URL={{ bconnect_api_url }}"
+Environment="BCONNECT_API_KEY={{ bconnect_api_key }}"
+ExecStart=/usr/bin/node {{ mcp_install_dir }}/build/index.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=bconnect-mcp
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths={{ mcp_install_dir }}
+
+[Install]
+WantedBy=multi-user.target

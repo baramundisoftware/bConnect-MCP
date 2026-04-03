@@ -1,0 +1,148 @@
+---
+- name: Deploy bConnect MCP Server
+  hosts: workstations
+  become: yes
+  vars:
+    mcp_install_dir: "/opt/bconnect-mcp"
+    mcp_user: "{{ ansible_user }}"
+    bconnect_api_url: "https://bms-win22srv:444/bconnect"
+    # Store sensitive data in ansible-vault encrypted file
+    bconnect_api_key: "{{ vault_bconnect_api_key }}"
+
+  tasks:
+    - name: Install Node.js 20.x repository
+      shell: |
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+      args:
+        creates: /etc/apt/sources.list.d/nodesource.list
+      tags: ['prereqs']
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+      tags: ['prereqs']
+
+    - name: Verify Node.js version
+      command: node --version
+      register: node_version
+      changed_when: false
+      tags: ['prereqs', 'verify']
+
+    - name: Display Node.js version
+      debug:
+        msg: "Node.js {{ node_version.stdout }} installed"
+      tags: ['prereqs', 'verify']
+
+    - name: Create MCP server directory
+      file:
+        path: "{{ mcp_install_dir }}"
+        state: directory
+        owner: "{{ mcp_user }}"
+        group: "{{ mcp_user }}"
+        mode: '0755'
+      tags: ['install']
+
+    - name: Copy MCP server files
+      synchronize:
+        src: "{{ playbook_dir }}/../"
+        dest: "{{ mcp_install_dir }}/"
+        rsync_opts:
+          - "--exclude=node_modules"
+          - "--exclude=build"
+          - "--exclude=.env"
+          - "--exclude=.git"
+          - "--exclude=ansible"
+      tags: ['install', 'update']
+
+    - name: Install npm dependencies
+      npm:
+        path: "{{ mcp_install_dir }}"
+        state: present
+      become_user: "{{ mcp_user }}"
+      tags: ['install', 'update']
+
+    - name: Build TypeScript project
+      command: npm run build
+      args:
+        chdir: "{{ mcp_install_dir }}"
+      become_user: "{{ mcp_user }}"
+      tags: ['install', 'update']
+
+    - name: Create .env file
+      template:
+        src: "{{ playbook_dir }}/../templates/bconnect-mcp.env.j2"
+        dest: "{{ mcp_install_dir }}/.env"
+        owner: "{{ mcp_user }}"
+        group: "{{ mcp_user }}"
+        mode: '0600'
+      tags: ['install', 'config']
+
+    - name: Create Claude Code MCP configuration directory
+      file:
+        path: "/home/{{ mcp_user }}/.claude"
+        state: directory
+        owner: "{{ mcp_user }}"
+        group: "{{ mcp_user }}"
+        mode: '0755'
+      tags: ['install', 'config']
+
+    - name: Configure Claude Code MCP
+      template:
+        src: "{{ playbook_dir }}/../templates/mcp-config.json.j2"
+        dest: "/home/{{ mcp_user }}/.claude/mcp-config.json"
+        owner: "{{ mcp_user }}"
+        group: "{{ mcp_user }}"
+        mode: '0644'
+      tags: ['install', 'config']
+
+    - name: Create systemd service file (optional)
+      template:
+        src: "{{ playbook_dir }}/../templates/bconnect-mcp.service.j2"
+        dest: "/etc/systemd/system/bconnect-mcp.service"
+        owner: root
+        group: root
+        mode: '0644'
+      when: install_as_service | default(false)
+      tags: ['service']
+
+    - name: Enable and start systemd service
+      systemd:
+        name: bconnect-mcp
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      when: install_as_service | default(false)
+      tags: ['service']
+
+    - name: Test MCP server connectivity
+      uri:
+        url: "{{ bconnect_api_url }}/health"
+        method: GET
+        timeout: 5
+      register: api_health
+      failed_when: false
+      tags: ['verify']
+
+    - name: Display API connectivity status
+      debug:
+        msg: "bConnect API is {{ 'reachable' if api_health.status == 200 else 'NOT reachable' }}"
+      tags: ['verify']
+
+    - name: Installation summary
+      debug:
+        msg:
+          - "bConnect MCP Server installed successfully!"
+          - "Installation directory: {{ mcp_install_dir }}"
+          - "Configuration: {{ mcp_install_dir }}/.env"
+          - "Claude Config: /home/{{ mcp_user }}/.claude/mcp-config.json"
+          - "To test: cd {{ mcp_install_dir }} && npm run inspector"
+      tags: ['verify']
+
+  handlers:
+    - name: restart bconnect-mcp
+      systemd:
+        name: bconnect-mcp
+        state: restarted
+      when: install_as_service | default(false)

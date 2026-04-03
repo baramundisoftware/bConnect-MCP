@@ -1,0 +1,216 @@
+/**
+ * bConnect API Client
+ *
+ * Wraps the baramundi bConnect REST API with authentication and error handling
+ */
+
+import axios, { AxiosInstance, AxiosError } from "axios";
+
+export interface BConnectConfig {
+  baseUrl: string;
+  apiKey?: string;
+  username?: string;
+  password?: string;
+  timeout?: number;
+}
+
+export class BConnectClient {
+  private client: AxiosInstance;
+  private config: BConnectConfig;
+
+  constructor(config: BConnectConfig) {
+    this.config = config;
+
+    // Create axios instance with base configuration
+    this.client = axios.create({
+      baseURL: config.baseUrl,
+      timeout: config.timeout || 30000,
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      }
+    });
+
+    // Setup authentication
+    this.setupAuth();
+
+    // Setup error handling interceptor
+    this.client.interceptors.response.use(
+      (response) => response,
+      (error: AxiosError) => {
+        return this.handleError(error);
+      }
+    );
+  }
+
+  /**
+   * Configure authentication based on provided credentials
+   */
+  private setupAuth() {
+    if (this.config.apiKey) {
+      // API Key authentication
+      this.client.defaults.headers.common["X-API-Key"] = this.config.apiKey;
+    } else if (this.config.username && this.config.password) {
+      // Basic authentication
+      const authString = Buffer.from(
+        `${this.config.username}:${this.config.password}`
+      ).toString("base64");
+      this.client.defaults.headers.common["Authorization"] = `Basic ${authString}`;
+    }
+  }
+
+  /**
+   * Handle API errors with meaningful messages
+   */
+  private handleError(error: AxiosError): Promise<never> {
+    if (error.response) {
+      // Server responded with error status
+      const status = error.response.status;
+      const message = error.response.data || error.message;
+
+      switch (status) {
+        case 401:
+          throw new Error(
+            "Authentication failed. Check your API key or credentials."
+          );
+        case 403:
+          throw new Error(
+            "Access denied. Insufficient permissions for this operation."
+          );
+        case 404:
+          throw new Error("Resource not found.");
+        case 429:
+          throw new Error("Rate limit exceeded. Please try again later.");
+        case 500:
+          throw new Error(`bConnect API error: ${message}`);
+        default:
+          throw new Error(`API error (${status}): ${message}`);
+      }
+    } else if (error.request) {
+      // Request made but no response received
+      throw new Error(
+        `Cannot connect to bConnect API at ${this.config.baseUrl}. ` +
+        "Check network connectivity and API availability."
+      );
+    } else {
+      // Error in request configuration
+      throw new Error(`Request error: ${error.message}`);
+    }
+  }
+
+  /**
+   * Device Management
+   */
+  async listDevices(limit: number = 100, filter?: string): Promise<any> {
+    const params: any = { $top: limit };
+    if (filter) {
+      params.$filter = filter;
+    }
+
+    const response = await this.client.get("/devices", { params });
+    return response.data;
+  }
+
+  async getDevice(deviceId: string): Promise<any> {
+    const response = await this.client.get(`/devices/${deviceId}`);
+    return response.data;
+  }
+
+  async searchDevices(query: string, searchField?: string): Promise<any> {
+    const field = searchField || "hostname";
+    const filter = `contains(${field}, '${query}')`;
+
+    const response = await this.client.get("/devices", {
+      params: { $filter: filter }
+    });
+    return response.data;
+  }
+
+  /**
+   * Software Management
+   */
+  async listSoftware(deviceId?: string, softwareName?: string): Promise<any> {
+    let url = "/software";
+    const params: any = {};
+
+    if (deviceId) {
+      url = `/devices/${deviceId}/software`;
+    }
+
+    if (softwareName) {
+      params.$filter = `contains(name, '${softwareName}')`;
+    }
+
+    const response = await this.client.get(url, { params });
+    return response.data;
+  }
+
+  /**
+   * Job Management
+   */
+  async listJobs(status?: string, limit: number = 100): Promise<any> {
+    const params: any = { $top: limit };
+
+    if (status) {
+      params.$filter = `status eq '${status}'`;
+    }
+
+    const response = await this.client.get("/jobs", { params });
+    return response.data;
+  }
+
+  async getJobStatus(jobId: string): Promise<any> {
+    const response = await this.client.get(`/jobs/${jobId}`);
+    return response.data;
+  }
+
+  async createDeploymentJob(
+    softwareId: string,
+    targetDeviceIds: string[],
+    scheduledTime?: string
+  ): Promise<any> {
+    const payload: any = {
+      softwareId,
+      targetDevices: targetDeviceIds
+    };
+
+    if (scheduledTime) {
+      payload.scheduledTime = scheduledTime;
+    }
+
+    const response = await this.client.post("/jobs", payload);
+    return response.data;
+  }
+
+  /**
+   * User Management
+   */
+  async listUsers(limit: number = 100): Promise<any> {
+    const response = await this.client.get("/users", {
+      params: { $top: limit }
+    });
+    return response.data;
+  }
+
+  /**
+   * Reporting
+   */
+  async getReport(reportType: string, format: string = "json"): Promise<any> {
+    const response = await this.client.get(`/reports/${reportType}`, {
+      params: { format }
+    });
+    return response.data;
+  }
+
+  /**
+   * Health check
+   */
+  async testConnection(): Promise<boolean> {
+    try {
+      await this.client.get("/health");
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }
+}

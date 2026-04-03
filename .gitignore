@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build output
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated files
+src/generated/
+
+# OpenAPI specs (can be regenerated)
+openapi-specs/
+
+# Release artifacts (binaries, tarballs, checksums)
+*.tar.gz
+*.tgz
+*.sha256
+*.exe

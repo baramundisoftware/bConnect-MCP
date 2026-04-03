@@ -1,0 +1,34 @@
+---
+all:
+  children:
+    workstations:
+      hosts:
+        # Example workstations - update with your actual machines
+        workstation1:
+          ansible_host: 192.168.1.101
+        workstation2:
+          ansible_host: 192.168.1.102
+        workstation3:
+          ansible_host: 192.168.1.103
+      vars:
+        ansible_user: ansible
+        ansible_become: yes
+        ansible_become_method: sudo
+        ansible_become_password: "{{ vault_sudo_password }}"
+        ansible_python_interpreter: /usr/bin/python3
+
+        # MCP Server Configuration
+        mcp_install_dir: /opt/bconnect-mcp
+        bconnect_api_url: https://bms-win22srv:444/bconnect
+
+        # Optional: Install as systemd service
+        install_as_service: false
+
+    # Example: Development environment
+    dev:
+      hosts:
+        localhost:
+          ansible_connection: local
+      vars:
+        mcp_install_dir: /workspaces/claudinno/bConnect-MCP
+        install_as_service: false

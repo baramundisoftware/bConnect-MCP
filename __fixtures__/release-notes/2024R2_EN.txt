@@ -1,0 +1,170 @@
+baramundi Management Suite 2024 R2
+Release Notes - English Version
+Release Date: September 20, 2024
+
+================================================================================
+WHAT'S NEW IN 2024 R2
+================================================================================
+
+NEW FEATURES
+
+1. AI-Powered Endpoint Insights (BETA)
+   - Anomaly detection for endpoint behavior
+   - Predictive failure analysis (disk, RAM, battery)
+   - Automated root cause analysis for job failures
+   - Natural language query for reports ("Show me all failed jobs this week")
+
+2. Zero Trust Network Access (ZTNA)
+   - Device trust verification before network access
+   - Integration with Microsoft Conditional Access
+   - Real-time compliance enforcement
+   - Automatic quarantine for non-compliant devices
+
+3. Enhanced Linux Support
+   - Support for Debian 12, Ubuntu 24.04 LTS
+   - Snap and Flatpak package management
+   - SELinux policy management
+   - Linux Desktop Environment inventory (GNOME, KDE, etc.)
+
+4. Microsoft Intune Co-Management
+   - Bi-directional sync with Microsoft Intune
+   - Unified policy enforcement (baramundi + Intune)
+   - Windows Autopilot integration
+   - Azure AD device sync
+
+5. Enhanced Patch Management
+   - Support for Linux kernel updates (automatic reboot handling)
+   - Driver updates for Windows endpoints
+   - BIOS/UEFI firmware updates
+   - Patch impact analysis (compatibility testing)
+
+IMPROVEMENTS
+
+1. Performance Enhancements
+   - 70% faster endpoint inventory processing
+   - Real-time dashboard updates (WebSocket support)
+   - Reduced SQL Server load (query optimization)
+   - Parallel job execution (up to 10,000 endpoints simultaneously)
+
+2. Cloud Management Gateway
+   - 5x increased throughput (up to 5,000 endpoints per CMG instance)
+   - Automatic load balancing across multiple CMG instances
+   - Health monitoring and alerting
+   - Geographic distribution support (multi-region deployments)
+
+3. bConnect API v2.0 Enhancements
+   - New endpoints: ComplianceViolations, SetupIntegrity
+   - WebSocket support for real-time event streaming
+   - GraphQL API (experimental)
+   - API rate limiting and throttling controls
+
+4. User Experience
+   - Guided wizards for complex tasks (OS deployment, package creation)
+   - Contextual help and tooltips
+   - Keyboard shortcuts and accessibility improvements
+   - Mobile-responsive web console
+
+5. Security Enhancements
+   - Multi-factor authentication (MFA) for console login
+   - Certificate-based agent authentication
+   - Encrypted database fields for sensitive data
+   - Audit logging for all administrative actions
+
+BUG FIXES
+
+1. Fixed: Cloud Management Gateway timeouts (from 2024 R1)
+2. Fixed: macOS battery health reporting incorrect values (from 2024 R1)
+3. Fixed: Variables endpoint pagination issue (from 2024 R1)
+4. Fixed: Job execution fails on endpoints with non-English locale (KB#2024-056)
+5. Fixed: Software inventory missing Microsoft 365 desktop apps (KB#2024-062)
+6. Fixed: Endpoint discovery duplicates endpoints with multiple NICs (KB#2024-068)
+7. Fixed: Management Console crashes when editing large logical groups (KB#2024-074)
+8. Fixed: bConnect API returns HTTP 401 for valid credentials (KB#2024-081)
+9. Fixed: Scheduled reports not sent via email (KB#2024-089)
+10. Fixed: Agent certificate renewal fails on macOS (KB#2024-095)
+
+KNOWN ISSUES
+
+1. AI-Powered Insights (BETA) requires Azure OpenAI API key
+   Workaround: Contact sales for Azure integration assistance
+   Resolution: On-premise AI model planned for 2025 R1
+
+2. GraphQL API does not support all bConnect v2.0 endpoints yet
+   Workaround: Use REST API for unsupported endpoints
+   Resolution: Full parity planned for 2024 R2 Update 1
+
+3. Microsoft Intune sync may duplicate devices in rare cases
+   Workaround: Manually deduplicate via Management Console
+   Resolution: Fix planned for 2024 R2 Update 2
+
+SYSTEM REQUIREMENTS
+
+Server:
+- Windows Server 2019 / 2022 / 2025
+- SQL Server 2019 / 2022
+- 16 GB RAM (32 GB recommended for > 5,000 endpoints)
+- 200 GB disk space (SSD required)
+
+NEW: Azure SQL Database support (cloud-only deployments)
+
+Endpoints:
+- Windows 10 22H2+ / Windows 11 23H2+
+- macOS 13 Ventura / 14 Sonoma / 15 Sequoia
+- Linux: Ubuntu 22.04+, RHEL 9+, Debian 12+
+- iOS 16+ / iPadOS 16+
+- Android 12+
+
+MIGRATION NOTES
+
+Upgrading from 2024 R1:
+1. Backup database (mandatory)
+2. Review AI features and Azure integration requirements
+3. Update Cloud Management Gateway instances to 2024 R2
+4. Test Intune co-management in lab environment
+5. Allow 1-2 hours downtime for database migration
+
+Upgrading from 2023 R2 or earlier:
+- Direct upgrade not supported
+- Upgrade to 2024 R1 first, then to 2024 R2
+
+Breaking Changes:
+- None (fully backward compatible with 2024 R1)
+
+DEPRECATION NOTICE
+
+The following features will be removed in 2025 R1:
+1. bConnect API v1.1 (migrate to v2.0 before March 2025)
+2. Legacy Job Engine (automatic migration to new engine)
+3. Windows Server 2016 support (end of life)
+4. Internet Explorer 11 support for Web Console
+
+DOCUMENTATION
+
+- What's New: https://docs.baramundi.com/2024r2/whats-new
+- Installation Guide: https://docs.baramundi.com/2024r2/installation
+- Migration Guide: https://docs.baramundi.com/2024r2/migration
+- API Documentation: https://bms-server/bconnect/docs/
+- AI Insights Guide: https://docs.baramundi.com/2024r2/ai-insights
+- Intune Co-Management: https://docs.baramundi.com/2024r2/intune
+
+SUPPORT
+
+- Technical Support: support@baramundi.com
+- Emergency Hotline: +49 821 5678-0 (24/7)
+- Community Forum: https://forum.baramundi.com
+- Knowledge Base: https://support.baramundi.com/kb
+- Training: https://www.baramundi.com/training
+- Feedback Portal: https://feedback.baramundi.com
+
+ACKNOWLEDGEMENTS
+
+Special thanks to our beta testers:
+- Acme Corporation (1,200 endpoints)
+- Global Healthcare Systems (8,500 endpoints)
+- University of Technology (15,000 endpoints)
+
+Your feedback was invaluable in making 2024 R2 a success!
+
+================================================================================
+(c) 2024 baramundi software GmbH. All rights reserved.
+================================================================================

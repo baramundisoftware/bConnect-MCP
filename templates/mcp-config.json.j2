@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "bconnect": {
+      "command": "node",
+      "args": [
+        "{{ mcp_install_dir }}/build/index.js"
+      ],
+      "env": {
+        "BCONNECT_API_URL": "{{ bconnect_api_url }}",
+        "BCONNECT_API_KEY": "{{ bconnect_api_key }}"
+      }
+    }
+  }
+}

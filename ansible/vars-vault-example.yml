@@ -1,0 +1,12 @@
+---
+# This is an EXAMPLE of what should be in your encrypted vault file
+# Create your actual vault with: ansible-vault create vars/vault.yml
+#
+# Store your sensitive credentials here
+
+vault_bconnect_api_key: "your_actual_bconnect_api_key_here"
+vault_sudo_password: "your_sudo_password_here"
+
+# Optional: If using username/password auth instead of API key
+vault_bconnect_username: "bconnect_user"
+vault_bconnect_password: "bconnect_password"
