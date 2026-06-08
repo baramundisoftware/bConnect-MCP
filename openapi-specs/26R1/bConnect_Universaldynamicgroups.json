@@ -1,0 +1,772 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "bConnect Universal Dynamic Groups API",
+    "description": "Universal Dynamic groups are summaries of target systems.Their groupings are independent of logical groups, so a target system can be a member of a logical and a dynamic group at the same time.(see <a target=\"_blank\" href=\"https://docs.baramundi.com/helpsetid=m_environment&externalid=k_obj_environment_dynamic-groups_dynamic-group-universal&\" rel=\"noopener noreferrer\" class=\"link\"><span class=\"url\"> documentation</span></a>). \n\nThe bConnect V2 PowerShell module is available from the <a target=\"_blank\" href=\"https://www.powershellgallery.com/packages/bConnectV2\" rel=\"noopener noreferrer\" class=\"link\"><span class=\"url\">PowerShell Gallery</span></a>.",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "https://bms.example.com:444/bconnect/universaldynamicgroups"
+    }
+  ],
+  "paths": {
+    "/v2.0/UniversalDynamicGroups": {
+      "get": {
+        "tags": [
+          "UniversalDynamicGroups"
+        ],
+        "summary": "Gets all universal dynamic groups",
+        "description": "Powershell function: `Get-bCUniversaldynamicgroupsUniversalDynamicGroups`",
+        "operationId": "GetUniversalDynamicGroups",
+        "parameters": [
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or Comment (e. g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are Name, Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all universal dynamic groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversalDynamicGroupPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCUniversaldynamicgroupsUniversalDynamicGroups",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/UniversalDynamicGroups/{id}": {
+      "get": {
+        "tags": [
+          "UniversalDynamicGroups"
+        ],
+        "summary": "Gets a universal dynamic group by id",
+        "description": "Powershell function: `Get-bCUniversaldynamicgroupsUniversalDynamicGroup`",
+        "operationId": "GetUniversalDynamicGroup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the universal dynamic group with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversalDynamicGroup"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A universal dynamic group with the specified id does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCUniversaldynamicgroupsUniversalDynamicGroup"
+      }
+    },
+    "/v2.0/Folders/{folderId}/UniversalDynamicGroups": {
+      "get": {
+        "tags": [
+          "UniversalDynamicGroups"
+        ],
+        "summary": "Gets universal dynamic groups contained in a folder.",
+        "description": "Powershell function: `Get-bCUniversaldynamicgroupsUniversalDynamicGroupsByFolderId`",
+        "operationId": "GetUniversalDynamicGroupsByFolderId",
+        "parameters": [
+          {
+            "name": "folderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or Comment (e. g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are Name, Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "includeSubfolders",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns universal dynamic groups contained in the specified folder.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UniversalDynamicGroupPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified folder does not exist or is not visible due to missing read rights.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCUniversaldynamicgroupsUniversalDynamicGroupsByFolderId",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/UniversalDynamicGroupsFolder": {
+      "get": {
+        "tags": [
+          "UniversalDynamicGroupsFolder"
+        ],
+        "summary": "Gets all folders",
+        "description": "Powershell function: `Get-bCUniversaldynamicgroupsFolders`",
+        "operationId": "GetFolders",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible value is Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters result by matching the exact value against Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all folders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCUniversaldynamicgroupsFolders",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/UniversalDynamicGroupsFolder/{id}": {
+      "get": {
+        "tags": [
+          "UniversalDynamicGroupsFolder"
+        ],
+        "summary": "Gets a folder by id",
+        "description": "Powershell function: `Get-bCUniversaldynamicgroupsFolder`",
+        "operationId": "GetFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the folder with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Folder"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A folder with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCUniversaldynamicgroupsFolder"
+      }
+    },
+    "/v2.0/UniversalDynamicGroupsFolder/{folderId}/Folders": {
+      "get": {
+        "tags": [
+          "UniversalDynamicGroupsFolder"
+        ],
+        "summary": "Gets all folders contained in a folder",
+        "description": "Powershell function: `Get-bCUniversaldynamicgroupsFoldersByFolderId`",
+        "operationId": "GetFoldersByFolderId",
+        "parameters": [
+          {
+            "name": "folderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible value is Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters result by matching the exact value against Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "includeSubFolders",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the folders contained in the specified folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified folder cannot be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCUniversaldynamicgroupsFoldersByFolderId",
+        "x-bConnect-returns-paged-list": true
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Folder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the folder",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the folder"
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the folder",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "description": "The id of the parent folder",
+            "format": "guid"
+          },
+          "parent": {
+            "type": "string",
+            "description": "The name of the parent folder"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FolderPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Folder"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JsonPatchDocument": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Operation"
+        },
+        "description": "Array of operations to perform"
+      },
+      "Operation": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "UniversalDynamicGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the universal dynamic group",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the universal dynamic group"
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the universal dynamic group",
+            "nullable": true
+          },
+          "folderName": {
+            "type": "string",
+            "description": "The name of the folder"
+          },
+          "folderId": {
+            "type": "string",
+            "description": "The id of the folder",
+            "format": "guid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UniversalDynamicGroupPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UniversalDynamicGroup"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "description": "Input your username and password to access this API",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "UniversalDynamicGroups",
+      "description": "Query Universal Dynamic Groups."
+    },
+    {
+      "name": "UniversalDynamicGroupsFolder",
+      "description": "Query for folders related to Universal Dynamic Groups."
+    }
+  ]
+}

@@ -1,0 +1,2261 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "bConnect Software API",
+    "description": "<p>Software is a core component of the baramundi Management Suite.<br><br><b>Well known GUIDs:</b> [ Software Bundles: 563AF2FE-2911-4E15-8B1F-55A62BFBED8C ]\n\nThe bConnect V2 PowerShell module is available from the <a target=\"_blank\" href=\"https://www.powershellgallery.com/packages/bConnectV2\" rel=\"noopener noreferrer\" class=\"link\"><span class=\"url\">PowerShell Gallery</span></a>.",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "https://bms.example.com:444/bconnect/software"
+    }
+  ],
+  "paths": {
+    "/v2.0/Bundles/{bundleId}/BundleApplications": {
+      "get": {
+        "tags": [
+          "BundleApplications"
+        ],
+        "summary": "Gets all bundle applications contained in a specific software bundle",
+        "description": "Powershell function: `Get-bCSoftwareBundleApplicationsByBundleId`",
+        "operationId": "GetBundleApplicationsByBundleId",
+        "parameters": [
+          {
+            "name": "bundleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are BundleName, ApplicationName, ApplicationVendor, Order.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are BundleName, ApplicationId, ApplicationName, ApplicationVendor.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the bundle applications for the specified bundle id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareBundleApplicationPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A bundle with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareBundleApplicationsByBundleId",
+        "x-bConnect-returns-paged-list": true
+      },
+      "post": {
+        "tags": [
+          "BundleApplications"
+        ],
+        "summary": "Assigns an application to a bundle",
+        "description": "Powershell function: `Add-bCSoftwareApplicationToBundle`",
+        "operationId": "AddApplicationToBundle",
+        "parameters": [
+          {
+            "name": "bundleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Required data to assign an application to a bundle\n\nInitialize in PowerShell with `Initialize-bCSoftwareAddApplicationRequest`",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AddApplicationRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created the bundle application",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareBundleApplication"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing rights to modify the bundle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified bundle or application can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The application is already included in the bundle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Add-bCSoftwareApplicationToBundle"
+      }
+    },
+    "/v2.0/BundleApplications": {
+      "get": {
+        "tags": [
+          "BundleApplications"
+        ],
+        "summary": "Gets all bundle applications",
+        "description": "Powershell function: `Get-bCSoftwareBundleApplications`",
+        "operationId": "GetBundleApplications",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are BundleName, ApplicationName, ApplicationVendor, Order.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are BundleName, ApplicationId, ApplicationName, ApplicationVendor.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid sort order or search query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all bundle applications",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareBundleApplicationPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareBundleApplications",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/BundleApplications/{id}": {
+      "delete": {
+        "tags": [
+          "BundleApplications"
+        ],
+        "summary": "Deletes a bundle application by id",
+        "description": "Powershell function: `Remove-bCSoftwareBundleApplicationById`",
+        "operationId": "DeleteBundleApplicationById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Bundle application successfully deleted or does not exist"
+          },
+          "403": {
+            "description": "Delete rights are missing for bundle object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Remove-bCSoftwareBundleApplicationById"
+      }
+    },
+    "/v2.0/Bundles/{bundleId}/BundleApplications/{id}": {
+      "patch": {
+        "tags": [
+          "BundleApplications"
+        ],
+        "summary": "Replaces an application within a bundle with the specified application",
+        "description": "Powershell function: `Invoke-bCSoftwareReplaceApplicationInBundle`",
+        "operationId": "ReplaceApplicationInBundle",
+        "parameters": [
+          {
+            "name": "bundleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON Patch document consists of a set of operations that allow specific partial changes to an object.\n\nInitialize patch operations in PowerShell with `Initialize-bCPatchOperation`",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              },
+              "example": [{"value":"e08cb41f-5701-4a44-8e31-d4e4cce7b1cf","path":"/ApplicationId","op":"replace"}]
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Input data is missing or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Updated the bundle application",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareBundleApplication"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Modify rights are missing for the bundle object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Either the bundle or the application does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The application is already included in the bundle or the bundle does not contain the bundle application",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Invoke-bCSoftwareReplaceApplicationInBundle"
+      }
+    },
+    "/v2.0/Bundle/Folders": {
+      "get": {
+        "tags": [
+          "BundleFolders"
+        ],
+        "summary": "Gets all folders",
+        "description": "Powershell function: `Get-bCSoftwareBundleFolders`",
+        "operationId": "GetBundleFolders",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible value is Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters result by matching the exact value against Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all folders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleFolderPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareBundleFolders",
+        "x-bConnect-returns-paged-list": true
+      },
+      "post": {
+        "tags": [
+          "BundleFolders"
+        ],
+        "summary": "Creates a folder according to the specified properties",
+        "description": "Powershell function: `New-bCSoftwareBundleFolder`",
+        "operationId": "CreateBundleFolder",
+        "requestBody": {
+          "description": "The folder to be created\n\nInitialize in PowerShell with `Initialize-bCSoftwareBundleFolderForCreation`",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/BundleFolderForCreation"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Creates the folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleFolder"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Object creation rights are missing for parent object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Either invalid input or the parent of the folder does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A value was tried to be set twice where duplicates are not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "New-bCSoftwareBundleFolder"
+      }
+    },
+    "/v2.0/Bundle/Folders/{id}": {
+      "get": {
+        "tags": [
+          "BundleFolders"
+        ],
+        "summary": "Gets a folder by id",
+        "description": "Powershell function: `Get-bCSoftwareBundleFolder`",
+        "operationId": "GetBundleFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the folder with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleFolder"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A folder with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareBundleFolder"
+      },
+      "patch": {
+        "tags": [
+          "BundleFolders"
+        ],
+        "summary": "Updates a folder according to the specified properties",
+        "description": "Powershell function: `Update-bCSoftwareBundleFolder`",
+        "operationId": "UpdateBundleFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties.\n\nInitialize patch operations in PowerShell with `Initialize-bCPatchOperation`",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              },
+              "example": [{"value":"My bundle folder","path":"/name","op":"replace"},{"value":"563AF2FE-2911-4E15-8B1F-55A62BFBED8C","path":"/parentId","op":"replace"},{"value":"This is an example comment.","path":"/comment","op":"replace"}]
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid input or the folder can not be changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Updates the folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleFolder"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Object modify rights are missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Either invalid input or the folder does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A value was tried to be set twice where duplicates are not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Update-bCSoftwareBundleFolder"
+      },
+      "delete": {
+        "tags": [
+          "BundleFolders"
+        ],
+        "summary": "Deletes a folder by id",
+        "description": "Powershell function: `Remove-bCSoftwareBundleFolder`",
+        "operationId": "DeleteBundleFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Folder is not empty or can not be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Folder successfully deleted or does not exist"
+          },
+          "403": {
+            "description": "Delete rights are missing for folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Remove-bCSoftwareBundleFolder"
+      }
+    },
+    "/v2.0/Bundle/Folders/{folderId}/Folders": {
+      "get": {
+        "tags": [
+          "BundleFolders"
+        ],
+        "summary": "Gets all folders contained by a folder",
+        "description": "Powershell function: `Get-bCSoftwareBundleFoldersByFolderId`",
+        "operationId": "GetBundleFoldersByFolderId",
+        "parameters": [
+          {
+            "name": "folderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible value is Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters result by matching the exact value against Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "includeSubfolders",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the folders contained in a specified folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BundleFolderPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified folder can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareBundleFoldersByFolderId",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/Bundles/{id}": {
+      "get": {
+        "tags": [
+          "Bundles"
+        ],
+        "summary": "Gets a software bundle by id",
+        "description": "Powershell function: `Get-bCSoftwareBundle`",
+        "operationId": "GetBundle",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the bundle with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareBundle"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A bundle with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareBundle"
+      },
+      "delete": {
+        "tags": [
+          "Bundles"
+        ],
+        "summary": "Deletes a bundle by id",
+        "description": "Powershell function: `Remove-bCSoftwareBundle`",
+        "operationId": "DeleteBundle",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Bundle successfully deleted or does not exist"
+          },
+          "403": {
+            "description": "Delete rights are missing for bundle object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Remove-bCSoftwareBundle"
+      }
+    },
+    "/v2.0/Bundles": {
+      "get": {
+        "tags": [
+          "Bundles"
+        ],
+        "summary": "Gets all software bundles",
+        "description": "Powershell function: `Get-bCSoftwareSoftwareBundles`",
+        "operationId": "GetSoftwareBundles",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, Comment, ParentName.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters result by matching the exact value against Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Invalid sort order or search query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all software bundles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareBundlePagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareSoftwareBundles",
+        "x-bConnect-returns-paged-list": true
+      },
+      "post": {
+        "tags": [
+          "Bundles"
+        ],
+        "summary": "Creates a bundle",
+        "description": "Powershell function: `New-bCSoftwareBundle`",
+        "operationId": "CreateBundle",
+        "requestBody": {
+          "description": "The bundle to be created\n\nInitialize in PowerShell with `Initialize-bCSoftwareSoftwareBundleForCreation`",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SoftwareBundleForCreation"
+                  }
+                ],
+                "description": "Software bundle with fields which can be set during creation with a POST request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created a bundle according to the specified properties",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SoftwareBundle"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Object creation rights are missing for parent object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Either invalid input or the parent of the bundle does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A value was tried to be set twice where duplicates are not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "New-bCSoftwareBundle"
+      }
+    },
+    "/v2.0/InstalledWindowsSoftware": {
+      "get": {
+        "tags": [
+          "InstalledWindowsSoftware"
+        ],
+        "summary": "Gets all installed Windows software",
+        "description": "Powershell function: `Get-bCSoftwareInstalledWindowsSoftware`",
+        "operationId": "GetInstalledWindowsSoftware",
+        "parameters": [
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable value is Vendor, Name, Category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Vendor, Name, Category (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns installed software for all Windows endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalledWindowsSoftwarePagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareInstalledWindowsSoftware",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/WindowsEndpoints/{endpointId}/InstalledWindowsSoftware": {
+      "get": {
+        "tags": [
+          "InstalledWindowsSoftware"
+        ],
+        "summary": "Gets all installed Windows software of a specific endpoint",
+        "description": "Powershell function: `Get-bCSoftwareInstalledWindowsSoftwareByEndpointId`",
+        "operationId": "GetInstalledWindowsSoftwareByEndpointId",
+        "parameters": [
+          {
+            "name": "endpointId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable value is Vendor, Name, Category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Vendor, Name, Category (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the installed Windows software of the specified endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalledWindowsSoftwarePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified endpoint can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareInstalledWindowsSoftwareByEndpointId",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/LogicalGroups/{logicalGroupId}/InstalledWindowsSoftware": {
+      "get": {
+        "tags": [
+          "InstalledWindowsSoftware"
+        ],
+        "summary": "Gets all installed Windows software of endpoints contained by a specific logical group",
+        "description": "Powershell function: `Get-bCSoftwareInstalledWindowsSoftwareByLogicalGroupId`",
+        "operationId": "GetInstalledWindowsSoftwareByLogicalGroupId",
+        "parameters": [
+          {
+            "name": "logicalGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "includeSubfolders",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable value is Vendor, Name, Category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Vendor, Name, Category (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the installed Windows software of endpoints contained by a specific logical group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalledWindowsSoftwarePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified logical group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareInstalledWindowsSoftwareByLogicalGroupId",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/InstalledWindowsSoftware": {
+      "get": {
+        "tags": [
+          "InstalledWindowsSoftware"
+        ],
+        "summary": "Gets all installed Windows software of endpoints contained by a specific universal dynamic group",
+        "description": "Powershell function: `Get-bCSoftwareInstalledWindowsSoftwareByUniversalDynamicGroupId`",
+        "operationId": "GetInstalledWindowsSoftwareByUniversalDynamicGroupId",
+        "parameters": [
+          {
+            "name": "universalDynamicGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable value is Vendor, Name, Category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Vendor, Name, Category (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the installed Windows software of endpoints contained by a specific universal dynamic group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstalledWindowsSoftwarePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified universal dynamic group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCSoftwareInstalledWindowsSoftwareByUniversalDynamicGroupId",
+        "x-bConnect-returns-paged-list": true
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddApplicationRequest": {
+        "required": [
+          "applicationId"
+        ],
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "description": "The id of the application which should be added to the bundle",
+            "format": "guid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BundleFolder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the folder",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the folder"
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the folder",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "description": "The id of the parent folder",
+            "format": "guid"
+          },
+          "parent": {
+            "type": "string",
+            "description": "The name of the parent folder"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BundleFolderForCreation": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "The name of the folder"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "The parent of the folder",
+            "format": "guid",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the folder",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BundleFolderPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BundleFolder"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InstalledWindowsSoftware": {
+        "type": "object",
+        "properties": {
+          "vendor": {
+            "type": "string",
+            "description": "The vendor of the software",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the software"
+          },
+          "version": {
+            "type": "string",
+            "description": "The version of the software",
+            "nullable": true
+          },
+          "category": {
+            "type": "string",
+            "description": "The user defined category of the software",
+            "nullable": true
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstalledWindowsSoftwareSource"
+              }
+            ],
+            "description": "How the software is managed on the device by the bMS"
+          },
+          "installed": {
+            "type": "string",
+            "description": "When the software was installed",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastFound": {
+            "type": "string",
+            "description": "When the software was found the last time on the endpoint",
+            "format": "date-time",
+            "nullable": true
+          },
+          "applicationId": {
+            "type": "string",
+            "description": "The id of the associated Windows application",
+            "format": "guid",
+            "nullable": true
+          },
+          "detectionRuleId": {
+            "type": "string",
+            "description": "The id of the associated software detection rule",
+            "format": "guid",
+            "nullable": true
+          },
+          "autFirstUse": {
+            "type": "string",
+            "description": "Application usage tracking: Date of the first use of the software, is null when recently used or no data is available",
+            "format": "date-time",
+            "nullable": true
+          },
+          "autLastUse": {
+            "type": "string",
+            "description": "Application usage tracking: Date of the last use of the software, is null when recently used or no data is available",
+            "format": "date-time",
+            "nullable": true
+          },
+          "autLastData": {
+            "type": "string",
+            "description": "Application usage tracking: Date of the last data update",
+            "format": "date-time",
+            "nullable": true
+          },
+          "autUsage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InstalledWindowsSoftwareAutUsage"
+              }
+            ],
+            "description": "Application usage tracking: Usage",
+            "nullable": true
+          },
+          "endpointId": {
+            "type": "string",
+            "description": "The id of the endpoint",
+            "format": "guid",
+            "nullable": true
+          },
+          "endpointName": {
+            "type": "string",
+            "description": "The name of the endpoint",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InstalledWindowsSoftwareAutUsage": {
+        "enum": [
+          "Unknown",
+          "RecentlyUsed",
+          "PreviouslyUsed",
+          "Unused",
+          "DataOutdated",
+          "AutDeactivated"
+        ],
+        "type": "string"
+      },
+      "InstalledWindowsSoftwarePagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstalledWindowsSoftware"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "InstalledWindowsSoftwareSource": {
+        "enum": [
+          "Unknown",
+          "Inventoried",
+          "Installed",
+          "ManagedSoftware"
+        ],
+        "type": "string"
+      },
+      "JsonPatchDocument": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Operation"
+        },
+        "description": "Array of operations to perform"
+      },
+      "Operation": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "OperationType": {
+        "enum": [
+          "Add",
+          "Remove",
+          "Replace",
+          "Move",
+          "Copy",
+          "Test",
+          "Invalid"
+        ],
+        "type": "string"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "SoftwareBundle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the bundle",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the bundle"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SoftwareBundleType"
+              }
+            ],
+            "description": "The type of the bundle"
+          },
+          "ignoreDependencies": {
+            "type": "boolean",
+            "description": "Indicates whether application dependencies should be ignored. Always true for uninstall bundles."
+          },
+          "parentId": {
+            "type": "string",
+            "description": "The id of the parent folder",
+            "format": "guid",
+            "nullable": true
+          },
+          "parentName": {
+            "type": "string",
+            "description": "The name of the parent folder",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comments about the bundle",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SoftwareBundleApplication": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the bundle application",
+            "format": "guid"
+          },
+          "bundleId": {
+            "type": "string",
+            "description": "The id of the bundle in which this application is contained",
+            "format": "guid"
+          },
+          "bundleName": {
+            "type": "string",
+            "description": "The name of the bundle in which this application is contained"
+          },
+          "applicationId": {
+            "type": "string",
+            "description": "The id of the application",
+            "format": "guid"
+          },
+          "applicationName": {
+            "type": "string",
+            "description": "The name of the application"
+          },
+          "applicationVendor": {
+            "type": "string",
+            "description": "The vendor of the application"
+          },
+          "applicationVersion": {
+            "type": "string",
+            "description": "The version of the application"
+          },
+          "order": {
+            "type": "integer",
+            "description": "The order within the bundle",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SoftwareBundleApplicationPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SoftwareBundleApplication"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SoftwareBundleForCreation": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "The name of the bundle"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SoftwareBundleType"
+              }
+            ],
+            "description": "Software bundle type. Default value is Install",
+            "nullable": true
+          },
+          "ignoreDependencies": {
+            "type": "boolean",
+            "description": "Whether application dependencies should be ignored. Always true for uninstall bundles",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "description": "ID of parent folder.",
+            "format": "guid",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "description": "Text field for creating comments on the software bundle",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Software bundle with fields which can be set during creation with a POST request"
+      },
+      "SoftwareBundlePagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SoftwareBundle"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SoftwareBundleType": {
+        "enum": [
+          "Install",
+          "Uninstall"
+        ],
+        "type": "string"
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "description": "Input your username and password to access this API",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "InstalledWindowsSoftware",
+      "description": "Query installed Windows software."
+    },
+    {
+      "name": "BundleApplications",
+      "description": "Query applications contained in software bundles."
+    },
+    {
+      "name": "Bundles",
+      "description": "Query software bundles."
+    },
+    {
+      "name": "BundleFolders",
+      "description": "Provides the creation and editing of bundle folders and their basic properties."
+    }
+  ]
+}

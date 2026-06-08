@@ -1,0 +1,69 @@
+/**
+ * Helpers for mock-integration tests.
+ *
+ * Tests run against bConnect-Mock (default: http://127.0.0.1:13433).
+ * Override via BCONNECT_MOCK_URL.
+ *
+ * Tests skip gracefully when the mock is unreachable — never break CI.
+ */
+
+import { BConnectClient } from '../../bconnect-client.js';
+
+export const MOCK_BASE_URL = process.env.BCONNECT_MOCK_URL ?? 'http://127.0.0.1:13433';
+export const NONEXISTENT_GUID = '00000000-0000-0000-0000-000000000000';
+
+export interface MockHealth {
+  status: string;
+  profile: string;
+  bmsVersion: string;
+}
+
+export async function getMockHealth(baseUrl = MOCK_BASE_URL): Promise<MockHealth | null> {
+  try {
+    const res = await fetch(`${baseUrl}/health`);
+    if (!res.ok) return null;
+    return (await res.json()) as MockHealth;
+  } catch {
+    return null;
+  }
+}
+
+export async function checkMockAvailable(baseUrl = MOCK_BASE_URL): Promise<boolean> {
+  return (await getMockHealth(baseUrl)) !== null;
+}
+
+/**
+ * Construct a BConnectClient pointed at the mock — env-vars-first with test
+ * defaults, mirroring how src/index.ts wires production.
+ */
+export function createClient(baseUrl = MOCK_BASE_URL): BConnectClient {
+  return new BConnectClient({
+    baseUrl: process.env.BCONNECT_BASE_URL || baseUrl,
+    username: process.env.BCONNECT_USERNAME || 'integration-test',
+    password: process.env.BCONNECT_PASSWORD || 'integration-test',
+    rejectUnauthorized: false,
+    timeout: 10000,
+  });
+}
+
+export async function rawGet(
+  path: string,
+  params: Record<string, string | number> = {},
+  baseUrl = MOCK_BASE_URL,
+): Promise<{ status: number; body: any }> {
+  const url = new URL(path, baseUrl);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
+  const res = await fetch(url.toString());
+  const body = await res.json().catch(() => null);
+  return { status: res.status, body };
+}
+
+export async function reset(baseUrl = MOCK_BASE_URL): Promise<void> {
+  const attempt = () => fetch(`${baseUrl}/api/reset`, { method: 'POST' });
+  let res = await attempt();
+  if (res.status === 429) {
+    await new Promise((r) => setTimeout(r, 1500));
+    res = await attempt();
+  }
+  if (!res.ok) throw new Error(`Reset failed: HTTP ${res.status}`);
+}

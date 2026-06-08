@@ -1,0 +1,3871 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "bConnect Jobs API",
+    "description": "Jobs are the main concept to execute tasks on endpoints managed by baramundi Management Suite (see <a target=\"_blank\" href=\"https://docs.baramundi.com/helpsetid=m_jobs&externalid=k_jobs\" rel=\"noopener noreferrer\" class=\"link\"><span class=\"url\"> documentation</span></a>).\r\n\r\nThereby defines a job definition the individual steps to be executed, whereas a job instance describes the actual execution on the endpoints. Job instances are automatically created when a job definition is assigned to one or more endpoints by an administrator or when an end user requests job assignments via the baramundi Kiosk. In order to be available within the baramundi Kiosk, the job definition has to be released by an administrator for the respective user or endpoint.",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "https://bms.example.com:444/bconnect/jobs"
+    }
+  ],
+  "paths": {
+    "/v2.0/Folders": {
+      "get": {
+        "tags": [
+          "Folders"
+        ],
+        "summary": "Gets all folders",
+        "operationId": "GetFolders",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible value is Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters result by matching the exact value against Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all folders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderPagedList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Folders"
+        ],
+        "summary": "Creates a folder according to the specified properties",
+        "operationId": "CreateFolder",
+        "requestBody": {
+          "description": "The folder to be created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/FolderForCreation"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Creates the folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Folder"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Object creation rights are missing for parent object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Either invalid input or the parent of the folder does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A value was tried to be set twice where duplicates are not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/Folders/{id}": {
+      "get": {
+        "tags": [
+          "Folders"
+        ],
+        "summary": "Gets a folder by id",
+        "operationId": "GetFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the folder with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Folder"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A folder with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Folders"
+        ],
+        "summary": "Updates a folder according to the specified properties",
+        "operationId": "UpdateFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties.",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Invalid input or the folder can not be changed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Updates the folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Folder"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Object modify rights are missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Either invalid input or the folder does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A value was tried to be set twice where duplicates are not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Folders"
+        ],
+        "summary": "Deletes a folder by id",
+        "operationId": "DeleteFolder",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Folder is not empty or can not be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Folder successfully deleted or does not exist"
+          },
+          "403": {
+            "description": "Delete rights are missing for folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/Folders/{folderId}/Folders": {
+      "get": {
+        "tags": [
+          "Folders"
+        ],
+        "summary": "Gets all folders contained by a folder",
+        "operationId": "GetFoldersByFolderId",
+        "parameters": [
+          {
+            "name": "folderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible value is Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters result by matching the exact value against Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "includeSubfolders",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the folders contained in a specified folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified folder can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/JobDefinitions": {
+      "get": {
+        "tags": [
+          "JobDefinitions"
+        ],
+        "summary": "Gets all job definitions",
+        "operationId": "GetJobDefinitions",
+        "parameters": [
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or DisplayName (e. g. DisplayName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are Name, DisplayName, Category, Description and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all job definitions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDefinitionPagedList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/JobDefinitions/{id}": {
+      "get": {
+        "tags": [
+          "JobDefinitions"
+        ],
+        "summary": "Gets a job definition by id",
+        "operationId": "GetJobDefinition",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the job definition with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDefinition"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A job definition with the specified id does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/Folders/{folderId}/JobDefinitions": {
+      "get": {
+        "tags": [
+          "JobDefinitions"
+        ],
+        "summary": "Gets all job definitions contained in the specified folder",
+        "operationId": "GetJobDefinitionsByFolderId",
+        "parameters": [
+          {
+            "name": "folderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or DisplayName (e. g. DisplayName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are Name, DisplayName, Category, Description and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "includeSubfolders",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the job definitions contained in the specified folder",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobDefinitionPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified folder can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/JobInstances": {
+      "post": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Assigns a job definition to an endpoint",
+        "operationId": "CreateJobInstance",
+        "requestBody": {
+          "description": "Required data to assign a job definition to a target object",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/JobInstanceForCreation"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Successfully assigned job definition to endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInstance"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing rights for job instance creation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job definition or endpoint can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Gets all job instances",
+        "operationId": "GetJobInstances",
+        "parameters": [
+          {
+            "name": "EndpointType",
+            "in": "query",
+            "description": "Filters result set by type of endpoint the job instance is executed on.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/EndpointType"
+                }
+              ]
+            }
+          },
+          {
+            "name": "LastAction",
+            "in": "query",
+            "description": "Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all job instances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInstancePagedList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/JobInstances/{id}": {
+      "get": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Gets a job instance by id",
+        "operationId": "GetJobInstance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the job instance with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInstance"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A job instance with the specified id does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Deletes a job instance by id",
+        "operationId": "DeleteJobInstance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Job instance successfully deleted or does not exist"
+          },
+          "403": {
+            "description": "Assign job rights are missing for either endpoint or job",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/JobInstances/{id}/Start": {
+      "post": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Starts a job instance",
+        "operationId": "StartJobInstance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Starts a job instance"
+          },
+          "403": {
+            "description": "Missing rights for starting a job instance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job instance can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/JobInstances/{id}/Stop": {
+      "post": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Stops a job instance",
+        "operationId": "StopJobInstance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Stops a job instance"
+          },
+          "403": {
+            "description": "Missing rights for stopping a job instance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job instance can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/JobInstances/{id}/Resume": {
+      "post": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Resumes a job instance for windows devices",
+        "operationId": "ResumeJobInstance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Resumes a job instance"
+          },
+          "403": {
+            "description": "Missing rights for resuming a job instance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job instance can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/JobDefinitions/{jobDefinitionId}/JobInstances": {
+      "get": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Gets all job instances by job definition id",
+        "operationId": "GetJobInstancesByJobDefinitionId",
+        "parameters": [
+          {
+            "name": "jobDefinitionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "EndpointType",
+            "in": "query",
+            "description": "Filters result set by type of endpoint the job instance is executed on.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/EndpointType"
+                }
+              ]
+            }
+          },
+          {
+            "name": "LastAction",
+            "in": "query",
+            "description": "Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the job instances with the specified job definition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job definition can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/Endpoints/{endpointId}/JobInstances": {
+      "get": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Gets all job instances assigned to a specific endpoint",
+        "operationId": "GetJobInstancesByEndpointId",
+        "parameters": [
+          {
+            "name": "endpointId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "LastAction",
+            "in": "query",
+            "description": "Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the job instances assigned to the specified endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified endpoint can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/LogicalGroups/{logicalGroupId}/JobInstances": {
+      "get": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Gets all job instances assigned to endpoints contained by a specific logical group",
+        "operationId": "GetJobInstancesByLogicalGroupId",
+        "parameters": [
+          {
+            "name": "logicalGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "JobDefinitionId",
+            "in": "query",
+            "description": "Filters result set by the id of the job definition.",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "LastAction",
+            "in": "query",
+            "description": "Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "includeSubfolders",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the job instances assigned to endpoints contained by a specific logical group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified logical group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/LogicalGroups/{logicalGroupId}/AssignJobDefinition": {
+      "post": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Assigns a job definition to endpoints contained by the specified logical group",
+        "operationId": "AssignJobDefinitionToLogicalGroup",
+        "parameters": [
+          {
+            "name": "logicalGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Required data to assign a job definition to a target object",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AssignJobDefinitionRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Group assignment fully or partially succeeded. Failed assignments may be listed in the response body with reasons for the error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing rights for job instance creation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job definition or logical group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/StaticGroups/{staticGroupId}/JobInstances": {
+      "get": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Gets all job instances assigned to endpoints contained by a specific static group",
+        "operationId": "GetJobInstancesByStaticGroupId",
+        "parameters": [
+          {
+            "name": "staticGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "JobDefinitionId",
+            "in": "query",
+            "description": "Filters result set by the id of the job definition.",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "LastAction",
+            "in": "query",
+            "description": "Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the job instances assigned to endpoints contained by a specific static group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified static group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/StaticGroups/{staticGroupId}/AssignJobDefinition": {
+      "post": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Assigns a job definition to endpoints contained by the specified static group",
+        "operationId": "AssignJobDefinitionToStaticGroup",
+        "parameters": [
+          {
+            "name": "staticGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Required data to assign a job definition to a target object",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AssignJobDefinitionRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Group assignment fully or partially succeeded. Failed assignments may be listed in the response body with reasons for the error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing rights for job instance creation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job definition or static group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/DynamicGroups/{dynamicGroupId}/JobInstances": {
+      "get": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Gets all job instances assigned to endpoints contained by a specific dynamic group",
+        "operationId": "GetJobInstancesByDynamicGroupId",
+        "parameters": [
+          {
+            "name": "dynamicGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "JobDefinitionId",
+            "in": "query",
+            "description": "Filters result set by the id of the job definition.",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "LastAction",
+            "in": "query",
+            "description": "Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the job instances assigned to endpoints contained by a specific dynamic group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified dynamic group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/DynamicGroups/{dynamicGroupId}/AssignJobDefinition": {
+      "post": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Assigns a job definition to endpoints contained by the specified dynamic group",
+        "operationId": "AssignJobDefinitionToWindowsDynamicGroup",
+        "parameters": [
+          {
+            "name": "dynamicGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Required data to assign a job definition to a target object",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AssignJobDefinitionRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Group assignment fully or partially succeeded. Failed assignments may be listed in the response body with reasons for the error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing rights for job instance creation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job definition or dynamic group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/JobInstances": {
+      "get": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Gets all job instances assigned to endpoints contained by a specific universal dynamic group",
+        "operationId": "GetJobInstancesByUniversalDynamicGroupId",
+        "parameters": [
+          {
+            "name": "universalDynamicGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "JobDefinitionId",
+            "in": "query",
+            "description": "Filters result set by the id of the job definition.",
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "LastAction",
+            "in": "query",
+            "description": "Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the job instances assigned to endpoints contained by a specific universal dynamic group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified universal dynamic group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/AssignJobDefinition": {
+      "post": {
+        "tags": [
+          "JobInstances"
+        ],
+        "summary": "Assigns a job definition to endpoints contained by the specified universal dynamic group",
+        "operationId": "AssignJobDefinitionToUniversalDynamicGroup",
+        "parameters": [
+          {
+            "name": "universalDynamicGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Required data to assign a job definition to a target object",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/AssignJobDefinitionRequest"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "207": {
+            "description": "Group assignment fully or partially succeeded. Failed assignments may be listed in the response body with reasons for the error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing rights for job instance creation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job definition or universal dynamic group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/KioskReleases": {
+      "get": {
+        "tags": [
+          "KioskReleases"
+        ],
+        "summary": "Gets all kiosk releases",
+        "operationId": "GetKioskReleases",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are AssignmentTarget.Name or JobDefinition.Name (e.g. JobDefinition.Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are AssignmentTarget.Name, JobDefinition.Name, JobDefinition.DisplayName and JobDefinition.Category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the requested kiosk releases",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KioskReleasePagedList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "KioskReleases"
+        ],
+        "summary": "Assigns a job definition to a target object. This can be an AD object, a logical group or an endpoint.The target is therefore able to login at baramundi Kiosk portal as a user or a device and choose the assigned job definition for execution on a specific endpoint.For kiosk release assignment JobAssignTarget rights on the job definition and SystemOrAdObjectAssignJob rights on the assignment target are required.",
+        "operationId": "CreateKioskRelease",
+        "requestBody": {
+          "description": "The kiosk release to be created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/KioskReleaseForCreation"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Creates a kiosk release object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KioskRelease"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing rights for kiosk release creation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job definition or target can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/KioskReleases/{id}": {
+      "get": {
+        "tags": [
+          "KioskReleases"
+        ],
+        "summary": "Gets an assigned kiosk release by id",
+        "operationId": "GetKioskRelease",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The kiosk release identifier",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the requested kiosk release",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KioskRelease"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The requested kiosk release can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "KioskReleases"
+        ],
+        "summary": "Withdraws a kiosk release",
+        "operationId": "WithdrawKioskRelease",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The identifier of the kiosk release to be withdrawn",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Withdraws the specified kiosk release"
+          },
+          "403": {
+            "description": "Missing rights for kiosk release deletion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/ADObjects/{adObjectId}/KioskReleases": {
+      "get": {
+        "tags": [
+          "KioskReleases"
+        ],
+        "summary": "Gets all kiosk releases assigned to a specific ad user",
+        "operationId": "GetKioskReleasesByAdObjectId",
+        "parameters": [
+          {
+            "name": "adObjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are AssignmentTarget.Name or JobDefinition.Name (e.g. JobDefinition.Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are AssignmentTarget.Name, JobDefinition.Name, JobDefinition.DisplayName and JobDefinition.Category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the kiosk releases assigned to the specified user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KioskReleasePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified AD object can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/JobDefinitions/{jobDefinitionId}/KioskReleases": {
+      "get": {
+        "tags": [
+          "KioskReleases"
+        ],
+        "summary": "Gets all kiosk releases assigned to a specific job definition",
+        "operationId": "GetKioskReleasesByJobDefinitionId",
+        "parameters": [
+          {
+            "name": "jobDefinitionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are AssignmentTarget.Name or JobDefinition.Name (e.g. JobDefinition.Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are AssignmentTarget.Name, JobDefinition.Name, JobDefinition.DisplayName and JobDefinition.Category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the kiosk releases assigned to the specified job definition",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KioskReleasePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job definition can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/Endpoints/{endpointId}/KioskReleases": {
+      "get": {
+        "tags": [
+          "KioskReleases"
+        ],
+        "summary": "Gets all kiosk releases assigned to a specific endpoint",
+        "operationId": "GetKioskReleasesByEndpointId",
+        "parameters": [
+          {
+            "name": "endpointId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are AssignmentTarget.Name or JobDefinition.Name (e.g. JobDefinition.Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are AssignmentTarget.Name, JobDefinition.Name, JobDefinition.DisplayName and JobDefinition.Category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the kiosk releases assigned to the specified endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KioskReleasePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified endpoint can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/LogicalGroups/{logicalGroupId}/KioskReleases": {
+      "get": {
+        "tags": [
+          "KioskReleases"
+        ],
+        "summary": "Gets all kiosk releases assigned to a specific logical group",
+        "operationId": "GetKioskReleasesByLogicalGroupId",
+        "parameters": [
+          {
+            "name": "logicalGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are AssignmentTarget.Name or JobDefinition.Name (e.g. JobDefinition.Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are AssignmentTarget.Name, JobDefinition.Name, JobDefinition.DisplayName and JobDefinition.Category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the kiosk releases assigned to the specified logical group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KioskReleasePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified logical group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssignJobDefinitionRequest": {
+        "required": [
+          "jobDefinitionId"
+        ],
+        "type": "object",
+        "properties": {
+          "jobDefinitionId": {
+            "type": "string",
+            "description": "The id of the job definition which should be assigned",
+            "format": "guid"
+          },
+          "startIfAlreadyAssigned": {
+            "type": "boolean",
+            "description": "If the job definition is already assigned to an endpoint, the existing job instance will be started directly after request is processed"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssignmentTargetType": {
+        "enum": [
+          "ADObject",
+          "AndroidEndpoint",
+          "IosEndpoint",
+          "LogicalGroup",
+          "MacEndpoint",
+          "WindowsEndpoint"
+        ],
+        "type": "string"
+      },
+      "EndpointType": {
+        "enum": [
+          "WindowsEndpoint",
+          "AndroidEndpoint",
+          "IOSEndpoint",
+          "MacEndpoint",
+          "NetworkEndpoint",
+          "IndustrialEndpoint",
+          "LinuxEndpoint"
+        ],
+        "type": "string"
+      },
+      "EverydayValidity": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ValidityPeriodDefinition"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "validityPeriods": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "Folder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the folder",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the folder"
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the folder",
+            "nullable": true
+          },
+          "parentId": {
+            "type": "string",
+            "description": "The id of the parent folder",
+            "format": "guid"
+          },
+          "parent": {
+            "type": "string",
+            "description": "The name of the parent folder"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FolderForCreation": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "The name of the folder"
+          },
+          "parentId": {
+            "type": "string",
+            "description": "The parent of the folder",
+            "format": "guid",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the folder",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FolderPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Folder"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "IndividualWeekdayValidity": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ValidityPeriodDefinition"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "monday": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              },
+              "tuesday": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              },
+              "wednesday": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              },
+              "thursday": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              },
+              "friday": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              },
+              "saturday": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              },
+              "sunday": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "JobDefinition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the job definition",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the job definition"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "The display name of the job definition",
+            "nullable": true
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobDefinitionType"
+              }
+            ],
+            "description": "The type of the job definition"
+          },
+          "folderId": {
+            "type": "string",
+            "description": "The id of the parent folder",
+            "format": "guid"
+          },
+          "folder": {
+            "type": "string",
+            "description": "The name of the parent folder"
+          },
+          "category": {
+            "type": "string",
+            "description": "The category of the job definition",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the job definition",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the job definition",
+            "nullable": true
+          },
+          "validity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobValidity"
+              }
+            ],
+            "description": "The time frame in which the job can be executed",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JobDefinitionPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobDefinition"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JobDefinitionType": {
+        "enum": [
+          "WindowsJobDefinition",
+          "MacOSAndMobileJobDefinition",
+          "NetworkAndOTDeviceJobDefinition"
+        ],
+        "type": "string"
+      },
+      "JobInstance": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the job instance",
+            "format": "guid"
+          },
+          "jobDefinitionId": {
+            "type": "string",
+            "description": "The id of the job definition",
+            "format": "guid"
+          },
+          "jobDefinitionName": {
+            "type": "string",
+            "description": "The name of the job definition"
+          },
+          "jobDefinitionDisplayName": {
+            "type": "string",
+            "description": "The display name of the job definition",
+            "nullable": true
+          },
+          "jobDefinitionType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobDefinitionType"
+              }
+            ],
+            "description": "The type of the job definition"
+          },
+          "endpointId": {
+            "type": "string",
+            "description": "The id of the endpoint the job definition is executed on",
+            "format": "guid"
+          },
+          "endpointName": {
+            "type": "string",
+            "description": "The name of the endpoint the job definition is executed on"
+          },
+          "endpointType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EndpointType"
+              }
+            ],
+            "description": "The type of the endpoint the job definition is executed on"
+          },
+          "initiator": {
+            "type": "string",
+            "description": "The initiator of the job instance",
+            "nullable": true
+          },
+          "start": {
+            "type": "string",
+            "description": "The start time of the current job instance execution",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastAction": {
+            "type": "string",
+            "description": "The time of the last action of the current job instance execution",
+            "format": "date-time",
+            "nullable": true
+          },
+          "nextExecution": {
+            "type": "string",
+            "description": "The time of the last action of the current job instance execution",
+            "format": "date-time",
+            "nullable": true
+          },
+          "successfulExecutions": {
+            "type": "integer",
+            "description": "The amount of successful executions of the job instance",
+            "format": "int32"
+          },
+          "erroneousExecutions": {
+            "type": "integer",
+            "description": "The amount of erroneous executions of the job instance",
+            "format": "int32"
+          },
+          "retries": {
+            "type": "integer",
+            "description": "The amount of retries of the job instance",
+            "format": "int32"
+          },
+          "delays": {
+            "type": "integer",
+            "description": "The amount of user driven delays of the job instance",
+            "format": "int32"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/State"
+              }
+            ],
+            "description": "Current state of the job instance"
+          },
+          "stateDescription": {
+            "type": "string",
+            "description": "Further information to the job instance's current state",
+            "nullable": true
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobInstanceStep"
+            },
+            "description": "The steps of the job instance containing the tasks to be executed on the endpoint"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JobInstanceForCreation": {
+        "required": [
+          "endpointId",
+          "jobDefinitionId"
+        ],
+        "type": "object",
+        "properties": {
+          "jobDefinitionId": {
+            "type": "string",
+            "description": "The id of the job definition",
+            "format": "guid"
+          },
+          "endpointId": {
+            "type": "string",
+            "description": "The id of the endpoint the job definition is executed on",
+            "format": "guid"
+          },
+          "startIfAlreadyAssigned": {
+            "type": "boolean",
+            "description": "If the job definition is already assigned to an endpoint, the existing job instance will be started directly after request is processed"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JobInstancePagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobInstance"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JobInstanceStep": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobInstanceStepType"
+              }
+            ],
+            "description": "The type of the job step"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the job step",
+            "nullable": true
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/State"
+              }
+            ],
+            "description": "Current state of the job step"
+          },
+          "stateDescription": {
+            "type": "string",
+            "description": "Further information to the job instance's current state",
+            "nullable": true
+          },
+          "lastAction": {
+            "type": "string",
+            "description": "The time of the last action of the job instance step",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "JobInstanceStepType": {
+        "enum": [
+          "Unknown",
+          "WindowsCloningBackup",
+          "WindowsApplicationInstallation",
+          "WindowsApplicationUninstall",
+          "WindowsInventory",
+          "WindowsManagedSoftware",
+          "WindowsPXEBoot",
+          "WindowsOperatingSystemInstallation",
+          "WindowsCloningImaging",
+          "WindowsCloningSysprep",
+          "WindowsWipeHardDisk",
+          "WindowsPersonalBackup",
+          "WindowsPersonalRestore",
+          "WindowsVolumeBackup",
+          "WindowsVolumeRestore",
+          "WindowsApplyEnergyPolicy",
+          "WindowsServerSideAction",
+          "WindowsComplianceScan",
+          "WindowsNetworkScan",
+          "WindowsBitLockerConfigureOperatingSystemVolumeEncryption",
+          "WindowsBitLockerWaitForDataVolumeEncryptionPreconditions",
+          "WindowsBitLockerStartDataVolumeEncryption",
+          "WindowsBitLockerStartOperatingSystemVolumeEncryption",
+          "WindowsBitLockerTurnOff",
+          "WindowsBitLockerTurnOnNetworkUnlock",
+          "WindowsBitLockerTurnOffNetworkUnlock",
+          "WindowsMicrosoftUpdateInventory",
+          "WindowsMicrosoftUpdateInstallation",
+          "WindowsMicrosoftUpdateUninstall",
+          "WindowsMicrosoftDefenderDefinitionsUpdate",
+          "WindowsMicrosoftDefenderScan",
+          "MacOsAndMobileApplicationExecute",
+          "MacOsAndMobileApplicationInstallation",
+          "MacOsAndMobileApplicationUninstall",
+          "MacOsAndMobileApplicationConfigure",
+          "MacOsAndMobileApplicationRemoveConfiguration",
+          "MacOsAndMobileHardwareInventory",
+          "MacOsAndMobileLock",
+          "MacOsAndMobileProfileInstall",
+          "MacOsAndMobileProfileUninstall",
+          "MacOsAndMobileSoftwareInventory",
+          "MacOsAndMobileUpdateApps",
+          "MacOsAndMobileSSHExecution",
+          "MacOsAndMobileUnlock",
+          "MacOsAndMobileWait",
+          "MacOsAndMobileWipe",
+          "MacOsAndMobileServerSideAction",
+          "MacOsAndMobileOperatingSystemUpdate",
+          "MacOsAndMobileManageLostMode",
+          "MacOsAndMobileExecuteCommand",
+          "MacOsAndMobileManageDedicatedDeviceMode",
+          "MacOsAndMobileMacSSHEnrollment",
+          "NetworkAndOTDeviceInventoryExecute",
+          "NetworkAndOTDeviceInventoryImport",
+          "NetworkAndOTDeviceInventoryLoadCpe",
+          "NetworkAndOTDeviceVulnerabilityEvaluate",
+          "NetworkAndOTDeviceSSHMiniInventory",
+          "LinuxAndOTScriptExecution",
+          "WindowsMicrosoftUpgradeInstallation"
+        ],
+        "type": "string"
+      },
+      "JobValidity": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "The start time from which the job can be exeuted",
+            "format": "date-time",
+            "nullable": true
+          },
+          "end": {
+            "type": "string",
+            "description": "The end time until which the job can be exeuted",
+            "format": "date-time",
+            "nullable": true
+          },
+          "validityPeriods": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/WeekdayWeekendValidity"
+              },
+              {
+                "$ref": "#/components/schemas/IndividualWeekdayValidity"
+              },
+              {
+                "$ref": "#/components/schemas/EverydayValidity"
+              }
+            ],
+            "description": "The time periods during which the job can be exeuted",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "The time frame in which the job can be executed"
+      },
+      "JsonPatchDocument": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Operation"
+        },
+        "description": "Array of operations to perform"
+      },
+      "KioskRelease": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the kiosk release",
+            "format": "guid"
+          },
+          "assignmentTargetId": {
+            "type": "string",
+            "description": "The id of the object the job definition was assigned to",
+            "format": "guid"
+          },
+          "assignmentTargetName": {
+            "type": "string",
+            "description": "The name of the object the job definition was assigned to"
+          },
+          "assignmentTargetType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AssignmentTargetType"
+              }
+            ],
+            "description": "The type of the object the job definition was assigned to"
+          },
+          "jobDefinitionId": {
+            "type": "string",
+            "description": "The id of the job definition",
+            "format": "guid"
+          },
+          "jobDefinitionName": {
+            "type": "string",
+            "description": "The name of the job definition"
+          },
+          "jobDefinitionDisplayName": {
+            "type": "string",
+            "description": "The display name of the job definition",
+            "nullable": true
+          },
+          "jobDefinitionCategory": {
+            "type": "string",
+            "description": "The category of the job definition",
+            "nullable": true
+          },
+          "jobDefinitionSupportedPlatforms": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The supported platforms on which the job definition can be executed. Possible values are Windows, Mac and Mobile."
+          }
+        },
+        "additionalProperties": false
+      },
+      "KioskReleaseForCreation": {
+        "required": [
+          "assignmentTargetId",
+          "jobDefinitionId"
+        ],
+        "type": "object",
+        "properties": {
+          "assignmentTargetId": {
+            "type": "string",
+            "format": "guid"
+          },
+          "jobDefinitionId": {
+            "type": "string",
+            "format": "guid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "KioskReleasePagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/KioskRelease"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Operation": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "OperationType": {
+        "enum": [
+          "Add",
+          "Remove",
+          "Replace",
+          "Move",
+          "Copy",
+          "Test",
+          "Invalid"
+        ],
+        "type": "string"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "State": {
+        "enum": [
+          "Queued",
+          "Running",
+          "FinishedSuccessfully",
+          "FinishedWithError",
+          "Cancelled",
+          "Rescheduled",
+          "RescheduledWithError",
+          "WaitingForUser",
+          "RequirementsNotMet",
+          "Downloading",
+          "SkippedDueToIncompatibility",
+          "Delayed",
+          "Assigned",
+          "Canceling",
+          "MaintenanceWindow"
+        ],
+        "type": "string"
+      },
+      "ValidityPeriod": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "description": "Start of the period",
+            "format": "time",
+            "nullable": true
+          },
+          "end": {
+            "type": "string",
+            "description": "End of the period",
+            "format": "time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Specifies a period during which the job can be executed"
+      },
+      "ValidityPeriodDefinition": {
+        "required": [
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ValidityPeriodDefinitionType"
+              }
+            ],
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false,
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "WeekdayWeekend": "#/components/schemas/WeekdayWeekendValidity",
+            "IndividualWeekday": "#/components/schemas/IndividualWeekdayValidity",
+            "Everyday": "#/components/schemas/EverydayValidity"
+          }
+        }
+      },
+      "ValidityPeriodDefinitionType": {
+        "enum": [
+          "WeekdayWeekend",
+          "IndividualWeekday",
+          "Everyday"
+        ],
+        "type": "string"
+      },
+      "WeekdayWeekendValidity": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ValidityPeriodDefinition"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "weekdays": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              },
+              "weekends": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ValidityPeriod"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "description": "Input your username and password to access this API",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "KioskReleases",
+      "description": "Kiosk releases enable self administered job instance executions within the baramundi Kiosk portal started by logged in devices or users. Kiosk releases always consist of a job definition and an assigned target object which can be an AD object, a logical group or an endpoint."
+    },
+    {
+      "name": "JobDefinitions",
+      "description": "Job definitions describe the tasks to be executed on endpoints."
+    },
+    {
+      "name": "JobInstances",
+      "description": "Job instances describe the execution of a job definition on an endpoint."
+    },
+    {
+      "name": "Folders",
+      "description": "Provides the creation and editing of folders and their basic properties."
+    }
+  ]
+}

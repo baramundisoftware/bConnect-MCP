@@ -1,0 +1,2889 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "bConnect Server Management API",
+    "description": "The methods offered here provide support for configurations of the baramundi Management Server.<br><b>Well known GUIDs:</b> [Administration profile: 41601841-0DA2-4EF1-B810-D72E6231CF1B ]\n\nThe bConnect V2 PowerShell module is available from the <a target=\"_blank\" href=\"https://www.powershellgallery.com/packages/bConnectV2\" rel=\"noopener noreferrer\" class=\"link\"><span class=\"url\">PowerShell Gallery</span></a>.",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "https://bms.example.com:444/bconnect/servermanagement"
+    }
+  ],
+  "paths": {
+    "/v2.0/ApiKeys": {
+      "get": {
+        "tags": [
+          "ApiKeys"
+        ],
+        "summary": "Get API keys",
+        "description": "Powershell function: `Get-bCServermanagementApiKeys`",
+        "operationId": "GetApiKeys",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all API keys",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKey"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementApiKeys"
+      }
+    },
+    "/v2.0/CloudConnectors": {
+      "get": {
+        "tags": [
+          "CloudConnectors"
+        ],
+        "summary": "Get all cloud connectors",
+        "description": "Powershell function: `Get-bCServermanagementCloudConnectors`",
+        "operationId": "GetCloudConnectors",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all cloud connectors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CloudConnector"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementCloudConnectors"
+      }
+    },
+    "/v2.0/Dips": {
+      "get": {
+        "tags": [
+          "Dips"
+        ],
+        "summary": "Get DIP information",
+        "description": "Powershell function: `Get-bCServermanagementDipStatus`",
+        "operationId": "GetDipStatus",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns info about the DIPs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DipInfo"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing read rights for DIP management",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementDipStatus"
+      }
+    },
+    "/v2.0/Dips/SimulateMSWCleanup": {
+      "post": {
+        "tags": [
+          "Dips"
+        ],
+        "summary": "Simulates the cleanup of the Master DIP regarding managed software files",
+        "description": "Powershell function: `Invoke-bCServermanagementSimulateMSWCleanup`",
+        "operationId": "SimulateMSWCleanup",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns a list of files that would be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupSimulationResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing modify rights for Managed Software settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Simulation or cleanup is already running",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Invoke-bCServermanagementSimulateMSWCleanup"
+      }
+    },
+    "/v2.0/Dips/MSWCleanup": {
+      "post": {
+        "tags": [
+          "Dips"
+        ],
+        "summary": "Performs cleanup of the Master DIP regarding managed software files",
+        "description": "Powershell function: `Invoke-bCServermanagementMSWCleanup`",
+        "operationId": "MSWCleanup",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Performs cleanup and returns a value indicating the success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing modify rights for Managed Software settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Simulation or cleanup is already running",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Invoke-bCServermanagementMSWCleanup"
+      }
+    },
+    "/v2.0/DownloadJobs": {
+      "get": {
+        "tags": [
+          "DownloadJobs"
+        ],
+        "summary": "Gets all download jobs",
+        "description": "Powershell function: `Get-bCServermanagementDownloadJobs`",
+        "operationId": "GetDownloadJobs",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or LastExecution (e. g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are Name and LocalPathName.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters result by matching the exact value against Name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "StateValue",
+            "in": "query",
+            "description": "Filters result by matching StateValue.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/DownloadJobStatusValue"
+                }
+              ]
+            }
+          },
+          {
+            "name": "LastExecution",
+            "in": "query",
+            "description": "Filters on lastExecution. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all download jobs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadJobPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementDownloadJobs",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/DownloadJobs/{id}": {
+      "get": {
+        "tags": [
+          "DownloadJobs"
+        ],
+        "summary": "Gets a download job by id",
+        "description": "Powershell function: `Get-bCServermanagementDownloadJob`",
+        "operationId": "GetDownloadJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the download job with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadJob"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The download job with the specified id does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementDownloadJob"
+      }
+    },
+    "/v2.0/Gateway": {
+      "get": {
+        "tags": [
+          "Gateway"
+        ],
+        "summary": "Get gateway information",
+        "description": "Powershell function: `Get-bCServermanagementGateway`",
+        "operationId": "GetGateway",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns info about the gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Gateway"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing read rights for gateway configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementGateway"
+      }
+    },
+    "/v2.0/ManagementServer": {
+      "get": {
+        "tags": [
+          "ManagementServer"
+        ],
+        "summary": "Get information about the management server",
+        "description": "Powershell function: `Get-bCServermanagementManagementServer`",
+        "operationId": "GetManagementServer",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns info about the management server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagementServer"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementManagementServer"
+      }
+    },
+    "/v2.0/Restart": {
+      "post": {
+        "tags": [
+          "ManagementServer"
+        ],
+        "summary": "Restart the management server. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)",
+        "description": "Powershell function: `Restart-bCServermanagementBaramundiManagementServer`",
+        "operationId": "RestartBaramundiManagementServer",
+        "parameters": [
+          {
+            "name": "utcScheduleRestartTime",
+            "in": "query",
+            "description": "Date values have to be specified in ISO 8601 format (e.g. 2025-07-28T08:01:03.000Z).",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Restart time of the management server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing rights for controlling the management server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Restart-bCServermanagementBaramundiManagementServer"
+      }
+    },
+    "/v2.0/CancelScheduledRestart": {
+      "post": {
+        "tags": [
+          "ManagementServer"
+        ],
+        "summary": "Cancel the scheduled restart of the management server. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)",
+        "description": "Powershell function: `Stop-bCServermanagementScheduledRestartBaramundiManagementServer`",
+        "operationId": "CancelScheduledRestartBaramundiManagementServer",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Scheduled restart canceled."
+          },
+          "403": {
+            "description": "Missing rights for controlling the management server.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Stop-bCServermanagementScheduledRestartBaramundiManagementServer"
+      }
+    },
+    "/v2.0/Microservices": {
+      "get": {
+        "tags": [
+          "Microservices"
+        ],
+        "summary": "Get all microservices",
+        "description": "Powershell function: `Get-bCServermanagementMicroservices`",
+        "operationId": "GetMicroservices",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all microservices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Microservice"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementMicroservices"
+      }
+    },
+    "/v2.0/Microservices/{id}": {
+      "get": {
+        "tags": [
+          "Microservices"
+        ],
+        "summary": "Get a microservice",
+        "description": "Powershell function: `Get-bCServermanagementMicroservice`",
+        "operationId": "GetMicroservice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Data of the specified microservice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Microservice"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Microservice not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementMicroservice"
+      }
+    },
+    "/v2.0/Microservices/{id}/Start": {
+      "post": {
+        "tags": [
+          "Microservices"
+        ],
+        "summary": "Starts microservice. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)",
+        "description": "Powershell function: `Start-bCServermanagementMicroservice`",
+        "operationId": "StartMicroservice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Microservice starting."
+          },
+          "403": {
+            "description": "Missing rights for starting a microservice.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Microservice not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Start-bCServermanagementMicroservice"
+      }
+    },
+    "/v2.0/Microservices/{id}/Stop": {
+      "post": {
+        "tags": [
+          "Microservices"
+        ],
+        "summary": "Stops a microservice. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)",
+        "description": "Powershell function: `Stop-bCServermanagementMicroservice`",
+        "operationId": "StopMicroservice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Microservice stopped."
+          },
+          "403": {
+            "description": "Missing rights for stopping a microservice.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Microservice not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Stop-bCServermanagementMicroservice"
+      }
+    },
+    "/v2.0/Microservices/{id}/Restart": {
+      "post": {
+        "tags": [
+          "Microservices"
+        ],
+        "summary": "Restart a microservice. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)",
+        "description": "Powershell function: `Restart-bCServermanagementMicroservice`",
+        "operationId": "RestartMicroservice",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Microservice restarting."
+          },
+          "403": {
+            "description": "Missing rights for restarting a microservice.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Microservice not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Restart-bCServermanagementMicroservice"
+      }
+    },
+    "/v2.0/Objects/{id}/Rights": {
+      "get": {
+        "tags": [
+          "Objects"
+        ],
+        "summary": "Gets the access rights for an object.",
+        "description": "Powershell function: `Get-bCServermanagementAccessRights`",
+        "operationId": "GetAccessRights",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the access rights for the object with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectPermissions"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "An object with the specified id does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementAccessRights"
+      }
+    },
+    "/v2.0/Objects/{id}": {
+      "patch": {
+        "tags": [
+          "Objects"
+        ],
+        "summary": "Updates the modifiable values of the specified object permission",
+        "description": "Powershell function: `Update-bCServermanagementObjectPermission`",
+        "operationId": "UpdateObjectPermission",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable object permission properties.\n\nInitialize patch operations in PowerShell with `Initialize-bCPatchOperation`",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              },
+              "example": [{"value":"false","path":"/InheritRights","op":"replace"},{"value":{"securityProfileId":"fa6e53c2-b27a-4eef-b4f7-2ccffd0110e5","permissions":["Read","JobControl"]},"path":"/SecurityProfilePermissions/-","op":"add"},{"value":null,"path":"/SecurityProfilePermissions/fa6e53c2-b27a-4eef-b4f7-2ccffd0110e5","op":"remove"},{"value":"Modify","path":"/SecurityProfilePermissions/fa6e53c2-b27a-4eef-b4f7-2ccffd0110e5/Permissions/-","op":"add"},{"value":["Read","JobControl"],"path":"/SecurityProfilePermissions/fa6e53c2-b27a-4eef-b4f7-2ccffd0110e5/Permissions","op":"replace"},{"value":null,"path":"/SecurityProfilePermissions/fa6e53c2-b27a-4eef-b4f7-2ccffd0110e5/Permissions/Modify","op":"remove"}]
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "The specified values to be modified are invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the new values of the object permission with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectPermissions"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission to modify the values of the object permission with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified object permission can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Update-bCServermanagementObjectPermission"
+      }
+    },
+    "/v2.0/PxeRelays": {
+      "get": {
+        "tags": [
+          "PxeRelays"
+        ],
+        "summary": "Get all PxE Relays",
+        "description": "Powershell function: `Get-bCServermanagementPxeRelays`",
+        "operationId": "GetPxeRelays",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all PxE Relays",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PxeRelay"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementPxeRelays"
+      }
+    },
+    "/v2.0/SecurityGroups": {
+      "get": {
+        "tags": [
+          "SecurityGroups"
+        ],
+        "summary": "Gets all security groups",
+        "description": "Powershell function: `Get-bCServermanagementSecurityGroups`",
+        "operationId": "GetSecurityGroups",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br/>Only Name is supported (e. g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are Name and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all security groups",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityGroupPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementSecurityGroups",
+        "x-bConnect-returns-paged-list": true
+      },
+      "post": {
+        "tags": [
+          "SecurityGroups"
+        ],
+        "summary": "Creates a security group according to the specified properties",
+        "description": "Powershell function: `New-bCServermanagementSecurityGroup`",
+        "operationId": "CreateSecurityGroup",
+        "requestBody": {
+          "description": "The security group to be created\n\nInitialize in PowerShell with `Initialize-bCServermanagementSecurityGroupForCreation`",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SecurityGroupForCreation"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "One or more validation errors occured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Security group successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityGroup"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Object creation rights are missing for parent object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A value was tried to be set twice where duplicates are not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "New-bCServermanagementSecurityGroup"
+      }
+    },
+    "/v2.0/SecurityGroups/{id}": {
+      "get": {
+        "tags": [
+          "SecurityGroups"
+        ],
+        "summary": "Gets a security group by id",
+        "description": "Powershell function: `Get-bCServermanagementSecurityGroup`",
+        "operationId": "GetSecurityGroup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the security group with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityGroup"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A security group with the specified id does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementSecurityGroup"
+      },
+      "delete": {
+        "tags": [
+          "SecurityGroups"
+        ],
+        "summary": "Deletes a security group by id",
+        "description": "Powershell function: `Remove-bCServermanagementSecurityGroup`",
+        "operationId": "DeleteSecurityGroup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Security group successfully deleted or does not exist"
+          },
+          "403": {
+            "description": "Delete rights are missing for security group",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Remove-bCServermanagementSecurityGroup"
+      },
+      "patch": {
+        "tags": [
+          "SecurityGroups"
+        ],
+        "summary": "Updates the modifiable values of the specified security group",
+        "description": "Powershell function: `Update-bCServermanagementSecurityGroup`",
+        "operationId": "UpdateSecurityGroup",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security group properties.\n\nInitialize patch operations in PowerShell with `Initialize-bCPatchOperation`",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              },
+              "example": [{"value":"user@domain.com","path":"/Name","op":"replace"},{"value":"54B8F337-F4DE-4413-8B40-9EE6221D8792","path":"/ProfileIds/-","op":"add"},{"value":null,"path":"/ProfileIds/1","op":"remove"},{"value":null,"path":"/ProfileIds/0B7D304A-1B15-49EF-89FE-FDA03FF6437E","op":"remove"}]
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "The specified values to be modified are invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the new values of the security group with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityGroup"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission to modify the values of the security group with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified security group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A value was tried to be set twice where duplicates are not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Update-bCServermanagementSecurityGroup"
+      }
+    },
+    "/v2.0/SecurityProfiles": {
+      "get": {
+        "tags": [
+          "SecurityProfiles"
+        ],
+        "summary": "Gets all security profiles",
+        "description": "Powershell function: `Get-bCServermanagementSecurityProfiles`",
+        "operationId": "GetSecurityProfiles",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br/>Only Name is supported (e. g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties. Searchable values are Name and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all security profiles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityProfilePagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementSecurityProfiles",
+        "x-bConnect-returns-paged-list": true
+      },
+      "post": {
+        "tags": [
+          "SecurityProfiles"
+        ],
+        "summary": "Creates a security profile according to the specified properties",
+        "description": "Powershell function: `New-bCServermanagementSecurityProfile`",
+        "operationId": "CreateSecurityProfile",
+        "requestBody": {
+          "description": "The security profile to be created\n\nInitialize in PowerShell with `Initialize-bCServermanagementSecurityProfileForCreation`",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SecurityProfileForCreation"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "One or more validation errors occured",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Security profile successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityProfile"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Object creation rights are missing for parent object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "A value was tried to be set twice where duplicates are not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "New-bCServermanagementSecurityProfile"
+      }
+    },
+    "/v2.0/SecurityProfiles/{id}": {
+      "get": {
+        "tags": [
+          "SecurityProfiles"
+        ],
+        "summary": "Gets a security profile by id",
+        "description": "Powershell function: `Get-bCServermanagementSecurityProfile`",
+        "operationId": "GetSecurityProfile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the security profile with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityProfile"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A security profile with the specified id does not exist or is not visible due to missing read rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementSecurityProfile"
+      },
+      "delete": {
+        "tags": [
+          "SecurityProfiles"
+        ],
+        "summary": "Deletes a security profile by id",
+        "description": "Powershell function: `Remove-bCServermanagementSecurityProfile`",
+        "operationId": "DeleteSecurityProfile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Default security profile 'Administration' can not be deleted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Security profile successfully deleted or does not exist"
+          },
+          "403": {
+            "description": "Delete rights are missing for security profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Remove-bCServermanagementSecurityProfile"
+      },
+      "patch": {
+        "tags": [
+          "SecurityProfiles"
+        ],
+        "summary": "Updates the modifiable values of the specified security profile",
+        "description": "Powershell function: `Update-bCServermanagementSecurityProfile`",
+        "operationId": "UpdateSecurityProfile",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security profile properties.<br>Default security profile 'Administration' can not be modified.\n\nInitialize patch operations in PowerShell with `Initialize-bCPatchOperation`",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              },
+              "example": [{"value":"New name","path":"/Name","op":"replace"},{"value":"New comment","path":"/Comment","op":"replace"},{"value":false,"path":"/DisplayAdministratorIdentities","op":"replace"},{"value":false,"path":"/DisplayEndpointUserIdentities","op":"replace"}]
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "The specified values to be modified are invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the new values of the security profile with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecurityProfile"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission to modify the values of the security profile with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified security profile can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The name must be unique and can not be set twice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Update-bCServermanagementSecurityProfile"
+      }
+    },
+    "/v2.0/VpnAppliance": {
+      "get": {
+        "tags": [
+          "VpnAppliance"
+        ],
+        "summary": "Get VPN Appliance",
+        "description": "Powershell function: `Get-bCServermanagementVpnAppliance`",
+        "operationId": "GetVpnAppliance",
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns info about the VPN Appliance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VpnAppliance"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCServermanagementVpnAppliance"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApiKey": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the API key"
+          },
+          "expirationDate": {
+            "type": "string",
+            "description": "Expiration date",
+            "format": "date"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "If true, API key is active and can be used"
+          },
+          "isAvailableViaGateway": {
+            "type": "boolean",
+            "description": "If true, API key can be used via Gateway"
+          },
+          "securityProfiles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            },
+            "description": "Ids of the security profiles assigned to the API key"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssignedSecurityProfile": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the security profile",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the security profile"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CleanupResult": {
+        "type": "object",
+        "properties": {
+          "wasSuccessful": {
+            "type": "boolean",
+            "description": "Indicates if the cleanup was successful"
+          },
+          "result": {
+            "type": "string",
+            "description": "The result of the cleanup.",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CleanupSimulationResult": {
+        "type": "object",
+        "properties": {
+          "simulationResult": {
+            "type": "string",
+            "description": "The result of the simulated cleanup.",
+            "nullable": true
+          },
+          "filesToDelete": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "A list of all the files that a cleanup would delete."
+          }
+        },
+        "additionalProperties": false
+      },
+      "CloudConnector": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the cloud connector"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceState"
+              }
+            ],
+            "description": "State of the cloud connector"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DailyRepetition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RepetitionDefinition"
+          },
+          {
+            "type": "object",
+            "additionalProperties": false
+          }
+        ]
+      },
+      "DayOfWeek": {
+        "enum": [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "type": "string"
+      },
+      "DipInfo": {
+        "required": [
+          "hostName"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the DIP",
+            "format": "guid"
+          },
+          "hostName": {
+            "type": "string",
+            "description": "The hostname of the DIP"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DipStatus"
+              }
+            ],
+            "description": "The state of the DIP"
+          },
+          "lastUpdate": {
+            "type": "string",
+            "description": "Last state change of the DIP",
+            "format": "date-time",
+            "nullable": true
+          },
+          "details": {
+            "type": "string",
+            "description": "State message of the DIP",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DipStatus": {
+        "enum": [
+          "Unknown",
+          "Idle",
+          "Warning",
+          "Error",
+          "Syncing",
+          "Initializing",
+          "Stopping",
+          "ShuttingDown",
+          "Unresponsive",
+          "CheckingSync"
+        ],
+        "type": "string"
+      },
+      "DownloadJob": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Id of the download job",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the download job"
+          },
+          "interval": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DailyRepetition"
+                },
+                {
+                  "$ref": "#/components/schemas/WeeklyRepetition"
+                }
+              ]
+            },
+            "description": "A list of configured intervals in which the download job is executed"
+          },
+          "lastExecution": {
+            "type": "string",
+            "description": "Last execution time of download job",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastUpdate": {
+            "type": "string",
+            "description": "Time of the last state change of the download job",
+            "format": "date-time",
+            "nullable": true
+          },
+          "stateValue": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DownloadJobStatusValue"
+              }
+            ],
+            "description": "State of the download job"
+          },
+          "stateMessage": {
+            "type": "string",
+            "description": "The message describing the state of the download job",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL of the download job",
+            "nullable": true
+          },
+          "localPathName": {
+            "type": "string",
+            "description": "The local pathname of the download job",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DownloadJobPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DownloadJob"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DownloadJobStatusValue": {
+        "enum": [
+          "Unknown",
+          "Running",
+          "Success",
+          "Error",
+          "RescheduledSuccess",
+          "RescheduledError"
+        ],
+        "type": "string"
+      },
+      "Gateway": {
+        "type": "object",
+        "properties": {
+          "configurationStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GatewayConfigurationStatus"
+              }
+            ]
+          },
+          "availability": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/GatewayAvailability"
+              }
+            ]
+          },
+          "lastContact": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "GatewayAvailability": {
+        "enum": [
+          "Unknown",
+          "Up",
+          "Down"
+        ],
+        "type": "string"
+      },
+      "GatewayConfigurationStatus": {
+        "enum": [
+          "NotConfigured",
+          "Enrolling",
+          "Enrolled",
+          "Error"
+        ],
+        "type": "string"
+      },
+      "JsonPatchDocument": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Operation"
+        },
+        "description": "Array of operations to perform"
+      },
+      "ManagementServer": {
+        "required": [
+          "name",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the management server"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version of the management server"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceState"
+              }
+            ],
+            "description": "State of the management server"
+          },
+          "plannedServerRestartTimes": {
+            "type": "string",
+            "description": "Planned restart time of the management server",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Microservice": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Id of the microservice",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the microservice"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceState"
+              }
+            ],
+            "description": "State of the microservice"
+          },
+          "message": {
+            "type": "string",
+            "description": "State message of the microservice",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ObjectPermissions": {
+        "type": "object",
+        "properties": {
+          "objectId": {
+            "type": "string",
+            "description": "The id of the object",
+            "format": "guid"
+          },
+          "objectName": {
+            "type": "string",
+            "description": "The name of the object"
+          },
+          "inheritRights": {
+            "type": "boolean",
+            "description": "Indicates of the rights are inherited or defined at the object itself"
+          },
+          "securityProfilePermissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SecurityProfilePermissions"
+            },
+            "description": "A list of all security profiles with configured permissions for the object"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Operation": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "OperationType": {
+        "enum": [
+          "Add",
+          "Remove",
+          "Replace",
+          "Move",
+          "Copy",
+          "Test",
+          "Invalid"
+        ],
+        "type": "string"
+      },
+      "Permissions": {
+        "enum": [
+          "Full",
+          "Read",
+          "Modify",
+          "Delete",
+          "CreateFolder",
+          "CreateObject",
+          "JobAssignTarget",
+          "JobControl",
+          "JobEditAutoAssign",
+          "SystemOrAdObjectAssignJob",
+          "SystemRemoteControl",
+          "SystemBitLockerControl",
+          "SystemJobPrioritization",
+          "AutViewCollectedData",
+          "AutConfig",
+          "LicenseManagement",
+          "ArgusCockpit",
+          "LocalAdminUser",
+          "SystemRemoteDeskNoConfirmation"
+        ],
+        "type": "string",
+        "description": "\n\n**Note:** The following values are deprecated and should no longer be used.\n- AutViewCollectedData -> Removed in 26.1. Keep to avoid gaps in enum values. See Commit 86f45dbc and EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details."
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "PxeRelay": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the PXE Relay"
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ServiceState"
+              }
+            ],
+            "description": "State of the PXE Relay"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RepetitionDefinition": {
+        "required": [
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "description": "Time of the repetition",
+            "format": "time"
+          }
+        },
+        "additionalProperties": false,
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "Daily": "#/components/schemas/DailyRepetition",
+            "Weekly": "#/components/schemas/WeeklyRepetition"
+          }
+        }
+      },
+      "SecurityGroup": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the security group",
+            "format": "guid"
+          },
+          "groupName": {
+            "type": "string",
+            "description": "The name of the security group"
+          },
+          "assignedSecurityProfiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignedSecurityProfile"
+            },
+            "description": "The assigned security profiles"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SecurityGroupForCreation": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string",
+            "description": "The name of the security group."
+          },
+          "profiles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "guid"
+            },
+            "description": "Guids of security profiles to assign."
+          }
+        },
+        "additionalProperties": false
+      },
+      "SecurityGroupPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SecurityGroup"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SecurityProfile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the security profile",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the security profile"
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the security profile",
+            "nullable": true
+          },
+          "displayAdministratorIdentities": {
+            "type": "boolean",
+            "description": "Determines if the security profile can see administrative user names"
+          },
+          "displayEndpointUserIdentities": {
+            "type": "boolean",
+            "description": "Determines if the security profile can see end user names"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SecurityProfileForCreation": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "maxLength": 50,
+            "minLength": 1,
+            "type": "string",
+            "description": "The name of the security profile. Only characters supported by the codepage Windows-1252 are allowed."
+          },
+          "comment": {
+            "maxLength": 255,
+            "type": "string",
+            "description": "The comment of the security profile",
+            "nullable": true
+          },
+          "displayAdministratorIdentities": {
+            "type": "boolean",
+            "description": "Determines if the security profile can see administrative user names"
+          },
+          "displayEndpointUserIdentities": {
+            "type": "boolean",
+            "description": "Determines if the security profile can see end user names"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SecurityProfilePagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SecurityProfile"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SecurityProfilePermissions": {
+        "type": "object",
+        "properties": {
+          "securityProfileId": {
+            "type": "string",
+            "description": "The id of the security profile",
+            "format": "guid"
+          },
+          "securityProfileName": {
+            "type": "string",
+            "description": "The name of the security profile"
+          },
+          "permissions": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Permissions"
+            },
+            "description": "A set of permissions of the security profile"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ServiceState": {
+        "enum": [
+          "Unknown",
+          "Stopped",
+          "StoppedNotConfigured",
+          "Starting",
+          "Running",
+          "RunningNotConfigured",
+          "MaintenanceMode",
+          "Warning",
+          "Stopping",
+          "RestartRequired",
+          "NotLicensed",
+          "ExternalNotRequired",
+          "RunningNotLicensed",
+          "RestartPlanned",
+          "WarningConfigurationError"
+        ],
+        "type": "string"
+      },
+      "VpnAppliance": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/VpnApplianceStatus"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "VpnApplianceStatus": {
+        "enum": [
+          "Unknown",
+          "NotConfigured",
+          "Ok",
+          "Unreachable",
+          "ConfigurationOutdated",
+          "Error"
+        ],
+        "type": "string"
+      },
+      "WeeklyRepetition": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/RepetitionDefinition"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "weekdays": {
+                "uniqueItems": true,
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/DayOfWeek"
+                },
+                "description": "A set of days on which the download job will be executed"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "description": "Input your username and password to access this API",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "VpnAppliance",
+      "description": "Manages VPN Appliance."
+    },
+    {
+      "name": "SecurityProfiles",
+      "description": "Manages security profiles information.<br><b>For any changes a server restart is necessary!</b>"
+    },
+    {
+      "name": "SecurityGroups",
+      "description": "Manages security groups information.<br><b>For any changes a server restart is necessary!</b>"
+    },
+    {
+      "name": "PxeRelays",
+      "description": "Manages PxE Relays."
+    },
+    {
+      "name": "Objects",
+      "description": "Manages access rights of objects."
+    },
+    {
+      "name": "Microservices",
+      "description": "Manages microservices."
+    },
+    {
+      "name": "ManagementServer",
+      "description": "Manages the baramundi management server."
+    },
+    {
+      "name": "Gateway",
+      "description": "Manages the gateway."
+    },
+    {
+      "name": "DownloadJobs",
+      "description": "Manages downloadjobs."
+    },
+    {
+      "name": "Dips",
+      "description": "Manages DIPs."
+    },
+    {
+      "name": "CloudConnectors",
+      "description": "Manages cloud connectors."
+    },
+    {
+      "name": "ApiKeys",
+      "description": "Manages API keys."
+    }
+  ]
+}

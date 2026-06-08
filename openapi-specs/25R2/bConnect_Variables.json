@@ -1,0 +1,1649 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "bConnect Variables API",
+    "description": "<p>Variables are an essential part of the baramundi Management Suite (see <a target=\"_blank\" href=\"http://docs.baramundi.com/helpsetid=m_t_configuration&externalid=i_configuration_variables\" rel=\"noopener noreferrer\" class=\"link\"><span class=\"url\"> documentation</span></a>).\r\n\r\nEach variable definition represents a blueprint of an additional property for an object and contains name, type, category and the default value of the property.<br />Once a variable definition is set, each member of the variable definition’s scope(s) (i.e. Android Endpoint) gets an individual variable instance and its default value can be overridden if needed.<br />Thus this additional object information can be used within job executions and custom commands for individual use cases.</p><p>Variable scopes can be legacy (ADObject, Endpoint, LogicalGroup, WindowsApplication and WindowsApplication) or modern (AndroidEndpoint, IndustrialEndpoint, IosEndpoint and NetworkEndpoint). For a variable definition either a single legacy scope or one or multiple modern scopes can be specified. Variable definition scopes can not be changed from a modern scope to a legacy scope and legacy scopes can not be changed at all.</p><p>Variable definition and instance values of type 'Password' can be set like those of other variable types but are always returned as '*****' in order to maintain a high level of security and can only be implicitly accessed during execution of job instances or custom commands.</p>",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "https://bms.example.com:444/bconnect/variables"
+    }
+  ],
+  "paths": {
+    "/v2.0/VariableDefinitions": {
+      "get": {
+        "tags": [
+          "VariableDefinitions"
+        ],
+        "summary": "Gets all variable definitions",
+        "operationId": "GetVariableDefinitions",
+        "parameters": [
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Scope",
+            "in": "query",
+            "description": "Filters results by exactly matching scope.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Scope"
+                }
+              ]
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Category, Type, DefaultValue and Comment (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, Category, DefaultValue and Comment.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all variable definitions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableDefinitionPagedList"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "VariableDefinitions"
+        ],
+        "summary": "Creates a new variable definition which leads to implicit creation of variable instances for all objects within the specified scopes",
+        "operationId": "CreateVariableDefinition",
+        "requestBody": {
+          "description": "The variable definition to be created",
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/VariableDefinitionForCreation"
+                  }
+                ],
+                "description": "A variable definition with describing fields"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Variable definition could not be created due to invalid input data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Variable definition successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableDefinition"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing create object rights for variables configuration node",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Missing read rights for variables configuration node",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The combination of name, category and scope must be unique and can not be set twice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/VariableDefinitions/{id}": {
+      "get": {
+        "tags": [
+          "VariableDefinitions"
+        ],
+        "summary": "Gets a variable definition with the specified id",
+        "operationId": "GetVariableDefinitionById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the variable definition with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableDefinition"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified variable definition can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "VariableDefinitions"
+        ],
+        "summary": "Updates the modifiable values of the specified variable definition",
+        "operationId": "UpdateVariableDefinition",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable definition properties.",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              },
+              "example": [{"value":"New name","path":"/Name","op":"replace"},{"value":"New category","path":"/Category","op":"replace"},{"value":["AndroidEndpoint","IosEndpoint","NetworkEndpoint","IndustrialEndpoint","LinuxEndpoint"],"path":"/Scopes","op":"replace"},{"value":"New default value","path":"/DefaultValue","op":"replace"},{"value":"New comment","path":"/Comment","op":"replace"}]
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "The specified values to be modified are invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the new value of the variable definition with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableDefinition"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission to modify the value of the variable definition with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified variable definition can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The combination of name, category and scope must be unique and can not be set twice",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "VariableDefinitions"
+        ],
+        "summary": "Deletes the variable definition with the specified id",
+        "operationId": "DeleteVariableDefinition",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Variable definition successfully deleted or does not exist"
+          },
+          "403": {
+            "description": "Missing delete rights for variables configuration node",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The variable definition is still in use",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/VariableInstances": {
+      "get": {
+        "tags": [
+          "VariableInstances"
+        ],
+        "summary": "Gets all variable instances",
+        "operationId": "GetVariableInstances",
+        "parameters": [
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Scope",
+            "in": "query",
+            "description": "Filters results by exactly matching scope.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Scope"
+                }
+              ]
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Category, OwnerName and Value (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, Category, OwnerName and Value.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all variable instances",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableInstancePagedList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/VariableInstances/{id}": {
+      "get": {
+        "tags": [
+          "VariableInstances"
+        ],
+        "summary": "Gets the variable instance with the specified id",
+        "operationId": "GetVariableInstanceById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the variable instance with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableInstance"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified variable instance can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "VariableInstances"
+        ],
+        "summary": "Overrides the default value of the specified variable instance. Value can be reset to initial value by setting IsDefault property to true for all endpoint variable instances except windows endpoints.",
+        "operationId": "UpdateVariableInstance",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable instance properties.",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              },
+              "example": [{"value":"New value","path":"/Value","op":"replace"},{"value":"false","path":"/IsDefault","op":"replace"}]
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "The specified value is not suitable for the defined variable type",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the new value of the variable instance with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableInstance"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission to modify the value of the variable instance with the specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified variable instance can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/Endpoints/{endpointId}/VariableInstances": {
+      "get": {
+        "tags": [
+          "VariableInstances"
+        ],
+        "summary": "Gets all variable instances assigned to a specific endpoint",
+        "operationId": "GetVariableInstancesByEndpointId",
+        "parameters": [
+          {
+            "name": "endpointId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Scope",
+            "in": "query",
+            "description": "Filters results by exactly matching scope.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Scope"
+                }
+              ]
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Category, OwnerName and Value (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, Category, OwnerName and Value.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all variable instances of the specified object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified endpoint can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/LogicalGroups/{logicalGroupId}/VariableInstances": {
+      "get": {
+        "tags": [
+          "VariableInstances"
+        ],
+        "summary": "Gets all variable instances assigned to a specific logical group",
+        "operationId": "GetVariableInstancesByLogicalGroupId",
+        "parameters": [
+          {
+            "name": "logicalGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Scope",
+            "in": "query",
+            "description": "Filters results by exactly matching scope.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Scope"
+                }
+              ]
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Category, OwnerName and Value (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, Category, OwnerName and Value.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all variable instances of the specified object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified logical group can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/ADObjects/{adObjectId}/VariableInstances": {
+      "get": {
+        "tags": [
+          "VariableInstances"
+        ],
+        "summary": "Gets all variable instances assigned to a specific AD object",
+        "operationId": "GetVariableInstancesByADObjectId",
+        "parameters": [
+          {
+            "name": "adObjectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Scope",
+            "in": "query",
+            "description": "Filters results by exactly matching scope.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Scope"
+                }
+              ]
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Category, OwnerName and Value (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, Category, OwnerName and Value.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all variable instances of the specified object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified AD object can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/WindowsJobDefinitions/{windowsJobDefinitionId}/VariableInstances": {
+      "get": {
+        "tags": [
+          "VariableInstances"
+        ],
+        "summary": "Gets all variable instances assigned to a specific windows job definition",
+        "operationId": "GetVariableInstancesByWindowsJobDefinitonId",
+        "parameters": [
+          {
+            "name": "windowsJobDefinitionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Scope",
+            "in": "query",
+            "description": "Filters results by exactly matching scope.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Scope"
+                }
+              ]
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Category, OwnerName and Value (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, Category, OwnerName and Value.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all variable instances of the specified object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified job definiton can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v2.0/WindowsApplications/{windowsApplicationId}/VariableInstances": {
+      "get": {
+        "tags": [
+          "VariableInstances"
+        ],
+        "summary": "Gets all variable instances assigned to a specific windows application",
+        "operationId": "GetVariableInstancesByWindowsApplicationId",
+        "parameters": [
+          {
+            "name": "windowsApplicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "description": "Filters results by exactly matching name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Category",
+            "in": "query",
+            "description": "Filters results by exactly matching category.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Scope",
+            "in": "query",
+            "description": "Filters results by exactly matching scope.",
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Scope"
+                }
+              ]
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Category, OwnerName and Value (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, Category, OwnerName and Value.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all variable instances of the specified object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VariableInstancePagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified application can not be found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "JsonPatchDocument": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Operation"
+        },
+        "description": "Array of operations to perform"
+      },
+      "Operation": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "OperationType": {
+        "enum": [
+          "Add",
+          "Remove",
+          "Replace",
+          "Move",
+          "Copy",
+          "Test",
+          "Invalid"
+        ],
+        "type": "string"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "Scope": {
+        "enum": [
+          "ADObject",
+          "AndroidEndpoint",
+          "Endpoint",
+          "IndustrialEndpoint",
+          "IosEndpoint",
+          "LogicalGroup",
+          "NetworkEndpoint",
+          "WindowsApplication",
+          "WindowsJobDefinition",
+          "LinuxEndpoint"
+        ],
+        "type": "string",
+        "description": "[Legacy] ADObject: Creates variable instances for Active Directory users and groups<br />[Modern] AndroidEndpoint: Creates variable instances for Android endpoints<br />[Legacy] Endpoint: Creates variable instances for endpoints of type Windows and Mac<br />[Modern] IndustrialEndpoint: Creates variable instances for industrial endpoints<br />[Modern] IosEndpoint: Creates variable instances for iOS endpoints<br />[Legacy] LogicalGroup: Creates variable instances for logical groups containing endpoints<br />[Modern] NetworkEndpoint: Creates variable instances for network endpoints<br />[Legacy] WindowsJobDefinition: Creates variable instances for windows job definitions<br />[Legacy] WindowsApplication: Creates variable instances for windows applications<br />[Modern] LinuxEndpoint: Creates variable instances for linux endpoints<br />"
+      },
+      "Type": {
+        "enum": [
+          "String",
+          "Integer",
+          "Password",
+          "Date",
+          "DropDownList",
+          "DropDownEditableList",
+          "Checkbox",
+          "FileLink",
+          "Folder"
+        ],
+        "type": "string"
+      },
+      "VariableDefinition": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the variable definition",
+            "format": "guid"
+          },
+          "scopes": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Scope"
+            },
+            "description": "The scope of the variable definition. Specific scopes can be combined in order to form multiscope variable definitions."
+          },
+          "category": {
+            "type": "string",
+            "description": "The category of the variable definition"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the variable definition"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Type"
+              }
+            ],
+            "description": "The type of the variable definition"
+          },
+          "defaultValue": {
+            "type": "string",
+            "description": "Default value of the variable definition which is implicitly set as value for belonging variable instances",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the variable definition",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "A variable definition with describing fields"
+      },
+      "VariableDefinitionForCreation": {
+        "required": [
+          "category",
+          "name",
+          "scopes"
+        ],
+        "type": "object",
+        "properties": {
+          "scopes": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Scope"
+            },
+            "description": "The scope of the variable definition. Specific scopes can be combined in order to form multiscope variable definitions."
+          },
+          "category": {
+            "minLength": 1,
+            "type": "string",
+            "description": "The category of the variable definition"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string",
+            "description": "The name of the variable definition"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Type"
+              }
+            ],
+            "description": "The type of the variable definition"
+          },
+          "defaultValue": {
+            "type": "string",
+            "description": "Default value of the variable definition which is implicitly set as value for belonging variable instances",
+            "nullable": true
+          },
+          "comment": {
+            "type": "string",
+            "description": "The comment of the variable definition",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "A variable definition with describing fields"
+      },
+      "VariableDefinitionPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariableDefinition"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VariableInstance": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The id of the variable instance",
+            "format": "guid"
+          },
+          "ownerId": {
+            "type": "string",
+            "description": "The id of the variable instance's owner",
+            "format": "guid"
+          },
+          "ownerName": {
+            "type": "string",
+            "description": "The name of the variable instance's owner"
+          },
+          "variableDefinitionId": {
+            "type": "string",
+            "description": "The id of the variable instance's definition",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the variable instance"
+          },
+          "scope": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Scope"
+              }
+            ],
+            "description": "The scope of the variable instance."
+          },
+          "category": {
+            "type": "string",
+            "description": "The category of the variable instance"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Type"
+              }
+            ],
+            "description": "The type of the variable instance"
+          },
+          "value": {
+            "type": "string",
+            "description": "The value of the variable instance",
+            "nullable": true
+          },
+          "isDefault": {
+            "type": "boolean",
+            "description": "Boolean value for showing if a default value for the variable instance is set"
+          }
+        },
+        "additionalProperties": false,
+        "description": "A variable instance with describing fields"
+      },
+      "VariableInstancePagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VariableInstance"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "description": "Input your username and password to access this API",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "VariableDefinitions",
+      "description": "Manages variable definitions to add custom object information for usage within job executions or custom commands"
+    },
+    {
+      "name": "VariableInstances",
+      "description": "Provides queries and filters for variable instances and their dependencies and the possibility to adapt the variable instance's value"
+    }
+  ]
+}

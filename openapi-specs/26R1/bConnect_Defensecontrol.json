@@ -1,0 +1,2239 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "bConnect Defense Control API",
+    "description": "<p>With DefenseControl, relevant security configurations as well as endpoint threats detected by MicrosoftDefender can be viewed. In addition, orchestration of the Microsoft BitLocker tool enables reliable protection of endpoint hard disks (see <a href=\"https://docs.baramundi.com/helpsetid=m_defense-control&amp;externalid=k_defense-control\">documentation</a>).<br> <br>The APIs provided here allow reading BitLocker related information, MicrosoftDefender status and detected threats on Windows endpoints.</p>\n\nThe bConnect V2 PowerShell module is available from the <a target=\"_blank\" href=\"https://www.powershellgallery.com/packages/bConnectV2\" rel=\"noopener noreferrer\" class=\"link\"><span class=\"url\">PowerShell Gallery</span></a>.",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "https://bms.example.com:444/bconnect/defensecontrol"
+    }
+  ],
+  "paths": {
+    "/v2.0/BitLocker/WindowsEndpoints": {
+      "get": {
+        "tags": [
+          "BitLocker"
+        ],
+        "summary": "Get information concerning BitLocker for all windows endpoints",
+        "description": "Powershell function: `Get-bCDefensecontrolBitLockerStates`",
+        "operationId": "GetBitLockerStates",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are EndpointId or EndpointName (e.g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are EndpointName.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all found BitLocker states",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BitLockerWindowsEndpointPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolBitLockerStates",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/BitLocker/WindowsEndpoints/{id}": {
+      "get": {
+        "tags": [
+          "BitLocker"
+        ],
+        "summary": "Get information concerning BitLocker for a specific windows endpoint",
+        "description": "Powershell function: `Get-bCDefensecontrolBitLockerStatesByWindowsEndpointId`",
+        "operationId": "GetBitLockerStatesByWindowsEndpointId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns current BitLocker state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BitLockerWindowsEndpoint"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A windows endpoint with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolBitLockerStatesByWindowsEndpointId"
+      }
+    },
+    "/v2.0/BitLocker/WindowsEndpoints/{id}/Secrets": {
+      "get": {
+        "tags": [
+          "BitLocker"
+        ],
+        "summary": "Get BitLocker secrets for a specific windows endpoint",
+        "description": "Powershell function: `Get-bCDefensecontrolBitLockerSecretsByWindowsEndpointId`",
+        "operationId": "GetBitLockerSecretsByWindowsEndpointId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns BitLocker secrets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BitLockerSecrets"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions to read the BitLocker secrets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Windows endpoint with the specified ID does not exist or is not accessible due to missing rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolBitLockerSecretsByWindowsEndpointId"
+      },
+      "patch": {
+        "tags": [
+          "BitLocker"
+        ],
+        "summary": "Update BitLocker PIN for a specific Windows endpoint",
+        "description": "Powershell function: `Update-bCDefensecontrolBitLockerPinByWindowsEndpointId`",
+        "operationId": "UpdateBitLockerPinByWindowsEndpointId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              },
+              "example": [{"value":"23546375","path":"/InitialStartupPin","op":"replace"}]
+            }
+          }
+        },
+        "responses": {
+          "400": {
+            "description": "Input data is missing or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "BitLocker PIN updated successfully and secrets returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BitLockerSecrets"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions to modify the BitLocker secrets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Windows endpoint with the specified ID does not exist or is not accessible due to missing rights",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Update-bCDefensecontrolBitLockerPinByWindowsEndpointId"
+      }
+    },
+    "/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/{id}": {
+      "get": {
+        "tags": [
+          "LocalAdministrativeAccounts"
+        ],
+        "summary": "Get local admin account information for a specific windows endpoint",
+        "description": "Powershell function: `Get-bCDefensecontrolLocalAdminUserCredentialsByWindowsEndpointId`",
+        "operationId": "GetLocalAdminUserCredentialsByWindowsEndpointId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns current local admin account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalAdminAccountWindowsEndpoint"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A windows endpoint with the specified id does not exist or the user doesn't have the required rights to access the object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This action can not be executed on a disabled device.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolLocalAdminUserCredentialsByWindowsEndpointId"
+      },
+      "patch": {
+        "tags": [
+          "LocalAdministrativeAccounts"
+        ],
+        "summary": "Change the expiration date of local admin account for a specific windows endpoint. You can only patch the 'requested expiration date'. Setting the property to a date in the past will trigger the generation of new credentials on the endpoint. The requested expiration date is set until the client acknowledges the request. After acknowledging the request, the 'requested expiration date' will be set to 'null' and the 'expiration date' will contain the new expiration date. You can trigger an immediate update of the expiration date on an endpoint by using the 'TriggerUpdateOnClient' [POST] action.",
+        "description": "Powershell function: `Update-bCDefensecontrolLocalAdminUserCredentialsForWindowsEndpointId`",
+        "operationId": "PatchLocalAdminUserCredentialsForWindowsEndpointId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable properties.\n\nInitialize patch operations in PowerShell with `Initialize-bCPatchOperation`",
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonPatchDocument"
+              },
+              "example": [{"value":"2026-05-22T11:22:19.9566172Z","path":"/LocalAdminAccount/RequestedExpirationDate","op":"replace"}]
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns current local admin account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocalAdminAccountWindowsEndpoint"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A windows endpoint with the specified id does not exist or isn't visible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The bConnect user does not have the required local admin user privileges for the client.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This action can not be executed on a disabled device.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Update-bCDefensecontrolLocalAdminUserCredentialsForWindowsEndpointId"
+      }
+    },
+    "/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/{id}/TriggerUpdateOnClient": {
+      "post": {
+        "tags": [
+          "LocalAdministrativeAccounts"
+        ],
+        "summary": "Request a client to immediately update the expiration date of its' local administrative account. This only works if the client is online. You can specify a timeout with the 'timeout' query parameter. The default timeout is 30 seconds",
+        "description": "Powershell function: `Invoke-bCDefensecontrolTriggerUpdateOnClient`",
+        "operationId": "TriggerUpdateOnClient",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "timeout",
+            "in": "query",
+            "description": "The timeout to use for the request. Must be between 0 and 60 seconds.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns 'true' if the client changed its' expiration date. 'false' if the client could not be reached at this time.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A windows endpoint with the specified id does not exist or isn't visible.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The bConnect user does not have the required local admin user privileges for the client.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "This action can not be executed on a disabled device.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Invoke-bCDefensecontrolTriggerUpdateOnClient"
+      }
+    },
+    "/v2.0/MicrosoftDefender/Threats": {
+      "get": {
+        "tags": [
+          "MicrosoftDefender"
+        ],
+        "summary": "Get all threats found by Microsoft Defender",
+        "description": "Powershell function: `Get-bCDefensecontrolMicrosoftDefenderThreats`",
+        "operationId": "GetMicrosoftDefenderThreats",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Severity or EndpointName (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all found threats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreatPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolMicrosoftDefenderThreats",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/MicrosoftDefender/Threats/{id}": {
+      "get": {
+        "tags": [
+          "MicrosoftDefender"
+        ],
+        "summary": "Get a threat by id",
+        "description": "Powershell function: `Get-bCDefensecontrolMicrosoftDefenderThreat`",
+        "operationId": "GetMicrosoftDefenderThreat",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the specified threat",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Threat"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A threat with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolMicrosoftDefenderThreat"
+      }
+    },
+    "/v2.0/MicrosoftDefender/WindowsEndpoints/{endpointId}/Threats": {
+      "get": {
+        "tags": [
+          "MicrosoftDefender"
+        ],
+        "summary": "Get all threats found by Microsoft Defender for a specific windows endpoint",
+        "description": "Powershell function: `Get-bCDefensecontrolMicrosoftDefenderThreatsByWindowsEndpointId`",
+        "operationId": "GetMicrosoftDefenderThreatsByWindowsEndpointId",
+        "parameters": [
+          {
+            "name": "endpointId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Severity or EndpointName (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all found threats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreatPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A windows endpoint with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolMicrosoftDefenderThreatsByWindowsEndpointId",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/MicrosoftDefender/LogicalGroups/{logicalGroupId}/Threats": {
+      "get": {
+        "tags": [
+          "MicrosoftDefender"
+        ],
+        "summary": "Get all threats found by Microsoft Defender for a specific logical group",
+        "description": "Powershell function: `Get-bCDefensecontrolMicrosoftDefenderThreatsByLogicalGroupId`",
+        "operationId": "GetMicrosoftDefenderThreatsByLogicalGroupId",
+        "parameters": [
+          {
+            "name": "logicalGroupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          },
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name, Severity or EndpointName (e.g. Name asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "includeSubfolders",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all found threats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreatPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "An org unit with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolMicrosoftDefenderThreatsByLogicalGroupId",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/MicrosoftDefender/WindowsEndpoints": {
+      "get": {
+        "tags": [
+          "MicrosoftDefender"
+        ],
+        "summary": "Retrieves information concerning Microsoft Defender state on windows endpoints",
+        "description": "Powershell function: `Get-bCDefensecontrolMicrosoftDefenderStates`",
+        "operationId": "GetMicrosoftDefenderStates",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are EndpointId or EndpointName (e.g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are EndpointName.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all found states",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MicrosoftDefenderWindowsEndpointPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolMicrosoftDefenderStates",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/MicrosoftDefender/WindowsEndpoints/{id}": {
+      "get": {
+        "tags": [
+          "MicrosoftDefender"
+        ],
+        "summary": "Retrieves information concerning Microsoft Defender state for a single windows endpoint",
+        "description": "Powershell function: `Get-bCDefensecontrolMicrosoftDefenderStatesByWindowsEndpointId`",
+        "operationId": "GetMicrosoftDefenderStatesByWindowsEndpointId",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns the current Microsoft Defender state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MicrosoftDefenderWindowsEndpoint"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A windows endpoint with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCDefensecontrolMicrosoftDefenderStatesByWindowsEndpointId"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdditionalActions": {
+        "enum": [
+          "None",
+          "FullScanRequired",
+          "RebootRequired",
+          "FullScanAndRebootRequired",
+          "ManualStepsRequired",
+          "FullScanAndManualStepsRequired",
+          "RebootAndManualStepsRequired",
+          "FullScanAndRebootAndManualStepsRequired",
+          "OfflineScanRequired",
+          "FullScanAndOfflineScanRequired",
+          "RebootAndOfflineScanRequired",
+          "FullScanAndRebootAndOfflineScanRequired",
+          "ManualStepsAndOfflineScanRequired",
+          "FullScanAndManualStepsAndOfflineScanRequired",
+          "RebootAndManualStepsAndOfflineScanRequired",
+          "FullScanAndRebootAndManualStepsAndOfflineScanRequired"
+        ],
+        "type": "string"
+      },
+      "Antimalware": {
+        "type": "object",
+        "properties": {
+          "engineVersion": {
+            "type": "string",
+            "description": "The engine version"
+          },
+          "productVersion": {
+            "type": "string",
+            "description": "The product version"
+          },
+          "runningMode": {
+            "type": "string",
+            "description": "The running mode"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "The antimalware status"
+          },
+          "serviceVersion": {
+            "type": "string",
+            "description": "The service version"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Antispyware": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "description": "The antispyware status"
+          },
+          "definitionCreation": {
+            "type": "string",
+            "description": "The antispyware definition creation",
+            "format": "date-time"
+          },
+          "definitionVersion": {
+            "type": "string",
+            "description": "The antispyware definition version"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Antivirus": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "description": "Antivirus status"
+          },
+          "definitionCreation": {
+            "type": "string",
+            "description": "The antivirus definition creation",
+            "format": "date-time"
+          },
+          "definitionVersion": {
+            "type": "string",
+            "description": "The antivirus definition version"
+          }
+        },
+        "additionalProperties": false
+      },
+      "BitLockerRecoveryKey": {
+        "type": "object",
+        "properties": {
+          "volumeId": {
+            "type": "string",
+            "description": "The BitLocker volume identifier",
+            "format": "guid",
+            "nullable": true
+          },
+          "volumeNameOrPartition": {
+            "type": "string",
+            "description": "VolumeName/Partition"
+          },
+          "isSystemVolume": {
+            "type": "boolean",
+            "description": "Indicates whether this is the system volume"
+          },
+          "initialRecoveryKey": {
+            "type": "string",
+            "description": "The initial recovery key",
+            "nullable": true
+          },
+          "inventoriedRecoveryKey": {
+            "type": "string",
+            "description": "The inventoried recovery key",
+            "nullable": true
+          },
+          "lastUpdate": {
+            "type": "string",
+            "description": "The last update timestamp",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "The BitLocker Recovery Key"
+      },
+      "BitLockerSecrets": {
+        "type": "object",
+        "properties": {
+          "endpointId": {
+            "type": "string",
+            "description": "Unique endpoint identifier",
+            "format": "guid"
+          },
+          "initialStartupPin": {
+            "type": "string",
+            "description": "Initial startup PIN for BitLocker"
+          },
+          "bitLockerRecoveryKeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BitLockerRecoveryKey"
+            },
+            "description": "Collection of BitLocker recovery keys"
+          }
+        },
+        "additionalProperties": false,
+        "description": "BitLocker secrets for an device"
+      },
+      "BitLockerVersion": {
+        "enum": [
+          "Unknown",
+          "Vista",
+          "Win7"
+        ],
+        "type": "string"
+      },
+      "BitLockerVolumeData": {
+        "type": "object",
+        "properties": {
+          "conversionStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversionStatus"
+              }
+            ],
+            "description": "Conversion status"
+          },
+          "encryptionPercentage": {
+            "type": "integer",
+            "description": "Encryption progress in percent",
+            "format": "int32",
+            "nullable": true
+          },
+          "suspendCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "bitLockerVersion": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BitLockerVersion"
+              }
+            ]
+          },
+          "protectionStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProtectionStatus"
+              }
+            ]
+          },
+          "lockStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LockStatus"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "BitLockerWindowsEndpoint": {
+        "type": "object",
+        "properties": {
+          "endpointId": {
+            "type": "string",
+            "description": "The id of the endpoint",
+            "format": "guid"
+          },
+          "endpointName": {
+            "type": "string",
+            "description": "The name of the endpoint"
+          },
+          "isSecureBootEnabled": {
+            "type": "boolean",
+            "description": "If set secure boot is enabled on this client"
+          },
+          "isStartupPinEnabled": {
+            "type": "boolean",
+            "description": "If set BitLocker Startup PIN is enabled on this client",
+            "nullable": true
+          },
+          "isStartupUsbKeyEnabled": {
+            "type": "boolean",
+            "description": "If set BitLocker Startup USB Key is enabled on this client",
+            "nullable": true
+          },
+          "networkUnlockStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NetworkUnlockStatus"
+              }
+            ],
+            "description": "The status of Network Unlock Feature on Client"
+          },
+          "tpmData": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TPMData"
+              }
+            ],
+            "description": "TPM data",
+            "nullable": true
+          },
+          "storageMedia": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorageMedium"
+            },
+            "description": "Inventoried Storages",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BitLockerWindowsEndpointPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BitLockerWindowsEndpoint"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "BusType": {
+        "enum": [
+          "Unknown",
+          "SCSI",
+          "ATAPI",
+          "ATA",
+          "IEEE1394",
+          "SSA",
+          "FibreChannel",
+          "USB",
+          "RAID",
+          "ISCSI",
+          "SAS",
+          "SATA",
+          "SD",
+          "MMC",
+          "Virtual",
+          "FileBackedVirtual",
+          "StorageSpaces",
+          "NVMe"
+        ],
+        "type": "string"
+      },
+      "CleaningAction": {
+        "enum": [
+          "Unknown",
+          "Clean",
+          "Quarantine",
+          "Remove",
+          "Allow",
+          "UserDefined",
+          "NoAction",
+          "Block"
+        ],
+        "type": "string"
+      },
+      "ConversionStatus": {
+        "enum": [
+          "Unknown",
+          "FullyDecrypted",
+          "FullyEncrypted",
+          "EncryptionInProgress",
+          "DecryptionInProgress",
+          "EncryptionPaused",
+          "DecryptionPaused"
+        ],
+        "type": "string"
+      },
+      "DetectionSourceType": {
+        "enum": [
+          "Unknown",
+          "User",
+          "System",
+          "RealTime",
+          "Ioav",
+          "Nri",
+          "IeProtect",
+          "Elam",
+          "LocalAttestation",
+          "RemoteAttestation"
+        ],
+        "type": "string"
+      },
+      "FileSystemType": {
+        "enum": [
+          "Unknown",
+          "FAT",
+          "FAT32",
+          "NTFS",
+          "EXFAT",
+          "CSVFS",
+          "REFS"
+        ],
+        "type": "string"
+      },
+      "HighestSeverity": {
+        "enum": [
+          "None",
+          "Low",
+          "Moderate",
+          "High",
+          "Severe"
+        ],
+        "type": "string"
+      },
+      "JsonPatchDocument": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Operation"
+        },
+        "description": "Array of operations to perform"
+      },
+      "LocalAdminAccount": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "The username of the local administrative user",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "description": "The password of the local administrative user",
+            "nullable": true
+          },
+          "expirationDate": {
+            "type": "string",
+            "description": "The current expiration date of the credentials, which is known by the client",
+            "format": "date-time",
+            "nullable": true
+          },
+          "requestedExpirationDate": {
+            "type": "string",
+            "description": "The requested expiration date of the credentials, which is not yet known by the client. If this is null no new expiration date is requested.",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LocalAdminAccountWindowsEndpoint": {
+        "type": "object",
+        "properties": {
+          "endpointId": {
+            "type": "string",
+            "description": "The id of the endpoint",
+            "format": "guid"
+          },
+          "endpointName": {
+            "type": "string",
+            "description": "The name of the endpoint",
+            "nullable": true
+          },
+          "localAdminAccount": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalAdminAccount"
+              }
+            ],
+            "description": "The local admin account data of the endpoint",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LockStatus": {
+        "enum": [
+          "Unknown",
+          "Unlocked",
+          "Locked"
+        ],
+        "type": "string"
+      },
+      "MicrosoftDefenderState": {
+        "type": "object",
+        "properties": {
+          "antimalware": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Antimalware"
+              }
+            ],
+            "description": "The Antimalware system"
+          },
+          "antispyware": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Antispyware"
+              }
+            ],
+            "description": "The antispyware system"
+          },
+          "antivirus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Antivirus"
+              }
+            ],
+            "description": "The antivirus system"
+          },
+          "networkInspectionSystem": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NetworkInspectionSystem"
+              }
+            ],
+            "description": "The network inspection system"
+          },
+          "isBehaviorMonitoringActive": {
+            "type": "boolean",
+            "description": "The behavior monitoring status"
+          },
+          "isIoavProtectionActive": {
+            "type": "boolean",
+            "description": "The IOAV protection status"
+          },
+          "isTamperProtectionActive": {
+            "type": "boolean",
+            "description": "The tamper protection status"
+          },
+          "isOnAccessProtectionActive": {
+            "type": "boolean",
+            "description": "The On-access protection status"
+          },
+          "isRealTimeProtectionActive": {
+            "type": "boolean",
+            "description": "Real-time protection status"
+          },
+          "realTimeScanDirection": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ScanDirection"
+              }
+            ],
+            "description": "Real-time scan direction"
+          },
+          "lastFullScan": {
+            "type": "string",
+            "description": "The last full scan",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastQuickScan": {
+            "type": "string",
+            "description": "The last quick scan",
+            "format": "date-time",
+            "nullable": true
+          },
+          "highestSeverity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HighestSeverity"
+              }
+            ],
+            "description": "The severity of the highest active threat"
+          },
+          "activeThreats": {
+            "type": "integer",
+            "description": "The number of active threats",
+            "format": "int32"
+          },
+          "resolvedThreats": {
+            "type": "integer",
+            "description": "The number of resolved threats",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MicrosoftDefenderWindowsEndpoint": {
+        "type": "object",
+        "properties": {
+          "endpointId": {
+            "type": "string",
+            "description": "The endpoint id",
+            "format": "guid"
+          },
+          "endpointName": {
+            "type": "string",
+            "description": "The name of the endpoint"
+          },
+          "isMicrosoftDefenderActive": {
+            "type": "boolean",
+            "description": "Indicates, if Microsoft Defender is activated on the device"
+          },
+          "microsoftDefenderState": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MicrosoftDefenderState"
+              }
+            ],
+            "description": "Information about Microsoft Defender actuality and findings",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MicrosoftDefenderWindowsEndpointPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MicrosoftDefenderWindowsEndpoint"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "NetworkInspectionSystem": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean",
+            "description": "The network inspection system status"
+          },
+          "engineVersion": {
+            "type": "string",
+            "description": "The network inspection system engine version"
+          },
+          "definitionCreation": {
+            "type": "string",
+            "description": "The network inspection system definition creation",
+            "format": "date-time"
+          },
+          "definitionVersion": {
+            "type": "string",
+            "description": "The network inspection system definition version"
+          }
+        },
+        "additionalProperties": false
+      },
+      "NetworkUnlockStatus": {
+        "enum": [
+          "Unknown",
+          "Deactivated",
+          "OtherCertificate",
+          "Activated",
+          "NotSupported"
+        ],
+        "type": "string",
+        "description": "Deactivated: BitLocker Network Unlock is not active, User needs to enter BitLocker PIN at startup.<br />OtherCertificate: BitLocker Network Unlock is active, but not configured for using with bMS.Installed BitLocker Network Unlock Certificate is unknown.<br />Activated: BitLocker Network Unlock is active, System boots without requesting PIN, if connected per LAN<br />NotSupported: BitLocker Network Unlock is not supported on device<br />Unknown: BitLockerNetworkUnlock status was not inventorised yet.<br />"
+      },
+      "Operation": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "OperationType": {
+        "enum": [
+          "Add",
+          "Remove",
+          "Replace",
+          "Move",
+          "Copy",
+          "Test",
+          "Invalid"
+        ],
+        "type": "string"
+      },
+      "PartitionStyle": {
+        "enum": [
+          "Unknown",
+          "MBR",
+          "GPT"
+        ],
+        "type": "string"
+      },
+      "PartitionType": {
+        "enum": [
+          "Unknown",
+          "Data",
+          "EFI_System",
+          "Recovery"
+        ],
+        "type": "string"
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "ProtectionStatus": {
+        "enum": [
+          "Unknown",
+          "Unprotected",
+          "Protected"
+        ],
+        "type": "string"
+      },
+      "ScanDirection": {
+        "enum": [
+          "IncomingAndOutgoingFiles",
+          "IncomingFilesOnly",
+          "OutgoingFilesOnly"
+        ],
+        "type": "string"
+      },
+      "StorageMedium": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer",
+            "description": "Disk index of the storage medium",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the storage medium"
+          },
+          "byteSize": {
+            "type": "integer",
+            "description": "Total size in bytes",
+            "format": "int64"
+          },
+          "busType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BusType"
+              }
+            ],
+            "description": "Bus type used by the storage medium"
+          },
+          "partitionStyle": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartitionStyle"
+              }
+            ],
+            "description": "Partition style of the storage medium"
+          },
+          "storageVolumes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorageVolume"
+            },
+            "description": "Volumes on this storage medium"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StorageVolume": {
+        "type": "object",
+        "properties": {
+          "driveLetter": {
+            "type": "string",
+            "description": "Current volume letter"
+          },
+          "name": {
+            "type": "string",
+            "description": "Volume label"
+          },
+          "fileSystem": {
+            "type": "string",
+            "description": "Volume file system"
+          },
+          "fileSystemType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileSystemType"
+              }
+            ],
+            "description": "File system type"
+          },
+          "capacity": {
+            "type": "integer",
+            "description": "Total size in bytes",
+            "format": "int64"
+          },
+          "freeSpace": {
+            "type": "integer",
+            "description": "Free space in bytes",
+            "format": "int64"
+          },
+          "isSystemVolume": {
+            "type": "boolean",
+            "description": "Indicates whether the volume contains the operating system"
+          },
+          "volumeId": {
+            "type": "string",
+            "description": "Volume ID",
+            "format": "guid",
+            "nullable": true
+          },
+          "partitionType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartitionType"
+              }
+            ],
+            "description": "Type of the partition"
+          },
+          "bitLockerVolumeData": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BitLockerVolumeData"
+              }
+            ],
+            "description": "BitLocker data",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TPMData": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "TPM version"
+          },
+          "tpmStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TPMStatus"
+              }
+            ],
+            "description": "TPM status"
+          },
+          "isOwned": {
+            "type": "boolean",
+            "description": "Indicates whether the TPM has an owner"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TPMStatus": {
+        "enum": [
+          "NotAvailable",
+          "Deactivated",
+          "Enabled",
+          "Activated"
+        ],
+        "type": "string"
+      },
+      "Threat": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identifier of detected threat",
+            "format": "guid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of threat"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Indicates whether the threat is active or not"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreatSeverity"
+              }
+            ],
+            "description": "Specifies the threat severity"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreatCategory"
+              }
+            ],
+            "description": "Specifies the threat category"
+          },
+          "threatType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreatType"
+              }
+            ],
+            "description": "The type of threat"
+          },
+          "domainUser": {
+            "type": "string",
+            "description": "The domain user at threat detection time"
+          },
+          "processName": {
+            "type": "string",
+            "description": "Process name"
+          },
+          "fileNames": {
+            "type": "string",
+            "description": "File names detected by Microsoft Defender Antivirus, separated by newline"
+          },
+          "actionSuccess": {
+            "type": "boolean",
+            "description": "Indicates whether threat could be resolved or not"
+          },
+          "executionStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreatExecutionStatus"
+              }
+            ],
+            "description": "The execution status of threat"
+          },
+          "threatStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ThreatStatus"
+              }
+            ],
+            "description": "The threat status"
+          },
+          "detectionSource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DetectionSourceType"
+              }
+            ],
+            "description": "The detection source type"
+          },
+          "cleaningAction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CleaningAction"
+              }
+            ],
+            "description": "The cleaning status"
+          },
+          "additionalActions": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdditionalActions"
+              }
+            ],
+            "description": "Additional actions"
+          },
+          "detectionTime": {
+            "type": "string",
+            "description": "The detection time of the threat",
+            "format": "date-time",
+            "nullable": true
+          },
+          "remediationTime": {
+            "type": "string",
+            "description": "The remediation time",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastStatusChangedTime": {
+            "type": "string",
+            "description": "The last time the status of threat changed",
+            "format": "date-time",
+            "nullable": true
+          },
+          "endpointId": {
+            "type": "string",
+            "description": "The id of endpoint where threat was detected",
+            "format": "guid"
+          },
+          "endpointName": {
+            "type": "string",
+            "description": "The name of endpoint where threat was detected"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ThreatCategory": {
+        "enum": [
+          "Invalid",
+          "Adware",
+          "Spyware",
+          "PasswordStealer",
+          "TrojanDownloader",
+          "Worm",
+          "Backdoor",
+          "RemoteAccessTrojan",
+          "Trojan",
+          "EmailFlooder",
+          "Keylogger",
+          "Dialer",
+          "MonitoringSoftware",
+          "BrowserModifier",
+          "Cookie",
+          "BrowserPlugin",
+          "AolExploit",
+          "Nuker",
+          "SecurityDisabler",
+          "JokeProgram",
+          "HostileActiveXControl",
+          "SoftwareBundler",
+          "StealthNotifier",
+          "SettingsModifier",
+          "Toolbar",
+          "RemoteControlSoftware",
+          "TrojanFtp",
+          "PotentialUnwantedSoftware",
+          "IcqExploit",
+          "TrojanTelnet",
+          "Exploit",
+          "FilesharingProgram",
+          "MalwareCreationTool",
+          "TrojanRemoteControlSoftware",
+          "Tool",
+          "TrojanDenialOfService",
+          "TrojanDropper",
+          "TrojanMassMailer",
+          "TrojanMonitoringSoftware",
+          "TrojanProxyServer",
+          "Virus",
+          "Known",
+          "Unknown",
+          "Spp",
+          "Behavior",
+          "Vulnerability",
+          "Policy"
+        ],
+        "type": "string"
+      },
+      "ThreatExecutionStatus": {
+        "enum": [
+          "Unknown",
+          "Blocked",
+          "Allowed",
+          "Executing",
+          "NotExecuting"
+        ],
+        "type": "string"
+      },
+      "ThreatPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Threat"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ThreatSeverity": {
+        "enum": [
+          "Unknown",
+          "Low",
+          "Moderate",
+          "High",
+          "Severe"
+        ],
+        "type": "string"
+      },
+      "ThreatStatus": {
+        "enum": [
+          "Unknown",
+          "Detected",
+          "Cleaned",
+          "Quarantined",
+          "Removed",
+          "Allowed",
+          "Blocked",
+          "CleanFailed",
+          "QuarantineFailed",
+          "RemoveFailed",
+          "AllowFailed",
+          "Abandoned",
+          "BlockedFailed",
+          "RestoredFromQuarantine",
+          "RemovedFromQuarantine"
+        ],
+        "type": "string"
+      },
+      "ThreatType": {
+        "enum": [
+          "KnownBad",
+          "BehaviorType",
+          "Unknown",
+          "KnownGood",
+          "NriType"
+        ],
+        "type": "string"
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "description": "Input your username and password to access this API",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": [ ]
+    }
+  ]
+}
