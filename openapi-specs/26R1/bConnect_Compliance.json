@@ -1,0 +1,1078 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "bConnect Compliance API",
+    "description": "<p>Devices managed by the baramundi Management Suite can be scanned and checked for security-related information such as vulnerabilities and configuration violations.<br>The provided APIs allow you to query vulnerabilities detected on Windows endpoints, including detailed metadata such as CVE ID, description, severity, score, affected operating systems and products.<br>Likewise, configuration violations identified for Android, iOS and macOS endpoints can be retrieved along with metadata such as description, severity and type.</p>\n\nThe bConnect V2 PowerShell module is available from the <a target=\"_blank\" href=\"https://www.powershellgallery.com/packages/bConnectV2\" rel=\"noopener noreferrer\" class=\"link\"><span class=\"url\">PowerShell Gallery</span></a>.",
+    "version": "2.0"
+  },
+  "servers": [
+    {
+      "url": "https://bms.example.com:444/bconnect/compliance"
+    }
+  ],
+  "paths": {
+    "/v2.0/DetectedRuleViolations": {
+      "get": {
+        "tags": [
+          "DetectedRuleViolations"
+        ],
+        "summary": "Gets all detected rule violations for Android, iOS and macOS endpoints",
+        "description": "Powershell function: `Get-bCComplianceDetectedRuleViolations`",
+        "operationId": "GetDetectedRuleViolations",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are EndpointName or RuleName (e.g. RuleName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are EndpointName or RuleName.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all detected rule violations for Android, iOS and macOS endpoints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleViolationPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCComplianceDetectedRuleViolations",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/Endpoints/{endpointId}/DetectedRuleViolations": {
+      "get": {
+        "tags": [
+          "DetectedRuleViolations"
+        ],
+        "summary": "Gets detected rule violations for an Android, iOS or macOS endpoint by endpoint id",
+        "description": "Powershell function: `Get-bCComplianceDetectedRuleViolationsForEndpoint`",
+        "operationId": "GetDetectedRuleViolationsForEndpoint",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are EndpointName or RuleName (e.g. RuleName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are EndpointName or RuleName.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "endpointId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns detected rule violations for an Android, iOS or macOS endpoint with specified endpoint id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleViolationPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "An Android, iOS or macOS endpoint with the specified id does not exist or contains no rule violation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCComplianceDetectedRuleViolationsForEndpoint",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/DetectedVulnerabilities": {
+      "get": {
+        "tags": [
+          "DetectedVulnerabilities"
+        ],
+        "summary": "Gets all detected vulnerabilities for Windows endpoints",
+        "description": "Powershell function: `Get-bCComplianceAllDetectedVulnerabilities`",
+        "operationId": "GetAllDetectedVulnerabilities",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are EndpointName or CveId (e.g. EndpointName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are EndpointName or CveId.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all detected vulnerabilities for Windows endpoints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectedVulnerabilityPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCComplianceAllDetectedVulnerabilities",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/WindowsEndpoints/{endpointId}/DetectedVulnerabilities": {
+      "get": {
+        "tags": [
+          "DetectedVulnerabilities"
+        ],
+        "summary": "Gets detected vulnerabilities for a Windows endpoint by endpoint id",
+        "description": "Powershell function: `Get-bCComplianceDetectedVulnerabilitiesByEndpoint`",
+        "operationId": "GetDetectedVulnerabilitiesByEndpoint",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible value is CveId (e.g. CveId asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable value is CveId.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "endpointId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all detected vulnerabilities for a Windows endpoint with specified endpoint id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectedVulnerabilityPagedList"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A Windows endpoint with the specified id does not exist or there are no detected vulnerabilities for this endpoint",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCComplianceDetectedVulnerabilitiesByEndpoint",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/Rules": {
+      "get": {
+        "tags": [
+          "Rules"
+        ],
+        "summary": "Gets all configuration rules for Android, iOS and macOS endpoints",
+        "description": "Powershell function: `Get-bCComplianceAllMobileDeviceRules`",
+        "operationId": "GetAllMobileDeviceRules",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are RuleName or Description (e.g. RuleName asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are RuleName or Description.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all configuration rules for Android, iOS and macOS endpoints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCComplianceAllMobileDeviceRules",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/Rules/{id}": {
+      "get": {
+        "tags": [
+          "Rules"
+        ],
+        "summary": "Gets a configuration rule for an Android, iOS or macOS endpoint by rule id",
+        "description": "Powershell function: `Get-bCComplianceMobileDeviceRule`",
+        "operationId": "GetMobileDeviceRule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns a configuration rule for an Android, iOS or macOS endpoint with specified rule id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rule"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A configuration rule with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCComplianceMobileDeviceRule"
+      }
+    },
+    "/v2.0/Vulnerabilities": {
+      "get": {
+        "tags": [
+          "Vulnerabilities"
+        ],
+        "summary": "Gets all detectable vulnerabilities for Windows endpoints",
+        "description": "Powershell function: `Get-bCComplianceAllVulnerabilities`",
+        "operationId": "GetAllVulnerabilities",
+        "parameters": [
+          {
+            "name": "OrderBy",
+            "in": "query",
+            "description": "Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are CveId or CvssScore (e.g. CveId asc).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "SearchQuery",
+            "in": "query",
+            "description": "Filters results by matching the given value against searchable properties.<br />Searchable values are CveId, AffectedProducts or AffectedOperatingSystems.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Page",
+            "in": "query",
+            "description": "The zero-indexed number of the first page that begins the set of pages that are returned in the response.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-bConnect-page-parameter": true
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "description": "The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000.",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns all detectable vulnerabilities for Windows endpoints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VulnerabilityPagedList"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCComplianceAllVulnerabilities",
+        "x-bConnect-returns-paged-list": true
+      }
+    },
+    "/v2.0/Vulnerabilities/{id}": {
+      "get": {
+        "tags": [
+          "Vulnerabilities"
+        ],
+        "summary": "Gets a detectable vulnerability for Windows endpoints by id",
+        "description": "Powershell function: `Get-bCComplianceVulnerability`",
+        "operationId": "GetVulnerability",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "guid"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Returns a detectable vulnerability for Windows endpoints with specified id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vulnerability"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A vulnerability with the specified id does not exist",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        },
+        "x-powershell-method-name": "Get-bCComplianceVulnerability"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "DetectedVulnerability": {
+        "required": [
+          "cveId",
+          "endpointName",
+          "vulnerabilityId"
+        ],
+        "type": "object",
+        "properties": {
+          "endpointId": {
+            "type": "string",
+            "description": "The identifier of the endpoint",
+            "format": "guid"
+          },
+          "endpointName": {
+            "type": "string",
+            "description": "The name of the endpoint"
+          },
+          "vulnerabilityId": {
+            "type": "string",
+            "description": "The identifier of the cve",
+            "format": "guid"
+          },
+          "cveId": {
+            "type": "string",
+            "description": "The name of the cve"
+          },
+          "detected": {
+            "type": "string",
+            "description": "Last detection datetime",
+            "format": "date-time"
+          },
+          "ignored": {
+            "type": "boolean",
+            "description": "Indicates whether the vulnerability is ignored on the endpoint"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DetectedVulnerabilityPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DetectedVulnerability"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "JsonPatchDocument": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Operation"
+        },
+        "description": "Array of operations to perform"
+      },
+      "Operation": {
+        "type": "object",
+        "properties": {
+          "op": {
+            "type": "string"
+          },
+          "value": {
+            "type": "object",
+            "nullable": true
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          },
+          "instance": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": { }
+      },
+      "Rule": {
+        "required": [
+          "ruleName",
+          "severity",
+          "type"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identifier of the rule",
+            "format": "guid"
+          },
+          "ruleName": {
+            "type": "string",
+            "description": "The name of the rule"
+          },
+          "type": {
+            "type": "string",
+            "description": "The rule type"
+          },
+          "severity": {
+            "type": "string",
+            "description": "The Severity of the rule"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the rule"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RulePagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Rule"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RuleViolation": {
+        "required": [
+          "endpointName",
+          "ruleId",
+          "state"
+        ],
+        "type": "object",
+        "properties": {
+          "endpointId": {
+            "type": "string",
+            "description": "The identifier of the endpoint",
+            "format": "guid"
+          },
+          "endpointName": {
+            "type": "string",
+            "description": "The name of the endpoint"
+          },
+          "ruleId": {
+            "type": "string",
+            "description": "The identifier of the Rule",
+            "format": "guid"
+          },
+          "ruleName": {
+            "type": "string",
+            "description": "The name of the Rule"
+          },
+          "detected": {
+            "type": "string",
+            "description": "Last detection datetime",
+            "format": "date-time"
+          },
+          "state": {
+            "type": "string",
+            "description": "The state of the violation"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RuleViolationPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RuleViolation"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Vulnerability": {
+        "required": [
+          "cveId",
+          "cvssScore",
+          "severity"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The identifier of cve",
+            "format": "guid"
+          },
+          "cveId": {
+            "type": "string",
+            "description": "The cve id"
+          },
+          "cvssScore": {
+            "type": "number",
+            "description": "Specifies the cvss score of cve",
+            "format": "double"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Specifies the cve severity"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of cve",
+            "nullable": true
+          },
+          "affectedProducts": {
+            "type": "string",
+            "description": "String with all affected products",
+            "nullable": true
+          },
+          "affectedOperatingSystems": {
+            "type": "string",
+            "description": "String with all affected operating systems",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "VulnerabilityPagedList": {
+        "type": "object",
+        "properties": {
+          "currentPage": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true,
+            "readOnly": true
+          },
+          "totalItems": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "hasPreviousPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNextPage": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vulnerability"
+            },
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "description": "Input your username and password to access this API",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": [ ]
+    }
+  ],
+  "tags": [
+    {
+      "name": "Rules",
+      "description": "Compliance rules for Android, iOS and macOS endpoints"
+    },
+    {
+      "name": "DetectedVulnerabilities",
+      "description": "Detected vulnerabilities on Windows endpoints"
+    },
+    {
+      "name": "Vulnerabilities",
+      "description": "Detectable Vulnerabilities"
+    },
+    {
+      "name": "DetectedRuleViolations",
+      "description": "Detected rule violations for Android, iOS and macOS endpoints"
+    }
+  ]
+}

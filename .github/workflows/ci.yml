@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install and build all servers
+        run: |
+          for dir in bconnect-*-mcp bconnect-server-template; do
+            echo "=== $dir ==="
+            (cd "$dir" && npm ci && npm run build)
+          done
+
+      - name: Run tests (all servers)
+        run: |
+          for dir in bconnect-*-mcp; do
+            echo "=== Testing $dir ==="
+            (cd "$dir" && npm test)
+          done
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit all servers
+        run: |
+          for dir in bconnect-*-mcp bconnect-server-template; do
+            echo "=== Auditing $dir ==="
+            (cd "$dir" && npm ci && npm audit --audit-level=high) || true
+          done

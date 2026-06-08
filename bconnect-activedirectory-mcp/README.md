@@ -1,0 +1,95 @@
+# bconnect-activedirectory-mcp
+
+Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
+
+**Domain:** Active Directory OUs, groups, users, and objects synchronized into baramundi Management Suite  
+**Tools:** 16
+
+---
+
+## Quick Start
+
+```env
+BCONNECT_BASE_URL=https://<your-bms-server>:444/bconnect
+BCONNECT_USERNAME=mcp-reader
+BCONNECT_PASSWORD=<password>
+BCONNECT_REJECT_UNAUTHORIZED=true
+# Optional: AUDIT_LOG_LEVEL=write   (all / write / security / none)
+```
+
+```bash
+# Run directly (development)
+cd bconnect-activedirectory-mcp
+npm install && npm run build
+node build/index.js
+
+# Claude Code / Claude Desktop entry (~/.claude.json or claude_desktop_config.json):
+{
+  "mcpServers": {
+    "bconnect-activedirectory": {
+      "command": "node",
+      "args": ["/opt/bconnect-mcp-suite/bconnect-activedirectory-mcp/build/index.js"],
+      "env": {
+        "BCONNECT_BASE_URL": "https://bms-server:444/bconnect",
+        "BCONNECT_USERNAME": "mcp-reader",
+        "BCONNECT_PASSWORD": "<password>"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_ad_groups` | List all AD groups synchronized into baramundi |
+| `get_ad_group` | Get details of a specific AD group by GUID |
+| `list_ad_subgroups` | List nested sub-groups of a parent AD group |
+| `list_ad_groups_by_org_unit` | List AD groups within a specific OU |
+| `list_ad_objects` | List all AD objects (users and groups) |
+| `get_ad_object` | Get details of a specific AD object by GUID |
+| `list_ad_object_memberships` | List group memberships for an AD object |
+| `list_ad_objects_by_group` | List AD objects that are members of a group |
+| `list_ad_objects_by_org_unit` | List AD objects within a specific OU |
+| `list_ad_users` | List all AD users synchronized into baramundi |
+| `get_ad_user` | Get details of a specific AD user by GUID |
+| `list_ad_users_by_group` | List AD users that are members of a group |
+| `list_ad_users_by_org_unit` | List AD users within a specific OU |
+| `list_org_units` | List all AD organizational units |
+| `get_org_unit` | Get details of a specific OU by GUID |
+| `list_org_units_by_org_unit` | List child OUs within a parent OU |
+
+---
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `BCONNECT_BASE_URL` | Yes | — | bConnect REST API base URL |
+| `BCONNECT_USERNAME` | Yes | — | API username |
+| `BCONNECT_PASSWORD` | Yes | — | API password |
+| `BCONNECT_REJECT_UNAUTHORIZED` | No | `true` | Set `false` to allow self-signed TLS |
+| `BCONNECT_RELEASE` | No | `25R2` | Set `26R1` to enable additional tools |
+| `AUDIT_LOG_LEVEL` | No | `write` | `all` / `write` / `security` / `none` |
+
+---
+
+## Part of the Suite
+
+This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).
+
+---
+
+## Compatibility
+
+| MCP server version | Supported bMS release | bConnect API | Notes |
+|--------------------|-----------------------|--------------|-------|
+| `26.1.0` | baramundi Management Suite 2026R1 | V2.0 | Current — full tool set |
+| `25.2.0` *(planned)* | baramundi Management Suite 2025R2 | V2.0 | Subset of tools (25R2 spec) |
+| `1.0.0` (legacy) | ≤25R2 (unspecified) | V2.0 | Pre-versioning-scheme release |
+
+> Version scheme: `<bMS-year-2digit>.<bMS-release-number>.<mcp-patch>`
+> Example: `26.1.0` targets bMS 2026R1; patch-only fixes increment the last digit.

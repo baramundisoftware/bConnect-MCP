@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build all servers
+        run: |
+          for dir in bconnect-*-mcp bconnect-server-template; do
+            echo "=== Building $dir ==="
+            (cd "$dir" && npm ci && npm run build)
+          done
+
+      - name: Run tests
+        run: |
+          for dir in bconnect-*-mcp; do
+            echo "=== Testing $dir ==="
+            (cd "$dir" && npm test)
+          done
+
+      - name: Create release archive
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          ARCHIVE="bconnect-mcp-suite-${VERSION}.zip"
+
+          # Collect all servers into a release directory
+          mkdir -p release-package
+
+          for dir in bconnect-*-mcp; do
+            echo "Packaging $dir..."
+            mkdir -p "release-package/$dir"
+            cp -r "$dir/build" "release-package/$dir/"
+            cp "$dir/package.json" "release-package/$dir/"
+            cp "$dir/package-lock.json" "release-package/$dir/"
+            [ -f "$dir/.env.example" ] && cp "$dir/.env.example" "release-package/$dir/"
+            [ -f "$dir/README.md" ] && cp "$dir/README.md" "release-package/$dir/"
+          done
+
+          # Add root files
+          cp README.md release-package/
+          cp LICENSE release-package/
+          cp CHANGELOG.md release-package/
+          cp .env.example release-package/
+
+          # Add install instructions
+          cat > release-package/INSTALL.md << 'INSTALLEOF'
+          # Installation
+
+          ## Prerequisites
+          - Node.js 20 or later (https://nodejs.org/)
+          - Your bMS server address and credentials
+
+          ## Steps
+          1. Extract this archive
+          2. For each server you need, run:
+             cd bconnect-<name>-mcp
+             npm ci --production
+          3. Copy .env.example to .env and fill in your credentials
+          4. Start: node build/index.js
+
+          See README.md for full documentation.
+          INSTALLEOF
+
+          cd release-package
+          zip -r "../${ARCHIVE}" .
+          cd ..
+
+          # Generate checksums
+          sha256sum "${ARCHIVE}" > "${ARCHIVE}.sha256"
+
+          echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          # Extract the section for this version from CHANGELOG.md
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk "/^## \[${VERSION}\]/{found=1; next} /^## \[/{if(found) exit} found{print}" CHANGELOG.md > release-notes.md
+
+          if [ ! -s release-notes.md ]; then
+            echo "Release ${VERSION}" > release-notes.md
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: release-notes.md
+          files: |
+            ${{ env.ARCHIVE }}
+            ${{ env.ARCHIVE }}.sha256
+          draft: false
+          prerelease: true

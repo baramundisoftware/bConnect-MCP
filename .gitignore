@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+# package-lock.json is committed so npm ci can reproduce the reviewed
+# dependency tree (see SECURITY.md → Operational Hardening).
+
+# Build output
+build/
+dist/
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated files
+src/generated/
+
+
+# Release artifacts (binaries, tarballs, checksums)
+*.tar.gz
+*.tgz
+*.sha256
+*.exe
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Internal docs — not for repository
+Tasks.md
+Requirements.md
+reports/
+docs/internal/
+docs/Bugs_Mock.md
+docs/Bugs_MCP.md
+docs/architecture-integrated.md
+adr/
+handover/
+releases/
+
+# One-off / dev-only scripts
+scripts/install-asciinema.sh
+scripts/record-demo-asciinema.sh
+scripts/patch-write-gate-and-startup.mjs
+scripts/build-windows-binary.sh
+scripts/generate-checksums.sh
+build-tests/pkg-output.test.sh
+build-tests/quality-gate.sh

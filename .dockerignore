@@ -1,0 +1,22 @@
+# Keep Docker build context small — exclude build artifacts and dev files
+**/node_modules
+**/build
+**/.git
+**/coverage
+**/__tests__
+**/*.test.ts
+**/*.spec.ts
+**/vitest*.config*
+# Note: src/generated/ is NOT excluded — servers need generated types to build
+**/.env
+**/.env.*
+releases/
+reports/
+docs/
+adr/
+scripts/
+build-tests/
+*.md
+!**/package.json
+!**/package-lock.json
+!**/tsconfig.json
