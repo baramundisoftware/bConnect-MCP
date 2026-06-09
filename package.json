@@ -22,7 +22,11 @@
     "bconnect",
     "model-context-protocol"
   ],
-  "author": "baramundi software GmbH",
+  "author": {
+    "name": "baramundi software GmbH",
+    "email": "bernd.wiedemann@baramundi.com",
+    "url": "https://www.baramundi.com"
+  },
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
