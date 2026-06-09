@@ -23,7 +23,7 @@ We are committed to making participation in this project a harassment-free exper
 
 ## Enforcement
 
-Instances of unacceptable behaviour may be reported to **bernd.wiedemann@baramundi.com**. All complaints will be reviewed and investigated confidentially.
+Instances of unacceptable behaviour may be reported to **bernd.wiedemann@baramundi.de**. All complaints will be reviewed and investigated confidentially.
 
 ## Attribution
 
