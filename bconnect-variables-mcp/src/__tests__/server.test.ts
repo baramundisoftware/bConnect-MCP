@@ -23,7 +23,7 @@ const EXPECTED_TOOLS = [
   'update_variable_instance',
 ];
 
-async function startServer() {
+async function startServer(): Promise<{ client: InstanceType<typeof Client> }> {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);

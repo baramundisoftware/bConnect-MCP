@@ -98,7 +98,7 @@ const ENDPOINTS_TOOLS_26R1_ONLY = [
 ] as const;
 
 const ALL_EXPECTED_TOOLS: string[] = [...ENDPOINTS_TOOLS];
-const ALL_EXPECTED_TOOLS_26R1: string[] = [...ENDPOINTS_TOOLS, ...ENDPOINTS_TOOLS_26R1_ONLY];
+const _ALL_EXPECTED_TOOLS_26R1: string[] = [...ENDPOINTS_TOOLS, ...ENDPOINTS_TOOLS_26R1_ONLY];
 
 // ── Tool names that must NOT appear in this server ─────────────────────────
 
@@ -226,7 +226,7 @@ const V11_TOOLS = [
   'get_inventory_snmp_scans_v1',
 ];
 
-const ALL_FORBIDDEN_TOOLS: string[] = [
+const _ALL_FORBIDDEN_TOOLS: string[] = [
   ...ACTIVEDIRECTORY_TOOLS,
   ...OPERATINGSYSTEMS_TOOLS,
   ...JOBS_TOOLS,

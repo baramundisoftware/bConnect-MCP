@@ -22,7 +22,7 @@ const EXPECTED_TOOLS = [
   'list_udg_folders_by_folder',
 ];
 
-async function startServer(release: string = '25R2') {
+async function startServer(release: string = '25R2'): Promise<{ client: InstanceType<typeof Client> }> {
   process.env.BCONNECT_RELEASE = release;
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

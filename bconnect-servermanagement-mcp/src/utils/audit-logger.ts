@@ -15,7 +15,7 @@ export interface AuditLogEntry {
   user: string;           // Username from config
   method: string;         // HTTP method
   path: string;           // API path
-  parameters?: any;       // Query params or request body
+  parameters?: Record<string, unknown>;  // Query params or request body
   statusCode?: number;    // HTTP status code
   duration?: number;      // Request duration in ms
   error?: string;         // Error message if failed
@@ -116,7 +116,7 @@ export class AuditLogger {
   /**
    * Log API request start
    */
-  logRequest(method: string, path: string, parameters?: any): number {
+  logRequest(method: string, path: string, parameters?: Record<string, unknown>): number {
     if (!this.shouldLog(method, path)) {
       return Date.now(); // Return start time for duration calculation
     }
@@ -206,12 +206,12 @@ export class AuditLogger {
     } else if (entry.level === 'warn') {
       console.warn(message);
     } else {
-      console.log(message);
+      console.info(message);
     }
 
     // Include parameters if configured (separate line for readability)
     if (entry.parameters && this.config.includeParameters) {
-      console.log(`${prefix} Parameters:`, JSON.stringify(entry.parameters, null, 2));
+      console.info(`${prefix} Parameters:`, JSON.stringify(entry.parameters, null, 2));
     }
   }
 

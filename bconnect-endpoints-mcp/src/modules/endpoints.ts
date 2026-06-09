@@ -13,9 +13,15 @@ type Endpoint = paths["/v2.0/Endpoints/{id}"]["get"]["responses"]["200"]["conten
 type WindowsEndpointsList = paths["/v2.0/WindowsEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type WindowsEndpoint = paths["/v2.0/WindowsEndpoints/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 
+// Type aliases for READ operations on platform endpoint lists
+type LinuxEndpointsList = paths["/v2.0/LinuxEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type MacEndpointsList = paths["/v2.0/MacEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type LogicalGroupsList = paths["/v2.0/LogicalGroups"]["get"]["responses"]["200"]["content"]["application/json"];
+
 // Type aliases for READ operations on individual platform endpoints
 type LinuxEndpoint = paths["/v2.0/LinuxEndpoints/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 type MacEndpoint = paths["/v2.0/MacEndpoints/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
+type LogicalGroup = paths["/v2.0/LogicalGroups/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for group-based endpoint list operations
 type EndpointsByLogicalGroupList = paths["/v2.0/LogicalGroups/{logicalGroupId}/Endpoints"]["get"]["responses"]["200"]["content"]["application/json"];
@@ -211,7 +217,7 @@ export class EndpointsModule {
   /**
    * Get all logical groups
    */
-  async getLogicalGroups(): Promise<any> {
+  async getLogicalGroups(): Promise<LogicalGroupsList> {
     const response = await this.client.get(
       `${this.basePath}/LogicalGroups`
     );
@@ -221,7 +227,7 @@ export class EndpointsModule {
   /**
    * Get a specific logical group
    */
-  async getLogicalGroup(id: string): Promise<any> {
+  async getLogicalGroup(id: string): Promise<LogicalGroup> {
     const response = await this.client.get(
       `${this.basePath}/LogicalGroups/${id}`
     );
@@ -231,7 +237,7 @@ export class EndpointsModule {
   /**
    * Get Linux endpoints
    */
-  async getLinuxEndpoints(params?: EndpointsQueryParams): Promise<any> {
+  async getLinuxEndpoints(params?: EndpointsQueryParams): Promise<LinuxEndpointsList> {
     const response = await this.client.get(
       `${this.basePath}/LinuxEndpoints`,
       { params }
@@ -252,7 +258,7 @@ export class EndpointsModule {
   /**
    * Get Mac endpoints
    */
-  async getMacEndpoints(params?: EndpointsQueryParams): Promise<any> {
+  async getMacEndpoints(params?: EndpointsQueryParams): Promise<MacEndpointsList> {
     const response = await this.client.get(
       `${this.basePath}/MacEndpoints`,
       { params }
@@ -273,7 +279,7 @@ export class EndpointsModule {
   /**
    * Get Android endpoints
    */
-  async getAndroidEndpoints(params?: EndpointsQueryParams): Promise<any> {
+  async getAndroidEndpoints(params?: EndpointsQueryParams): Promise<AndroidEndpointsList> {
     const response = await this.client.get(
       `${this.basePath}/AndroidEndpoints`,
       { params }
@@ -284,7 +290,7 @@ export class EndpointsModule {
   /**
    * Get iOS endpoints
    */
-  async getIosEndpoints(params?: EndpointsQueryParams): Promise<any> {
+  async getIosEndpoints(params?: EndpointsQueryParams): Promise<IosEndpointsList> {
     const response = await this.client.get(
       `${this.basePath}/IosEndpoints`,
       { params }

@@ -60,7 +60,7 @@ const PATTERNS = {
 /**
  * Validate a single parameter
  */
-function validateParameter(value: any, rule: ValidationRule): string[] {
+function validateParameter(value: unknown, rule: ValidationRule): string[] {
   const errors: string[] = [];
   const { name, required, type, min, max, minLength, maxLength, enum: enumValues, pattern, format } = rule;
 
@@ -154,8 +154,8 @@ function validateParameter(value: any, rule: ValidationRule): string[] {
 
     // JSON Patch validation (for arrays)
     if (format === 'json-patch') {
-      value.forEach((op: any, index: number) => {
-        if (!op.op || !['add', 'remove', 'replace', 'move', 'copy', 'test'].includes(op.op)) {
+      value.forEach((op: Record<string, unknown>, index: number) => {
+        if (!op.op || typeof op.op !== 'string' || !['add', 'remove', 'replace', 'move', 'copy', 'test'].includes(op.op)) {
           errors.push(`${name}[${index}].op must be one of: add, remove, replace, move, copy, test`);
         }
         if (!op.path) {
@@ -178,7 +178,7 @@ function validateParameter(value: any, rule: ValidationRule): string[] {
 /**
  * Validate all parameters against rules
  */
-export function validateParameters(args: Record<string, any> | undefined, rules: ValidationRule[]): ValidationResult {
+export function validateParameters(args: Record<string, unknown> | undefined, rules: ValidationRule[]): ValidationResult {
   const errors: string[] = [];
 
   // Check each rule
@@ -197,7 +197,7 @@ export function validateParameters(args: Record<string, any> | undefined, rules:
 /**
  * Validate and throw McpError if validation fails
  */
-export function validateOrThrow(args: Record<string, any> | undefined, rules: ValidationRule[]): void {
+export function validateOrThrow(args: Record<string, unknown> | undefined, rules: ValidationRule[]): void {
   const result = validateParameters(args, rules);
   if (!result.valid) {
     throw new McpError(

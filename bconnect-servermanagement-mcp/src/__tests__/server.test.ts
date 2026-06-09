@@ -50,7 +50,7 @@ const EXPECTED_26R1_ONLY_TOOLS = [
   'get_download_job',
 ];
 
-async function startServer() {
+async function startServer(): Promise<{ client: InstanceType<typeof Client> }> {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
@@ -60,7 +60,7 @@ async function startServer() {
   return { client };
 }
 
-async function startServerWith26R1() {
+async function startServerWith26R1(): Promise<{ client: InstanceType<typeof Client> }> {
   process.env.BCONNECT_RELEASE = '26R1';
   const { server } = createServer();
   process.env.BCONNECT_RELEASE = undefined;

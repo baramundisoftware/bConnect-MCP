@@ -50,7 +50,7 @@ export class DefenseControlModule {
     return response.data;
   }
 
-  async triggerLocalAdminAccountsUpdate(id: string): Promise<any> {
+  async triggerLocalAdminAccountsUpdate(id: string): Promise<boolean> {
     const response = await this.httpClient.post(
       `${this.basePath}/LocalAdministrativeAccounts/WindowsEndpoints/${id}/TriggerUpdateOnClient`
     );

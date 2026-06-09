@@ -51,7 +51,7 @@ export interface CacheStats {
  * Uses Map to maintain insertion order for LRU behavior.
  */
 export class ResponseCache {
-  private cache: Map<string, CacheEntry<any>>;
+  private cache: Map<string, CacheEntry<unknown>>;
   private readonly config: Required<ResponseCacheConfig>;
   private stats: CacheStats;
 
@@ -75,7 +75,7 @@ export class ResponseCache {
   /**
    * Generate cache key from method, URL, and parameters
    */
-  private generateKey(method: string, url: string, params?: any): string {
+  private generateKey(method: string, url: string, params?: unknown): string {
     const paramsStr = params ? JSON.stringify(params) : '';
     return `${method.toUpperCase()}:${url}:${paramsStr}`;
   }
@@ -83,7 +83,7 @@ export class ResponseCache {
   /**
    * Check if cache entry is expired
    */
-  private isExpired(entry: CacheEntry<any>): boolean {
+  private isExpired(entry: CacheEntry<unknown>): boolean {
     if (this.config.ttl === 0) {
       return false; // No expiration
     }
@@ -94,7 +94,6 @@ export class ResponseCache {
    * Evict expired entries
    */
   private evictExpired(): void {
-    const now = Date.now();
     for (const [key, entry] of this.cache.entries()) {
       if (this.isExpired(entry)) {
         this.cache.delete(key);
@@ -133,7 +132,7 @@ export class ResponseCache {
   /**
    * Get cached response
    */
-  get<T>(method: string, url: string, params?: any): T | null {
+  get<T>(method: string, url: string, params?: unknown): T | null {
     if (!this.config.enabled) {
       return null;
     }
@@ -165,7 +164,7 @@ export class ResponseCache {
   /**
    * Set cached response
    */
-  set<T>(method: string, url: string, data: T, params?: any): void {
+  set<T>(method: string, url: string, data: T, params?: unknown): void {
     if (!this.config.enabled || !this.shouldCache(method)) {
       return;
     }
@@ -209,7 +208,7 @@ export class ResponseCache {
   /**
    * Invalidate specific cache entry
    */
-  invalidate(method: string, url: string, params?: any): boolean {
+  invalidate(method: string, url: string, params?: unknown): boolean {
     const key = this.generateKey(method, url, params);
     const deleted = this.cache.delete(key);
     if (deleted) {
@@ -229,7 +228,7 @@ export class ResponseCache {
       // JSON.stringify(object) so they start with '{', or empty string.
       // Find method/URL boundary (first ':') and URL/params boundary (last ':{' or trailing ':').
       const methodEnd = key.indexOf(':');
-      if (methodEnd === -1) continue;
+      if (methodEnd === -1) {continue;}
       const paramsColonIdx = key.lastIndexOf(':{');
       const url = paramsColonIdx > methodEnd
         ? key.slice(methodEnd + 1, paramsColonIdx)

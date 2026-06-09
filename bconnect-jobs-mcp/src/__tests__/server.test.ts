@@ -237,7 +237,7 @@ const V11_TOOLS = [
   'get_inventory_snmp_scans_v1',
 ];
 
-const ALL_FORBIDDEN_TOOLS: string[] = [
+const _ALL_FORBIDDEN_TOOLS: string[] = [
   ...SERVERMANAGEMENT_TOOLS,
   ...VARIABLES_TOOLS,
   ...ENDPOINTS_TOOLS,
