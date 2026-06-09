@@ -299,7 +299,7 @@ export function createServer(): { server: Server } {
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error) {
-      if (error instanceof McpError) throw error;
+      if (error instanceof McpError) {throw error;}
       throw new McpError(
         ErrorCode.InternalError,
         `bConnect API error: ${error instanceof Error ? error.message : String(error)}`
@@ -312,7 +312,7 @@ export function createServer(): { server: Server } {
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-async function main() {
+async function main(): Promise<void> {
   dotenv.config();
 
   

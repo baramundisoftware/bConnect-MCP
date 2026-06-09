@@ -5,13 +5,23 @@
  * Supports multiple API modules: Endpoints, Assets, Software, etc.
  */
 
-import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosError, CreateAxiosDefaults, InternalAxiosRequestConfig } from "axios";
 import axiosRetry from "axios-retry";
 import https from "https";
-import { RateLimiter, RateLimitError, RateLimiterConfig } from "./utils/rate-limiter.js";
+import { PeerCertificate } from "tls";
+
+/**
+ * Extended Axios request config to carry internal metadata through interceptors.
+ */
+interface BConnectRequestConfig extends InternalAxiosRequestConfig {
+  __rateLimitInfo?: { allowed: boolean; remaining: number; limit: number; resetInMs: number };
+  __auditStartTime?: number;
+  __cachedResponse?: unknown;
+}
+import { RateLimiter, RateLimitError } from "./utils/rate-limiter.js";
 import { AuditLogger, AuditLevel, AuditLogEntry } from "./utils/audit-logger.js";
 import { ResponseCache } from "./utils/response-cache.js";
-import { BatchOperations, BatchOperation, BatchExecutionResult, createBatchOperations } from "./utils/batch-operations.js";
+import { BatchOperations, BatchOperation, BatchExecutionResult } from "./utils/batch-operations.js";
 import { JobsModule } from './modules/jobs.js';
 
 export interface BConnectConfig {
@@ -27,7 +37,7 @@ export interface BConnectConfig {
   cert?: string | Buffer;  // Client certificate
   key?: string | Buffer;   // Client private key
   passphrase?: string;     // Passphrase for client key
-  checkServerIdentity?: (hostname: string, cert: any) => Error | undefined;  // Custom hostname validation
+  checkServerIdentity?: (hostname: string, cert: PeerCertificate) => Error | undefined;  // Custom hostname validation
 
   // Retry Configuration
   maxRetries?: number;
@@ -104,7 +114,7 @@ export class BConnectClient {
 
     // Create V2.0 axios instance with base configuration
     // Note: In test environments, skip custom httpsAgent to allow MSW request interception
-    const axiosConfig: any = {
+    const axiosConfig: CreateAxiosDefaults = {
       baseURL: config.baseUrl,
       timeout: config.timeout || 30000,
       headers: {
@@ -122,7 +132,7 @@ export class BConnectClient {
 
     // Create V1.1 axios instance with bConnect V1.1 base URL
     const v1BaseUrl = config.v1BaseUrl || config.baseUrl.replace(/\/bconnect$/i, '/bConnect/V1.1');
-    const v1AxiosConfig: any = {
+    const v1AxiosConfig: CreateAxiosDefaults = {
       baseURL: v1BaseUrl,
       timeout: config.timeout || 30000,
       headers: {
@@ -180,10 +190,10 @@ export class BConnectClient {
         return baseDelay * Math.pow(2, retryCount - 1);
       },
       retryCondition: (error: AxiosError) => {
-        if (!error.response) return true;
+        if (!error.response) {return true;}
         const status = error.response.status;
-        if (status >= 500 && status < 600) return true;
-        if (status === 429) return true;
+        if (status >= 500 && status < 600) {return true;}
+        if (status === 429) {return true;}
         return false;
       },
     });
@@ -209,7 +219,7 @@ export class BConnectClient {
               );
             }
             // Attach rate limit info to request for response headers
-            (requestConfig as any).__rateLimitInfo = rateLimitInfo;
+            (requestConfig as BConnectRequestConfig).__rateLimitInfo = rateLimitInfo;
           }
           return requestConfig;
         },
@@ -228,7 +238,7 @@ export class BConnectClient {
               );
             }
             // Attach rate limit info to request for response headers
-            (requestConfig as any).__rateLimitInfo = rateLimitInfo;
+            (requestConfig as BConnectRequestConfig).__rateLimitInfo = rateLimitInfo;
           }
           return requestConfig;
         },
@@ -254,7 +264,7 @@ export class BConnectClient {
             const params = requestConfig.params || requestConfig.data;
             const startTime = this.auditLogger.logRequest(method, path, params);
             // Attach start time to request for duration calculation
-            (requestConfig as any).__auditStartTime = startTime;
+            (requestConfig as BConnectRequestConfig).__auditStartTime = startTime;
           }
           return requestConfig;
         },
@@ -270,7 +280,7 @@ export class BConnectClient {
             const params = requestConfig.params || requestConfig.data;
             const startTime = this.auditLogger.logRequest(method, path, params);
             // Attach start time to request for duration calculation
-            (requestConfig as any).__auditStartTime = startTime;
+            (requestConfig as BConnectRequestConfig).__auditStartTime = startTime;
           }
           return requestConfig;
         },
@@ -299,7 +309,7 @@ export class BConnectClient {
             const cachedResponse = this.responseCache.get(method, url, params);
             if (cachedResponse) {
               // Return cached response by throwing special marker
-              (requestConfig as any).__cachedResponse = cachedResponse;
+              (requestConfig as BConnectRequestConfig).__cachedResponse = cachedResponse;
             }
           }
           return requestConfig;
@@ -319,7 +329,7 @@ export class BConnectClient {
             const cachedResponse = this.responseCache.get(method, url, params);
             if (cachedResponse) {
               // Return cached response by throwing special marker
-              (requestConfig as any).__cachedResponse = cachedResponse;
+              (requestConfig as BConnectRequestConfig).__cachedResponse = cachedResponse;
             }
           }
           return requestConfig;
@@ -346,7 +356,7 @@ export class BConnectClient {
       (response) => {
         // Check if response was cached (from request interceptor)
         if (this.responseCache && response.config) {
-          const cachedResponse = (response.config as any).__cachedResponse;
+          const cachedResponse = (response.config as BConnectRequestConfig).__cachedResponse;
           if (cachedResponse) {
             // Return cached response
             response.data = cachedResponse;
@@ -374,7 +384,7 @@ export class BConnectClient {
 
         // Add rate limit headers if rate limiting is enabled
         if (this.rateLimiter && response.config) {
-          const rateLimitInfo = (response.config as any).__rateLimitInfo;
+          const rateLimitInfo = (response.config as BConnectRequestConfig).__rateLimitInfo;
           if (rateLimitInfo) {
             response.headers['X-RateLimit-Limit'] = rateLimitInfo.limit.toString();
             response.headers['X-RateLimit-Remaining'] = rateLimitInfo.remaining.toString();
@@ -387,7 +397,7 @@ export class BConnectClient {
           const method = response.config.method?.toUpperCase() || 'GET';
           const path = response.config.url || '';
           const statusCode = response.status;
-          const startTime = (response.config as any).__auditStartTime || Date.now();
+          const startTime = (response.config as BConnectRequestConfig).__auditStartTime || Date.now();
           this.auditLogger.logResponse(method, path, statusCode, startTime);
         }
 
@@ -403,7 +413,7 @@ export class BConnectClient {
       (response) => {
         // Check if response was cached (from request interceptor)
         if (this.responseCache && response.config) {
-          const cachedResponse = (response.config as any).__cachedResponse;
+          const cachedResponse = (response.config as BConnectRequestConfig).__cachedResponse;
           if (cachedResponse) {
             // Return cached response
             response.data = cachedResponse;
@@ -431,7 +441,7 @@ export class BConnectClient {
 
         // Add rate limit headers if rate limiting is enabled
         if (this.rateLimiter && response.config) {
-          const rateLimitInfo = (response.config as any).__rateLimitInfo;
+          const rateLimitInfo = (response.config as BConnectRequestConfig).__rateLimitInfo;
           if (rateLimitInfo) {
             response.headers['X-RateLimit-Limit'] = rateLimitInfo.limit.toString();
             response.headers['X-RateLimit-Remaining'] = rateLimitInfo.remaining.toString();
@@ -444,7 +454,7 @@ export class BConnectClient {
           const method = response.config.method?.toUpperCase() || 'GET';
           const path = response.config.url || '';
           const statusCode = response.status;
-          const startTime = (response.config as any).__auditStartTime || Date.now();
+          const startTime = (response.config as BConnectRequestConfig).__auditStartTime || Date.now();
           this.auditLogger.logResponse(method, path, statusCode, startTime);
         }
 
@@ -462,7 +472,7 @@ export class BConnectClient {
   /**
    * Configure Basic Authentication for both V2.0 and V1.1 clients
    */
-  private setupAuth() {
+  private setupAuth(): void {
     if (this.config.apiKey) {
       this.client.defaults.headers.common["X-Api-Key"] = this.config.apiKey;
       this.v1Client.defaults.headers.common["X-Api-Key"] = this.config.apiKey;
@@ -478,12 +488,13 @@ export class BConnectClient {
   /**
    * Handle API errors with meaningful messages
    */
-  private handleError(error: any): Promise<never> {
+  private handleError(error: AxiosError | RateLimitError | Error): Promise<never> {
     // Log error if audit logging is enabled
-    if (this.auditLogger && error.config) {
-      const method = error.config.method?.toUpperCase() || 'GET';
+    if (this.auditLogger && 'config' in error && error.config) {
+      const config = error.config as BConnectRequestConfig;
+      const method = config.method?.toUpperCase() || 'GET';
       const path = error.config.url || '';
-      const startTime = (error.config as any).__auditStartTime || Date.now();
+      const startTime = (error.config as BConnectRequestConfig).__auditStartTime || Date.now();
       this.auditLogger.logError(method, path, error, startTime);
     }
 
@@ -495,10 +506,9 @@ export class BConnectClient {
       );
     }
 
-    if (error.response) {
+    if (error instanceof AxiosError && error.response) {
       // Server responded with error status
       const status = error.response.status;
-      const message = error.response.data || error.message;
 
       switch (status) {
         case 401:
@@ -518,7 +528,7 @@ export class BConnectClient {
         default:
           throw new Error(`bConnect API error (HTTP ${status}).`);
       }
-    } else if (error.request) {
+    } else if (error instanceof AxiosError && error.request) {
       // Request made but no response received — do not expose internal hostname
       throw new Error(
         "Cannot connect to the bConnect API. " +
@@ -534,7 +544,7 @@ export class BConnectClient {
    * Health check / test connection
    */
   async testConnection(): Promise<boolean> {
-    if (process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK === 'true') return true;
+    if (process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK === 'true') {return true;}
     try {
       // TODO: Replace with a lightweight call to the domain's list endpoint
       await this.client.get('/info');
@@ -590,7 +600,7 @@ export class BConnectClient {
    * @returns Current batch operations configuration
    * @throws Error if batch operations is not enabled
    */
-  getBatchConfig() {
+  getBatchConfig(): { concurrency: number; stopOnError: boolean; retries: number; retryDelay: number } {
     if (!this.batchOperations) {
       throw new Error(
         'Batch operations is not enabled. Initialize BConnectClient with batch configuration.'

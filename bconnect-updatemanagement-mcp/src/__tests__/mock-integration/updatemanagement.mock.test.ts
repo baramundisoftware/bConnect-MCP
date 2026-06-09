@@ -31,7 +31,7 @@ beforeAll(async () => {
 
 describe('UpdateManagement — list windows endpoints', () => {
   it('returns a paged list with totalItems and at least one entry', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const result = await client.updateManagement.getWindowsEndpoints({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -44,10 +44,10 @@ describe('UpdateManagement — list windows endpoints', () => {
 
 describe('UpdateManagement — get windows endpoint by id', () => {
   it('returns the same endpoint that the list call surfaced', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const list = await client.updateManagement.getWindowsEndpoints({ PageSize: 1 } as never);
     const id = list.data?.[0]?.endpointId;
-    if (!id) throw new Error('mock returned empty list — fixture unexpected');
+    if (!id) {throw new Error('mock returned empty list — fixture unexpected');}
     const item = await client.updateManagement.getWindowsEndpoint(id);
     expect(item.endpointId).toBe(id);
     expect(item).toHaveProperty('endpointName');
@@ -56,7 +56,7 @@ describe('UpdateManagement — get windows endpoint by id', () => {
 
 describe('UpdateManagement — unknown id', () => {
   it('rejects with an HTTP error for a nonexistent GUID', async () => {
-    if (!available) return;
+    if (!available) {return;}
     await expect(client.updateManagement.getWindowsEndpoint(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

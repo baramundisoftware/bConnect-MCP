@@ -26,7 +26,7 @@ beforeAll(async () => {
 
 describe('Variables — list VariableDefinitions', () => {
   it('returns paged data with totalItems', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const result = await client.variables.getVariableDefinitions({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -36,10 +36,10 @@ describe('Variables — list VariableDefinitions', () => {
 
 describe('Variables — get VariableDefinition by id', () => {
   it('returns the same definition surfaced by the list', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const list = await client.variables.getVariableDefinitions({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
-    if (!id) throw new Error('mock returned empty VariableDefinitions list');
+    if (!id) {throw new Error('mock returned empty VariableDefinitions list');}
     const item = await client.variables.getVariableDefinition(id);
     expect(item.id).toBe(id);
   });
@@ -47,7 +47,7 @@ describe('Variables — get VariableDefinition by id', () => {
 
 describe('Variables — list VariableInstances', () => {
   it('returns paged data', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const result = await client.variables.getVariableInstances({ PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -56,7 +56,7 @@ describe('Variables — list VariableInstances', () => {
 
 describe('Variables — unknown VariableDefinition id', () => {
   it('rejects on get with nonexistent GUID', async () => {
-    if (!available) return;
+    if (!available) {return;}
     await expect(client.variables.getVariableDefinition(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

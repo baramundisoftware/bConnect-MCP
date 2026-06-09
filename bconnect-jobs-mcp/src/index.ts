@@ -22,11 +22,7 @@ import {
 import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow } from "./utils/parameter-validator.js";
 import type { paths as JobsPaths } from "./generated/jobs-types.js";
-import {
-  JobsRules
-} from "./utils/mcp-tool-validation-rules.js";
 
 // Type aliases for call-site casts (args are validated before use)
 type AssignJobDefinitionRequest = JobsPaths["/v2.0/LogicalGroups/{logicalGroupId}/AssignJobDefinition"]["post"]["requestBody"]["content"]["application/json"];
@@ -488,7 +484,7 @@ export function createServer(): { server: Server } {
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
   // ── Argument-validation pre-pass (runs before getBconnect) ─────────────────
-  function validateToolArguments(name: string, args: Record<string, unknown> | undefined): void {
+  function validateToolArguments(name: string, _args: Record<string, unknown> | undefined): void {
     switch (name) {
       // Job Definitions
       case "list_job_definitions":
@@ -821,7 +817,7 @@ export function createServer(): { server: Server } {
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error: unknown) {
-      if (error instanceof McpError) throw error;
+      if (error instanceof McpError) {throw error;}
       const message = error instanceof Error ? error.message : String(error);
       throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${message}`);
     }
@@ -852,7 +848,7 @@ export function createServer(): { server: Server } {
 
 // ─── Main entrypoint ─────────────────────────────────────────────────────────
 
-async function main() {
+async function main(): Promise<void> {
   dotenv.config();
 
   const baseUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:444/bconnect";

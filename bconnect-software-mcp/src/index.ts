@@ -442,7 +442,7 @@ export function createServer(): { server: Server } {
       const sw = bconnect.software;
 
       // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
-      const requires26R1 = () => {
+      const requires26R1 = (): void => {
         if (!is26R1) {
           throw new McpError(ErrorCode.MethodNotFound, `${name} is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.`);
         }
@@ -491,7 +491,7 @@ export function createServer(): { server: Server } {
         case "create_software_bundle": {
           requires26R1();
           const body: Record<string, unknown> = { name: args!.name };
-          if (typeof args!.folderId === "string") body.folderId = args!.folderId;
+          if (typeof args!.folderId === "string") {body.folderId = args!.folderId;}
           const result = await sw.createSoftwareBundle(body as never);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -519,7 +519,7 @@ export function createServer(): { server: Server } {
         case "add_application_to_bundle": {
           requires26R1();
           const body: Record<string, unknown> = { applicationId: args!.applicationId };
-          if (typeof args!.order === "number") body.order = args!.order;
+          if (typeof args!.order === "number") {body.order = args!.order;}
           const result = await sw.addApplicationToBundle(args!.bundleId as string, body as never);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -559,8 +559,8 @@ export function createServer(): { server: Server } {
         case "create_bundle_folder": {
           requires26R1();
           const body: Record<string, unknown> = { name: args!.name };
-          if (typeof args!.parentId === "string") body.parentId = args!.parentId;
-          if (typeof args!.comment === "string") body.comment = args!.comment;
+          if (typeof args!.parentId === "string") {body.parentId = args!.parentId;}
+          if (typeof args!.comment === "string") {body.comment = args!.comment;}
           const result = await sw.createBundleFolder(body as never);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -581,7 +581,7 @@ export function createServer(): { server: Server } {
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error) {
-      if (error instanceof McpError) throw error;
+      if (error instanceof McpError) {throw error;}
       throw new McpError(
         ErrorCode.InternalError,
         `bConnect API error: ${error instanceof Error ? error.message : String(error)}`
@@ -594,7 +594,7 @@ export function createServer(): { server: Server } {
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-async function main() {
+async function main(): Promise<void> {
   dotenv.config();
   
 

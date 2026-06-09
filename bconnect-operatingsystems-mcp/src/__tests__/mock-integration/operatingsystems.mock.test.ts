@@ -26,7 +26,7 @@ beforeAll(async () => {
 
 describe('OperatingSystems — list Folders', () => {
   it('returns paged data with totalItems', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const result = await client.operatingSystems.getFolders({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -36,10 +36,10 @@ describe('OperatingSystems — list Folders', () => {
 
 describe('OperatingSystems — get Folder by id', () => {
   it('returns the same folder surfaced by the list', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const list = await client.operatingSystems.getFolders({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
-    if (!id) throw new Error('mock returned empty Folders list');
+    if (!id) {throw new Error('mock returned empty Folders list');}
     const item = await client.operatingSystems.getFolder(id);
     expect(item.id).toBe(id);
   });
@@ -47,7 +47,7 @@ describe('OperatingSystems — get Folder by id', () => {
 
 describe('OperatingSystems — list WindowsEndpoints', () => {
   it('returns paged data', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const result = await client.operatingSystems.getWindowsEndpoints({ PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -56,7 +56,7 @@ describe('OperatingSystems — list WindowsEndpoints', () => {
 
 describe('OperatingSystems — unknown Folder id', () => {
   it('rejects on get with nonexistent GUID', async () => {
-    if (!available) return;
+    if (!available) {return;}
     await expect(client.operatingSystems.getFolder(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

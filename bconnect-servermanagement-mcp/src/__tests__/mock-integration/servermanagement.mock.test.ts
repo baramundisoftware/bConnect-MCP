@@ -26,7 +26,7 @@ beforeAll(async () => {
 
 describe('ServerManagement — list SecurityGroups', () => {
   it('returns paged data with totalItems', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const result = await client.serverManagement.getSecurityGroups({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -36,10 +36,10 @@ describe('ServerManagement — list SecurityGroups', () => {
 
 describe('ServerManagement — get SecurityGroup by id', () => {
   it('returns the same group surfaced by the list', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const list = await client.serverManagement.getSecurityGroups({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
-    if (!id) throw new Error('mock returned empty SecurityGroups list');
+    if (!id) {throw new Error('mock returned empty SecurityGroups list');}
     const item = await client.serverManagement.getSecurityGroup(id);
     expect(item.id).toBe(id);
   });
@@ -47,7 +47,7 @@ describe('ServerManagement — get SecurityGroup by id', () => {
 
 describe('ServerManagement — get ManagementServer (singleton)', () => {
   it('returns the management-server payload', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const ms = await client.serverManagement.getManagementServer();
     expect(ms).toBeDefined();
   });
@@ -55,7 +55,7 @@ describe('ServerManagement — get ManagementServer (singleton)', () => {
 
 describe('ServerManagement — unknown SecurityGroup id', () => {
   it('rejects on get with nonexistent GUID', async () => {
-    if (!available) return;
+    if (!available) {return;}
     await expect(client.serverManagement.getSecurityGroup(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

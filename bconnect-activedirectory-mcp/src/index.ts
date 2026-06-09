@@ -12,7 +12,6 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -647,7 +646,7 @@ export function createServer(): { server: Server } {
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error: unknown) {
-      if (error instanceof McpError) throw error;
+      if (error instanceof McpError) {throw error;}
       const message = error instanceof Error ? error.message : String(error);
       throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${message}`);
     }

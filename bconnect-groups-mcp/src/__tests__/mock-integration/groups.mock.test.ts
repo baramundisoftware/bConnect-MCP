@@ -36,7 +36,7 @@ beforeAll(async () => {
 
 describe('Groups — list Endpoints by LogicalGroup', () => {
   it('returns paged data', async () => {
-    if (!available || !logicalGroupId) return;
+    if (!available || !logicalGroupId) {return;}
     const result = await client.groups.getEndpointsByLogicalGroup(logicalGroupId, { PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -45,7 +45,7 @@ describe('Groups — list Endpoints by LogicalGroup', () => {
 
 describe('Groups — list WindowsEndpoints by LogicalGroup', () => {
   it('returns paged data', async () => {
-    if (!available || !logicalGroupId) return;
+    if (!available || !logicalGroupId) {return;}
     const result = await client.groups.getWindowsEndpointsByLogicalGroup(logicalGroupId, { PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -54,7 +54,7 @@ describe('Groups — list WindowsEndpoints by LogicalGroup', () => {
 
 describe('Groups — list Endpoints by StaticGroup (when available)', () => {
   it('returns paged data', async () => {
-    if (!available || !staticGroupId) return;
+    if (!available || !staticGroupId) {return;}
     const result = await client.groups.getEndpointsByStaticGroup(staticGroupId, { PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -63,7 +63,7 @@ describe('Groups — list Endpoints by StaticGroup (when available)', () => {
 
 describe('Groups — unknown LogicalGroup id', () => {
   it('rejects with HTTP error for nonexistent GUID', async () => {
-    if (!available) return;
+    if (!available) {return;}
     await expect(
       client.groups.getEndpointsByLogicalGroup('00000000-0000-0000-0000-000000000000'),
     ).rejects.toThrow();

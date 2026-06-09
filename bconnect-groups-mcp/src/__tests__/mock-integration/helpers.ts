@@ -21,7 +21,7 @@ export interface MockHealth {
 export async function getMockHealth(baseUrl = MOCK_BASE_URL): Promise<MockHealth | null> {
   try {
     const res = await fetch(`${baseUrl}/health`);
-    if (!res.ok) return null;
+    if (!res.ok) {return null;}
     return (await res.json()) as MockHealth;
   } catch {
     return null;
@@ -50,20 +50,20 @@ export async function rawGet(
   path: string,
   params: Record<string, string | number> = {},
   baseUrl = MOCK_BASE_URL,
-): Promise<{ status: number; body: any }> {
+): Promise<{ status: number; body: unknown }> {
   const url = new URL(path, baseUrl);
-  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
+  for (const [k, v] of Object.entries(params)) {url.searchParams.set(k, String(v));}
   const res = await fetch(url.toString());
   const body = await res.json().catch(() => null);
   return { status: res.status, body };
 }
 
 export async function reset(baseUrl = MOCK_BASE_URL): Promise<void> {
-  const attempt = () => fetch(`${baseUrl}/api/reset`, { method: 'POST' });
+  const attempt = (): Promise<Response> => fetch(`${baseUrl}/api/reset`, { method: 'POST' });
   let res = await attempt();
   if (res.status === 429) {
     await new Promise((r) => setTimeout(r, 1500));
     res = await attempt();
   }
-  if (!res.ok) throw new Error(`Reset failed: HTTP ${res.status}`);
+  if (!res.ok) {throw new Error(`Reset failed: HTTP ${res.status}`);}
 }

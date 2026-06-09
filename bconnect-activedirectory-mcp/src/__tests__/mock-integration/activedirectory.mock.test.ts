@@ -26,7 +26,7 @@ beforeAll(async () => {
 
 describe('ActiveDirectory — list ADGroups', () => {
   it('returns paged data with totalItems', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const result = await client.activeDirectory.getADGroups({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -38,10 +38,10 @@ describe('ActiveDirectory — list ADGroups', () => {
 
 describe('ActiveDirectory — get ADGroup by id', () => {
   it('returns the same group surfaced by the list', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const list = await client.activeDirectory.getADGroups({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
-    if (!id) throw new Error('mock returned empty ADGroups list');
+    if (!id) {throw new Error('mock returned empty ADGroups list');}
     const item = await client.activeDirectory.getADGroup(id);
     expect(item.id).toBe(id);
   });
@@ -49,7 +49,7 @@ describe('ActiveDirectory — get ADGroup by id', () => {
 
 describe('ActiveDirectory — list ADUsers', () => {
   it('returns paged data', async () => {
-    if (!available) return;
+    if (!available) {return;}
     const result = await client.activeDirectory.getADUsers({ PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -58,7 +58,7 @@ describe('ActiveDirectory — list ADUsers', () => {
 
 describe('ActiveDirectory — unknown id', () => {
   it('rejects on get with nonexistent GUID', async () => {
-    if (!available) return;
+    if (!available) {return;}
     await expect(client.activeDirectory.getADGroup(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

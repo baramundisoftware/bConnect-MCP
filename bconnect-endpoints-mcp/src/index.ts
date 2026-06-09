@@ -14,7 +14,6 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -24,10 +23,6 @@ import {
 import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow } from "./utils/parameter-validator.js";
-import {
-  EndpointsRules
-} from "./utils/mcp-tool-validation-rules.js";
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
@@ -768,7 +763,7 @@ export function createServer(): { server: Server } {
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
   // ── Argument-validation pre-pass (runs before getBconnect) ─────────────────
-  function validateToolArguments(name: string, args: Record<string, unknown> | undefined): void {
+  function validateToolArguments(name: string, _args: Record<string, unknown> | undefined): void {
     switch (name) {
       case "list_endpoints":
       case "get_endpoint":
@@ -1088,10 +1083,10 @@ export function createServer(): { server: Server } {
 
         case "update_android_endpoint": {
           const patchOperations: Array<Record<string, never>> = [];
-          if (args!.displayName !== undefined) patchOperations.push({ op: "replace", path: "/displayName", value: args!.displayName } as never);
-          if (args!.logicalGroupId !== undefined) patchOperations.push({ op: "replace", path: "/logicalGroupId", value: args!.logicalGroupId } as never);
-          if (args!.comment !== undefined) patchOperations.push({ op: "replace", path: "/comment", value: args!.comment } as never);
-          if (args!.serialNumber !== undefined) patchOperations.push({ op: "replace", path: "/serialNumber", value: args!.serialNumber } as never);
+          if (args!.displayName !== undefined) {patchOperations.push({ op: "replace", path: "/displayName", value: args!.displayName } as never);}
+          if (args!.logicalGroupId !== undefined) {patchOperations.push({ op: "replace", path: "/logicalGroupId", value: args!.logicalGroupId } as never);}
+          if (args!.comment !== undefined) {patchOperations.push({ op: "replace", path: "/comment", value: args!.comment } as never);}
+          if (args!.serialNumber !== undefined) {patchOperations.push({ op: "replace", path: "/serialNumber", value: args!.serialNumber } as never);}
           await bconnect.endpoints.updateAndroidEndpoint(args!.id as string, patchOperations);
           return { content: [{ type: "text", text: JSON.stringify({ success: true, message: `Android endpoint ${args!.id} updated successfully` }, null, 2) }] };
         }
@@ -1113,9 +1108,9 @@ export function createServer(): { server: Server } {
 
         case "update_ios_endpoint": {
           const patchOps: Array<Record<string, never>> = [];
-          if (args!.displayName !== undefined) patchOps.push({ op: "replace", path: "/displayName", value: args!.displayName } as never);
-          if (args!.logicalGroupId !== undefined) patchOps.push({ op: "replace", path: "/logicalGroupId", value: args!.logicalGroupId } as never);
-          if (args!.comment !== undefined) patchOps.push({ op: "replace", path: "/comment", value: args!.comment } as never);
+          if (args!.displayName !== undefined) {patchOps.push({ op: "replace", path: "/displayName", value: args!.displayName } as never);}
+          if (args!.logicalGroupId !== undefined) {patchOps.push({ op: "replace", path: "/logicalGroupId", value: args!.logicalGroupId } as never);}
+          if (args!.comment !== undefined) {patchOps.push({ op: "replace", path: "/comment", value: args!.comment } as never);}
           await bconnect.endpoints.updateIosEndpoint(args!.id as string, patchOps);
           return { content: [{ type: "text", text: JSON.stringify({ success: true, message: `iOS endpoint ${args!.id} updated successfully` }, null, 2) }] };
         }
@@ -1236,7 +1231,7 @@ export function createServer(): { server: Server } {
         }
 
         case "get_industrial_endpoint": {
-          if (!args?.id) throw new McpError(ErrorCode.InvalidParams, "id is required");
+          if (!args?.id) {throw new McpError(ErrorCode.InvalidParams, "id is required");}
           const result = await bconnect.endpoints.getIndustrialEndpoint(args.id as string);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -1300,37 +1295,37 @@ export function createServer(): { server: Server } {
 
         // Phase 24: 26R1-only tools
         case "list_unmanaged_endpoints": {
-          if (!is26R1) throw new McpError(ErrorCode.MethodNotFound, "list_unmanaged_endpoints is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "list_unmanaged_endpoints is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           const result = await bconnect.endpoints.listUnmanagedEndpoints(args || {});
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "get_unmanaged_endpoint": {
-          if (!is26R1) throw new McpError(ErrorCode.MethodNotFound, "get_unmanaged_endpoint is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "get_unmanaged_endpoint is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           const result = await bconnect.endpoints.getUnmanagedEndpoint(args!.id as string);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "delete_unmanaged_endpoint": {
-          if (!is26R1) throw new McpError(ErrorCode.MethodNotFound, "delete_unmanaged_endpoint is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "delete_unmanaged_endpoint is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           await bconnect.endpoints.deleteUnmanagedEndpoint(args!.id as string);
           return { content: [{ type: "text", text: `Unmanaged endpoint ${args!.id} deleted successfully` }] };
         }
 
         case "get_entra_id_data": {
-          if (!is26R1) throw new McpError(ErrorCode.MethodNotFound, "get_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "get_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           const result = await bconnect.endpoints.getEntraIdData(args!.endpointId as string);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "link_entra_id_data": {
-          if (!is26R1) throw new McpError(ErrorCode.MethodNotFound, "link_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "link_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           const result = await bconnect.endpoints.linkEntraIdData(args!.endpointId as string, args!.deviceId as string);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "unlink_entra_id_data": {
-          if (!is26R1) throw new McpError(ErrorCode.MethodNotFound, "unlink_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "unlink_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           await bconnect.endpoints.unlinkEntraIdData(args!.endpointId as string);
           return { content: [{ type: "text", text: `EntraID data unlinked from endpoint ${args!.endpointId} successfully` }] };
         }
@@ -1339,7 +1334,7 @@ export function createServer(): { server: Server } {
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error: unknown) {
-      if (error instanceof McpError) throw error;
+      if (error instanceof McpError) {throw error;}
       const message = error instanceof Error ? error.message : String(error);
       throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${message}`);
     }
@@ -1370,7 +1365,7 @@ export function createServer(): { server: Server } {
 
 // ─── Main entrypoint ─────────────────────────────────────────────────────────
 
-async function main() {
+async function main(): Promise<void> {
   dotenv.config();
 
   const baseUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:444/bconnect";

@@ -14,7 +14,6 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -492,7 +491,7 @@ export function createServer(): { server: Server } {
 
     // 26R1-only tools
     if (is26R1) {
-      (tools as any[]).push(
+      (tools as object[]).push(
         {
           name: "list_assets_by_org_unit",
           description: "[26R1] List all assets assigned to endpoints within a specific organizational unit. Returns a paged list of assets for the given OU GUID. Available in bConnect 26R1 and later.",
@@ -671,7 +670,7 @@ export function createServer(): { server: Server } {
       const assets = bconnect.assets;
 
       // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
-      const requires26R1 = () => {
+      const requires26R1 = (): void => {
         if (!is26R1) {
           throw new McpError(ErrorCode.MethodNotFound, `${name} is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.`);
         }
@@ -820,7 +819,7 @@ export function createServer(): { server: Server } {
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error: unknown) {
-      if (error instanceof McpError) throw error;
+      if (error instanceof McpError) {throw error;}
       const message = error instanceof Error ? error.message : String(error);
       throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${message}`);
     }

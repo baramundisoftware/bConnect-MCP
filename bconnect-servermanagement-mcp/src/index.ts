@@ -484,7 +484,7 @@ export function createServer(): { server: Server } {
       const sm = bconnect.serverManagement;
 
       // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
-      const requires26R1 = () => {
+      const requires26R1 = (): void => {
         if (!is26R1) {
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
         }
@@ -654,7 +654,7 @@ export function createServer(): { server: Server } {
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error) {
-      if (error instanceof McpError) throw error;
+      if (error instanceof McpError) {throw error;}
       throw new McpError(
         ErrorCode.InternalError,
         `bConnect API error: ${error instanceof Error ? error.message : String(error)}`
@@ -667,7 +667,7 @@ export function createServer(): { server: Server } {
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-async function main() {
+async function main(): Promise<void> {
   dotenv.config();
   
 
