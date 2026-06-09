@@ -40,7 +40,7 @@
     "@rollup/rollup-linux-arm64-gnu": "^4.60.0"
   },
   "devDependencies": {
-    "@types/node": "^22.18.12",
+    "@types/node": "^25.9.2",
     "@vitest/coverage-v8": "^3.2.4",
     "msw": "^2.11.6",
     "typescript": "^5.9.3",
