@@ -7,9 +7,26 @@ on:
     branches: [main]
 
 jobs:
-  build-and-test:
-    name: Build & Test
+  test:
+    name: Test ${{ matrix.server }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        server:
+          - bconnect-activedirectory-mcp
+          - bconnect-assets-mcp
+          - bconnect-compliance-mcp
+          - bconnect-defensecontrol-mcp
+          - bconnect-endpoints-mcp
+          - bconnect-groups-mcp
+          - bconnect-jobs-mcp
+          - bconnect-operatingsystems-mcp
+          - bconnect-servermanagement-mcp
+          - bconnect-software-mcp
+          - bconnect-universaldynamicgroups-mcp
+          - bconnect-updatemanagement-mcp
+          - bconnect-variables-mcp
 
     steps:
       - name: Checkout
@@ -19,20 +36,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ matrix.server }}/package-lock.json
 
-      - name: Install and build all servers
-        run: |
-          for dir in bconnect-*-mcp bconnect-server-template; do
-            echo "=== $dir ==="
-            (cd "$dir" && npm ci && npm run build)
-          done
+      - name: Install dependencies
+        run: cd ${{ matrix.server }} && npm ci
 
-      - name: Run tests (all servers)
-        run: |
-          for dir in bconnect-*-mcp; do
-            echo "=== Testing $dir ==="
-            (cd "$dir" && npm test)
-          done
+      - name: Build
+        run: cd ${{ matrix.server }} && npm run build
+
+      - name: Test
+        run: cd ${{ matrix.server }} && npm test
 
   security:
     name: Security Audit
@@ -49,7 +63,11 @@ jobs:
 
       - name: Audit all servers
         run: |
+          failures=0
           for dir in bconnect-*-mcp bconnect-server-template; do
-            echo "=== Auditing $dir ==="
-            (cd "$dir" && npm ci && npm audit --audit-level=high) || true
+            echo "=== $dir ==="
+            (cd "$dir" && npm ci --ignore-scripts && npm audit --audit-level=high) || failures=$((failures + 1))
           done
+          if [ $failures -gt 0 ]; then
+            echo "⚠️ $failures server(s) have audit findings (non-blocking)"
+          fi
