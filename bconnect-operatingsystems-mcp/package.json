@@ -1,6 +1,6 @@
 {
   "name": "bconnect-operatingsystems-mcp",
-  "version": "26.1.1",
+  "version": "26.1.2",
   "description": "MCP server for baramundi bConnect Operating Systems (OS folders, Windows endpoint OS installation info)",
   "type": "module",
   "main": "build/index.js",

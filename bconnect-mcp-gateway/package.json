@@ -1,6 +1,6 @@
 {
   "name": "bconnect-mcp-gateway",
-  "version": "26.1.1",
+  "version": "26.1.2",
   "description": "Unified MCP gateway — serves all 13 bConnect MCP servers on a single HTTP port",
   "type": "module",
   "main": "build/gateway.js",

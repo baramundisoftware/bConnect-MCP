@@ -5,6 +5,17 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.1.2] - 2026-06-09
+
+### Fixed
+- Updated copyright from "baramundi software AG" to "baramundi software GmbH"
+- Resolved all runtime dependency vulnerabilities (hono, fast-uri, ip-address)
+- Set author field in package.json
+
+### Added
+- Dependabot configuration for automated dependency updates
+- `.editorconfig`, `.nvmrc`, and `.prettierrc.json` for contributor consistency
+
 ## [26.1.1] - 2026-06-09
 
 Initial release. 12 domain-specific MCP servers for the baramundi bConnect REST API,
