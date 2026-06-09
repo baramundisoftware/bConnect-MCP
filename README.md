@@ -1,5 +1,7 @@
 # bConnect MCP Suite
 
+[![CI](https://github.com/baramundisoftware/bConnect-MCP/actions/workflows/ci.yml/badge.svg)](https://github.com/baramundisoftware/bConnect-MCP/actions/workflows/ci.yml)
+
 Connect your AI assistant to the **baramundi Management Suite** (bMS). This project provides MCP servers that let AI tools like Claude Desktop, Claude Code, Github Copilot or others read and manage your bMS — endpoints, jobs, software, compliance, and more — through the bConnect REST API.
 
 **212 tools** across **12 servers**, compatible with **baramundi 25R2 and 26R1**.
