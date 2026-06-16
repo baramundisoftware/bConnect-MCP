@@ -155,7 +155,7 @@ services:
     build:
       context: .
       dockerfile: bconnect-mcp-gateway/Dockerfile
-    image: bconnect-mcp-gateway:26.1.1
+    image: bconnect-mcp-gateway:26.1.5
     container_name: mcp-gateway
     ports:
       - "${MCP_GATEWAY_HOST_PORT:-3001}:3001"
