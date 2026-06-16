@@ -1,6 +1,6 @@
 {
   "name": "bconnect-assets-mcp",
-  "version": "26.1.2",
+  "version": "26.1.4",
   "description": "MCP server for baramundi bConnect Assets management (assets, asset types, folders)",
   "type": "module",
   "main": "build/index.js",
