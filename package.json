@@ -41,7 +41,7 @@
     "winston": "^3.18.3"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-arm64-gnu": "^4.60.0"
+    "@rollup/rollup-linux-arm64-gnu": "^4.62.0"
   },
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "^5.0.0",
