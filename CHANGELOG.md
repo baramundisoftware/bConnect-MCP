@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `TROUBLESHOOTING.md`, `WINDOWS-DEPLOYMENT.md`, `N8N.md`).
 - **SBOM regenerated** (`releases/sbom.json`) using `@cyclonedx/cyclonedx-npm` 5.0.0
   (previously 4.2.1); updated timestamp, version reference, and dependency tree.
+- `docker-compose.yml` gateway image tag corrected from stale `26.1.1` to `26.1.5`.
 
 ## [26.1.4] - 2026-06-16
 
