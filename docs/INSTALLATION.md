@@ -351,4 +351,4 @@ curl -k -u "username:password" \
 
 ---
 
-*bConnect MCP Suite v26.1.1 — 13 servers, 268 tools, bMS 26R1 / 25R2*
+*bConnect MCP Suite v26.1.4 — 13 servers, 268 tools, bMS 26R1 / 25R2*
