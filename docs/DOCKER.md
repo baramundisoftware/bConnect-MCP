@@ -94,6 +94,60 @@ Or with `docker compose` (pre-started containers via `docker exec`):
 
 ---
 
+## Gateway Container (Multi-user, Authenticated)
+
+`bconnect-mcp-gateway` runs all 13 servers on a single HTTP port and maps Bearer
+tokens to bConnect credentials. This is the recommended approach for shared
+deployments where different users or teams have different bConnect API keys.
+
+```bash
+# Build the gateway image
+docker build -t bconnect-mcp-gateway:26.1.1 ./bconnect-mcp-gateway
+
+# Run with a mounted token map
+docker run -d \
+  -p 3001:3001 \
+  -v /etc/mcp/tokens.json:/run/secrets/tokens.json:ro \
+  -e MCP_AUTH_CONFIG=/run/secrets/tokens.json \
+  -e MCP_GATEWAY_PORT=3001 \
+  -e MCP_GATEWAY_BIND=0.0.0.0 \
+  bconnect-mcp-gateway:26.1.1
+```
+
+Token map format (`/etc/mcp/tokens.json`):
+
+```json
+{
+  "tok_alice_<random>": {
+    "baseUrl":  "https://bms.company.com:444/bconnect",
+    "apiKey":   "bconnect-api-key-team-a"
+  },
+  "tok_bob_<random>": {
+    "baseUrl":  "https://bms.company.com:444/bconnect",
+    "username": "svc-readonly",
+    "password": "secret"
+  }
+}
+```
+
+Each client supplies its token in the `Authorization` header:
+
+```json
+{
+  "mcpServers": {
+    "bconnect-endpoints": {
+      "url": "http://mcp-gateway.company.com:3001/endpoints/mcp",
+      "headers": { "Authorization": "Bearer tok_alice_<random>" }
+    }
+  }
+}
+```
+
+When `MCP_AUTH_CONFIG` is not set the gateway falls back to the `BCONNECT_*`
+environment variables (single-credential mode, no auth required).
+
+---
+
 ## Environment Variables
 
 | Variable | Description | Default |
@@ -105,6 +159,9 @@ Or with `docker compose` (pre-started containers via `docker exec`):
 | `BCONNECT_AUDIT_LEVEL` | `none`, `security`, `write`, `all` | `none` |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | Set to `0` for self-signed certs | `1` |
 | `BCONNECT_CA_CERT_PATH` | Path to CA certificate inside container | — |
+| `MCP_AUTH_CONFIG` | Path to token map JSON (gateway only) | — |
+| `MCP_GATEWAY_PORT` | Gateway listen port | `3001` |
+| `MCP_GATEWAY_BIND` | Gateway bind address | `127.0.0.1` |
 
 ---
 

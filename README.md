@@ -184,6 +184,9 @@ All servers use the same environment variables:
 | `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Enable rate limiting to protect the bConnect API |
 | `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (network) |
 | `MCP_PORT` | — | `3000` | HTTP port (when `MCP_TRANSPORT=http`) |
+| `MCP_GATEWAY_PORT` | — | `3001` | Gateway listen port (when using `bconnect-mcp-gateway`) |
+| `MCP_GATEWAY_BIND` | — | `127.0.0.1` | Gateway bind address |
+| `MCP_AUTH_CONFIG` | — | — | Path to token map JSON; enables per-user auth in gateway mode (see below) |
 
 > \* **Authentication**: provide either `BCONNECT_API_KEY` alone, or both `BCONNECT_USERNAME` and `BCONNECT_PASSWORD`. API key takes precedence if both are set.
 
@@ -243,9 +246,70 @@ Edit `claude_desktop_config.json`:
 ```
 
 
-### Centralized Server (HTTP, multi-user)
+### Centralized Gateway (HTTP, multi-user, authenticated)
 
-Run the server on a central machine (e.g. on or near your bMS server):
+`bconnect-mcp-gateway` serves all 13 servers on a single HTTP port and supports
+per-user authentication via a token map. This is the recommended approach when
+multiple users or teams need access with different bConnect API credentials.
+
+**1. Create the token map** (`/etc/mcp/tokens.json`):
+
+```json
+{
+  "tok_alice_<random>": {
+    "baseUrl": "https://bms.company.com:444/bconnect",
+    "apiKey": "bconnect-key-team-a"
+  },
+  "tok_bob_<random>": {
+    "baseUrl": "https://bms.company.com:444/bconnect",
+    "username": "svc-readonly",
+    "password": "secret"
+  },
+  "tok_carol_<random>": {
+    "baseUrl": "https://bms.company.com:444/bconnect",
+    "apiKey": "bconnect-key-team-a"
+  }
+}
+```
+
+Multiple MCP tokens can share the same bConnect API key (n:m mapping).
+bConnect credentials stay on the server — clients only know their own token.
+
+**2. Start the gateway:**
+
+```bash
+cd bconnect-mcp-gateway
+MCP_AUTH_CONFIG=/etc/mcp/tokens.json \
+MCP_GATEWAY_PORT=3001 \
+node build/gateway.js
+```
+
+**3. Configure each client** with its own token:
+
+```json
+{
+  "mcpServers": {
+    "bconnect-endpoints": {
+      "url": "http://mcp-gateway.company.com:3001/endpoints/mcp",
+      "headers": { "Authorization": "Bearer tok_alice_<random>" }
+    },
+    "bconnect-assets": {
+      "url": "http://mcp-gateway.company.com:3001/assets/mcp",
+      "headers": { "Authorization": "Bearer tok_alice_<random>" }
+    }
+  }
+}
+```
+
+Available domains: `activedirectory`, `assets`, `compliance`, `defensecontrol`,
+`endpoints`, `groups`, `jobs`, `operatingsystems`, `servermanagement`, `software`,
+`universaldynamicgroups`, `updatemanagement`, `variables`.
+
+> **Security note:** Use TLS in front of the gateway (nginx, Caddy) and keep the token map file readable only by the gateway process.
+
+### Centralized Server (HTTP, single credential set)
+
+Run a single server on a central machine when all users share one bConnect credential:
 
 ```bash
 MCP_TRANSPORT=http MCP_PORT=3000 \

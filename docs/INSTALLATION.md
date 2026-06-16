@@ -42,6 +42,59 @@ See [WINDOWS-DEPLOYMENT.md](WINDOWS-DEPLOYMENT.md) for the full Windows guide.
 
 See [DOCKER.md](DOCKER.md) for Docker Compose and individual container setup.
 
+### Option D — Gateway (HTTP, multi-user, authenticated)
+
+`bconnect-mcp-gateway` serves all 13 bConnect MCP servers on a single HTTP port.
+Use this when multiple users or teams need access, each with their own bConnect
+credentials or API key.
+
+```bash
+cd bconnect-mcp-gateway
+npm ci
+npm run build
+```
+
+Create a token map file (e.g. `/etc/mcp/tokens.json`). Each key is a Bearer token
+you issue to a user; each value holds the bConnect credentials they will use:
+
+```json
+{
+  "tok_alice_<random>": {
+    "baseUrl":  "https://bms.company.com:444/bconnect",
+    "apiKey":   "bconnect-api-key-team-a"
+  },
+  "tok_bob_<random>": {
+    "baseUrl":  "https://bms.company.com:444/bconnect",
+    "username": "svc-readonly",
+    "password": "secret"
+  }
+}
+```
+
+Multiple tokens can share the same bConnect key (n:m mapping). bConnect credentials
+stay on the server — clients only know their own Bearer token.
+
+Start the gateway:
+
+```bash
+MCP_AUTH_CONFIG=/etc/mcp/tokens.json \
+MCP_GATEWAY_PORT=3001 \
+MCP_GATEWAY_BIND=0.0.0.0 \
+node build/gateway.js
+```
+
+**Gateway environment variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MCP_AUTH_CONFIG` | — | Path to token map JSON. When unset, auth is disabled (env-var fallback). |
+| `MCP_GATEWAY_PORT` | `3001` | Listen port |
+| `MCP_GATEWAY_BIND` | `127.0.0.1` | Bind address |
+
+> **Security:** Put a TLS-terminating reverse proxy (nginx, Caddy) in front of the
+> gateway for production use. The token map file should be readable only by the
+> gateway process.
+
 ---
 
 ## Configuration
@@ -243,6 +296,31 @@ claude mcp add bconnect-endpoints \
 ```
 
 Add one entry per server. You do not need to load all 13 — load only the domains you need.
+
+### Gateway (Claude Desktop or Claude Code, HTTP)
+
+When using the gateway, point each server at `/<domain>/mcp` and supply the user's
+Bearer token in the `Authorization` header:
+
+```json
+{
+  "mcpServers": {
+    "bconnect-endpoints": {
+      "url": "http://mcp-gateway.company.com:3001/endpoints/mcp",
+      "headers": { "Authorization": "Bearer tok_alice_<random>" }
+    },
+    "bconnect-assets": {
+      "url": "http://mcp-gateway.company.com:3001/assets/mcp",
+      "headers": { "Authorization": "Bearer tok_alice_<random>" }
+    }
+  }
+}
+```
+
+Available gateway domains: `activedirectory`, `assets`, `compliance`,
+`defensecontrol`, `endpoints`, `groups`, `jobs`, `operatingsystems`,
+`servermanagement`, `software`, `universaldynamicgroups`, `updatemanagement`,
+`variables`.
 
 ---
 
