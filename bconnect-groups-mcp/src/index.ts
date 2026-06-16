@@ -26,7 +26,14 @@ import { BConnectClient } from "./bconnect-client.js";
 
 // ── Factory exported for testing ─────────────────────────────────────────────
 
-export function createServer(): { server: Server } {
+export interface BConnectCredentials {
+  baseUrl?: string;
+  username?: string;
+  password?: string;
+  apiKey?: string;
+}
+
+export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const server = new Server(
     {
       name: "bconnect-groups-mcp",
@@ -286,13 +293,13 @@ export function createServer(): { server: Server } {
     // Lazy-initialize client on first tool call (not during testing)
     const getClient = (): BConnectClient => {
       dotenv.config();
-      const baseUrl  = process.env.BCONNECT_BASE_URL;
-      const username = process.env.BCONNECT_USERNAME;
-      const password = process.env.BCONNECT_PASSWORD;
-      const apiKey = process.env.BCONNECT_API_KEY;
+      const baseUrl  = credentials?.baseUrl ?? process.env.BCONNECT_BASE_URL;
+      const username = credentials?.username ?? process.env.BCONNECT_USERNAME;
+      const password = credentials?.password ?? process.env.BCONNECT_PASSWORD;
+      const apiKey = credentials?.apiKey ?? process.env.BCONNECT_API_KEY;
 
       if (!baseUrl || (!apiKey && (!username || !password))) {
-        throw new McpError(ErrorCode.InvalidRequest, "Missing required environment variables: BCONNECT_BASE_URL and either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD");
+        throw new McpError(ErrorCode.InvalidRequest, "Missing required bConnect credentials: BCONNECT_BASE_URL and either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD");
       }
 
       return new BConnectClient({

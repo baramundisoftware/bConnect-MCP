@@ -33,7 +33,14 @@ type FolderForCreation = JobsPaths["/v2.0/Folders"]["post"]["requestBody"]["cont
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
-export function createServer(): { server: Server } {
+export interface BConnectCredentials {
+  baseUrl?: string;
+  username?: string;
+  password?: string;
+  apiKey?: string;
+}
+
+export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const server = new Server(
     {
       name: "bconnect-jobs-mcp",
@@ -567,15 +574,15 @@ export function createServer(): { server: Server } {
     // This allows the server to be instantiated in tests without real credentials.
     const getBconnect = (): BConnectClient => {
       dotenv.config();
-      const baseUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:444/bconnect";
-      const username = process.env.BCONNECT_USERNAME;
-      const password = process.env.BCONNECT_PASSWORD;
-      const apiKey = process.env.BCONNECT_API_KEY;
+      const baseUrl = credentials?.baseUrl ?? process.env.BCONNECT_BASE_URL ?? "https://bms.example.com:444/bconnect";
+      const username = credentials?.username ?? process.env.BCONNECT_USERNAME;
+      const password = credentials?.password ?? process.env.BCONNECT_PASSWORD;
+      const apiKey = credentials?.apiKey ?? process.env.BCONNECT_API_KEY;
 
       if (!apiKey && (!username || !password)) {
         throw new McpError(
           ErrorCode.InternalError,
-          "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD environment variables are required"
+          "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required"
         );
       }
 
