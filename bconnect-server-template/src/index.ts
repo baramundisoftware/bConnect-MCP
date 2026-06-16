@@ -40,7 +40,7 @@ export function createServer(): { server: Server } {
   const server = new Server(
     {
       name: "bconnect-DOMAIN-mcp",
-      version: "26.1.4"
+      version: "26.1.5"
     },
     {
       capabilities: {

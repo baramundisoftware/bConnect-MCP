@@ -1,6 +1,6 @@
 {
   "name": "bconnect-jobs-mcp",
-  "version": "26.1.4",
+  "version": "26.1.5",
   "description": "MCP server for bConnect job management (jobs, servermanagement, variables)",
   "type": "module",
   "main": "build/index.js",

@@ -1,6 +1,6 @@
 {
   "name": "bconnect-groups-mcp",
-  "version": "26.1.4",
+  "version": "26.1.5",
   "description": "MCP server for baramundi bConnect group-scoped endpoint queries (list endpoints by group type)",
   "type": "module",
   "main": "build/index.js",

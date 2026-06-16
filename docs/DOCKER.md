@@ -1,4 +1,4 @@
-# Docker Deployment Guide — bConnect MCP Suite 26.1.4
+# Docker Deployment Guide — bConnect MCP Suite 26.1.5
 
 This guide covers running bConnect MCP servers as Docker containers.
 
@@ -25,7 +25,7 @@ Each server has its own `Dockerfile` based on `node:20-alpine` with a non-root u
 
 ```bash
 # Build a single server
-docker build -t bconnect-activedirectory-mcp:26.1.4 ./bconnect-activedirectory-mcp
+docker build -t bconnect-activedirectory-mcp:26.1.5 ./bconnect-activedirectory-mcp
 
 # Build all via docker compose
 docker compose build
@@ -72,7 +72,7 @@ MCP servers communicate via stdio, not HTTP. Use `docker run --rm -i` to pipe st
         "--env", "BCONNECT_BASE_URL=https://bms.company.com/bconnect",
         "--env", "BCONNECT_USERNAME=mcp-user",
         "--env", "BCONNECT_PASSWORD=your-password",
-        "bconnect-activedirectory-mcp:26.1.4"
+        "bconnect-activedirectory-mcp:26.1.5"
       ]
     }
   }
@@ -102,7 +102,7 @@ deployments where different users or teams have different bConnect API keys.
 
 ```bash
 # Build the gateway image
-docker build -t bconnect-mcp-gateway:26.1.4 ./bconnect-mcp-gateway
+docker build -t bconnect-mcp-gateway:26.1.5 ./bconnect-mcp-gateway
 
 # Run with a mounted token map
 docker run -d \
@@ -111,7 +111,7 @@ docker run -d \
   -e MCP_AUTH_CONFIG=/run/secrets/tokens.json \
   -e MCP_GATEWAY_PORT=3001 \
   -e MCP_GATEWAY_BIND=0.0.0.0 \
-  bconnect-mcp-gateway:26.1.4
+  bconnect-mcp-gateway:26.1.5
 ```
 
 Token map format (`/etc/mcp/tokens.json`):
@@ -177,7 +177,7 @@ docker run --rm -i \
   --env BCONNECT_BASE_URL=https://bms.company.com/bconnect \
   --env BCONNECT_USERNAME=mcp-user \
   --env BCONNECT_PASSWORD=your-password \
-  bconnect-activedirectory-mcp:26.1.4
+  bconnect-activedirectory-mcp:26.1.5
 ```
 
 ---

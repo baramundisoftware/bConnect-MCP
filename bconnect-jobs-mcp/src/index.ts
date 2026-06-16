@@ -44,7 +44,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   const server = new Server(
     {
       name: "bconnect-jobs-mcp",
-      version: "26.1.4"
+      version: "26.1.5"
     },
     {
       capabilities: {

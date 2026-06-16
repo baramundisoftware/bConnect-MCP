@@ -162,6 +162,6 @@ $env:NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
 ## Version Information
 
-- **Suite version**: 26.1.4
+- **Suite version**: 26.1.5
 - **Compatible bMS releases**: 25R2, 26R1
 - **Node.js required**: 20+

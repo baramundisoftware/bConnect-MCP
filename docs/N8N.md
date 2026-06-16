@@ -202,4 +202,4 @@ entirely in the baramundi Management Center — not in n8n or the gateway.
 
 ---
 
-*bConnect MCP Suite v26.1.4 — see [INSTALLATION.md](INSTALLATION.md) for full setup instructions.*
+*bConnect MCP Suite v26.1.5 — see [INSTALLATION.md](INSTALLATION.md) for full setup instructions.*

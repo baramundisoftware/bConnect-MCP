@@ -1,6 +1,6 @@
 {
   "name": "bconnect-endpoints-mcp",
-  "version": "26.1.4",
+  "version": "26.1.5",
   "description": "MCP server for bConnect endpoint management (endpoints, activedirectory, operatingsystems)",
   "type": "module",
   "main": "build/index.js",

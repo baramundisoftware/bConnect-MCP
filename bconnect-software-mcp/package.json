@@ -1,6 +1,6 @@
 {
   "name": "bconnect-software-mcp",
-  "version": "26.1.4",
+  "version": "26.1.5",
   "description": "MCP server for baramundi bConnect Software — installed software inventory and software bundle management",
   "type": "module",
   "main": "build/index.js",
