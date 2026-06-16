@@ -5,6 +5,23 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.1.3] - 2026-06-16
+
+### Added
+- **Gateway authentication via token map** (`MCP_AUTH_CONFIG`): `bconnect-mcp-gateway`
+  now supports per-user Bearer token authentication. Set `MCP_AUTH_CONFIG` to a JSON
+  file mapping tokens to bConnect credentials (baseUrl, apiKey or username/password).
+  Multiple MCP tokens can share one bConnect API key (n:m mapping). When unset, the
+  gateway falls back to `BCONNECT_*` env vars — fully backwards compatible.
+- `BConnectCredentials` interface exported from all 13 servers; `createServer()` now
+  accepts an optional `credentials` parameter so the gateway can inject per-request
+  bConnect credentials without touching environment variables.
+- Gateway environment variables: `MCP_GATEWAY_PORT` (default `3001`),
+  `MCP_GATEWAY_BIND` (default `127.0.0.1`), `MCP_AUTH_CONFIG`.
+- `/health` endpoint now reports `authEnabled` status.
+- Documentation updated: README, `docs/INSTALLATION.md`, `docs/DOCKER.md` — covers
+  gateway setup, token map format, and client configuration examples.
+
 ## [26.1.2] - 2026-06-09
 
 ### Fixed
