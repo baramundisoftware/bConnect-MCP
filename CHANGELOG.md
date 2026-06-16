@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.1.4] - 2026-06-16
+
+### Added
+- **Auth middleware unit tests** (`bconnect-mcp-gateway/src/__tests__/auth.test.ts`, 23 tests):
+  `loadTokenMap` and `createAuthMiddleware` are now fully covered — missing file,
+  invalid JSON, non-object root (all call `process.exit(1)`); auth disabled pass-through;
+  401 on missing/wrong/unknown Bearer token; correct credential resolution per token;
+  no credential leakage between requests; n:m sharing verified.
+- **Credential injection tests** (`bconnect-compliance-mcp/src/__tests__/credentials.test.ts`,
+  6 tests): verifies that `createServer(credentials)` passes injected apiKey and
+  username/password to `BConnectClient`, takes priority over env vars, falls back to env
+  vars when omitted, and is stateless across tool calls. `BConnectClient` is mocked so
+  no real bConnect connection is made.
+- **Gateway refactored** into three modules for testability: `auth.ts` (token map +
+  middleware, no server imports), `app.ts` (`createApp` factory), `gateway.ts` (startup
+  only). The public gateway behaviour is unchanged.
+- **`bconnect-mcp-gateway`** now has `test`, `test:watch`, and `test:coverage` npm
+  scripts with a `vitest.config.ts`.
+
 ## [26.1.3] - 2026-06-16
 
 ### Added
