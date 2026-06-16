@@ -401,6 +401,7 @@ curl -k -u "username:password" \
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) if you encounter issues
 - See [DOCKER.md](DOCKER.md) for containerised deployment
 - See [WINDOWS-DEPLOYMENT.md](WINDOWS-DEPLOYMENT.md) for Windows-specific setup
+- See [N8N.md](N8N.md) for using the gateway from n8n workflows
 
 ---
 

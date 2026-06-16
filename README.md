@@ -307,6 +307,8 @@ Available domains: `activedirectory`, `assets`, `compliance`, `defensecontrol`,
 
 > **Security note:** Use TLS in front of the gateway (nginx, Caddy) and keep the token map file readable only by the gateway process.
 
+For using the gateway from **n8n workflows**, see [docs/N8N.md](docs/N8N.md).
+
 ### Centralized Server (HTTP, single credential set)
 
 Run a single server on a central machine when all users share one bConnect credential:
