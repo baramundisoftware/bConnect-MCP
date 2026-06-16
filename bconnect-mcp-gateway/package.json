@@ -7,11 +7,13 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "start": "node --import ./build/preload.js build/gateway.js"
+    "start": "node --import ./build/preload.js build/gateway.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "express": "^4.21.0",
     "bconnect-activedirectory-mcp": "file:../bconnect-activedirectory-mcp",
     "bconnect-assets-mcp": "file:../bconnect-assets-mcp",
     "bconnect-compliance-mcp": "file:../bconnect-compliance-mcp",
@@ -24,11 +26,14 @@
     "bconnect-software-mcp": "file:../bconnect-software-mcp",
     "bconnect-universaldynamicgroups-mcp": "file:../bconnect-universaldynamicgroups-mcp",
     "bconnect-updatemanagement-mcp": "file:../bconnect-updatemanagement-mcp",
-    "bconnect-variables-mcp": "file:../bconnect-variables-mcp"
+    "bconnect-variables-mcp": "file:../bconnect-variables-mcp",
+    "express": "^4.21.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/node": "^22.18.12",
-    "typescript": "^5.9.3"
+    "@vitest/coverage-v8": "^3.2.6",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.6"
   }
 }
