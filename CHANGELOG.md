@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.1.5] - 2026-06-16
+
+### Added
+- **`docs/N8N.md`** — new integration guide for using the bConnect MCP gateway
+  from n8n workflows. Covers: storing Bearer tokens as n8n Header Auth credentials,
+  MCP Client node configuration, HTTP Request node alternative, domain reference
+  table, multi-user example (2 users / 2 bConnect API keys), troubleshooting table,
+  and security notes.
+
+### Changed
+- **`docs/INSTALLATION.md` Option D** rewritten for clarity: broken into 4 explicit
+  steps (build, generate tokens, create token map, start gateway); token requirements
+  documented (min 32 random bytes, unique per user, descriptive prefix); placeholder
+  table explains every value to replace; apiKey vs username/password options clarified;
+  health check verification and `chmod 600` guidance added.
+- README and `docs/INSTALLATION.md` updated with pointer to the new N8N.md.
+- Version bumped to `26.1.5` across all `package.json` files, `src/index.ts` server
+  version strings, and documentation footers.
+
 ## [26.1.4] - 2026-06-16
 
 ### Added
