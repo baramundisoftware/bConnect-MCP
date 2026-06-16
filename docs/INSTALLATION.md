@@ -44,56 +44,109 @@ See [DOCKER.md](DOCKER.md) for Docker Compose and individual container setup.
 
 ### Option D — Gateway (HTTP, multi-user, authenticated)
 
-`bconnect-mcp-gateway` serves all 13 bConnect MCP servers on a single HTTP port.
-Use this when multiple users or teams need access, each with their own bConnect
-credentials or API key.
+`bconnect-mcp-gateway` serves all 13 bConnect MCP servers on a single HTTP port
+with per-user authentication. Use this when multiple users or teams need access,
+each with their own bConnect credentials or API key.
+
+#### Step 1 — Build the gateway
 
 ```bash
 cd bconnect-mcp-gateway
 npm ci
 npm run build
+cd ..
 ```
 
-Create a token map file (e.g. `/etc/mcp/tokens.json`). Each key is a Bearer token
-you issue to a user; each value holds the bConnect credentials they will use:
+#### Step 2 — Generate Bearer tokens
+
+Each user needs a unique Bearer token. Generate one per user with:
+
+```bash
+node -e "console.log('tok_' + require('crypto').randomBytes(32).toString('hex'))"
+```
+
+**Token requirements:**
+- Must be unique per user — never reuse tokens across users
+- Minimum 32 random bytes (64 hex characters) after the prefix
+- Use a descriptive prefix (e.g. `tok_alice_`, `tok_teamA_`) to identify the user
+- Treat tokens like passwords — do not share or log them
+
+Example output:
+```
+tok_alice_a3f8c2d1e4b7f09a2c5e8d3b6f1a4c7e2d5b8f3a6c9e2d5b8f1a4c7e0d3b6f9
+```
+
+#### Step 3 — Create the token map
+
+Create `/etc/mcp/tokens.json`. This file maps each user's Bearer token to their
+bConnect credentials. **Replace all placeholder values** before use.
 
 ```json
 {
-  "tok_alice_<random>": {
-    "baseUrl":  "https://bms.company.com:444/bconnect",
-    "apiKey":   "bconnect-api-key-team-a"
+  "tok_alice_a3f8c2d1e4b7f09a2c5e8d3b6f1a4c7e2d5b8f3a6c9e2d5b8f1a4c7e0d3b6f9": {
+    "baseUrl": "https://bms.company.com:444/bconnect",
+    "apiKey":  "PASTE-BCONNECT-API-KEY-FOR-ALICE-HERE"
   },
-  "tok_bob_<random>": {
-    "baseUrl":  "https://bms.company.com:444/bconnect",
-    "username": "svc-readonly",
-    "password": "secret"
+  "tok_bob_1c4e7a0d3f6b9e2c5a8d1f4b7e0c3a6d9f2b5e8c1d4a7f0b3e6c9d2a5f8b1e4c7": {
+    "baseUrl":   "https://bms.company.com:444/bconnect",
+    "username":  "svc-bob",
+    "password":  "PASTE-BOBS-BCONNECT-PASSWORD-HERE"
   }
 }
 ```
 
-Multiple tokens can share the same bConnect key (n:m mapping). bConnect credentials
-stay on the server — clients only know their own Bearer token.
+**What to replace:**
 
-Start the gateway:
+| Placeholder | Replace with |
+|-------------|-------------|
+| Token keys (`tok_alice_…`, `tok_bob_…`) | Your generated tokens from Step 2 |
+| `https://bms.company.com:444/bconnect` | Your bMS server URL |
+| `PASTE-BCONNECT-API-KEY-FOR-ALICE-HERE` | API key from baramundi Management Center → Server Management → API Keys |
+| `svc-bob` / `PASTE-BOBS-BCONNECT-PASSWORD-HERE` | bMS username and password (alternative to API key) |
+
+**Authentication options per user** — use one, not both:
+- `"apiKey": "..."` — recommended; generate in baramundi Management Center
+- `"username": "..."` + `"password": "..."` — use an existing bMS user account
+
+**n:m mapping** — multiple tokens can share the same bConnect API key. For example,
+all members of one team can each have their own token that maps to a single shared
+team API key.
+
+Restrict file access:
+```bash
+chmod 600 /etc/mcp/tokens.json
+```
+
+#### Step 4 — Start the gateway
 
 ```bash
+cd bconnect-mcp-gateway
 MCP_AUTH_CONFIG=/etc/mcp/tokens.json \
 MCP_GATEWAY_PORT=3001 \
 MCP_GATEWAY_BIND=0.0.0.0 \
-node build/gateway.js
+node --import ./build/preload.js build/gateway.js
 ```
 
-**Gateway environment variables:**
+Verify the gateway is running:
+```bash
+curl http://localhost:3001/health
+# → {"status":"ok","servers":[...],"count":13,"authEnabled":true}
+```
+
+`authEnabled: true` confirms the token map was loaded successfully.
+
+#### Gateway environment variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `MCP_AUTH_CONFIG` | — | Path to token map JSON. When unset, auth is disabled (env-var fallback). |
 | `MCP_GATEWAY_PORT` | `3001` | Listen port |
-| `MCP_GATEWAY_BIND` | `127.0.0.1` | Bind address |
+| `MCP_GATEWAY_BIND` | `127.0.0.1` | Bind address (`0.0.0.0` to accept remote connections) |
 
-> **Security:** Put a TLS-terminating reverse proxy (nginx, Caddy) in front of the
-> gateway for production use. The token map file should be readable only by the
-> gateway process.
+> **Security:** Always put a TLS-terminating reverse proxy (nginx, Caddy) in front
+> of the gateway in production — Bearer tokens travel in HTTP headers and must be
+> encrypted in transit. The token map file should be readable only by the gateway
+> process user.
 
 ---
 
