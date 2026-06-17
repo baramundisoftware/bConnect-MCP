@@ -189,7 +189,7 @@ but using separate bConnect API keys.
 }
 ```
 
-> `BCONNECT_BASE_URL` is set once in `.env` and shared by all tokens — no need
+> `BCONNECT_BASE_URL` is set once in `.env.gateway` and shared by all tokens — no need
 > to repeat the server URL per user.
 
 ### n8n credentials

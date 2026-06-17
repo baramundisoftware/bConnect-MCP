@@ -95,7 +95,7 @@ as `BCONNECT_BASE_URL` — do not repeat it here.**
 ```
 
 > **Why no `baseUrl` here?** Most organizations have one baramundi server. Set
-> `BCONNECT_BASE_URL` once in `.env` and all tokens share it automatically.
+> `BCONNECT_BASE_URL` once in `.env.gateway` and all tokens share it automatically.
 > Only add `"baseUrl"` to a token entry if that specific user must reach a
 > **different** bMS server.
 
@@ -125,10 +125,10 @@ chmod 600 /etc/mcp/tokens.json
 **Docker Compose (recommended):**
 
 ```bash
-# Add token map path to .env
-echo "MCP_AUTH_CONFIG_PATH=/etc/mcp/tokens.json" >> .env
+cp .env.gateway.example .env.gateway
+# Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
 
-docker compose -f docker-compose.gateway.yml up -d
+docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 ```
 
 **Node.js (bare):**

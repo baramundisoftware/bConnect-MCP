@@ -30,10 +30,10 @@ docker compose logs -f bconnect-activedirectory-mcp
 ## Quick Start — Gateway (multi-user HTTP)
 
 ```bash
-cp .env.example .env
-# Set MCP_AUTH_CONFIG_PATH=/etc/mcp/tokens.json in .env (see Option D in INSTALLATION.md)
+cp .env.gateway.example .env.gateway
+# Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
 
-docker compose -f docker-compose.gateway.yml up -d
+docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 
 # Verify
 curl http://localhost:3001/health
@@ -126,10 +126,10 @@ deployments where different users or teams have different bConnect API keys.
 **With Docker Compose (recommended):**
 
 ```bash
-# Set token map path in .env
-echo "MCP_AUTH_CONFIG_PATH=/etc/mcp/tokens.json" >> .env
+cp .env.gateway.example .env.gateway
+# Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
 
-docker compose -f docker-compose.gateway.yml up -d
+docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 ```
 
 **With `docker run` (manual):**

@@ -271,10 +271,10 @@ bConnect credentials stay on the server — clients only know their own token.
 **2. Start the gateway:**
 
 ```bash
-cd bconnect-mcp-gateway
-MCP_AUTH_CONFIG=/etc/mcp/tokens.json \
-MCP_GATEWAY_PORT=3001 \
-node build/gateway.js
+cp .env.gateway.example .env.gateway
+# Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
+
+docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 ```
 
 **3. Configure each client** with its own token:
