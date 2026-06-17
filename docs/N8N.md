@@ -152,15 +152,16 @@ but using separate bConnect API keys.
 ```json
 {
   "tok_alice_a3f8c2d1e4b7f09a2c5e8d3b6f1a4c7e2d5b8f3a6c9e2d5b8f1a4c7e0d3b6f9": {
-    "baseUrl": "https://bms.company.com:444/bconnect",
-    "apiKey":  "bconnect-api-key-for-alice"
+    "apiKey": "bconnect-api-key-for-alice"
   },
   "tok_bob_1c4e7a0d3f6b9e2c5a8d1f4b7e0c3a6d9f2b5e8c1d4a7f0b3e6c9d2a5f8b1e4c7": {
-    "baseUrl": "https://bms.company.com:444/bconnect",
-    "apiKey":  "bconnect-api-key-for-bob"
+    "apiKey": "bconnect-api-key-for-bob"
   }
 }
 ```
+
+> `BCONNECT_BASE_URL` is set once in `.env` and shared by all tokens — no need
+> to repeat the server URL per user.
 
 ### n8n credentials
 

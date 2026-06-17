@@ -78,29 +78,32 @@ tok_alice_a3f8c2d1e4b7f09a2c5e8d3b6f1a4c7e2d5b8f3a6c9e2d5b8f1a4c7e0d3b6f9
 
 #### Step 3 — Create the token map
 
-Create `/etc/mcp/tokens.json`. This file maps each user's Bearer token to their
-bConnect credentials. **Replace all placeholder values** before use.
+Create `/etc/mcp/tokens.json`. Each key is a Bearer token; each value contains
+only the credentials for that user. **The bMS server URL is set once in `.env`
+as `BCONNECT_BASE_URL` — do not repeat it here.**
 
 ```json
 {
   "tok_alice_a3f8c2d1e4b7f09a2c5e8d3b6f1a4c7e2d5b8f3a6c9e2d5b8f1a4c7e0d3b6f9": {
-    "baseUrl": "https://bms.company.com:444/bconnect",
-    "apiKey":  "PASTE-BCONNECT-API-KEY-FOR-ALICE-HERE"
+    "apiKey": "PASTE-BCONNECT-API-KEY-FOR-ALICE-HERE"
   },
   "tok_bob_1c4e7a0d3f6b9e2c5a8d1f4b7e0c3a6d9f2b5e8c1d4a7f0b3e6c9d2a5f8b1e4c7": {
-    "baseUrl":   "https://bms.company.com:444/bconnect",
-    "username":  "svc-bob",
-    "password":  "PASTE-BOBS-BCONNECT-PASSWORD-HERE"
+    "username": "svc-bob",
+    "password": "PASTE-BOBS-BCONNECT-PASSWORD-HERE"
   }
 }
 ```
+
+> **Why no `baseUrl` here?** Most organizations have one baramundi server. Set
+> `BCONNECT_BASE_URL` once in `.env` and all tokens share it automatically.
+> Only add `"baseUrl"` to a token entry if that specific user must reach a
+> **different** bMS server.
 
 **What to replace:**
 
 | Placeholder | Replace with |
 |-------------|-------------|
 | Token keys (`tok_alice_…`, `tok_bob_…`) | Your generated tokens from Step 2 |
-| `https://bms.company.com:444/bconnect` | Your bMS server URL |
 | `PASTE-BCONNECT-API-KEY-FOR-ALICE-HERE` | API key from baramundi Management Center → Server Management → API Keys |
 | `svc-bob` / `PASTE-BOBS-BCONNECT-PASSWORD-HERE` | bMS username and password (alternative to API key) |
 
@@ -118,6 +121,17 @@ chmod 600 /etc/mcp/tokens.json
 ```
 
 #### Step 4 — Start the gateway
+
+**Docker Compose (recommended):**
+
+```bash
+# Add token map path to .env
+echo "MCP_AUTH_CONFIG_PATH=/etc/mcp/tokens.json" >> .env
+
+docker compose -f docker-compose.gateway.yml up -d
+```
+
+**Node.js (bare):**
 
 ```bash
 cd bconnect-mcp-gateway

@@ -2,19 +2,42 @@
 
 This guide covers running bConnect MCP servers as Docker containers.
 
+Two Docker Compose files serve different use cases:
+
+| File | Use case | Transport |
+|------|----------|-----------|
+| `docker-compose.yml` | Single developer, Claude Desktop / Claude Code | stdio via `docker exec` |
+| `docker-compose.gateway.yml` | Teams, n8n, multi-user HTTP access | HTTP, Bearer token auth |
+
 ---
 
-## Quick Start
+## Quick Start — stdio (Claude Desktop / Claude Code)
 
 ```bash
 # Copy and fill in credentials
 cp .env.example .env
 
-# Start all servers
+# Start all 13 servers
 docker compose up -d
+
+# Or start only the servers you need
+docker compose up -d bconnect-endpoints-mcp bconnect-assets-mcp
 
 # Check logs
 docker compose logs -f bconnect-activedirectory-mcp
+```
+
+## Quick Start — Gateway (multi-user HTTP)
+
+```bash
+cp .env.example .env
+# Set MCP_AUTH_CONFIG_PATH=/etc/mcp/tokens.json in .env (see Option D in INSTALLATION.md)
+
+docker compose -f docker-compose.gateway.yml up -d
+
+# Verify
+curl http://localhost:3001/health
+# → {"status":"ok","count":13,"authEnabled":true}
 ```
 
 ---
@@ -100,9 +123,20 @@ Or with `docker compose` (pre-started containers via `docker exec`):
 tokens to bConnect credentials. This is the recommended approach for shared
 deployments where different users or teams have different bConnect API keys.
 
+**With Docker Compose (recommended):**
+
 ```bash
-# Build the gateway image
-docker build -t bconnect-mcp-gateway:26.1.5 ./bconnect-mcp-gateway
+# Set token map path in .env
+echo "MCP_AUTH_CONFIG_PATH=/etc/mcp/tokens.json" >> .env
+
+docker compose -f docker-compose.gateway.yml up -d
+```
+
+**With `docker run` (manual):**
+
+```bash
+# Build (context must be the repo root — gateway imports all 13 servers)
+docker build -f bconnect-mcp-gateway/Dockerfile -t bconnect-mcp-gateway:26.1.5 .
 
 # Run with a mounted token map
 docker run -d \
@@ -119,16 +153,17 @@ Token map format (`/etc/mcp/tokens.json`):
 ```json
 {
   "tok_alice_<random>": {
-    "baseUrl":  "https://bms.company.com:444/bconnect",
-    "apiKey":   "bconnect-api-key-team-a"
+    "apiKey": "bconnect-api-key-team-a"
   },
   "tok_bob_<random>": {
-    "baseUrl":  "https://bms.company.com:444/bconnect",
     "username": "svc-readonly",
     "password": "secret"
   }
 }
 ```
+
+> `BCONNECT_BASE_URL` is set once in `.env` and shared by all tokens. Only add
+> `"baseUrl"` to a token entry if that user needs to reach a different bMS server.
 
 Each client supplies its token in the `Authorization` header:
 

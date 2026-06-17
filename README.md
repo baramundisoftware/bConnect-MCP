@@ -256,21 +256,14 @@ multiple users or teams need access with different bConnect API credentials.
 
 ```json
 {
-  "tok_alice_<random>": {
-    "baseUrl": "https://bms.company.com:444/bconnect",
-    "apiKey": "bconnect-key-team-a"
-  },
-  "tok_bob_<random>": {
-    "baseUrl": "https://bms.company.com:444/bconnect",
-    "username": "svc-readonly",
-    "password": "secret"
-  },
-  "tok_carol_<random>": {
-    "baseUrl": "https://bms.company.com:444/bconnect",
-    "apiKey": "bconnect-key-team-a"
-  }
+  "tok_alice_<random>": { "apiKey": "bconnect-key-team-a" },
+  "tok_bob_<random>":   { "username": "svc-readonly", "password": "secret" },
+  "tok_carol_<random>": { "apiKey": "bconnect-key-team-a" }
 }
 ```
+
+> Set `BCONNECT_BASE_URL` once in `.env` — all tokens share it automatically.
+> Only add `"baseUrl"` to a token entry if that user needs a different bMS server.
 
 Multiple MCP tokens can share the same bConnect API key (n:m mapping).
 bConnect credentials stay on the server — clients only know their own token.
