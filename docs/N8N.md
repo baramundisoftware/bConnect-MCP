@@ -180,6 +180,57 @@ entirely in the baramundi Management Center — not in n8n or the gateway.
 
 ---
 
+## Context Window & Performance
+
+This is the most important configuration decision for AI Agent workflows.
+
+### How n8n loads MCP tools
+
+When an n8n AI Agent node runs, it calls `tools/list` on **every configured MCP
+server** and injects all returned tool definitions — name, description, full JSON
+input schema — into the LLM system prompt **on every single invocation**. Tools
+are not loaded lazily.
+
+Each tool definition costs roughly 600–700 tokens. The bConnect MCP suite has
+212 tools across 13 domains.
+
+### Token cost per configuration
+
+| Domains connected | Tools | Approx. tokens consumed |
+|-------------------|-------|------------------------|
+| `endpoints` only | 47 | ~29,000 |
+| `endpoints` + `software` | 66 | ~41,000 |
+| `endpoints` + `jobs` + `assets` | 97 | ~60,000 |
+| `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 130 | ~81,000 |
+| All 13 domains | 212 | ~130,000+ |
+
+At 130,000 tokens for tool definitions alone, you have consumed the entire context
+window of many models — before any conversation, user data, or system instructions.
+
+### Rule: connect only what the workflow needs
+
+Each n8n workflow should configure only the domains it actually uses:
+
+| Workflow purpose | Recommended domains |
+|-----------------|--------------------|
+| Endpoint inventory / reporting | `endpoints` |
+| Software audit | `endpoints`, `software` |
+| Job automation | `jobs`, `endpoints` |
+| Compliance review | `compliance`, `endpoints` |
+| AD group management | `activedirectory`, `groups` |
+| Full IT ops assistant | pick 3–5 max |
+
+The gateway's domain-per-URL design makes this straightforward — add one MCP
+Client node per domain you need and leave the rest out.
+
+### Never connect all 13 domains to a single AI Agent
+
+Even with a large-context model, loading all 212 tool definitions wastes tokens
+on tools the workflow will never call, increases latency, and reduces the model's
+effective reasoning budget for actual work.
+
+---
+
 ## Troubleshooting
 
 | Problem | Cause | Fix |
