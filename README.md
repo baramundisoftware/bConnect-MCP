@@ -262,7 +262,7 @@ multiple users or teams need access with different bConnect API credentials.
 }
 ```
 
-> Set `BCONNECT_BASE_URL` once in `.env` — all tokens share it automatically.
+> Set `BCONNECT_BASE_URL` once in `.env.gateway` — all tokens share it automatically.
 > Only add `"baseUrl"` to a token entry if that user needs a different bMS server.
 
 Multiple MCP tokens can share the same bConnect API key (n:m mapping).

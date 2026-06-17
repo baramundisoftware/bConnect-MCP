@@ -79,7 +79,7 @@ tok_alice_a3f8c2d1e4b7f09a2c5e8d3b6f1a4c7e2d5b8f3a6c9e2d5b8f1a4c7e0d3b6f9
 #### Step 3 — Create the token map
 
 Create `/etc/mcp/tokens.json`. Each key is a Bearer token; each value contains
-only the credentials for that user. **The bMS server URL is set once in `.env`
+only the credentials for that user. **The bMS server URL is set once in `.env.gateway`
 as `BCONNECT_BASE_URL` — do not repeat it here.**
 
 ```json

@@ -1,0 +1,66 @@
+version: "3.9"
+
+# bConnect MCP Gateway — HTTP deployment (multi-user, n8n, teams)
+#
+# Use case: shared MCP access over HTTP for multiple users or workflows.
+# A single container bundles all 13 MCP servers behind one authenticated
+# HTTP endpoint. Clients authenticate with a Bearer token; the gateway
+# resolves each token to the appropriate bConnect API credentials.
+#
+# For single-developer stdio use (Claude Desktop / Claude Code) use
+# docker-compose.yml instead.
+#
+# See docs/INSTALLATION.md — Option D and docs/N8N.md for full setup.
+#
+# Usage:
+#   cp .env.gateway.example .env.gateway
+#   # Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
+#   docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
+#
+# Health check:
+#   curl http://localhost:3001/health
+#   # → {"status":"ok","count":13,"authEnabled":true}
+
+services:
+
+  mcp-gateway:
+    build:
+      context: .
+      dockerfile: bconnect-mcp-gateway/Dockerfile
+    image: bconnect-mcp-gateway:26.1.5
+    container_name: mcp-gateway
+    ports:
+      - "${MCP_GATEWAY_HOST_PORT:-3001}:3001"
+    environment:
+      MCP_GATEWAY_PORT: "3001"
+      MCP_GATEWAY_BIND: "0.0.0.0"
+      # Token map auth — set MCP_AUTH_CONFIG_PATH in .env.gateway to your tokens.json path.
+      # The file is mounted read-only at /run/secrets/tokens.json inside the container.
+      # When unset, the gateway falls back to BCONNECT_* vars (single-credential mode).
+      MCP_AUTH_CONFIG: ${MCP_AUTH_CONFIG_PATH:+/run/secrets/tokens.json}
+      # Fallback credentials (used when MCP_AUTH_CONFIG_PATH is not set).
+      BCONNECT_BASE_URL: ${BCONNECT_BASE_URL:-https://bms-server/bconnect}
+      BCONNECT_USERNAME: ${BCONNECT_USERNAME:-}
+      BCONNECT_PASSWORD: ${BCONNECT_PASSWORD:-}
+      BCONNECT_API_KEY: ${BCONNECT_API_KEY:-}
+      BCONNECT_AUDIT_LEVEL: ${BCONNECT_AUDIT_LEVEL:-none}
+      BCONNECT_SKIP_CONNECTIVITY_CHECK: ${BCONNECT_SKIP_CONNECTIVITY_CHECK:-false}
+      NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-1}
+      BCONNECT_CA_CERT_PATH: ${BCONNECT_CA_CERT_PATH:-}
+    volumes:
+      # Token map — mounted read-only when MCP_AUTH_CONFIG_PATH is set in .env.gateway.
+      # Falls back to /dev/null (harmless) when not set.
+      - ${MCP_AUTH_CONFIG_PATH:-/dev/null}:/run/secrets/tokens.json:ro
+      # CA certificate for self-signed bMS certificates (optional).
+      - ${BCONNECT_CA_CERT_PATH:-/dev/null}:${BCONNECT_CA_CERT_PATH:-/dev/null}:ro
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://localhost:3001/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1));"
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3

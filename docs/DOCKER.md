@@ -162,7 +162,7 @@ Token map format (`/etc/mcp/tokens.json`):
 }
 ```
 
-> `BCONNECT_BASE_URL` is set once in `.env` and shared by all tokens. Only add
+> `BCONNECT_BASE_URL` is set once in `.env.gateway` and shared by all tokens. Only add
 > `"baseUrl"` to a token entry if that user needs to reach a different bMS server.
 
 Each client supplies its token in the `Authorization` header:
