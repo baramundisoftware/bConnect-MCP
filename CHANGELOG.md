@@ -5,6 +5,35 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [26.1.6] - 2026-06-17
+
+### Added
+- **`docker-compose.gateway.yml`** — new dedicated Docker Compose file for the
+  HTTP gateway (multi-user / n8n) use case. Separates the gateway deployment from
+  the stdio server deployment (`docker-compose.yml`). Includes healthcheck and
+  token map volume mount.
+- **`.env.gateway.example`** — new env template for the gateway, containing only
+  the variables it needs: `BCONNECT_BASE_URL`, TLS settings, `MCP_AUTH_CONFIG_PATH`,
+  `MCP_GATEWAY_HOST_PORT`, and commented single-credential fallback vars. Used with
+  `--env-file .env.gateway`.
+
+### Changed
+- **`docker-compose.yml`** — gateway service (`mcp-gateway`) removed; stdio-only now.
+- **`.env.example`** — simplified to stdio use case; gateway variables removed.
+- **Token map examples** across README, `docs/INSTALLATION.md`, `docs/DOCKER.md`,
+  and `docs/N8N.md` — removed `baseUrl` from per-user entries. `BCONNECT_BASE_URL`
+  is set once in `.env.gateway` and shared by all tokens; `baseUrl` in a token entry
+  is now documented as an advanced/multi-server override only.
+- **`docs/N8N.md`** — added AI Agent + MCP tool node setup guide (Step 2: MCP Server
+  credential, Step 3: wire Tool: MCP sub-node); added **Context Window & Performance**
+  section with token cost table per domain combination and per-use-case domain
+  recommendations.
+- All gateway startup commands updated to use
+  `docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d`.
+- All `.env` references in gateway context corrected to `.env.gateway` across
+  `docker-compose.gateway.yml`, README, `docs/INSTALLATION.md`, `docs/DOCKER.md`,
+  and `docs/N8N.md`.
+
 ## [26.1.5] - 2026-06-16
 
 ### Added
