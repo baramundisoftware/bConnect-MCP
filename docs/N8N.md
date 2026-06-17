@@ -51,24 +51,53 @@ Repeat for each user that needs their own bConnect API key.
 
 ---
 
-## Step 2 — Add an MCP Client Node
+## Step 2 — Add an MCP Server Credential
 
-The **MCP Client** node (available since n8n 1.22) connects directly to an
-MCP-compatible HTTP endpoint.
+The MCP Server credential bundles the URL and auth together so you can reuse
+it across multiple workflow nodes.
 
-1. Add a new node → search for **MCP Client**
-2. Configure the node:
+1. In n8n go to **Credentials → Add Credential → MCP Server**
+2. Fill in:
 
 | Field | Value |
 |-------|-------|
-| **MCP Server URL** | `http://mcp-gateway.company.com:3001/endpoints/mcp` |
+| **Name** | e.g. `bConnect Endpoints` |
+| **URL** | `http://mcp-gateway.company.com:3001/endpoints/mcp` |
 | **Authentication** | Header Auth |
-| **Credential** | Select the credential created in Step 1 |
-| **Operation** | Call Tool |
-| **Tool Name** | e.g. `list_windows_endpoints` |
-| **Tool Arguments** | e.g. `{ "PageSize": 25 }` |
+| **Header Auth Credential** | Select the credential created in Step 1 |
 
-> Replace `endpoints` in the URL with the domain you need — see the full list below.
+3. Save
+
+Repeat for each domain you need — one MCP Server credential per domain URL.
+
+---
+
+## Step 3 — Wire the AI Agent node
+
+1. Add an **AI Agent** node to your workflow
+2. Add a **Tool: MCP** sub-node connected to the AI Agent
+3. In the MCP tool node, set **Credential** to your `bConnect Endpoints` credential
+
+The AI Agent now has access to exactly the 47 endpoints tools (~29,000 tokens) —
+nothing from the other 12 domains is loaded.
+
+```
+Workflow:
+  [Trigger] → [AI Agent] → (answer)
+                  │
+                  └── [Tool: MCP]  credential: bConnect Endpoints
+                                   → /endpoints/mcp (47 tools)
+```
+
+**Adding a second domain** — add another MCP tool sub-node with its own credential:
+
+```
+  [AI Agent]
+      │
+      ├── [Tool: MCP]  credential: bConnect Endpoints  → /endpoints/mcp  (47 tools)
+      └── [Tool: MCP]  credential: bConnect Software   → /software/mcp   (19 tools)
+                                                                     total: ~41,000 tokens
+```
 
 ---
 
