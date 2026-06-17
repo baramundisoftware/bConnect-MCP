@@ -162,6 +162,11 @@ services:
     environment:
       MCP_GATEWAY_PORT: "3001"
       MCP_GATEWAY_BIND: "0.0.0.0"
+      # Token map auth (Option D). Set MCP_AUTH_CONFIG_PATH in .env to the host
+      # path of your tokens.json — it will be mounted read-only at the path below.
+      # When MCP_AUTH_CONFIG_PATH is unset, MCP_AUTH_CONFIG is empty and the
+      # gateway falls back to the BCONNECT_* vars (single-credential mode).
+      MCP_AUTH_CONFIG: ${MCP_AUTH_CONFIG_PATH:+/run/secrets/tokens.json}
       BCONNECT_BASE_URL: ${BCONNECT_BASE_URL:-https://bms-server/bconnect}
       BCONNECT_USERNAME: ${BCONNECT_USERNAME}
       BCONNECT_PASSWORD: ${BCONNECT_PASSWORD}
@@ -169,4 +174,9 @@ services:
       BCONNECT_AUDIT_LEVEL: ${BCONNECT_AUDIT_LEVEL:-none}
       BCONNECT_SKIP_CONNECTIVITY_CHECK: ${BCONNECT_SKIP_CONNECTIVITY_CHECK:-false}
       NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-1}
+    volumes:
+      # Mounts the host token map read-only when MCP_AUTH_CONFIG_PATH is set.
+      # Falls back to /dev/null (harmless empty file) when not set.
+      # Example .env entry: MCP_AUTH_CONFIG_PATH=/etc/mcp/tokens.json
+      - ${MCP_AUTH_CONFIG_PATH:-/dev/null}:/run/secrets/tokens.json:ro
     restart: unless-stopped
