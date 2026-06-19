@@ -10,6 +10,8 @@ import { writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
+import type { Response } from "express";
+
 import { loadTokenMap, createAuthMiddleware, type TokenMap } from "../auth.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -34,7 +36,9 @@ function makeRes() {
       return stub;
     },
   };
-  return stub;
+  // Cast to Response so it satisfies the middleware signature, while keeping
+  // the test-only _status/_body fields accessible on the returned value.
+  return stub as unknown as Response & { _status: number; _body: unknown };
 }
 
 function writeTmp(name: string, content: string): string {
