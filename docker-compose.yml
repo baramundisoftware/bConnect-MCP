@@ -1,20 +1,23 @@
 version: "3.9"
 
-# bConnect MCP Suite — Docker Compose reference configuration
+# bConnect MCP Suite — stdio deployment (Claude Desktop / Claude Code)
+#
+# Use case: single developer running MCP servers locally. Each server runs
+# as a long-lived container; Claude connects via `docker exec` (stdio transport).
+# No ports are exposed — this is not an HTTP deployment.
+#
+# For multi-user HTTP access (n8n, teams) use docker-compose.gateway.yml instead.
 #
 # Usage:
-#   1. Copy .env.example to .env and fill in your credentials
-#   2. docker compose up -d
+#   cp .env.example .env          # fill in BCONNECT_* credentials
+#   docker compose up -d          # start all 13 servers
+#   docker compose up -d bconnect-endpoints-mcp   # start one server only
 #
-# All servers communicate via stdio (MCP transport) — they are not HTTP services.
-# Each container is kept running and Claude Desktop connects via `docker exec`.
-#
-# Claude Desktop config snippet (claude_desktop_config.json):
+# Claude Desktop / Claude Code config snippet:
 #   "mcpServers": {
-#     "bconnect-activedirectory": {
+#     "bconnect-endpoints": {
 #       "command": "docker",
-#       "args": ["exec", "-i", "bconnect-activedirectory-mcp", "node", "build/index.js"],
-#       "env": {}
+#       "args": ["exec", "-i", "bconnect-endpoints-mcp", "node", "build/index.js"]
 #     }
 #   }
 
@@ -83,6 +86,14 @@ services:
     image: bconnect-endpoints-mcp:26.1.0
     container_name: bconnect-endpoints-mcp
 
+  bconnect-groups-mcp:
+    <<: *bconnect-common
+    build:
+      context: ./bconnect-groups-mcp
+      dockerfile: Dockerfile
+    image: bconnect-groups-mcp:26.1.0
+    container_name: bconnect-groups-mcp
+
   bconnect-jobs-mcp:
     <<: *bconnect-common
     build:
@@ -146,37 +157,3 @@ services:
       dockerfile: Dockerfile
     image: bconnect-variables-mcp:26.1.0
     container_name: bconnect-variables-mcp
-
-  # ── Unified MCP HTTP Gateway (optional) ──────────────────────
-  # Serves all 13 MCP servers on a single HTTP port.
-  # Start with: docker compose up mcp-gateway
-  mcp-gateway:
-    profiles: [gateway]
-    build:
-      context: .
-      dockerfile: bconnect-mcp-gateway/Dockerfile
-    image: bconnect-mcp-gateway:26.1.5
-    container_name: mcp-gateway
-    ports:
-      - "${MCP_GATEWAY_HOST_PORT:-3001}:3001"
-    environment:
-      MCP_GATEWAY_PORT: "3001"
-      MCP_GATEWAY_BIND: "0.0.0.0"
-      # Token map auth (Option D). Set MCP_AUTH_CONFIG_PATH in .env to the host
-      # path of your tokens.json — it will be mounted read-only at the path below.
-      # When MCP_AUTH_CONFIG_PATH is unset, MCP_AUTH_CONFIG is empty and the
-      # gateway falls back to the BCONNECT_* vars (single-credential mode).
-      MCP_AUTH_CONFIG: ${MCP_AUTH_CONFIG_PATH:+/run/secrets/tokens.json}
-      BCONNECT_BASE_URL: ${BCONNECT_BASE_URL:-https://bms-server/bconnect}
-      BCONNECT_USERNAME: ${BCONNECT_USERNAME}
-      BCONNECT_PASSWORD: ${BCONNECT_PASSWORD}
-      BCONNECT_API_KEY: ${BCONNECT_API_KEY:-}
-      BCONNECT_AUDIT_LEVEL: ${BCONNECT_AUDIT_LEVEL:-none}
-      BCONNECT_SKIP_CONNECTIVITY_CHECK: ${BCONNECT_SKIP_CONNECTIVITY_CHECK:-false}
-      NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-1}
-    volumes:
-      # Mounts the host token map read-only when MCP_AUTH_CONFIG_PATH is set.
-      # Falls back to /dev/null (harmless empty file) when not set.
-      # Example .env entry: MCP_AUTH_CONFIG_PATH=/etc/mcp/tokens.json
-      - ${MCP_AUTH_CONFIG_PATH:-/dev/null}:/run/secrets/tokens.json:ro
-    restart: unless-stopped
