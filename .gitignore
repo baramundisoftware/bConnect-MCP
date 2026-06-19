@@ -62,3 +62,6 @@ scripts/build-windows-binary.sh
 scripts/generate-checksums.sh
 build-tests/pkg-output.test.sh
 build-tests/quality-gate.sh
+
+# Generated SBOM (CycloneDX) — produced by `npm run sbom`, attached to releases
+sbom.json
