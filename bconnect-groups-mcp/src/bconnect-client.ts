@@ -19,9 +19,9 @@ interface BConnectRequestConfig extends InternalAxiosRequestConfig {
   __cachedResponse?: unknown;
 }
 import { RateLimiter, RateLimitError } from "./utils/rate-limiter.js";
-import { AuditLogger, AuditLevel, AuditLogEntry } from "./utils/audit-logger.js";
-import { ResponseCache } from "./utils/response-cache.js";
-import { BatchOperations, BatchOperation, BatchExecutionResult } from "./utils/batch-operations.js";
+import { AuditLogger, AuditLevel, AuditLogEntry } from "@bconnect/mcp-core";
+import { ResponseCache } from "@bconnect/mcp-core";
+import { BatchOperations, BatchOperation, BatchExecutionResult } from "@bconnect/mcp-core";
 import { GroupsModule } from './modules/groups.js';
 
 export interface BConnectConfig {

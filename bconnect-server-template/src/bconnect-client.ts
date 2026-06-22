@@ -9,9 +9,9 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from "ax
 import axiosRetry from "axios-retry";
 import https from "https";
 import { RateLimiter, RateLimitError, RateLimiterConfig } from "./utils/rate-limiter.js";
-import { AuditLogger, AuditLevel, AuditLogEntry } from "./utils/audit-logger.js";
-import { ResponseCache } from "./utils/response-cache.js";
-import { BatchOperations, BatchOperation, BatchExecutionResult, createBatchOperations } from "./utils/batch-operations.js";
+import { AuditLogger, AuditLevel, AuditLogEntry } from "@bconnect/mcp-core";
+import { ResponseCache } from "@bconnect/mcp-core";
+import { BatchOperations, BatchOperation, BatchExecutionResult, createBatchOperations } from "@bconnect/mcp-core";
 
 export interface BConnectConfig {
   baseUrl: string;

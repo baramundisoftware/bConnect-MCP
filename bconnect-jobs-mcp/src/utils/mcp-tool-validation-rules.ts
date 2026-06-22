@@ -5,7 +5,7 @@
  * Organized by module for maintainability.
  */
 
-import { ValidationRule, CommonRules, validateOrThrow } from './parameter-validator.js';
+import { ValidationRule, CommonRules, validateOrThrow } from "@bconnect/mcp-core";
 
 /**
  * Common pagination parameters used across many tools

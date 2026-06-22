@@ -7,7 +7,7 @@
  * See parameter-validator.ts for the ValidationRule type and validateOrThrow.
  */
 
-import { ValidationRule, CommonRules } from './parameter-validator.js';
+import { ValidationRule, CommonRules } from "@bconnect/mcp-core";
 
 /**
  * Pagination rules used by every list tool in this domain.
