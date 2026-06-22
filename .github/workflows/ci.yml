@@ -74,3 +74,33 @@ jobs:
           if [ $failures -gt 0 ]; then
             echo "⚠️ $failures server(s) have audit findings (non-blocking)"
           fi
+
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    # Static analysis of first-party code (complements the dependency-only audit).
+    # Non-blocking: findings are surfaced (the step reports failure via --error)
+    # but continue-on-error keeps them from gating the build.
+    container:
+      image: semgrep/semgrep
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Semgrep scan (non-blocking — report only)
+        continue-on-error: true
+        run: >
+          semgrep scan
+          --config p/security-audit
+          --config p/secrets
+          --config p/typescript
+          --config p/nodejs
+          --error
+          --metrics=off
+          --exclude build
+          --exclude node_modules
+          --exclude tests
+          --exclude __tests__
+          --exclude fixtures
+          --exclude '*.test.ts'

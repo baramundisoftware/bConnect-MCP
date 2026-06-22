@@ -12,10 +12,23 @@ updates:
       - "github-actions"
 
   - package-ecosystem: "npm"
-    directory: "/"
+    # Cover the root, the gateway, the template, and all 13 domain servers.
+    # Glob support in `directories` fans this single entry across every manifest.
+    directories:
+      - "/"
+      - "/bconnect-mcp-gateway"
+      - "/bconnect-server-template"
+      - "/bconnect-*-mcp"
     schedule:
       interval: "weekly"
       day: "monday"
+    open-pull-requests-limit: 10
+    # Group updates so the monorepo does not produce one PR per manifest per dep.
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+      development-dependencies:
+        dependency-type: "development"
     commit-message:
       prefix: "chore(deps)"
     labels:
