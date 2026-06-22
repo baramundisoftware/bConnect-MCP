@@ -8,7 +8,7 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from "axios";
 import axiosRetry from "axios-retry";
 import https from "https";
-import { RateLimiter, RateLimitError, RateLimiterConfig } from "./utils/rate-limiter.js";
+import { RateLimiter, RateLimitError, RateLimiterConfig } from "@bconnect/mcp-core";
 import { AuditLogger, AuditLevel, AuditLogEntry } from "@bconnect/mcp-core";
 import { ResponseCache } from "@bconnect/mcp-core";
 import { BatchOperations, BatchOperation, BatchExecutionResult, createBatchOperations } from "@bconnect/mcp-core";

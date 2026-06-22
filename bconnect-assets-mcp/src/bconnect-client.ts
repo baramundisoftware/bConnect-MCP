@@ -18,7 +18,7 @@ interface BConnectRequestConfig extends InternalAxiosRequestConfig {
   __auditStartTime?: number;
   __cachedResponse?: unknown;
 }
-import { RateLimiter, RateLimitError } from "./utils/rate-limiter.js";
+import { RateLimiter, RateLimitError } from "@bconnect/mcp-core";
 import { AuditLogger, AuditLevel, AuditLogEntry } from "@bconnect/mcp-core";
 import { ResponseCache } from "@bconnect/mcp-core";
 import { BatchOperations, BatchOperation, BatchExecutionResult } from "@bconnect/mcp-core";
