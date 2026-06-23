@@ -24,7 +24,7 @@ import {
 import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow } from "./utils/parameter-validator.js";
+import { validateOrThrow } from "@bconnect/mcp-core";
 import { UdgRules } from "./utils/mcp-tool-validation-rules.js";
 
 // ─── Factory exported for testing ───────────────────────────────────────────

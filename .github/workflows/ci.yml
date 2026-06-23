@@ -40,16 +40,19 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: ${{ matrix.server }}/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
-        run: cd ${{ matrix.server }} && npm ci
+      - name: Install dependencies (workspaces)
+        run: npm ci
+
+      - name: Build shared core
+        run: npm run build -w @bconnect/mcp-core
 
       - name: Build
-        run: cd ${{ matrix.server }} && npm run build
+        run: npm run build -w ${{ matrix.server }}
 
       - name: Test
-        run: cd ${{ matrix.server }} && npm test
+        run: npm test -w ${{ matrix.server }}
 
   security:
     name: Security Audit
@@ -63,14 +66,29 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
-      - name: Audit all servers
-        run: |
-          failures=0
-          for dir in bconnect-*-mcp bconnect-server-template; do
-            echo "=== $dir ==="
-            (cd "$dir" && npm ci --ignore-scripts && npm audit --audit-level=high) || failures=$((failures + 1))
-          done
-          if [ $failures -gt 0 ]; then
-            echo "⚠️ $failures server(s) have audit findings (non-blocking)"
-          fi
+      - name: Install dependencies (workspaces)
+        run: npm ci --ignore-scripts
+
+      - name: Audit (all workspaces)
+        run: npm audit --audit-level=high || echo "⚠️ audit findings (non-blocking)"
+
+  duplication:
+    name: Duplication guard (jscpd)
+    runs-on: ubuntu-latest
+    # Guards the Q1/Q2 shared-core extraction: fails if client/util code is
+    # copy-pasted back across servers. Config + threshold live in .jscpd.json
+    # (generated types and the server-specific validation rules are excluded).
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check for copy-pasted client/util code
+        run: npx --yes jscpd bconnect-*-mcp/src bconnect-server-template/src

@@ -1,0 +1,11 @@
+{
+  "name": "@bconnect/mcp-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "exports": { ".": { "types": "./build/index.d.ts", "default": "./build/index.js" } },
+  "scripts": { "build": "tsc" },
+  "devDependencies": { "typescript": "^5.9.3" }
+}

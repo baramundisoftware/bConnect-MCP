@@ -8,7 +8,7 @@
  *
  * Pattern (see any of the 13 production servers for full examples):
  *
- *   import { ValidationRule, CommonRules } from './parameter-validator.js';
+ *   import { ValidationRule, CommonRules } from "@bconnect/mcp-core";
  *
  *   const paginationRules = (): ValidationRule[] => [
  *     CommonRules.page(),
@@ -41,7 +41,7 @@
  * required-field rules.
  */
 
-import { ValidationRule, CommonRules } from './parameter-validator.js';
+import { ValidationRule, CommonRules } from "@bconnect/mcp-core";
 
 export const DomainRules = {
   // TODO: Add one method per tool. Each returns ValidationRule[].
