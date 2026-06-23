@@ -157,4 +157,43 @@ describe('bconnect-defensecontrol-mcp', () => {
       ).rejects.toThrow(/timeout/i);
     });
   });
+
+  // Secret-read gate (security audit C3): tools that return live credentials
+  // (LAPS passwords, BitLocker keys/PIN) must be off unless ALLOW_SECRET_READ=true.
+  describe('secret-read gate (C3)', () => {
+    afterEach(() => {
+      delete process.env.ALLOW_SECRET_READ;
+      delete process.env.BCONNECT_BASE_URL;
+    });
+
+    it('blocks get_local_admin_accounts by default (no ALLOW_SECRET_READ)', async () => {
+      const { client } = await startServer();
+      const res = await client.callTool({ name: 'get_local_admin_accounts', arguments: { endpointId: 'd0000001-0001-0001-0001-000000000001' }});
+      expect(res.isError).toBe(true);
+      expect(JSON.stringify(res.content)).toMatch(/ALLOW_SECRET_READ/);
+    });
+
+    it('blocks get_bitlocker_secrets by default (26R1)', async () => {
+      process.env.BCONNECT_RELEASE = '26R1';
+      const { client } = await startServer();
+      const res = await client.callTool({
+        name: 'get_bitlocker_secrets',
+        arguments: { endpointId: 'd0000001-0001-0001-0001-000000000001' },
+      });
+      expect(res.isError).toBe(true);
+      expect(JSON.stringify(res.content)).toMatch(/ALLOW_SECRET_READ/);
+    });
+
+    it('passes the gate when ALLOW_SECRET_READ=true (fails downstream, not at the gate)', async () => {
+      process.env.ALLOW_SECRET_READ = 'true';
+      process.env.BCONNECT_BASE_URL = 'http://127.0.0.1:9'; // refused fast → proves gate was bypassed
+      const { client } = await startServer();
+      const outcome = await client
+        .callTool({ name: 'get_local_admin_accounts', arguments: { endpointId: 'd0000001-0001-0001-0001-000000000001' }})
+        .then((res) => ({ res }))
+        .catch((err) => ({ err }));
+      // Whether it rejected (network) or returned an error result, it must NOT be the gate message.
+      expect(JSON.stringify(outcome)).not.toMatch(/Set ALLOW_SECRET_READ=true to enable it/);
+    });
+  });
 });
