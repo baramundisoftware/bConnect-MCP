@@ -35,8 +35,8 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "axios": "^1.7.0",
     "axios-retry": "^4.5.0",
-    "dotenv": "^16.4.0",
-    "express": "^4.21.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "node-cache": "^5.1.2",
     "winston": "^3.18.3"
   },
