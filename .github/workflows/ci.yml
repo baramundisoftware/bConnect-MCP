@@ -121,4 +121,6 @@ jobs:
           node-version: '20'
 
       - name: Check for copy-pasted client/util code
-        run: npx --yes jscpd bconnect-*-mcp/src bconnect-server-template/src
+        # Pin the version: jscpd's detection changes across majors, which would
+        # make the threshold non-reproducible (config lives in .jscpd.json).
+        run: npx --yes jscpd@5.0.11 bconnect-*-mcp/src bconnect-server-template/src
