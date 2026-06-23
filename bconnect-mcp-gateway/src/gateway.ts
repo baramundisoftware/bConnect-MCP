@@ -42,6 +42,21 @@ const app = createApp(tokenMap);
 const port = parseInt(process.env.MCP_GATEWAY_PORT ?? "3001", 10);
 const bind = process.env.MCP_GATEWAY_BIND ?? "127.0.0.1";
 
+// Fail closed: an unauthenticated gateway reachable from a non-loopback address
+// is an open proxy to bConnect (it would serve every tool using the env-fallback
+// credentials). Refuse to start in that configuration unless the operator has
+// explicitly accepted the risk via MCP_ALLOW_NO_AUTH=true.
+const isLoopbackBind = bind === "127.0.0.1" || bind === "::1" || bind === "localhost";
+if (!authEnabled && !isLoopbackBind && process.env.MCP_ALLOW_NO_AUTH !== "true") {
+  console.error(
+    `[mcp-gateway] Refusing to start: authentication is disabled (no MCP_AUTH_CONFIG) ` +
+      `and the bind address is ${bind}. An unauthenticated gateway on a non-loopback ` +
+      `address is an open bConnect proxy. Provide a token map via MCP_AUTH_CONFIG, ` +
+      `bind to loopback (127.0.0.1), or set MCP_ALLOW_NO_AUTH=true to override.`,
+  );
+  process.exit(1);
+}
+
 app.listen(port, bind, () => {
   console.error(`[mcp-gateway] Listening on http://${bind}:${port} (${domains.length} servers)`);
   console.error(`[mcp-gateway] Domains: ${domains.join(", ")}`);

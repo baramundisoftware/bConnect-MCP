@@ -50,6 +50,8 @@ docs/internal/
 docs/Bugs_Mock.md
 docs/Bugs_MCP.md
 docs/architecture-integrated.md
+docs/NEXT-STEPS.md
+docs/SECURITY-AUDIT-*.md
 adr/
 handover/
 releases/

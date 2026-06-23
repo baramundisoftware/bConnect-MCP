@@ -28,6 +28,7 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "@bconnect/mcp-core": "*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "axios": "^1.7.0",
     "axios-retry": "^4.5.0",

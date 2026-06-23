@@ -4,7 +4,7 @@
  * Input validation rules for all 33 group-scoped endpoint query tools.
  */
 
-import { ValidationRule, CommonRules } from './parameter-validator.js';
+import { ValidationRule, CommonRules } from "@bconnect/mcp-core";
 
 const paginationRules = (): ValidationRule[] => [
   CommonRules.page(),

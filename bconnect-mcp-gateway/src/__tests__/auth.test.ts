@@ -237,6 +237,21 @@ describe("createAuthMiddleware", () => {
       expect(res.locals["bconnectCredentials"]).toEqual(tokenMap["valid-token-a"]);
     });
 
+    // Regression: prototype-pollution auth bypass (security audit C1, 2026-06-22).
+    // Inherited Object.prototype keys must NOT authenticate — they would otherwise
+    // pass the truthiness check and fall back to the env-credential identity.
+    it.each(["__proto__", "constructor", "toString", "hasOwnProperty", "valueOf", "isPrototypeOf"])(
+      "returns 401 for inherited prototype key %s used as a token",
+      (proto) => {
+        const next = vi.fn();
+        const res = makeRes();
+        middleware(makeReq("/endpoints/mcp", { authorization: `Bearer ${proto}` }), res, next);
+        expect(next).not.toHaveBeenCalled();
+        expect(res._status).toBe(401);
+        expect(res.locals["bconnectCredentials"]).toBeUndefined();
+      },
+    );
+
     it("passes a valid username/password token and sets correct credentials", () => {
       const next = vi.fn();
       const res = makeRes();

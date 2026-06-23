@@ -4,6 +4,14 @@
   "description": "Meta package for the bConnect-MCP suite (13 servers + template). Real code lives in bconnect-*-mcp/ subdirectories.",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "bconnect-*-mcp",
+    "bconnect-server-template"
+  ],
+  "overrides": {
+    "esbuild": "0.27.7"
+  },
   "scripts": {
     "build": "for d in bconnect-*-mcp bconnect-server-template; do (cd \"$d\" && npm run build) || exit 1; done",
     "test": "vitest run",
