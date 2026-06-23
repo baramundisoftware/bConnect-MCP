@@ -24,11 +24,28 @@ updates:
       day: "monday"
     open-pull-requests-limit: 10
     # Group updates so the monorepo does not produce one PR per manifest per dep.
+    # Restrict groups to minor/patch so the routine PR stays green-and-mergeable;
+    # majors arrive as separate PRs (deliberate migrations), and the breaking ones
+    # below are ignored until planned.
     groups:
       production-dependencies:
         dependency-type: "production"
+        update-types: ["minor", "patch"]
       development-dependencies:
         dependency-type: "development"
+        update-types: ["minor", "patch"]
+    ignore:
+      # Breaking majors handled as deliberate migration tasks, not auto-PRs.
+      - dependency-name: "express"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "vitest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@vitest/coverage-v8"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: "chore(deps)"
     labels:
