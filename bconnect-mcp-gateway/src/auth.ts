@@ -88,6 +88,17 @@ export function createAuthMiddleware(
     }
 
     const token = authHeader.slice(7);
+    // Look up the token as an OWN property only. `tokenMap` is a plain object,
+    // so it inherits truthy keys from Object.prototype (`__proto__`,
+    // `constructor`, `toString`, `hasOwnProperty`, …). Indexing with one of
+    // those as the token would return a truthy value and pass the credential
+    // check, authenticating an attacker as the env-fallback identity. Gating
+    // on hasOwnProperty rejects every inherited key.
+    if (!Object.prototype.hasOwnProperty.call(tokenMap, token)) {
+      res.status(401).json({ error: "Invalid or unknown token" });
+      return;
+    }
+
     const credentials = tokenMap[token];
     if (!credentials) {
       res.status(401).json({ error: "Invalid or unknown token" });

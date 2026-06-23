@@ -407,8 +407,21 @@ async function main(): Promise<void> {
       res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Session management not supported in stateless mode." }));
     });
 
-    app.listen(port, () => {
-      console.error(`${serverName} listening on http://0.0.0.0:${port}/mcp`);
+    const bind = process.env.MCP_BIND ?? "127.0.0.1";
+    // Standalone HTTP mode has no client authentication. Binding to a non-loopback
+    // address would expose an unauthenticated bConnect proxy, so fail closed unless
+    // the operator explicitly opts in (front it with the authenticated gateway instead).
+    const isLoopbackBind = bind === "127.0.0.1" || bind === "::1" || bind === "localhost";
+    if (!isLoopbackBind && process.env.MCP_ALLOW_NO_AUTH !== "true") {
+      console.error(
+        `${serverName}: refusing to bind ${bind} — standalone HTTP mode is unauthenticated. ` +
+          `Bind to loopback (the default) and front it with the authenticated gateway, ` +
+          `or set MCP_ALLOW_NO_AUTH=true to override.`,
+      );
+      process.exit(1);
+    }
+    app.listen(port, bind, () => {
+      console.error(`${serverName} listening on http://${bind}:${port}/mcp`);
     });
   } else {
     const { server } = createServer();
