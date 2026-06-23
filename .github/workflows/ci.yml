@@ -74,3 +74,21 @@ jobs:
           if [ $failures -gt 0 ]; then
             echo "⚠️ $failures server(s) have audit findings (non-blocking)"
           fi
+
+  duplication:
+    name: Duplication guard (jscpd)
+    runs-on: ubuntu-latest
+    # Guards the Q1/Q2 shared-core extraction: fails if client/util code is
+    # copy-pasted back across servers. Config + threshold live in .jscpd.json
+    # (generated types and the server-specific validation rules are excluded).
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check for copy-pasted client/util code
+        run: npx --yes jscpd bconnect-*-mcp/src bconnect-server-template/src

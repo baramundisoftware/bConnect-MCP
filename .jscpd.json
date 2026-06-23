@@ -1,0 +1,16 @@
+{
+  "threshold": 5,
+  "minLines": 40,
+  "reporters": ["consoleFull"],
+  "absolute": true,
+  "gitignore": true,
+  "ignore": [
+    "**/build/**",
+    "**/node_modules/**",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/generated/**",
+    "**/mcp-tool-validation-rules.ts",
+    "packages/**"
+  ]
+}
