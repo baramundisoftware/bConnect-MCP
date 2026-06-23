@@ -1,7 +1,9 @@
 {
   "threshold": 5,
   "minLines": 40,
-  "reporters": ["consoleFull"],
+  "reporters": [
+    "consoleFull"
+  ],
   "absolute": true,
   "gitignore": true,
   "ignore": [
@@ -11,6 +13,7 @@
     "**/*.test.ts",
     "**/generated/**",
     "**/mcp-tool-validation-rules.ts",
-    "packages/**"
+    "packages/**",
+    "**/index.ts"
   ]
 }

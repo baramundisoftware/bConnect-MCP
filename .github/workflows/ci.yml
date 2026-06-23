@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -60,10 +60,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
@@ -75,6 +75,36 @@ jobs:
       - name: Audit (all workspaces)
         run: npm audit --audit-level=high || echo "⚠️ audit findings (non-blocking)"
 
+  sast:
+    name: SAST (Semgrep)
+    runs-on: ubuntu-latest
+    # Static analysis of first-party code (complements the dependency-only audit).
+    # Non-blocking: findings are surfaced (the step reports failure via --error)
+    # but continue-on-error keeps them from gating the build.
+    container:
+      image: semgrep/semgrep
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Semgrep scan (non-blocking — report only)
+        continue-on-error: true
+        run: >
+          semgrep scan
+          --config p/security-audit
+          --config p/secrets
+          --config p/typescript
+          --config p/nodejs
+          --error
+          --metrics=off
+          --exclude build
+          --exclude node_modules
+          --exclude tests
+          --exclude __tests__
+          --exclude fixtures
+          --exclude '*.test.ts'
+
   duplication:
     name: Duplication guard (jscpd)
     runs-on: ubuntu-latest
@@ -83,12 +113,14 @@ jobs:
     # (generated types and the server-specific validation rules are excluded).
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
 
       - name: Check for copy-pasted client/util code
-        run: npx --yes jscpd bconnect-*-mcp/src bconnect-server-template/src
+        # Pin the version: jscpd's detection changes across majors, which would
+        # make the threshold non-reproducible (config lives in .jscpd.json).
+        run: npx --yes jscpd@5.0.11 bconnect-*-mcp/src bconnect-server-template/src
