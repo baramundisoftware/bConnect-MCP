@@ -156,6 +156,10 @@ curl http://localhost:3001/health
 | `MCP_AUTH_CONFIG` | — | Path to token map JSON. When unset, auth is disabled (env-var fallback). |
 | `MCP_GATEWAY_PORT` | `3001` | Listen port |
 | `MCP_GATEWAY_BIND` | `127.0.0.1` | Bind address (`0.0.0.0` to accept remote connections) |
+| `MCP_GATEWAY_RATE_LIMIT_ENABLED` | `true` | Per-token inbound rate limiting; set `false` to disable |
+| `MCP_GATEWAY_RATE_LIMIT_MAX` | `300` | Max requests per window, **per token** (per client IP when auth disabled) |
+| `MCP_GATEWAY_RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window in ms |
+| `MCP_GATEWAY_MAX_BODY` | `1mb` | Max accepted request body size |
 
 > **Security:** Always put a TLS-terminating reverse proxy (nginx, Caddy) in front
 > of the gateway in production — Bearer tokens travel in HTTP headers and must be
@@ -184,11 +188,22 @@ BCONNECT_RELEASE=26R1          # or 25R2
 ### Optional Variables
 
 ```env
-BCONNECT_TIMEOUT=30000         # Request timeout in ms (default: 30000)
-BCONNECT_MAX_RETRIES=3         # Retry attempts for 429/5xx errors
-BCONNECT_RETRY_DELAY=100       # Base delay between retries in ms
-BCONNECT_AUDIT_LEVEL=off       # Audit logging: off | basic | full
+BCONNECT_TIMEOUT=30000               # Request timeout in ms (default: 30000)
+BCONNECT_MAX_RETRIES=3               # Retry attempts for 429/5xx errors
+BCONNECT_RETRY_DELAY=100             # Base delay between retries in ms
+BCONNECT_AUDIT_LEVEL=off             # Audit logging: off | basic | full
+
+# Outbound rate limiting (server → bMS). Throttles the calls each MCP server
+# makes to the bMS API. Off by default; set ENABLED=true to activate.
+BCONNECT_RATE_LIMIT_ENABLED=false    # Enable the client-side rate limiter
+BCONNECT_RATE_LIMIT_MAX_REQUESTS=100 # Max requests per window (default: 100)
+BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min)
 ```
+
+> **Two layers of rate limiting.** The `BCONNECT_RATE_LIMIT_*` vars above throttle
+> a server's **outbound** calls to bMS (per process). They do **not** limit
+> **inbound** requests to the HTTP gateway — that is configured separately on the
+> gateway (`MCP_GATEWAY_RATE_LIMIT_*`, see the Gateway environment variables table).
 
 ### bMS Release Notes
 

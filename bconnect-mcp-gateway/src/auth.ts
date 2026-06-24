@@ -106,6 +106,7 @@ export function createAuthMiddleware(
     }
 
     res.locals["bconnectCredentials"] = credentials;
+    res.locals["authToken"] = token; // used as the per-token rate-limit key
     next();
   };
 }

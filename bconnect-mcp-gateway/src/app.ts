@@ -23,6 +23,7 @@ import { createServer as createUpdatemanagementServer } from "bconnect-updateman
 import { createServer as createVariablesServer } from "bconnect-variables-mcp";
 
 import { type BConnectCredentials, type TokenMap, createAuthMiddleware } from "./auth.js";
+import { createRateLimitMiddleware } from "./rate-limit.js";
 
 // ─── Server factory registry ──────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
@@ -49,8 +50,11 @@ export const domains = Object.keys(serverFactories);
 export function createApp(tokenMap: TokenMap): express.Application {
   const authEnabled = Object.keys(tokenMap).length > 0;
   const app = express();
-  app.use(express.json());
+  // Cap request body size (default 1mb) to bound per-request memory (audit H2).
+  app.use(express.json({ limit: process.env.MCP_GATEWAY_MAX_BODY ?? "1mb" }));
   app.use(createAuthMiddleware(tokenMap));
+  // Per-token inbound rate limiting (runs after auth so the token is known).
+  app.use(createRateLimitMiddleware());
 
   // MCP Streamable HTTP handler — stateless, one server+transport per request
   app.post("/:domain/mcp", async (req: Request, res: Response) => {
