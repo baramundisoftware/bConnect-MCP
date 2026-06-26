@@ -6,7 +6,7 @@
 # The gateway imports all 13 MCP servers via file: deps, so the build
 # context must include the sibling server directories.
 
-FROM node:20-alpine AS builder
+FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS builder
 WORKDIR /app
 
 # Copy each server: package files, tsconfig, and source.
@@ -73,7 +73,7 @@ WORKDIR /app/bconnect-mcp-gateway
 RUN npm install && npm run build
 
 # ── Runtime stage ────────────────────────────────────────────────
-FROM node:20-alpine
+FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
 WORKDIR /app
 
 RUN addgroup -S bconnect && adduser -S bconnect -G bconnect
