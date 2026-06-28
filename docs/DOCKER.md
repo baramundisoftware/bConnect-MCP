@@ -165,6 +165,27 @@ Token map format (`/etc/mcp/tokens.json`):
 > `BCONNECT_BASE_URL` is set once in `.env.gateway` and shared by all tokens. Only add
 > `"baseUrl"` to a token entry if that user needs to reach a different bMS server.
 
+**Hash tokens at rest (recommended — audit M1).** Instead of plaintext token keys,
+use the **SHA-256 hex** of each token as the key, so a leaked `tokens.json` can't be
+replayed. The gateway auto-detects a hashed map and hashes the presented token before
+lookup. Generate a key with the bundled helper:
+
+```bash
+node bconnect-mcp-gateway/build/hash-token.js tok_alice_<random>
+# → 9f86d081…   (use this as the key)
+```
+
+```json
+{
+  "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08": {
+    "apiKey": "bconnect-api-key-team-a"
+  }
+}
+```
+
+A map is treated as hashed only when **every** key is a 64-char SHA-256 hex; otherwise
+it stays in (legacy) plaintext mode and the gateway logs a recommendation to migrate.
+
 Each client supplies its token in the `Authorization` header:
 
 ```json

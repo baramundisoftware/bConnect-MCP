@@ -12,7 +12,7 @@ import { tmpdir } from "node:os";
 
 import type { Response } from "express";
 
-import { loadTokenMap, createAuthMiddleware, type TokenMap } from "../auth.js";
+import { loadTokenMap, createAuthMiddleware, hashToken, isHashedTokenMap, type TokenMap } from "../auth.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -305,6 +305,50 @@ describe("createAuthMiddleware", () => {
       middleware(makeReq("/endpoints/mcp", { authorization: "Bearer tok-bob" }), res, vi.fn());
       expect(res.locals["bconnectCredentials"]).toEqual(tokenMap["tok-bob"]);
       expect(res.locals["bconnectCredentials"]).not.toEqual(shared);
+    });
+  });
+
+  // Hashed token map (audit M1): tokens stored as SHA-256, looked up by hash.
+  describe("hashed token map (M1)", () => {
+    const RAW = "tok_hashed_0123456789abcdef";
+    const creds = { apiKey: "key-hashed" };
+    const hashedMap: TokenMap = { [hashToken(RAW)]: creds };
+    const middleware = createAuthMiddleware(hashedMap);
+
+    it("hashToken returns a 64-char sha256 hex", () => {
+      expect(hashToken(RAW)).toMatch(/^[a-f0-9]{64}$/);
+    });
+
+    it("detects hashed vs plaintext maps", () => {
+      expect(isHashedTokenMap(hashedMap)).toBe(true);
+      expect(isHashedTokenMap({ "tok-plain": creds })).toBe(false);
+      expect(isHashedTokenMap({})).toBe(false);
+    });
+
+    it("authenticates the raw token against a hashed map", () => {
+      const next = vi.fn();
+      const res = makeRes();
+      middleware(makeReq("/endpoints/mcp", { authorization: `Bearer ${RAW}` }), res, next);
+      expect(next).toHaveBeenCalledOnce();
+      expect(res.locals["bconnectCredentials"]).toEqual(creds);
+    });
+
+    it("rejects presenting the hash itself as the token", () => {
+      const res = makeRes();
+      middleware(makeReq("/endpoints/mcp", { authorization: `Bearer ${hashToken(RAW)}` }), res, vi.fn());
+      expect(res._status).toBe(401);
+    });
+
+    it("rejects an unknown raw token", () => {
+      const res = makeRes();
+      middleware(makeReq("/endpoints/mcp", { authorization: "Bearer wrong-token" }), res, vi.fn());
+      expect(res._status).toBe(401);
+    });
+
+    it("still rejects inherited prototype keys in hashed mode", () => {
+      const res = makeRes();
+      middleware(makeReq("/endpoints/mcp", { authorization: "Bearer __proto__" }), res, vi.fn());
+      expect(res._status).toBe(401);
     });
   });
 });

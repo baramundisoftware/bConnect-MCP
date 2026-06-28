@@ -6,6 +6,7 @@
  */
 
 import fs from "fs";
+import crypto from "crypto";
 import type { Request, Response, NextFunction } from "express";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -18,6 +19,24 @@ export interface BConnectCredentials {
 }
 
 export type TokenMap = Record<string, BConnectCredentials>;
+
+// ─── Token hashing (audit M1) ──────────────────────────────────────────────────
+
+const SHA256_HEX = /^[a-f0-9]{64}$/;
+
+/** SHA-256 hex of a Bearer token — the key form used in a hashed token map. */
+export function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token, "utf8").digest("hex");
+}
+
+/**
+ * A token map is in "hashed" mode when every key is a SHA-256 hex digest.
+ * Mixed/plaintext maps stay in legacy plaintext mode (with a warning at load).
+ */
+export function isHashedTokenMap(tokenMap: TokenMap): boolean {
+  const keys = Object.keys(tokenMap);
+  return keys.length > 0 && keys.every((k) => SHA256_HEX.test(k));
+}
 
 // ─── Token map loading ───────────────────────────────────────────────────────
 
@@ -69,6 +88,15 @@ export function createAuthMiddleware(
   tokenMap: TokenMap
 ): (req: Request, res: Response, next: NextFunction) => void {
   const authEnabled = Object.keys(tokenMap).length > 0;
+  const hashedMode = isHashedTokenMap(tokenMap);
+
+  if (authEnabled) {
+    if (hashedMode) {
+      console.error(`[mcp-gateway] Auth: token map is hashed (SHA-256) — tokens are not stored in plaintext.`);
+    } else {
+      console.error(`[mcp-gateway] Auth: token map is PLAINTEXT. Recommend hashing tokens at rest — run 'node build/hash-token.js <token>' and use the digests as keys.`);
+    }
+  }
 
   return (req: Request, res: Response, next: NextFunction): void => {
     if (req.path === "/health") {
@@ -88,18 +116,21 @@ export function createAuthMiddleware(
     }
 
     const token = authHeader.slice(7);
-    // Look up the token as an OWN property only. `tokenMap` is a plain object,
-    // so it inherits truthy keys from Object.prototype (`__proto__`,
-    // `constructor`, `toString`, `hasOwnProperty`, …). Indexing with one of
-    // those as the token would return a truthy value and pass the credential
-    // check, authenticating an attacker as the env-fallback identity. Gating
-    // on hasOwnProperty rejects every inherited key.
-    if (!Object.prototype.hasOwnProperty.call(tokenMap, token)) {
+    // In hashed mode (audit M1) the map is keyed by SHA-256 of the token, so the
+    // raw token is never stored at rest; hash the presented token before lookup.
+    // Hashing also defuses lookup-timing concerns — there is no preimage to
+    // recover from the (uniformly distributed) hash key.
+    const lookupKey = hashedMode ? hashToken(token) : token;
+    // Look up as an OWN property only. `tokenMap` is a plain object, so it
+    // inherits truthy keys from Object.prototype (`__proto__`, `constructor`,
+    // `toString`, …); indexing with one of those would pass the credential check
+    // and authenticate as the env-fallback identity. hasOwnProperty rejects them.
+    if (!Object.prototype.hasOwnProperty.call(tokenMap, lookupKey)) {
       res.status(401).json({ error: "Invalid or unknown token" });
       return;
     }
 
-    const credentials = tokenMap[token];
+    const credentials = tokenMap[lookupKey];
     if (!credentials) {
       res.status(401).json({ error: "Invalid or unknown token" });
       return;
