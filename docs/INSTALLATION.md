@@ -188,7 +188,16 @@ BCONNECT_TIMEOUT=30000         # Request timeout in ms (default: 30000)
 BCONNECT_MAX_RETRIES=3         # Retry attempts for 429/5xx errors
 BCONNECT_RETRY_DELAY=100       # Base delay between retries in ms
 BCONNECT_AUDIT_LEVEL=off       # Audit logging: off | basic | full
+ALLOW_WRITE_OPERATIONS=false   # Enable write/destructive tools (default: off)
+ALLOW_SECRET_READ=false        # Enable secret-returning reads (default: off) — see below
 ```
+
+> **`ALLOW_SECRET_READ`** gates the DefenseControl tools that return **live
+> credentials** — `get_bitlocker_secrets` (recovery keys + PIN) and
+> `get_local_admin_accounts` (cleartext LAPS passwords). It is **off by default**
+> so those secrets cannot land in an LLM context/transcript unintentionally. Set
+> it to `true` only on a server/deployment where retrieving those secrets is an
+> intended, authorized use.
 
 ### bMS Release Notes
 

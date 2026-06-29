@@ -314,6 +314,24 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       };
     }
 
+    // 3. Secret-read gate (security audit C3). These GETs return live secrets
+    // (BitLocker recovery keys/PIN, cleartext LAPS admin passwords) that would
+    // otherwise land in the model context/transcript unredacted. Off by default;
+    // an operator must opt in explicitly.
+    const SECRET_READ_TOOLS = new Set<string>([
+      "get_bitlocker_secrets",
+      "get_local_admin_accounts",
+    ]);
+    if (SECRET_READ_TOOLS.has(name) && process.env.ALLOW_SECRET_READ !== "true") {
+      return {
+        content: [{
+          type: "text" as const,
+          text: `Secret-returning operation '${name}' is disabled because it exposes live credentials (BitLocker keys / LAPS passwords). Set ALLOW_SECRET_READ=true to enable it.`
+        }],
+        isError: true
+      };
+    }
+
 
     const getBconnect = (): BConnectClient => {
       dotenv.config();
