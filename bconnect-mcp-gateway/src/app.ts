@@ -24,6 +24,8 @@ import { createServer as createVariablesServer } from "bconnect-variables-mcp";
 
 import { type BConnectCredentials, type TokenMap, createAuthMiddleware } from "./auth.js";
 import { createRateLimitMiddleware } from "./rate-limit.js";
+import { createLogger } from "./logger.js";
+import { createAccessLogMiddleware } from "./access-log.js";
 
 // ─── Server factory registry ──────────────────────────────────────────────────
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
@@ -50,6 +52,8 @@ export const domains = Object.keys(serverFactories);
 export function createApp(tokenMap: TokenMap): express.Application {
   const authEnabled = Object.keys(tokenMap).length > 0;
   const app = express();
+  // Access log first so it records every request's final status (incl. 401/429).
+  app.use(createAccessLogMiddleware(createLogger()));
   // Cap request body size (default 1mb) to bound per-request memory (audit H2).
   app.use(express.json({ limit: process.env.MCP_GATEWAY_MAX_BODY ?? "1mb" }));
   app.use(createAuthMiddleware(tokenMap));

@@ -218,6 +218,12 @@ environment variables (single-credential mode, no auth required).
 | `MCP_AUTH_CONFIG` | Path to token map JSON (gateway only) | — |
 | `MCP_GATEWAY_PORT` | Gateway listen port | `3001` |
 | `MCP_GATEWAY_BIND` | Gateway bind address | `127.0.0.1` |
+| `LOG_LEVEL` | Gateway log level: `error`, `warn`, `info`, `debug` | `info` |
+| `LOG_FORMAT` | Gateway log format: `text` or `json` (use `json` for ELK/Loki) | `text` |
+
+> The gateway writes a structured **access log** (method, path, status, duration, and a
+> non-reversible caller id — a SHA-256 prefix of the token, never the raw token) for every
+> request. Set `LOG_FORMAT=json` for machine-ingestible logs.
 
 ---
 
