@@ -16,6 +16,7 @@
     "js-yaml": "^4.2.0"
   },
   "scripts": {
+    "ci": "bash scripts/ci-local.sh",
     "build": "for d in bconnect-*-mcp bconnect-server-template; do (cd \"$d\" && npm run build) || exit 1; done",
     "test": "vitest run",
     "test:watch": "vitest",
