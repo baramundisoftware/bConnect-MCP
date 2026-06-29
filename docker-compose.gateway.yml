@@ -1,5 +1,3 @@
-version: "3.9"
-
 # bConnect MCP Gateway — HTTP deployment (multi-user, n8n, teams)
 #
 # Use case: shared MCP access over HTTP for multiple users or workflows.
@@ -54,6 +52,14 @@ services:
       # CA certificate for self-signed bMS certificates (optional).
       - ${BCONNECT_CA_CERT_PATH:-/dev/null}:${BCONNECT_CA_CERT_PATH:-/dev/null}:ro
     restart: unless-stopped
+    # Resource limits (audit H2): bound a runaway request rate / per-request
+    # server creation from exhausting the host. Tune via .env.gateway.
+    deploy:
+      resources:
+        limits:
+          memory: ${MCP_GATEWAY_MEM_LIMIT:-512m}
+          cpus: "${MCP_GATEWAY_CPU_LIMIT:-1.0}"
+          pids: 512
     healthcheck:
       test:
         - CMD

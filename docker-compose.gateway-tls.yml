@@ -1,0 +1,47 @@
+# bConnect MCP Gateway — TLS front (Caddy reverse proxy) — ADR-0001
+#
+# Overlay for docker-compose.gateway.yml that puts Caddy in front of the gateway
+# for TLS termination. The gateway is taken off its public host port and exposed
+# only on the internal Docker network; Caddy is the sole public entry point.
+#
+# Usage:
+#   docker compose -f docker-compose.gateway.yml -f docker-compose.gateway-tls.yml \
+#     --env-file .env.gateway up -d
+#
+# Set MCP_GATEWAY_PUBLIC_HOST in .env.gateway to the hostname clients use.
+# Clients then connect to https://<host>/<domain>/mcp with their Bearer token.
+
+services:
+
+  mcp-gateway:
+    # Remove the public host-port mapping from the base file — the gateway is now
+    # reachable only by Caddy over the internal network.
+    ports: !reset []
+    expose:
+      - "3001"
+
+  caddy:
+    image: caddy:2-alpine@sha256:5f5c8640aae01df9654968d946d8f1a56c497f1dd5c5cda4cf95ab7c14d58648
+    container_name: mcp-gateway-caddy
+    restart: unless-stopped
+    depends_on:
+      - mcp-gateway
+    ports:
+      - "${MCP_GATEWAY_TLS_PORT:-443}:443"
+      - "${MCP_GATEWAY_HTTP_PORT:-80}:80" # ACME HTTP-01 / redirect to HTTPS
+    environment:
+      MCP_GATEWAY_PUBLIC_HOST: ${MCP_GATEWAY_PUBLIC_HOST:-localhost}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data   # persisted certs / ACME account
+      - caddy_config:/config
+    deploy:
+      resources:
+        limits:
+          memory: ${MCP_CADDY_MEM_LIMIT:-128m}
+          cpus: "${MCP_CADDY_CPU_LIMIT:-0.5}"
+          pids: 256
+
+volumes:
+  caddy_data:
+  caddy_config:

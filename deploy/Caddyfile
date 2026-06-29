@@ -1,0 +1,38 @@
+# bConnect MCP Gateway — Caddy reverse proxy (TLS termination) — ADR-0001
+#
+# Caddy terminates TLS and forwards to the gateway over the internal Docker
+# network. The gateway itself stays loopback/internal-only (no public HTTP port)
+# when started with docker-compose.gateway-tls.yml.
+#
+# Set MCP_GATEWAY_PUBLIC_HOST in .env.gateway (the hostname clients connect to).
+#
+# TLS options — pick ONE:
+#   * Public CA (Let's Encrypt): just use a real, resolvable hostname (default
+#     behaviour below — Caddy auto-provisions a cert).
+#   * Internal/corporate deployment: replace `tls` line with `tls internal`
+#     (Caddy's local CA) or `tls /path/cert.pem /path/key.pem` for your own cert.
+
+{$MCP_GATEWAY_PUBLIC_HOST:localhost} {
+	# Internal CA by default so this works out-of-the-box on a private network.
+	# For a public hostname with Let's Encrypt, delete this line.
+	tls internal
+
+	encode gzip
+
+	# Forward everything (including the Authorization: Bearer header) to the
+	# gateway on the internal network. reverse_proxy preserves request headers.
+	reverse_proxy mcp-gateway:3001 {
+		header_up X-Forwarded-Proto https
+	}
+
+	# Edge/IP flood limiting can be added here with the caddy ratelimit plugin
+	# (requires a custom Caddy build). Per-token limiting is already enforced
+	# in the gateway itself (MCP_GATEWAY_RATE_LIMIT_*).
+
+	header {
+		# Basic hardening headers.
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		-Server
+	}
+}

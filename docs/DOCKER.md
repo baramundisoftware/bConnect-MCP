@@ -202,6 +202,44 @@ Each client supplies its token in the `Authorization` header:
 When `MCP_AUTH_CONFIG` is not set the gateway falls back to the `BCONNECT_*`
 environment variables (single-credential mode, no auth required).
 
+### TLS with a Caddy reverse proxy (production)
+
+Bearer tokens travel in HTTP headers, so any deployment beyond localhost **must**
+terminate TLS. The suite ships a Caddy overlay (ADR-0001): Caddy is the only
+public entry point and the gateway runs internal-only.
+
+```bash
+# Set the public hostname clients will use
+echo "MCP_GATEWAY_PUBLIC_HOST=mcp-gateway.company.com" >> .env.gateway
+
+docker compose \
+  -f docker-compose.gateway.yml \
+  -f docker-compose.gateway-tls.yml \
+  --env-file .env.gateway up -d
+```
+
+- Caddy publishes `443` (and `80` for ACME); the gateway no longer exposes a host port.
+- TLS: `deploy/Caddyfile` uses Caddy's **internal CA** by default (works on a private
+  network out of the box). For a public hostname, remove the `tls internal` line to let
+  Caddy auto-provision a Let's Encrypt cert; for a corporate cert use `tls /cert.pem /key.pem`.
+- Clients then use `https://<host>/<domain>/mcp` with their `Authorization: Bearer` token.
+- **Rate limiting:** per-token limiting is enforced in the gateway itself
+  (`MCP_GATEWAY_RATE_LIMIT_*`); edge/IP flood limiting can be added in the Caddyfile via the
+  ratelimit plugin (custom Caddy build).
+
+### Resource limits
+
+Both compose files set memory/CPU/pids limits (audit H2) to bound a runaway request
+rate. Tune via `.env.gateway`: `MCP_GATEWAY_MEM_LIMIT` (default `512m`),
+`MCP_GATEWAY_CPU_LIMIT` (`1.0`), and the Caddy equivalents `MCP_CADDY_MEM_LIMIT` /
+`MCP_CADDY_CPU_LIMIT`.
+
+### Reproducible base images
+
+All Dockerfiles pin `node:20-alpine` to a SHA256 **digest** (audit M3), so image builds
+are reproducible and don't silently absorb upstream base-image changes. Dependabot bumps
+the digest like any other dependency.
+
 ---
 
 ## Environment Variables
