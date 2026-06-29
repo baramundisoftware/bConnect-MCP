@@ -35,8 +35,18 @@
 import { loadTokenMap, type TokenMap } from "./auth.js";
 import { createApp, domains } from "./app.js";
 import { createLogger } from "./logger.js";
+import { resolveFileSecrets } from "./secrets.js";
 
 const log = createLogger();
+
+// audit M2: hydrate credential env vars from mounted secret files (*_FILE).
+try {
+  resolveFileSecrets();
+} catch (err) {
+  log.error("cannot read a *_FILE secret referenced in the environment", { error: String(err) });
+  process.exit(1);
+}
+
 const tokenMap: TokenMap = loadTokenMap(process.env.MCP_AUTH_CONFIG);
 const authEnabled = Object.keys(tokenMap).length > 0;
 const app = createApp(tokenMap);

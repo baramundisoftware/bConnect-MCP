@@ -257,6 +257,25 @@ docker run --rm -i \
 ## Security Notes
 
 - All containers run as non-root user `bconnect`
-- No credentials are embedded in images — always pass via environment variables
-- Use Docker secrets or a secrets manager for production deployments
+- No credentials are embedded in images
+- **Prefer mounted secrets over env vars (audit M2).** The gateway supports the
+  Docker/Compose `*_FILE` convention for the fallback credentials — mount the secret
+  and point `<VAR>_FILE` at it instead of putting the value in the environment (where
+  `docker inspect` would expose it). An explicit env var still wins if both are set.
+
+  ```yaml
+  # docker-compose.gateway.yml (excerpt)
+  services:
+    mcp-gateway:
+      environment:
+        BCONNECT_API_KEY_FILE: /run/secrets/bms_api_key
+      secrets:
+        - bms_api_key
+  secrets:
+    bms_api_key:
+      file: ./secrets/bms_api_key.txt
+  ```
+
+  Supported: `BCONNECT_USERNAME_FILE`, `BCONNECT_PASSWORD_FILE`, `BCONNECT_API_KEY_FILE`.
+  (The multi-user token map is already file-mounted via `MCP_AUTH_CONFIG`.)
 - The `bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` servers exit gracefully when `BCONNECT_RELEASE=25R2`
