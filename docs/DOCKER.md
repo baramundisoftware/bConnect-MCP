@@ -165,6 +165,27 @@ Token map format (`/etc/mcp/tokens.json`):
 > `BCONNECT_BASE_URL` is set once in `.env.gateway` and shared by all tokens. Only add
 > `"baseUrl"` to a token entry if that user needs to reach a different bMS server.
 
+**Hash tokens at rest (recommended — audit M1).** Instead of plaintext token keys,
+use the **SHA-256 hex** of each token as the key, so a leaked `tokens.json` can't be
+replayed. The gateway auto-detects a hashed map and hashes the presented token before
+lookup. Generate a key with the bundled helper:
+
+```bash
+node bconnect-mcp-gateway/build/hash-token.js tok_alice_<random>
+# → 9f86d081…   (use this as the key)
+```
+
+```json
+{
+  "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08": {
+    "apiKey": "bconnect-api-key-team-a"
+  }
+}
+```
+
+A map is treated as hashed only when **every** key is a 64-char SHA-256 hex; otherwise
+it stays in (legacy) plaintext mode and the gateway logs a recommendation to migrate.
+
 Each client supplies its token in the `Authorization` header:
 
 ```json
@@ -197,6 +218,12 @@ environment variables (single-credential mode, no auth required).
 | `MCP_AUTH_CONFIG` | Path to token map JSON (gateway only) | — |
 | `MCP_GATEWAY_PORT` | Gateway listen port | `3001` |
 | `MCP_GATEWAY_BIND` | Gateway bind address | `127.0.0.1` |
+| `LOG_LEVEL` | Gateway log level: `error`, `warn`, `info`, `debug` | `info` |
+| `LOG_FORMAT` | Gateway log format: `text` or `json` (use `json` for ELK/Loki) | `text` |
+
+> The gateway writes a structured **access log** (method, path, status, duration, and a
+> non-reversible caller id — a SHA-256 prefix of the token, never the raw token) for every
+> request. Set `LOG_FORMAT=json` for machine-ingestible logs.
 
 ---
 
@@ -230,6 +257,25 @@ docker run --rm -i \
 ## Security Notes
 
 - All containers run as non-root user `bconnect`
-- No credentials are embedded in images — always pass via environment variables
-- Use Docker secrets or a secrets manager for production deployments
+- No credentials are embedded in images
+- **Prefer mounted secrets over env vars (audit M2).** The gateway supports the
+  Docker/Compose `*_FILE` convention for the fallback credentials — mount the secret
+  and point `<VAR>_FILE` at it instead of putting the value in the environment (where
+  `docker inspect` would expose it). An explicit env var still wins if both are set.
+
+  ```yaml
+  # docker-compose.gateway.yml (excerpt)
+  services:
+    mcp-gateway:
+      environment:
+        BCONNECT_API_KEY_FILE: /run/secrets/bms_api_key
+      secrets:
+        - bms_api_key
+  secrets:
+    bms_api_key:
+      file: ./secrets/bms_api_key.txt
+  ```
+
+  Supported: `BCONNECT_USERNAME_FILE`, `BCONNECT_PASSWORD_FILE`, `BCONNECT_API_KEY_FILE`.
+  (The multi-user token map is already file-mounted via `MCP_AUTH_CONFIG`.)
 - The `bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` servers exit gracefully when `BCONNECT_RELEASE=25R2`

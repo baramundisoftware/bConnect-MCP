@@ -34,6 +34,18 @@
 
 import { loadTokenMap, type TokenMap } from "./auth.js";
 import { createApp, domains } from "./app.js";
+import { createLogger } from "./logger.js";
+import { resolveFileSecrets } from "./secrets.js";
+
+const log = createLogger();
+
+// audit M2: hydrate credential env vars from mounted secret files (*_FILE).
+try {
+  resolveFileSecrets();
+} catch (err) {
+  log.error("cannot read a *_FILE secret referenced in the environment", { error: String(err) });
+  process.exit(1);
+}
 
 const tokenMap: TokenMap = loadTokenMap(process.env.MCP_AUTH_CONFIG);
 const authEnabled = Object.keys(tokenMap).length > 0;
@@ -48,21 +60,20 @@ const bind = process.env.MCP_GATEWAY_BIND ?? "127.0.0.1";
 // explicitly accepted the risk via MCP_ALLOW_NO_AUTH=true.
 const isLoopbackBind = bind === "127.0.0.1" || bind === "::1" || bind === "localhost";
 if (!authEnabled && !isLoopbackBind && process.env.MCP_ALLOW_NO_AUTH !== "true") {
-  console.error(
-    `[mcp-gateway] Refusing to start: authentication is disabled (no MCP_AUTH_CONFIG) ` +
-      `and the bind address is ${bind}. An unauthenticated gateway on a non-loopback ` +
-      `address is an open bConnect proxy. Provide a token map via MCP_AUTH_CONFIG, ` +
-      `bind to loopback (127.0.0.1), or set MCP_ALLOW_NO_AUTH=true to override.`,
+  log.error(
+    "Refusing to start: auth disabled (no MCP_AUTH_CONFIG) on a non-loopback bind — " +
+      "this is an open bConnect proxy. Provide MCP_AUTH_CONFIG, bind to loopback, or set MCP_ALLOW_NO_AUTH=true.",
+    { bind },
   );
   process.exit(1);
 }
 
 app.listen(port, bind, () => {
-  console.error(`[mcp-gateway] Listening on http://${bind}:${port} (${domains.length} servers)`);
-  console.error(`[mcp-gateway] Domains: ${domains.join(", ")}`);
+  log.info("listening", { url: `http://${bind}:${port}`, servers: domains.length });
+  log.info("domains", { domains: domains.join(",") });
   if (authEnabled) {
-    console.error(`[mcp-gateway] Auth: enabled (${Object.keys(tokenMap).length} token(s))`);
+    log.info("auth enabled", { tokens: Object.keys(tokenMap).length });
   } else {
-    console.error(`[mcp-gateway] Auth: disabled — set MCP_AUTH_CONFIG to enable token-based auth`);
+    log.warn("auth disabled — set MCP_AUTH_CONFIG to enable token-based auth");
   }
 });
