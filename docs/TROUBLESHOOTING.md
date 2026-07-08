@@ -34,7 +34,7 @@ Expected output: `bconnect-endpoints-mcp running on stdio`
 Each server reads its own `.env` (or inherits from environment). Required variables:
 
 ```env
-BCONNECT_BASE_URL=https://your-bms-server:444/bconnect
+BCONNECT_BASE_URL=https://your-bms-server:443/bconnect
 BCONNECT_USERNAME=your-username
 BCONNECT_PASSWORD=your-password
 BCONNECT_RELEASE=26R1          # or 25R2
@@ -44,7 +44,7 @@ BCONNECT_RELEASE=26R1          # or 25R2
 
 ```bash
 curl -k -u "username:password" \
-  "https://your-bms-server:444/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
+  "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
 ```
 
 ---
@@ -60,7 +60,7 @@ curl -k -u "username:password" \
 1. **Test credentials with curl:**
    ```bash
    curl -k -u "username:password" \
-     "https://your-bms-server:444/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
+     "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
    ```
 
 2. **Check for special characters in password:**
@@ -104,12 +104,14 @@ BCONNECT_TIMEOUT=300000    # 5 minutes for very long operations
 1. **Verify server is reachable:**
    ```bash
    ping your-bms-server
-   curl -k https://your-bms-server:444/bconnect/
+   curl -k https://your-bms-server:443/bconnect/
    ```
 
-2. **Verify firewall:** Port 444 must be open between client and server.
+2. **Verify firewall:** Port 443 must be open between client and server.
 
-3. **Enable retry logic:**
+3. **Wrong port?** 443 is the default, but bConnect can be configured on a different port. Older or test installations commonly use **444**. Confirm the port in the baramundi Management Center (bConnect settings) and make sure it matches the port in `BCONNECT_BASE_URL`. A `curl` to the wrong port typically hangs (timeout) or is refused.
+
+4. **Enable retry logic:**
    ```env
    BCONNECT_MAX_RETRIES=3
    BCONNECT_RETRY_DELAY=100
@@ -117,7 +119,7 @@ BCONNECT_TIMEOUT=300000    # 5 minutes for very long operations
 
 ### Error: "ECONNREFUSED" or "Connection refused"
 
-Server not listening on port 444. Check that the baramundi bConnect service is running on the BMS server:
+Nothing is listening on the port in `BCONNECT_BASE_URL` (443 by default; some installations use 444 — see above). Check that the baramundi bConnect service is running on the BMS server and that the port matches:
 
 ```powershell
 Get-Service | Where-Object {$_.Name -like "*baramundi*"}
@@ -198,7 +200,7 @@ MCP configuration must list each server individually. Example `claude_desktop_co
       "command": "node",
       "args": ["/path/to/bconnect-endpoints-mcp/dist/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server:444/bconnect",
+        "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
         "BCONNECT_USERNAME": "your-username",
         "BCONNECT_PASSWORD": "your-password",
         "BCONNECT_RELEASE": "26R1"
@@ -208,7 +210,7 @@ MCP configuration must list each server individually. Example `claude_desktop_co
       "command": "node",
       "args": ["/path/to/bconnect-assets-mcp/dist/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server:444/bconnect",
+        "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
         "BCONNECT_USERNAME": "your-username",
         "BCONNECT_PASSWORD": "your-password",
         "BCONNECT_RELEASE": "26R1"
@@ -299,11 +301,11 @@ BCONNECT_RETRY_DELAY=200
 ```bash
 # Test authentication
 curl -v -k -u "username:password" \
-  "https://your-bms-server:444/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
+  "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
 
 # Save response
 curl -k -u "username:password" \
-  "https://your-bms-server:444/bconnect/endpoints/v2.0/Endpoints?PageSize=1" \
+  "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1" \
   -o response.json && cat response.json | jq .
 ```
 
@@ -343,7 +345,7 @@ Get-Content "C:\ProgramData\baramundi\Logs\bConnect.log" -Tail 100
 ### Monitor Network Traffic
 
 ```bash
-sudo tcpdump -i any host your-bms-server and port 444 -A
+sudo tcpdump -i any host your-bms-server and port 443 -A
 ```
 
 ---
@@ -352,13 +354,13 @@ sudo tcpdump -i any host your-bms-server and port 444 -A
 
 - [ ] `.env` file exists and all required variables are set
 - [ ] Credentials verified with curl
-- [ ] `BCONNECT_BASE_URL` includes port (e.g. `:444`)
+- [ ] `BCONNECT_BASE_URL` includes port (e.g. `:443`)
 - [ ] `BCONNECT_RELEASE` matches your bMS version (`26R1` or `25R2`)
 - [ ] TLS configured correctly (`BCONNECT_CA_CERT_PATH` or `NODE_TLS_REJECT_UNAUTHORIZED=0` for dev)
 - [ ] Claude MCP config lists the correct server(s) for the domain you need
 - [ ] Claude was restarted after config changes
 - [ ] BMS server is reachable (ping / curl test)
-- [ ] Port 444 is open (firewall)
+- [ ] Port 443 is open (firewall)
 - [ ] bConnect service is running on the BMS server
 - [ ] GUIDs are in correct UUID format
 - [ ] 26R1-only servers not used with `BCONNECT_RELEASE=25R2`

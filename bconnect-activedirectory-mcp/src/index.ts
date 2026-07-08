@@ -671,7 +671,7 @@ async function main(): Promise<void> {
   // Startup connectivity check (REQ-SRV-013)
   dotenv.config();
   {
-    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:444/bconnect";
+    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:443/bconnect";
     const _startupUser = process.env.BCONNECT_USERNAME;
     const _startupPass = process.env.BCONNECT_PASSWORD;
     const _startupApiKey = process.env.BCONNECT_API_KEY;

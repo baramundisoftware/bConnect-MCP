@@ -5,7 +5,7 @@ This guide covers installing and configuring the bConnect MCP Suite (13 servers)
 ## Prerequisites
 
 - **baramundi Management Suite** 25R2 or 26R1 with bConnect API enabled
-- **bConnect API URL** — typically `https://your-bms-server:444/bconnect`
+- **bConnect API URL** — typically `https://your-bms-server:443/bconnect`
 - **API credentials** — a bMS user account with API access
 - **Claude Desktop** or **Claude Code** (CLI)
 
@@ -179,7 +179,7 @@ cp .env.example .env
 ### Required Variables
 
 ```env
-BCONNECT_BASE_URL=https://your-bms-server:444/bconnect
+BCONNECT_BASE_URL=https://your-bms-server:443/bconnect
 BCONNECT_USERNAME=your-username
 BCONNECT_PASSWORD=your-password
 BCONNECT_RELEASE=26R1          # or 25R2
@@ -280,7 +280,7 @@ Use only in isolated development or lab environments.
 
 ```powershell
 $hostname = "your-bms-server"
-$port     = 444
+$port     = 443
 
 $tcpClient = [System.Net.Sockets.TcpClient]::new($hostname, $port)
 $sslStream = [System.Net.Security.SslStream]::new($tcpClient.GetStream(), $false, { $true })
@@ -302,7 +302,7 @@ $pem | Set-Content -Encoding ascii "C:\certs\bms-ca.pem"
 **Method A — openssl s_client (recommended)**
 
 ```bash
-openssl s_client -showcerts -connect your-bms-server:444 </dev/null 2>/dev/null \
+openssl s_client -showcerts -connect your-bms-server:443 </dev/null 2>/dev/null \
   | openssl x509 -outform PEM > /etc/ssl/certs/bms-ca.pem
 
 # Verify
@@ -312,7 +312,7 @@ openssl x509 -in /etc/ssl/certs/bms-ca.pem -noout -subject -issuer -dates
 If the server uses an intermediate CA, capture the full chain:
 
 ```bash
-openssl s_client -showcerts -connect your-bms-server:444 </dev/null 2>/dev/null \
+openssl s_client -showcerts -connect your-bms-server:443 </dev/null 2>/dev/null \
   | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
   > /etc/ssl/certs/bms-ca-chain.pem
 ```
@@ -326,7 +326,7 @@ openssl s_client -showcerts -connect your-bms-server:444 </dev/null 2>/dev/null 
 ```bash
 curl --cacert /etc/ssl/certs/bms-ca.pem \
      -u "username:password" \
-     https://your-bms-server:444/bconnect/endpoints/v2.0/Endpoints?PageSize=1
+     https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1
 ```
 
 A `200` response confirms the CA cert is correct and `BCONNECT_CA_CERT_PATH` will work.
@@ -351,7 +351,7 @@ Add each server you want to use to your Claude MCP configuration.
 ```bash
 claude mcp add bconnect-endpoints \
   node /path/to/bconnect-endpoints-mcp/dist/index.js \
-  -e BCONNECT_BASE_URL=https://your-bms-server:444/bconnect \
+  -e BCONNECT_BASE_URL=https://your-bms-server:443/bconnect \
   -e BCONNECT_USERNAME=your-username \
   -e BCONNECT_PASSWORD=your-password \
   -e BCONNECT_RELEASE=26R1
@@ -366,7 +366,7 @@ claude mcp add bconnect-endpoints \
       "command": "node",
       "args": ["/path/to/bconnect-endpoints-mcp/dist/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server:444/bconnect",
+        "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
         "BCONNECT_USERNAME": "your-username",
         "BCONNECT_PASSWORD": "your-password",
         "BCONNECT_RELEASE": "26R1"
@@ -376,7 +376,7 @@ claude mcp add bconnect-endpoints \
       "command": "node",
       "args": ["/path/to/bconnect-assets-mcp/dist/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server:444/bconnect",
+        "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
         "BCONNECT_USERNAME": "your-username",
         "BCONNECT_PASSWORD": "your-password",
         "BCONNECT_RELEASE": "26R1"
@@ -429,7 +429,7 @@ Test API connectivity:
 
 ```bash
 curl -k -u "username:password" \
-  "https://your-bms-server:444/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
+  "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
 ```
 
 ---
