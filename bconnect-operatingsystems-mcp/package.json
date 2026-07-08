@@ -40,7 +40,7 @@
     "winston": "^3.18.3"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.18.12",
     "@vitest/coverage-v8": "^3.2.4",
     "msw": "^2.11.6",
