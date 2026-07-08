@@ -11,15 +11,16 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 ## What You Need
 
 - A **baramundi Management Suite** (25R2 or 26R1) with bConnect API enabled
-- Your **bMS server address** (e.g. `https://bms.company.com:444/bconnect`)
+- Your **bMS server address** (e.g. `https://bms.company.com:443/bconnect`)
 - A **bMS user account** with API access, or an **API key**
   (generate one in the baramundi mangement console under **Server Management > API Keys**)
 - **Node.js 20 or later** ([download](https://nodejs.org/))
 
 ### Network Requirements
 
-- Port **444** (HTTPS) must be open between the machine running the MCP server and your bMS server
-- Test connectivity: `curl -k https://bms.company.com:444/bconnect/info/v2.0/Info`
+- Port **443** (HTTPS) must be open between the machine running the MCP server and your bMS server
+  - 443 is the default. Some installations expose bConnect on a different port (e.g. **444** in older/test setups) — check the bConnect port in your baramundi Management Center and adjust the port in `BCONNECT_BASE_URL` accordingly.
+- Test connectivity: `curl -k https://bms.company.com:443/bconnect/info/v2.0/Info`
 
 ---
 
@@ -54,7 +55,7 @@ Edit `.env`:
 
 ```env
 # Your bMS server address (include /bconnect at the end)
-BCONNECT_BASE_URL=https://bms.company.com:444/bconnect
+BCONNECT_BASE_URL=https://bms.company.com:443/bconnect
 
 # Option 1: API Key (recommended)
 BCONNECT_API_KEY=your-api-key-here
@@ -84,7 +85,7 @@ In another terminal, send a test request:
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
-  BCONNECT_BASE_URL=https://bms.company.com:444/bconnect \
+  BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
   BCONNECT_API_KEY=your-api-key \
   node build/index.js
 ```
@@ -102,7 +103,7 @@ Add the server to your AI assistant's MCP configuration. Example for Claude Desk
       "command": "node",
       "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://bms.company.com:444/bconnect",
+        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
         "BCONNECT_API_KEY": "your-api-key"
       }
     }
@@ -137,7 +138,7 @@ See [docs/DOCKER.md](docs/DOCKER.md) for the full guide. Quick start:
 ```bash
 docker run -d \
   -p 3000:3000 \
-  -e BCONNECT_BASE_URL=https://bms.company.com:444/bconnect \
+  -e BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
   -e BCONNECT_API_KEY=your-api-key \
   -e MCP_TRANSPORT=http \
   -e MCP_PORT=3000 \
@@ -174,7 +175,7 @@ All servers use the same environment variables:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `BCONNECT_BASE_URL` | Yes | — | bConnect API URL (e.g. `https://bms.company.com:444/bconnect`) |
+| `BCONNECT_BASE_URL` | Yes | — | bConnect API URL (e.g. `https://bms.company.com:443/bconnect`) |
 | `BCONNECT_API_KEY` | Yes* | — | API key for authentication |
 | `BCONNECT_USERNAME` | Yes* | — | Username for Basic Auth |
 | `BCONNECT_PASSWORD` | Yes* | — | Password for Basic Auth |
@@ -194,8 +195,8 @@ All servers use the same environment variables:
 
 1. Open the **baramundi Management Center** on your bMS server
 2. The server address is the machine name or IP where bMS is installed
-3. bConnect listens on **port 444** by default (HTTPS)
-4. Your URL will be: `https://<server-name>:444/bconnect`
+3. bConnect listens on **port 443** by default (HTTPS). If your installation uses a different port (e.g. **444** in older/test setups), use that port instead — you can check it in the bConnect settings of the Management Center
+4. Your URL will be: `https://<server-name>:443/bconnect`
 
 ### How to Generate an API Key
 
@@ -237,7 +238,7 @@ Edit `claude_desktop_config.json`:
       "command": "node",
       "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://bms.company.com:444/bconnect",
+        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
         "BCONNECT_API_KEY": "your-api-key"
       }
     }
@@ -308,7 +309,7 @@ Run a single server on a central machine when all users share one bConnect crede
 
 ```bash
 MCP_TRANSPORT=http MCP_PORT=3000 \
-BCONNECT_BASE_URL=https://bms.company.com:444/bconnect \
+BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
 BCONNECT_API_KEY=your-api-key \
 node build/index.js
 ```
@@ -337,7 +338,7 @@ Most MCP clients use the same JSON format. Add to your client's configuration fi
       "command": "node",
       "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://bms.company.com:444/bconnect",
+        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
         "BCONNECT_API_KEY": "your-api-key"
       }
     }
@@ -374,7 +375,7 @@ done
 
 | Problem | Solution |
 |---------|----------|
-| **Connection refused** | Check `BCONNECT_BASE_URL` includes `/bconnect`. Verify port 444 is open and the bConnect service is running on your bMS server. |
+| **Connection refused** | Check `BCONNECT_BASE_URL` includes `/bconnect`. Verify port 443 is open and the bConnect service is running on your bMS server. |
 | **SSL/TLS certificate errors** | Set `BCONNECT_CA_CERT_PATH` to your CA certificate. Only use `NODE_TLS_REJECT_UNAUTHORIZED=0` for development. |
 | **401 Unauthorized** | Verify your credentials. If using an API key, check it hasn't expired. If using Basic Auth, confirm the user has bConnect API access in the bMS console. |
 | **404 Not Found** | Verify `BCONNECT_RELEASE` matches your bMS version. 26R1 endpoints don't exist on a 25R2 server. |

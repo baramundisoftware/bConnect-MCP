@@ -6,7 +6,7 @@ echo "🐧 Linux Endpoint Vulnerability Report"
 echo "========================================"
 echo ""
 
-BASE_URL="${BCONNECT_BASE_URL:?Set BCONNECT_BASE_URL (e.g. https://host:444)}"
+BASE_URL="${BCONNECT_BASE_URL:?Set BCONNECT_BASE_URL (e.g. https://host:443)}"
 AUTH="${BCONNECT_USERNAME:?Set BCONNECT_USERNAME}:${BCONNECT_PASSWORD:?Set BCONNECT_PASSWORD}"
 
 # Array of Linux endpoint IDs and names

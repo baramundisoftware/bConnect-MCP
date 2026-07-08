@@ -900,7 +900,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     // This allows the server to be instantiated in tests without real credentials.
     const getBconnect = (): BConnectClient => {
       dotenv.config();
-      const baseUrl = credentials?.baseUrl ?? process.env.BCONNECT_BASE_URL ?? "https://bms.example.com:444/bconnect";
+      const baseUrl = credentials?.baseUrl ?? process.env.BCONNECT_BASE_URL ?? "https://bms.example.com:443/bconnect";
       const username = credentials?.username ?? process.env.BCONNECT_USERNAME;
       const password = credentials?.password ?? process.env.BCONNECT_PASSWORD;
       const apiKey = credentials?.apiKey ?? process.env.BCONNECT_API_KEY;
@@ -1375,7 +1375,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 async function main(): Promise<void> {
   dotenv.config();
 
-  const baseUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:444/bconnect";
+  const baseUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:443/bconnect";
   const username = process.env.BCONNECT_USERNAME;
   const password = process.env.BCONNECT_PASSWORD;
   const apiKey = process.env.BCONNECT_API_KEY;

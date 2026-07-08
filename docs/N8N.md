@@ -24,7 +24,7 @@ bconnect-mcp-gateway :3001
     │  resolves token → bConnect credentials
     ▼
 baramundi bConnect API
-    https://bms.company.com:444/bconnect
+    https://bms.company.com:443/bconnect
 ```
 
 The gateway authenticates the n8n request using the Bearer token, looks up the

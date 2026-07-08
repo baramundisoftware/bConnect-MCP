@@ -8,7 +8,7 @@ Deploy the bConnect MCP Suite on Windows for use with Claude Desktop or other MC
 
 - Windows 10/11 or Windows Server 2019/2022
 - [Node.js 20+](https://nodejs.org/) installed
-- Network access to your baramundi Management Server (bMS) on port 444
+- Network access to your baramundi Management Server (bMS) on port 443
 
 ---
 
@@ -52,7 +52,7 @@ Copy `.env.example` to `.env` in each server directory and edit:
 
 ```env
 # Your bMS server address (include /bconnect at the end)
-BCONNECT_BASE_URL=https://bms.company.com:444/bconnect
+BCONNECT_BASE_URL=https://bms.company.com:443/bconnect
 
 # Option 1: API Key (recommended)
 BCONNECT_API_KEY=your-api-key-here
@@ -91,7 +91,7 @@ Edit `%APPDATA%\Claude\claude_desktop_config.json`:
       "command": "node",
       "args": ["C:\\bConnect-MCP\\bconnect-endpoints-mcp\\build\\index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://bms.company.com:444/bconnect",
+        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
         "BCONNECT_API_KEY": "your-api-key"
       }
     },
@@ -99,7 +99,7 @@ Edit `%APPDATA%\Claude\claude_desktop_config.json`:
       "command": "node",
       "args": ["C:\\bConnect-MCP\\bconnect-assets-mcp\\build\\index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://bms.company.com:444/bconnect",
+        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
         "BCONNECT_API_KEY": "your-api-key"
       }
     }
@@ -123,7 +123,7 @@ winget install NSSM.NSSM
 nssm install bConnectEndpointsMCP "C:\Program Files\nodejs\node.exe" "C:\bConnect-MCP\bconnect-endpoints-mcp\build\index.js"
 nssm set bConnectEndpointsMCP DisplayName "bConnect Endpoints MCP"
 nssm set bConnectEndpointsMCP AppDirectory "C:\bConnect-MCP\bconnect-endpoints-mcp"
-nssm set bConnectEndpointsMCP AppEnvironmentExtra "BCONNECT_BASE_URL=https://bms.company.com:444/bconnect" "BCONNECT_API_KEY=your-api-key" "BCONNECT_RELEASE=26R1"
+nssm set bConnectEndpointsMCP AppEnvironmentExtra "BCONNECT_BASE_URL=https://bms.company.com:443/bconnect" "BCONNECT_API_KEY=your-api-key" "BCONNECT_RELEASE=26R1"
 nssm set bConnectEndpointsMCP Start SERVICE_AUTO_START
 
 # Start
@@ -153,7 +153,7 @@ $env:NODE_TLS_REJECT_UNAUTHORIZED = "0"
 | Problem | Solution |
 |---------|----------|
 | `node` not found | Install Node.js 20+ and restart PowerShell |
-| Connection refused | Check bMS URL and port 444 firewall rule |
+| Connection refused | Check bMS URL and port 443 firewall rule |
 | SSL errors | Set `BCONNECT_CA_CERT_PATH` or `NODE_TLS_REJECT_UNAUTHORIZED=0` |
 | Claude doesn't see tools | Check config JSON path and restart Claude Desktop |
 | Service won't start | Run `node build/index.js` manually first to see errors |

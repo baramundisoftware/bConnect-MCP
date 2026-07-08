@@ -10,7 +10,7 @@ Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST 
 ## Quick Start
 
 ```env
-BCONNECT_BASE_URL=https://<your-bms-server>:444/bconnect
+BCONNECT_BASE_URL=https://<your-bms-server>:443/bconnect
 BCONNECT_USERNAME=mcp-reader
 BCONNECT_PASSWORD=<password>
 BCONNECT_REJECT_UNAUTHORIZED=true
@@ -30,7 +30,7 @@ node build/index.js
       "command": "node",
       "args": ["/opt/bconnect-mcp-suite/bconnect-operatingsystems-mcp/build/index.js"],
       "env": {
-        "BCONNECT_BASE_URL": "https://bms-server:444/bconnect",
+        "BCONNECT_BASE_URL": "https://bms-server:443/bconnect",
         "BCONNECT_USERNAME": "mcp-reader",
         "BCONNECT_PASSWORD": "<password>"
       }

@@ -193,7 +193,7 @@ async function main(): Promise<void> {
   // Startup connectivity check (REQ-SRV-013). Set BCONNECT_SKIP_CONNECTIVITY_CHECK=true
   // to disable when the management server is reachable only after a delay.
   if (process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK !== "true") {
-    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:444/bconnect";
+    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:443/bconnect";
     const _startupUser = process.env.BCONNECT_USERNAME;
     const _startupPass = process.env.BCONNECT_PASSWORD;
     const _startupApiKey = process.env.BCONNECT_API_KEY;
