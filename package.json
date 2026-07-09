@@ -57,7 +57,7 @@
     "@rollup/rollup-linux-arm64-gnu": "^4.60.0"
   },
   "devDependencies": {
-    "@cyclonedx/cyclonedx-npm": "^5.0.0",
+    "@cyclonedx/cyclonedx-npm": "^6.0.0",
     "@types/node": "^22.20.0",
     "@typescript-eslint/eslint-plugin": "^8.62.0",
     "@typescript-eslint/parser": "^8.61.0",
