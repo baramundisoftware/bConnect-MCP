@@ -38,6 +38,11 @@ updates:
       # Breaking majors handled as deliberate migration tasks, not auto-PRs.
       - dependency-name: "express"
         update-types: ["version-update:semver-major"]
+      # @types/express must track the express runtime major (currently v4).
+      # A v5 types bump on a v4 runtime is a mismatch; upgrade both together
+      # as part of the express major migration, not as a standalone types PR.
+      - dependency-name: "@types/express"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
       - dependency-name: "vitest"
