@@ -43,7 +43,25 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies (workspaces)
-        run: npm ci
+        shell: bash
+        # Strict, reproducible install on normal branches. Dependabot's
+        # regenerated root lockfile omits the workspace self-links
+        # (bconnect-*-mcp@x.y.z), so `npm ci` fails on its PRs — reconcile
+        # with `npm install` for Dependabot branches only (see issue #70).
+        # Context values go through env (not inline ${{ }}) to avoid script injection.
+        env:
+          ACTOR: ${{ github.actor }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if npm ci; then
+            :
+          elif [[ "$ACTOR" == "dependabot[bot]" || "$HEAD_REF" == dependabot/* ]]; then
+            echo "::notice::Lockfile out of sync on a Dependabot branch — reconciling with 'npm install'."
+            npm install --no-audit --no-fund
+          else
+            echo "::error::'npm ci' failed: package-lock.json is out of sync. Run 'npm install' and commit package-lock.json."
+            exit 1
+          fi
 
       - name: Build shared core
         run: npm run build -w @bconnect/mcp-core
@@ -70,7 +88,22 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies (workspaces)
-        run: npm ci --ignore-scripts
+        shell: bash
+        # See the test job: reconcile Dependabot's out-of-sync workspace
+        # lockfile (issue #70), strict `npm ci` everywhere else.
+        env:
+          ACTOR: ${{ github.actor }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if npm ci --ignore-scripts; then
+            :
+          elif [[ "$ACTOR" == "dependabot[bot]" || "$HEAD_REF" == dependabot/* ]]; then
+            echo "::notice::Lockfile out of sync on a Dependabot branch — reconciling with 'npm install'."
+            npm install --ignore-scripts --no-audit --no-fund
+          else
+            echo "::error::'npm ci' failed: package-lock.json is out of sync. Run 'npm install' and commit package-lock.json."
+            exit 1
+          fi
 
       - name: Audit (all workspaces)
         run: npm audit --audit-level=high || echo "⚠️ audit findings (non-blocking)"
