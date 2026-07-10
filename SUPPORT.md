@@ -5,7 +5,6 @@
 - **[docs/INSTALLATION.md](docs/INSTALLATION.md)** — installation, configuration, TLS setup
 - **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** — common issues and solutions
 - **[docs/DOCKER.md](docs/DOCKER.md)** — Docker deployment
-- **[docs/WINDOWS-DEPLOYMENT.md](docs/WINDOWS-DEPLOYMENT.md)** — Windows deployment
 
 ## Getting Help
 

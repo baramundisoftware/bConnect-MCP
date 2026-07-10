@@ -202,37 +202,37 @@ Each client supplies its token in the `Authorization` header:
 When `MCP_AUTH_CONFIG` is not set the gateway falls back to the `BCONNECT_*`
 environment variables (single-credential mode, no auth required).
 
-### TLS with a Caddy reverse proxy (production)
+### TLS and authentication (operator responsibility)
 
-Bearer tokens travel in HTTP headers, so any deployment beyond localhost **must**
-terminate TLS. The suite ships a Caddy overlay (ADR-0001): Caddy is the only
-public entry point and the gateway runs internal-only.
+The gateway serves plain HTTP and has **no built-in TLS or authentication** — by
+design. Any deployment beyond loopback **must** be fronted by a TLS-terminating,
+authenticating reverse proxy of your choice (nginx, Caddy, Traefik, HAProxy, or
+your IdP's application proxy). This is the standard pattern for self-hosted
+infrastructure: the operator owns the perimeter.
 
-```bash
-# Set the public hostname clients will use
-echo "MCP_GATEWAY_PUBLIC_HOST=mcp-gateway.company.com" >> .env.gateway
+The proxy in front of the gateway must:
 
-docker compose \
-  -f docker-compose.gateway.yml \
-  -f docker-compose.gateway-tls.yml \
-  --env-file .env.gateway up -d
-```
+- **Terminate TLS** — Bearer tokens travel in HTTP headers; never expose the
+  gateway over plaintext beyond localhost.
+- **Authenticate the caller** — via your IdP (OIDC/SAML) or the mechanism your
+  organisation already runs.
+- **Reach the gateway only over a private/loopback network** — publish the
+  proxy, not the gateway. As a fail-closed default the gateway refuses to start
+  on a non-loopback bind without auth unless `MCP_ALLOW_NO_AUTH=true` is set
+  explicitly.
+- **Strip any client-supplied identity headers** before injecting its own.
 
-- Caddy publishes `443` (and `80` for ACME); the gateway no longer exposes a host port.
-- TLS: `deploy/Caddyfile` uses Caddy's **internal CA** by default (works on a private
-  network out of the box). For a public hostname, remove the `tls internal` line to let
-  Caddy auto-provision a Let's Encrypt cert; for a corporate cert use `tls /cert.pem /key.pem`.
-- Clients then use `https://<host>/<domain>/mcp` with their `Authorization: Bearer` token.
-- **Rate limiting:** per-token limiting is enforced in the gateway itself
-  (`MCP_GATEWAY_RATE_LIMIT_*`); edge/IP flood limiting can be added in the Caddyfile via the
-  ratelimit plugin (custom Caddy build).
+Clients then connect to `https://<host>/<domain>/mcp` through the proxy with
+their `Authorization: Bearer` token.
+
+> Per-token rate limiting is enforced in the gateway itself
+> (`MCP_GATEWAY_RATE_LIMIT_*`); add edge/IP flood limiting at your proxy.
 
 ### Resource limits
 
-Both compose files set memory/CPU/pids limits (audit H2) to bound a runaway request
-rate. Tune via `.env.gateway`: `MCP_GATEWAY_MEM_LIMIT` (default `512m`),
-`MCP_GATEWAY_CPU_LIMIT` (`1.0`), and the Caddy equivalents `MCP_CADDY_MEM_LIMIT` /
-`MCP_CADDY_CPU_LIMIT`.
+The gateway compose file sets memory/CPU/pids limits (audit H2) to bound a runaway
+request rate. Tune via `.env.gateway`: `MCP_GATEWAY_MEM_LIMIT` (default `512m`) and
+`MCP_GATEWAY_CPU_LIMIT` (`1.0`).
 
 ### Reproducible base images
 

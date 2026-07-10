@@ -118,19 +118,6 @@ Restart your AI assistant. You can now ask it questions like:
 
 ---
 
-## Windows Deployment
-
-See [docs/WINDOWS-DEPLOYMENT.md](docs/WINDOWS-DEPLOYMENT.md) for the full guide:
-
-1. Install Node.js 20+ on your Windows machine
-2. Download the release archive from [GitHub Releases](https://github.com/baramundisoftware/bConnect-MCP/releases)
-3. Extract to `C:\bConnect-MCP\`
-4. For each server: `cd bconnect-<name>-mcp && npm ci --production`
-5. Create a `.env` file with your bMS credentials
-6. Start: `node build/index.js`
-
----
-
 ## Docker Deployment
 
 See [docs/DOCKER.md](docs/DOCKER.md) for the full guide. Quick start:

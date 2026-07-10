@@ -371,7 +371,6 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 
 - **README.md** — project overview and quick start
 - **docs/DOCKER.md** — Docker deployment
-- **docs/WINDOWS-DEPLOYMENT.md** — Windows deployment
 - **docs/INSTALLATION.md** — full installation and TLS setup
 - **baramundi Support**: https://www.baramundi.com/en/support/
 - **GitHub Issues**: open an issue in this repository
