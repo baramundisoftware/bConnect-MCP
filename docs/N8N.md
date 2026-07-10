@@ -55,7 +55,7 @@ carrying your proxy/IdP token).
 
 ## Step 2 — Add an MCP Server Credential
 
-The MCP Server credential bundles the URL and auth together so you can reuse
+The MCP Server credential bundles the URL (and any proxy auth) so you can reuse
 it across multiple workflow nodes.
 
 1. In n8n go to **Credentials → Add Credential → MCP Server**
@@ -64,9 +64,8 @@ it across multiple workflow nodes.
 | Field | Value |
 |-------|-------|
 | **Name** | e.g. `bConnect Endpoints` |
-| **URL** | `http://mcp-gateway.company.com:3001/endpoints/mcp` |
-| **Authentication** | Header Auth |
-| **Header Auth Credential** | Select the credential created in Step 1 |
+| **URL** | `http://mcp-gateway:3001/endpoints/mcp` (private network) |
+| **Authentication** | **None** on a trusted private network. If a proxy fronts the gateway, use **Header Auth** with whatever token/session the proxy requires. |
 
 3. Save
 
@@ -138,8 +137,8 @@ If the MCP Client node is not available in your n8n version, use an
 | Field | Value |
 |-------|-------|
 | **Method** | POST |
-| **URL** | `http://mcp-gateway.company.com:3001/endpoints/mcp` |
-| **Authentication** | Header Auth (select your credential) |
+| **URL** | `http://mcp-gateway:3001/endpoints/mcp` (private network) |
+| **Authentication** | None on a private network; Header Auth with your proxy's token if a proxy fronts the gateway |
 | **Content Type** | JSON |
 
 **Body** (JSON):
