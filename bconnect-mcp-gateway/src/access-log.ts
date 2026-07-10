@@ -5,13 +5,12 @@
  * request (including 401/429), so operators can audit who called what. Placed
  * first in the chain so it captures the final status set by later middleware.
  *
- * The raw Bearer token is never logged — callers are identified by a short
- * SHA-256 prefix of the token (stable across requests), or by IP when auth is
- * disabled. /health is logged at debug only, to avoid probe noise.
+ * The gateway has no built-in auth (ADR-0003); callers are identified by client
+ * IP. Real identity lives at the fronting reverse proxy. /health is logged at
+ * debug only, to avoid probe noise.
  */
 
 import type { Request, Response, NextFunction } from "express";
-import { hashToken } from "./auth.js";
 import type { Logger } from "./logger.js";
 
 export function createAccessLogMiddleware(logger: Logger): (req: Request, res: Response, next: NextFunction) => void {
@@ -20,8 +19,7 @@ export function createAccessLogMiddleware(logger: Logger): (req: Request, res: R
 
     res.on("finish", () => {
       const durationMs = Math.round(Number(process.hrtime.bigint() - start) / 1e5) / 10;
-      const token = res.locals["authToken"] as string | undefined;
-      const caller = token ? `tok:${hashToken(token).slice(0, 12)}` : (req.ip ?? "-");
+      const caller = req.ip ?? "-";
       const fields = {
         method: req.method,
         path: req.path,

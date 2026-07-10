@@ -8,9 +8,8 @@
  *
  *   BCONNECT_PASSWORD_FILE=/run/secrets/bms_password   →   BCONNECT_PASSWORD=<file contents>
  *
- * An explicit env var always wins over its `_FILE` counterpart.
- * (The token map is already file-mounted via MCP_AUTH_CONFIG — this covers the
- * single-credential fallback path.)
+ * An explicit env var always wins over its `_FILE` counterpart. This supplies
+ * the gateway's single BCONNECT_* service credential from mounted secrets.
  */
 
 import fs from "fs";

@@ -2,7 +2,9 @@
  * bconnect-mcp-gateway — Express app factory
  *
  * Exported for testing. The gateway entry point (gateway.ts) calls
- * createApp(loadTokenMap(...)).listen(...)
+ * createApp().listen(...). The gateway has no built-in auth (ADR-0003):
+ * authentication is the fronting proxy's job; downstream calls use a single
+ * BCONNECT_* service credential.
  */
 
 import express, { Request, Response } from "express";
@@ -22,7 +24,6 @@ import { createServer as createUniversaldynamicgroupsServer } from "bconnect-uni
 import { createServer as createUpdatemanagementServer } from "bconnect-updatemanagement-mcp";
 import { createServer as createVariablesServer } from "bconnect-variables-mcp";
 
-import { type BConnectCredentials, type TokenMap, createAuthMiddleware } from "./auth.js";
 import { createRateLimitMiddleware } from "./rate-limit.js";
 import { createLogger } from "./logger.js";
 import { createAccessLogMiddleware } from "./access-log.js";
@@ -49,15 +50,14 @@ export const domains = Object.keys(serverFactories);
 
 // ─── App factory ──────────────────────────────────────────────────────────────
 
-export function createApp(tokenMap: TokenMap): express.Application {
-  const authEnabled = Object.keys(tokenMap).length > 0;
+export function createApp(): express.Application {
   const app = express();
   // Access log first so it records every request's final status (incl. 401/429).
   app.use(createAccessLogMiddleware(createLogger()));
   // Cap request body size (default 1mb) to bound per-request memory (audit H2).
   app.use(express.json({ limit: process.env.MCP_GATEWAY_MAX_BODY ?? "1mb" }));
-  app.use(createAuthMiddleware(tokenMap));
-  // Per-token inbound rate limiting (runs after auth so the token is known).
+  // Per-client-IP inbound rate limiting. The gateway has no built-in auth
+  // (ADR-0003); identity/authN is the fronting proxy's job.
   app.use(createRateLimitMiddleware());
 
   // MCP Streamable HTTP handler — stateless, one server+transport per request
@@ -71,8 +71,9 @@ export function createApp(tokenMap: TokenMap): express.Application {
       return;
     }
 
-    const credentials = res.locals["bconnectCredentials"] as BConnectCredentials | undefined;
-    const { server } = factory(credentials) as {
+    // No per-request credential: each server falls back to the BCONNECT_*
+    // service credential (single-credential mode). bMS RBAC governs it.
+    const { server } = factory(undefined) as {
       server: { connect: (t: unknown) => Promise<void>; close: () => Promise<void> };
     };
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
@@ -95,9 +96,9 @@ export function createApp(tokenMap: TokenMap): express.Application {
     res.status(405).json({ error: "Method Not Allowed. Session management not supported in stateless mode." });
   });
 
-  // Health endpoint — always unauthenticated
+  // Health endpoint
   app.get("/health", (_req: Request, res: Response) => {
-    res.json({ status: "ok", servers: domains, count: domains.length, authEnabled });
+    res.json({ status: "ok", servers: domains, count: domains.length });
   });
 
   return app;

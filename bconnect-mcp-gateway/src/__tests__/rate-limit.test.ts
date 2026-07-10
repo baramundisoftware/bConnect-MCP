@@ -1,5 +1,5 @@
 /**
- * bconnect-mcp-gateway — per-token rate limiting (security audit H2).
+ * bconnect-mcp-gateway — per-IP rate limiting (security audit H2).
  */
 
 import { describe, it, expect, vi, afterEach } from "vitest";
@@ -7,13 +7,13 @@ import type { Request, Response } from "express";
 
 import { createRateLimitMiddleware } from "../rate-limit.js";
 
-function makeReq(path: string): Request {
-  return { path, ip: "127.0.0.1", headers: {} } as unknown as Request;
+function makeReq(path: string, ip = "127.0.0.1"): Request {
+  return { path, ip, headers: {} } as unknown as Request;
 }
 
-function makeRes(authToken?: string) {
+function makeRes() {
   const stub = {
-    locals: (authToken ? { authToken } : {}) as Record<string, unknown>,
+    locals: {} as Record<string, unknown>,
     _status: 0,
     _body: null as unknown,
     _headers: {} as Record<string, string>,
@@ -35,25 +35,25 @@ describe("createRateLimitMiddleware", () => {
     process.env.MCP_GATEWAY_RATE_LIMIT_MAX = "5";
     const mw = createRateLimitMiddleware();
     const next = vi.fn();
-    mw(makeReq("/endpoints/mcp"), makeRes("tok-a"), next);
+    mw(makeReq("/endpoints/mcp"), makeRes(), next);
     expect(next).toHaveBeenCalledOnce();
   });
 
   it("always exempts /health", () => {
     process.env.MCP_GATEWAY_RATE_LIMIT_MAX = "1";
     const mw = createRateLimitMiddleware();
-    mw(makeReq("/endpoints/mcp"), makeRes("tok-h"), vi.fn()); // consume the 1
+    mw(makeReq("/endpoints/mcp"), makeRes(), vi.fn()); // consume the 1
     const next = vi.fn();
     mw(makeReq("/health"), makeRes(), next);
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it("returns 429 with Retry-After once a token exceeds its limit", () => {
+  it("returns 429 with Retry-After once a caller exceeds its limit", () => {
     process.env.MCP_GATEWAY_RATE_LIMIT_MAX = "2";
     const mw = createRateLimitMiddleware();
-    mw(makeReq("/endpoints/mcp"), makeRes("tok-x"), vi.fn());
-    mw(makeReq("/endpoints/mcp"), makeRes("tok-x"), vi.fn());
-    const res3 = makeRes("tok-x");
+    mw(makeReq("/endpoints/mcp"), makeRes(), vi.fn());
+    mw(makeReq("/endpoints/mcp"), makeRes(), vi.fn());
+    const res3 = makeRes();
     const next3 = vi.fn();
     mw(makeReq("/endpoints/mcp"), res3, next3);
     expect(next3).not.toHaveBeenCalled();
@@ -61,25 +61,25 @@ describe("createRateLimitMiddleware", () => {
     expect(res3._headers["Retry-After"]).toBeDefined();
   });
 
-  it("isolates limits per token (token A exhausted does not block token B)", () => {
+  it("isolates limits per client IP (IP A exhausted does not block IP B)", () => {
     process.env.MCP_GATEWAY_RATE_LIMIT_MAX = "1";
     const mw = createRateLimitMiddleware();
-    mw(makeReq("/endpoints/mcp"), makeRes("A"), vi.fn()); // A consumes its 1
-    const resA2 = makeRes("A");
-    mw(makeReq("/endpoints/mcp"), resA2, vi.fn());
+    mw(makeReq("/endpoints/mcp", "10.0.0.1"), makeRes(), vi.fn()); // A consumes its 1
+    const resA2 = makeRes();
+    mw(makeReq("/endpoints/mcp", "10.0.0.1"), resA2, vi.fn());
     expect(resA2._status).toBe(429); // A is now blocked
     const nextB = vi.fn();
-    mw(makeReq("/endpoints/mcp"), makeRes("B"), nextB);
-    expect(nextB).toHaveBeenCalledOnce(); // B is unaffected
+    mw(makeReq("/endpoints/mcp", "10.0.0.2"), makeRes(), nextB);
+    expect(nextB).toHaveBeenCalledOnce(); // B (different IP) is unaffected
   });
 
   it("is a no-op when MCP_GATEWAY_RATE_LIMIT_ENABLED=false", () => {
     process.env.MCP_GATEWAY_RATE_LIMIT_ENABLED = "false";
     process.env.MCP_GATEWAY_RATE_LIMIT_MAX = "1";
     const mw = createRateLimitMiddleware();
-    mw(makeReq("/endpoints/mcp"), makeRes("z"), vi.fn());
+    mw(makeReq("/endpoints/mcp"), makeRes(), vi.fn());
     const next = vi.fn();
-    mw(makeReq("/endpoints/mcp"), makeRes("z"), next);
+    mw(makeReq("/endpoints/mcp"), makeRes(), next);
     expect(next).toHaveBeenCalledOnce(); // not blocked despite max=1
   });
 });

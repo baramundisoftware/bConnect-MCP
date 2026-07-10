@@ -1,19 +1,20 @@
 /**
  * bconnect-mcp-gateway — per-token rate limiting (security audit H2).
  *
- * Limits INBOUND requests to the gateway, keyed per Bearer token (or per client
- * IP when auth is disabled), so one noisy caller / runaway workflow cannot
- * exhaust the gateway or hammer the downstream bMS. Reuses the token-bucket
- * RateLimiter from @bconnect/mcp-core — no extra dependency.
+ * Limits INBOUND requests to the gateway, keyed per client IP, so one noisy
+ * caller / runaway workflow cannot exhaust the gateway or hammer the downstream
+ * bMS. Reuses the token-bucket RateLimiter from @bconnect/mcp-core — no extra
+ * dependency.
  *
  * Config (env):
  *   MCP_GATEWAY_RATE_LIMIT_ENABLED   default "true" (set "false" to disable)
  *   MCP_GATEWAY_RATE_LIMIT_MAX       default 300   (requests per window, per key)
  *   MCP_GATEWAY_RATE_LIMIT_WINDOW_MS default 60000 (window size, ms)
  *
- * Edge/flood protection and per-IP limits belong at the TLS reverse proxy
- * (see ADR-0001); this in-app layer is the per-token fairness/abuse control
- * the proxy cannot do (it does not see token identity).
+ * This is a coarse in-app DoS backstop. The gateway has no built-in auth
+ * (ADR-0003), so richer edge/flood/per-identity limiting belongs at the
+ * fronting reverse proxy. Behind a proxy, set Express `trust proxy` if you need
+ * the real client IP rather than the proxy's.
  */
 
 import type { Request, Response, NextFunction } from "express";
@@ -26,8 +27,7 @@ export function createRateLimitMiddleware(): (req: Request, res: Response, next:
   const maxRequests = Number.isNaN(maxRaw) ? 300 : maxRaw;
   const windowMs = Number.isNaN(windowRaw) ? 60000 : windowRaw;
 
-  // One token bucket per caller key. Token maps are finite, so this map is
-  // bounded for the authenticated case.
+  // One token bucket per client IP.
   const limiters = new Map<string, RateLimiter>();
 
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -36,7 +36,7 @@ export function createRateLimitMiddleware(): (req: Request, res: Response, next:
       return;
     }
 
-    const key = (res.locals["authToken"] as string | undefined) ?? req.ip ?? "global";
+    const key = req.ip ?? "global";
     let limiter = limiters.get(key);
     if (!limiter) {
       limiter = new RateLimiter({ maxRequests, windowMs, enabled: true });

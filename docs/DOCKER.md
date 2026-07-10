@@ -7,7 +7,7 @@ Two Docker Compose files serve different use cases:
 | File | Use case | Transport |
 |------|----------|-----------|
 | `docker-compose.yml` | Single developer, Claude Desktop / Claude Code | stdio via `docker exec` |
-| `docker-compose.gateway.yml` | Teams, n8n, multi-user HTTP access | HTTP, Bearer token auth |
+| `docker-compose.gateway.yml` | Teams, n8n, multi-user HTTP access | HTTP (auth via a fronting reverse proxy) |
 
 ---
 
@@ -31,13 +31,13 @@ docker compose logs -f bconnect-activedirectory-mcp
 
 ```bash
 cp .env.gateway.example .env.gateway
-# Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
+# Edit .env.gateway — set BCONNECT_BASE_URL and the BCONNECT_* service credential
 
 docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 
 # Verify
 curl http://localhost:3001/health
-# → {"status":"ok","count":13,"authEnabled":true}
+# → {"status":"ok","count":13}
 ```
 
 ---
@@ -117,17 +117,18 @@ Or with `docker compose` (pre-started containers via `docker exec`):
 
 ---
 
-## Gateway Container (Multi-user, Authenticated)
+## Gateway Container (Multi-user)
 
-`bconnect-mcp-gateway` runs all 13 servers on a single HTTP port and maps Bearer
-tokens to bConnect credentials. This is the recommended approach for shared
-deployments where different users or teams have different bConnect API keys.
+`bconnect-mcp-gateway` runs all 13 servers on a single HTTP port. It has **no
+built-in authentication** — see "TLS and authentication" below; you **must** front it
+with an authenticating reverse proxy. Downstream bMS calls use a single `BCONNECT_*`
+service credential (bMS RBAC governs it — scope it to least privilege).
 
 **With Docker Compose (recommended):**
 
 ```bash
 cp .env.gateway.example .env.gateway
-# Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
+# Edit .env.gateway — set BCONNECT_BASE_URL and the BCONNECT_* service credential
 
 docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 ```
@@ -138,69 +139,30 @@ docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 # Build (context must be the repo root — gateway imports all 13 servers)
 docker build -f bconnect-mcp-gateway/Dockerfile -t bconnect-mcp-gateway:26.1.5 .
 
-# Run with a mounted token map
+# Bind loopback and front it with your proxy. Publishing a non-loopback port
+# requires MCP_ALLOW_NO_AUTH=true (your assertion that a proxy handles auth).
 docker run -d \
-  -p 3001:3001 \
-  -v /etc/mcp/tokens.json:/run/secrets/tokens.json:ro \
-  -e MCP_AUTH_CONFIG=/run/secrets/tokens.json \
-  -e MCP_GATEWAY_PORT=3001 \
-  -e MCP_GATEWAY_BIND=0.0.0.0 \
+  -p 127.0.0.1:3001:3001 \
+  -e BCONNECT_BASE_URL=https://bms.company.com/bconnect \
+  -e BCONNECT_API_KEY=your-service-key \
   bconnect-mcp-gateway:26.1.5
 ```
 
-Token map format (`/etc/mcp/tokens.json`):
+The service credential can be supplied from mounted secrets via the `*_FILE`
+convention (audit M2), e.g. `-e BCONNECT_API_KEY_FILE=/run/secrets/bms_api_key`.
 
-```json
-{
-  "tok_alice_<random>": {
-    "apiKey": "bconnect-api-key-team-a"
-  },
-  "tok_bob_<random>": {
-    "username": "svc-readonly",
-    "password": "secret"
-  }
-}
-```
-
-> `BCONNECT_BASE_URL` is set once in `.env.gateway` and shared by all tokens. Only add
-> `"baseUrl"` to a token entry if that user needs to reach a different bMS server.
-
-**Hash tokens at rest (recommended — audit M1).** Instead of plaintext token keys,
-use the **SHA-256 hex** of each token as the key, so a leaked `tokens.json` can't be
-replayed. The gateway auto-detects a hashed map and hashes the presented token before
-lookup. Generate a key with the bundled helper:
-
-```bash
-node bconnect-mcp-gateway/build/hash-token.js tok_alice_<random>
-# → 9f86d081…   (use this as the key)
-```
-
-```json
-{
-  "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08": {
-    "apiKey": "bconnect-api-key-team-a"
-  }
-}
-```
-
-A map is treated as hashed only when **every** key is a 64-char SHA-256 hex; otherwise
-it stays in (legacy) plaintext mode and the gateway logs a recommendation to migrate.
-
-Each client supplies its token in the `Authorization` header:
+Clients connect **through your authenticating proxy** (which supplies whatever
+credential/session the proxy requires):
 
 ```json
 {
   "mcpServers": {
     "bconnect-endpoints": {
-      "url": "http://mcp-gateway.company.com:3001/endpoints/mcp",
-      "headers": { "Authorization": "Bearer tok_alice_<random>" }
+      "url": "https://mcp-gateway.company.com/endpoints/mcp"
     }
   }
 }
 ```
-
-When `MCP_AUTH_CONFIG` is not set the gateway falls back to the `BCONNECT_*`
-environment variables (single-credential mode, no auth required).
 
 ### TLS and authentication (operator responsibility)
 
@@ -212,8 +174,8 @@ infrastructure: the operator owns the perimeter.
 
 The proxy in front of the gateway must:
 
-- **Terminate TLS** — Bearer tokens travel in HTTP headers; never expose the
-  gateway over plaintext beyond localhost.
+- **Terminate TLS** — credentials and data travel in HTTP headers; never expose
+  the gateway over plaintext beyond localhost.
 - **Authenticate the caller** — via your IdP (OIDC/SAML) or the mechanism your
   organisation already runs.
 - **Reach the gateway only over a private/loopback network** — publish the
@@ -222,11 +184,11 @@ The proxy in front of the gateway must:
   explicitly.
 - **Strip any client-supplied identity headers** before injecting its own.
 
-Clients then connect to `https://<host>/<domain>/mcp` through the proxy with
-their `Authorization: Bearer` token.
+Clients then connect to `https://<host>/<domain>/mcp` through the proxy, which
+supplies whatever credential/session it requires.
 
-> Per-token rate limiting is enforced in the gateway itself
-> (`MCP_GATEWAY_RATE_LIMIT_*`); add edge/IP flood limiting at your proxy.
+> Per-IP rate limiting is enforced in the gateway itself as a coarse backstop
+> (`MCP_GATEWAY_RATE_LIMIT_*`); add richer edge/flood/per-identity limiting at your proxy.
 
 ### Resource limits
 
@@ -253,7 +215,7 @@ the digest like any other dependency.
 | `BCONNECT_AUDIT_LEVEL` | `none`, `security`, `write`, `all` | `none` |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | Set to `0` for self-signed certs | `1` |
 | `BCONNECT_CA_CERT_PATH` | Path to CA certificate inside container | — |
-| `MCP_AUTH_CONFIG` | Path to token map JSON (gateway only) | — |
+| `MCP_ALLOW_NO_AUTH` | Allow a non-loopback gateway bind (asserts a proxy is in front) | `false` |
 | `MCP_GATEWAY_PORT` | Gateway listen port | `3001` |
 | `MCP_GATEWAY_BIND` | Gateway bind address | `127.0.0.1` |
 | `LOG_LEVEL` | Gateway log level: `error`, `warn`, `info`, `debug` | `info` |
@@ -315,5 +277,5 @@ docker run --rm -i \
   ```
 
   Supported: `BCONNECT_USERNAME_FILE`, `BCONNECT_PASSWORD_FILE`, `BCONNECT_API_KEY_FILE`.
-  (The multi-user token map is already file-mounted via `MCP_AUTH_CONFIG`.)
+  This is how the gateway's single service credential is supplied from mounted secrets.
 - The `bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` servers exit gracefully when `BCONNECT_RELEASE=25R2`
