@@ -57,8 +57,9 @@ message if `25R2` is set.
 
 ## Tool Count Accountability
 
-No tool from the original monolith (`src/modules/`) may be dropped or duplicated. See
-`adr/ADR-001-server-split.md` for the full tool-to-server mapping table.
+No tool from the original monolith (`src/modules/`) may be dropped or duplicated. Each
+OpenAPI spec file maps to exactly one `bconnect-<domain>-mcp` server (the file-based split);
+the server table in the root `README.md` lists every server and its tool count.
 
 ## Type Safety
 
