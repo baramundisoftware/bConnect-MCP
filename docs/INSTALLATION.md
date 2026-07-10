@@ -30,19 +30,11 @@ cd bconnect-assets-mcp    && npm ci && npm run build && cd ..
 # 3. Configure credentials (see Configuration section below)
 ```
 
-### Option B — Windows (Pre-built .exe)
-
-Download the `.exe` files from the `releases/windows-binaries/` directory or the GitHub Release page.
-
-Each server is a standalone executable — no Node.js installation required.
-
-See [WINDOWS-DEPLOYMENT.md](WINDOWS-DEPLOYMENT.md) for the full Windows guide.
-
-### Option C — Docker
+### Option B — Docker
 
 See [DOCKER.md](DOCKER.md) for Docker Compose and individual container setup.
 
-### Option D — Gateway (HTTP, multi-user, authenticated)
+### Option C — Gateway (HTTP, multi-user, authenticated)
 
 `bconnect-mcp-gateway` serves all 13 bConnect MCP servers on a single HTTP port
 with per-user authentication. Use this when multiple users or teams need access,
@@ -438,7 +430,6 @@ curl -k -u "username:password" \
 
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) if you encounter issues
 - See [DOCKER.md](DOCKER.md) for containerised deployment
-- See [WINDOWS-DEPLOYMENT.md](WINDOWS-DEPLOYMENT.md) for Windows-specific setup
 - See [N8N.md](N8N.md) for using the gateway from n8n workflows
 
 ---
