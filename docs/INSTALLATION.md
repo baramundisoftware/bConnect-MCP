@@ -139,11 +139,17 @@ BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min
 > intended, authorized use.
 
 > **What write tools can (and can't) do.** With `ALLOW_WRITE_OPERATIONS=true`, the
-> assistant can **start / assign / manage things that already exist in your bMS** —
-> e.g. run an existing job definition, assign a job to a group, edit an object. It
-> **cannot author new bMS content from scratch** (it does not define new jobs,
-> packages, or installation logic). The write path is bounded by what already exists
-> in the target bMS, and every call is further governed by that credential's bMS RBAC.
+> assistant can **create, modify, start, assign and delete many bMS objects** — e.g.
+> create an endpoint, asset, logical group or folder; create and start a job instance;
+> assign a job to a group; build a software bundle from existing applications; create a
+> security group/profile. What it **cannot** do is author the underlying content that
+> bConnect itself does not expose: notably **job definitions** — the step and
+> installation logic of a job is read-only over bConnect, so the assistant can create
+> *instances* of an existing definition and assign them but cannot define a new job's
+> steps; likewise it bundles **already-imported** applications rather than authoring the
+> installer packages themselves. Every call is further governed by that credential's
+> bMS RBAC, so the effective write surface is whatever bConnect exposes ∩ what your
+> service account is permitted to do.
 
 > **Two layers of rate limiting.** The `BCONNECT_RATE_LIMIT_*` vars above throttle
 > a server's **outbound** calls to bMS (per process). They do **not** limit
