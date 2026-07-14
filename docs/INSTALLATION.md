@@ -138,6 +138,13 @@ BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min
 > it to `true` only on a server/deployment where retrieving those secrets is an
 > intended, authorized use.
 
+> **What write tools can (and can't) do.** With `ALLOW_WRITE_OPERATIONS=true`, the
+> assistant can **start / assign / manage things that already exist in your bMS** —
+> e.g. run an existing job definition, assign a job to a group, edit an object. It
+> **cannot author new bMS content from scratch** (it does not define new jobs,
+> packages, or installation logic). The write path is bounded by what already exists
+> in the target bMS, and every call is further governed by that credential's bMS RBAC.
+
 > **Two layers of rate limiting.** The `BCONNECT_RATE_LIMIT_*` vars above throttle
 > a server's **outbound** calls to bMS (per process). They do **not** limit
 > **inbound** requests to the HTTP gateway — that is configured separately on the
@@ -287,6 +294,15 @@ claude mcp add bconnect-endpoints \
 ```
 
 ### Claude Desktop (`claude_desktop_config.json`)
+
+**Where is `claude_desktop_config.json`?**
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows (standard installer):** `%APPDATA%\Claude\claude_desktop_config.json`
+- **Windows (Microsoft Store / MSIX install):** the file lives inside the packaged
+  app's sandbox, e.g.
+  `C:\Users\<user>\AppData\Local\Packages\Claude_<id>\LocalCache\Roaming\Claude\claude_desktop_config.json`
+  — edit that copy, not one under `%APPDATA%`, or Claude Desktop won't see your changes.
 
 ```json
 {
