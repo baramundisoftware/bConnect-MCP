@@ -85,7 +85,7 @@ This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MC
 
 | MCP server version | Supported bMS release | bConnect API | Notes |
 |--------------------|-----------------------|--------------|-------|
-| `26.1.0` | baramundi Management Suite 2026R1 | V2.0 | **26R1 only** — UDGs do not exist in 25R2 |
+| `26.1.7` | baramundi Management Suite 2026R1 | V2.0 | **26R1 only** — UDGs do not exist in 25R2 |
 | `1.0.0` (legacy) | ≤25R2 (unspecified) | V2.0 | Pre-versioning-scheme release (no UDG tools) |
 
 > This server requires `BCONNECT_RELEASE=26R1`. It exposes 0 tools when targeting 25R2.

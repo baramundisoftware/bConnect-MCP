@@ -4,7 +4,7 @@
 
 Connect your AI assistant to the **baramundi Management Suite** (bMS). This project provides MCP servers that let AI tools like Claude Desktop, Claude Code, Github Copilot or others read and manage your bMS — endpoints, jobs, software, compliance, and more — through the bConnect REST API.
 
-**212 tools** across **12 servers**, compatible with **baramundi 25R2 and 26R1**.
+**276 tools** across **13 servers**, compatible with **baramundi 25R2 and 26R1**.
 
 ---
 
@@ -138,10 +138,11 @@ docker run -d \
 
 | Server | Tools | 25R2 | 26R1 | What It Does |
 |--------|-------|------|------|--------------|
-| `bconnect-endpoints-mcp` | 47 | Yes | Yes | Windows/Linux/Mac/Android/iOS endpoints, logical groups, maintenance windows |
+| `bconnect-endpoints-mcp` | 66 | Yes | Yes | Windows/Linux/Mac/Android/iOS endpoints, logical groups, maintenance windows |
+| `bconnect-groups-mcp` | 33 | Yes | Yes | Endpoints by logical/static/dynamic/AD group |
+| `bconnect-jobs-mcp` | 34 | Yes | Yes | Job definitions, instances, folders, kiosk releases |
 | `bconnect-servermanagement-mcp` | 30 | Yes | Yes | Management server, microservices, security groups, API keys |
 | `bconnect-assets-mcp` | 26 | Yes | Yes | Asset inventory, asset types, stock folders |
-| `bconnect-jobs-mcp` | 24 | Yes | Yes | Job definitions, instances, folders, kiosk releases |
 | `bconnect-software-mcp` | 19 | Yes | Yes | Installed software inventory, software bundles |
 | `bconnect-activedirectory-mcp` | 16 | Yes | Yes | AD groups, users, objects, organizational units |
 | `bconnect-variables-mcp` | 13 | Yes | Yes | Variable definitions and instances |
@@ -150,7 +151,7 @@ docker run -d \
 | `bconnect-compliance-mcp` | 8 | No | Yes | Compliance violations, CVE vulnerabilities (26R1 only) |
 | `bconnect-universaldynamicgroups-mcp` | 6 | No | Yes | Universal Dynamic Group definitions (26R1 only) |
 | `bconnect-updatemanagement-mcp` | 3 | Yes | Yes | Windows Update management |
-| **Total** | **212** | | | |
+| **Total** | **276** | | | |
 
 Install only the servers you need. Most users start with `bconnect-endpoints-mcp`.
 

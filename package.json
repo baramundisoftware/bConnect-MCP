@@ -1,6 +1,6 @@
 {
   "name": "bconnect-mcp-server",
-  "version": "26.1.5",
+  "version": "26.1.7",
   "description": "Meta package for the bConnect-MCP suite (13 servers + template). Real code lives in bconnect-*-mcp/ subdirectories.",
   "private": true,
   "type": "module",

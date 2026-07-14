@@ -1,6 +1,6 @@
 {
   "name": "bconnect-defensecontrol-mcp",
-  "version": "26.1.5",
+  "version": "26.1.7",
   "description": "MCP server for baramundi bConnect Defense Control (BitLocker, Local Admin, Microsoft Defender threats and states)",
   "type": "module",
   "main": "build/index.js",

@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Group-scoped endpoint queries — list endpoints by logical, static, dynamic, and universal dynamic groups  
-**Tools:** 27
+**Tools:** 33
 
 ---
 
@@ -43,7 +43,7 @@ node build/index.js
 
 ## Available Tools
 
-All 27 tools are read-only GET operations.
+All 33 tools are read-only GET operations.
 
 | Tool | Description |
 |------|-------------|
@@ -100,9 +100,9 @@ This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MC
 
 | MCP server version | Supported bMS release | bConnect API | Notes |
 |--------------------|-----------------------|--------------|-------|
-| `26.1.0` | baramundi Management Suite 2026R1 | V2.0 | Current — full tool set |
+| `26.1.7` | baramundi Management Suite 2026R1 | V2.0 | Current — full tool set |
 | `25.2.0` *(planned)* | baramundi Management Suite 2025R2 | V2.0 | Subset of tools (25R2 spec) |
 | `1.0.0` (legacy) | ≤25R2 (unspecified) | V2.0 | Pre-versioning-scheme release |
 
 > Version scheme: `<bMS-year-2digit>.<bMS-release-number>.<mcp-patch>`
-> Example: `26.1.0` targets bMS 2026R1; patch-only fixes increment the last digit.
+> Example: `26.1.7` targets bMS 2026R1; patch-only fixes increment the last digit.

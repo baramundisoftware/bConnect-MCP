@@ -1,6 +1,6 @@
 {
   "name": "bconnect-activedirectory-mcp",
-  "version": "26.1.5",
+  "version": "26.1.7",
   "description": "MCP server for baramundi bConnect Active Directory management (AD groups, users, objects, org units)",
   "type": "module",
   "main": "build/index.js",
