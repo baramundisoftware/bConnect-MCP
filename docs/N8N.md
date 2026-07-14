@@ -79,7 +79,7 @@ Repeat for each domain you need — one MCP Server credential per domain URL.
 2. Add a **Tool: MCP** sub-node connected to the AI Agent
 3. In the MCP tool node, set **Credential** to your `bConnect Endpoints` credential
 
-The AI Agent now has access to exactly the 47 endpoints tools (~29,000 tokens) —
+The AI Agent now has access to exactly the 66 endpoints tools (~41,000 tokens) —
 nothing from the other 12 domains is loaded.
 
 ```
@@ -87,7 +87,7 @@ Workflow:
   [Trigger] → [AI Agent] → (answer)
                   │
                   └── [Tool: MCP]  credential: bConnect Endpoints
-                                   → /endpoints/mcp (47 tools)
+                                   → /endpoints/mcp (66 tools)
 ```
 
 **Adding a second domain** — add another MCP tool sub-node with its own credential:
@@ -95,9 +95,9 @@ Workflow:
 ```
   [AI Agent]
       │
-      ├── [Tool: MCP]  credential: bConnect Endpoints  → /endpoints/mcp  (47 tools)
+      ├── [Tool: MCP]  credential: bConnect Endpoints  → /endpoints/mcp  (66 tools)
       └── [Tool: MCP]  credential: bConnect Software   → /software/mcp   (19 tools)
-                                                                     total: ~41,000 tokens
+                                                                     total: ~53,000 tokens
 ```
 
 ---
@@ -199,19 +199,19 @@ input schema — into the LLM system prompt **on every single invocation**. Tool
 are not loaded lazily.
 
 Each tool definition costs roughly 600–700 tokens. The bConnect MCP suite has
-212 tools across 13 domains.
+276 tools across 13 domains.
 
 ### Token cost per configuration
 
 | Domains connected | Tools | Approx. tokens consumed |
 |-------------------|-------|------------------------|
-| `endpoints` only | 47 | ~29,000 |
-| `endpoints` + `software` | 66 | ~41,000 |
-| `endpoints` + `jobs` + `assets` | 97 | ~60,000 |
-| `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 130 | ~81,000 |
-| All 13 domains | 212 | ~130,000+ |
+| `endpoints` only | 66 | ~41,000 |
+| `endpoints` + `software` | 85 | ~53,000 |
+| `endpoints` + `jobs` + `assets` | 126 | ~78,000 |
+| `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 161 | ~100,000 |
+| All 13 domains | 276 | ~170,000+ |
 
-At 130,000 tokens for tool definitions alone, you have consumed the entire context
+At 170,000 tokens for tool definitions alone, you have consumed the entire context
 window of many models — before any conversation, user data, or system instructions.
 
 ### Rule: connect only what the workflow needs
@@ -260,4 +260,4 @@ effective reasoning budget for actual work.
 
 ---
 
-*bConnect MCP Suite v26.1.5 — see [INSTALLATION.md](INSTALLATION.md) for full setup instructions.*
+*bConnect MCP Suite v26.1.7 — see [INSTALLATION.md](INSTALLATION.md) for full setup instructions.*

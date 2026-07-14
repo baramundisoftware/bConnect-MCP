@@ -1,4 +1,4 @@
-# Docker Deployment Guide — bConnect MCP Suite 26.1.5
+# Docker Deployment Guide — bConnect MCP Suite 26.1.7
 
 This guide covers running bConnect MCP servers as Docker containers.
 
@@ -48,7 +48,7 @@ Each server has its own `Dockerfile` based on `node:20-alpine` with a non-root u
 
 ```bash
 # Build a single server
-docker build -t bconnect-activedirectory-mcp:26.1.5 ./bconnect-activedirectory-mcp
+docker build -t bconnect-activedirectory-mcp:26.1.7 ./bconnect-activedirectory-mcp
 
 # Build all via docker compose
 docker compose build
@@ -95,7 +95,7 @@ MCP servers communicate via stdio, not HTTP. Use `docker run --rm -i` to pipe st
         "--env", "BCONNECT_BASE_URL=https://bms.company.com/bconnect",
         "--env", "BCONNECT_USERNAME=mcp-user",
         "--env", "BCONNECT_PASSWORD=your-password",
-        "bconnect-activedirectory-mcp:26.1.5"
+        "bconnect-activedirectory-mcp:26.1.7"
       ]
     }
   }
@@ -137,7 +137,7 @@ docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 
 ```bash
 # Build (context must be the repo root — gateway imports all 13 servers)
-docker build -f bconnect-mcp-gateway/Dockerfile -t bconnect-mcp-gateway:26.1.5 .
+docker build -f bconnect-mcp-gateway/Dockerfile -t bconnect-mcp-gateway:26.1.7 .
 
 # Bind loopback and front it with your proxy. Publishing a non-loopback port
 # requires MCP_ALLOW_NO_AUTH=true (your assertion that a proxy handles auth).
@@ -145,7 +145,7 @@ docker run -d \
   -p 127.0.0.1:3001:3001 \
   -e BCONNECT_BASE_URL=https://bms.company.com/bconnect \
   -e BCONNECT_API_KEY=your-service-key \
-  bconnect-mcp-gateway:26.1.5
+  bconnect-mcp-gateway:26.1.7
 ```
 
 The service credential can be supplied from mounted secrets via the `*_FILE`
@@ -239,7 +239,7 @@ docker run --rm -i \
   --env BCONNECT_BASE_URL=https://bms.company.com/bconnect \
   --env BCONNECT_USERNAME=mcp-user \
   --env BCONNECT_PASSWORD=your-password \
-  bconnect-activedirectory-mcp:26.1.5
+  bconnect-activedirectory-mcp:26.1.7
 ```
 
 ---

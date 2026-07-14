@@ -28,7 +28,7 @@ services:
     build:
       context: .
       dockerfile: bconnect-mcp-gateway/Dockerfile
-    image: bconnect-mcp-gateway:26.1.5
+    image: bconnect-mcp-gateway:26.1.7
     container_name: mcp-gateway
     ports:
       # Loopback-only by default — reachable from the host / a co-located proxy,
