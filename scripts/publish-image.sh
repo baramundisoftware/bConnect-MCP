@@ -6,9 +6,8 @@
 # Per ADR-003 only the gateway is distributed as a container (the 13 domain
 # servers run over stdio). Builds linux/amd64 + linux/arm64 (one native, the
 # other via QEMU emulation) into a single manifest list and pushes it to the
-# GitHub Container Registry. Mirrors the tag scheme of
-# .github/workflows/docker-publish.yml (X.Y.Z, X.Y, latest), deriving the
-# version from the root package.json.
+# GitHub Container Registry. Tags X.Y.Z, X.Y and latest, deriving the version
+# from the root package.json.
 #
 # Usage:
 #   scripts/publish-image.sh [options]
