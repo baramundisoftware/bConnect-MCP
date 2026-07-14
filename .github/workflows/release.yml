@@ -46,6 +46,14 @@ jobs:
           # @bconnect/mcp-core package that every server imports.
           cp package.json package-lock.json README.md LICENSE CHANGELOG.md .env.example release-package/
 
+          # Documentation — TRACKED files only. `git ls-files` never lists gitignored
+          # internal docs (Bugs_*, NEXT-STEPS, SECURITY-AUDIT-*, docs/adr/), so they
+          # are automatically excluded from the release.
+          git ls-files docs/ SUPPORT.md SECURITY.md CONTRIBUTING.md CODE_OF_CONDUCT.md | while read -r f; do
+            mkdir -p "release-package/$(dirname "$f")"
+            cp "$f" "release-package/$f"
+          done
+
           # Shared core (built) + the server-template manifest. Both are workspace
           # members, so their package.json must be present for `npm ci` to validate
           # the lockfile.
