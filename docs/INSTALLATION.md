@@ -138,6 +138,19 @@ BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min
 > it to `true` only on a server/deployment where retrieving those secrets is an
 > intended, authorized use.
 
+> **What write tools can (and can't) do.** With `ALLOW_WRITE_OPERATIONS=true`, the
+> assistant can **create, modify, start, assign and delete many bMS objects** — e.g.
+> create an endpoint, asset, logical group or folder; create and start a job instance;
+> assign a job to a group; build a software bundle from existing applications; create a
+> security group/profile. What it **cannot** do is author the underlying content that
+> bConnect itself does not expose: notably **job definitions** — the step and
+> installation logic of a job is read-only over bConnect, so the assistant can create
+> *instances* of an existing definition and assign them but cannot define a new job's
+> steps; likewise it bundles **already-imported** applications rather than authoring the
+> installer packages themselves. Every call is further governed by that credential's
+> bMS RBAC, so the effective write surface is whatever bConnect exposes ∩ what your
+> service account is permitted to do.
+
 > **Two layers of rate limiting.** The `BCONNECT_RATE_LIMIT_*` vars above throttle
 > a server's **outbound** calls to bMS (per process). They do **not** limit
 > **inbound** requests to the HTTP gateway — that is configured separately on the
@@ -287,6 +300,15 @@ claude mcp add bconnect-endpoints \
 ```
 
 ### Claude Desktop (`claude_desktop_config.json`)
+
+**Where is `claude_desktop_config.json`?**
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows (standard installer):** `%APPDATA%\Claude\claude_desktop_config.json`
+- **Windows (Microsoft Store / MSIX install):** the file lives inside the packaged
+  app's sandbox, e.g.
+  `C:\Users\<user>\AppData\Local\Packages\Claude_<id>\LocalCache\Roaming\Claude\claude_desktop_config.json`
+  — edit that copy, not one under `%APPDATA%`, or Claude Desktop won't see your changes.
 
 ```json
 {
