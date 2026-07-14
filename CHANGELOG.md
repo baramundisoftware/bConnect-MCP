@@ -5,6 +5,25 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- **TLS: honor the OS/client CA trust store (issue #59).** Node validates TLS against
+  its bundled CA list only and never reads the OS certificate store, so an internally
+  signed bMS certificate that Windows already trusts still failed until the admin
+  manually exported it and set `BCONNECT_CA_CERT_PATH`. On **Node.js ≥ 22.15** the
+  shared client now merges the OS trust store (`tls.getCACertificates("system")`) with
+  Node's bundle, so an already-trusted CA works with **zero export**. `BCONNECT_CA_CERT_PATH`
+  remains an explicit override; behavior is unchanged on older Node (feature-detected).
+- **Clearer TLS errors.** A certificate-not-trusted failure now returns an actionable
+  message (upgrade Node, set `BCONNECT_CA_CERT_PATH`, or `NODE_EXTRA_CA_CERTS`) instead
+  of a generic "cannot connect".
+
+### Changed
+- **Node.js baseline raised to 22 (LTS).** Docker images now build on `node:22-alpine`,
+  CI/release run on Node 22, and `engines.node` is `>=20.0.0` (18 is EOL). The automatic
+  OS-trust-store behavior above requires Node ≥ 22.15.
+
 ## [26.1.7] - 2026-07-14
 
 > Version bumped `26.1.5` → `26.1.7` across the suite (26.1.6 was documented but

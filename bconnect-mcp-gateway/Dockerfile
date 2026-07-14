@@ -9,7 +9,7 @@
 # every server, then installs + builds the gateway with --install-links so its
 # node_modules is self-contained and the runtime image needs only the gateway.
 
-FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS builder
+FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS builder
 WORKDIR /app
 
 # Source only — build/, node_modules and tests are excluded via .dockerignore.
@@ -40,7 +40,7 @@ RUN npm run build \
 # symlinks to core and the 13 servers.
 
 # ── Runtime stage ────────────────────────────────────────────────
-FROM node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2
 
 RUN addgroup -S bconnect && adduser -S bconnect -G bconnect
 

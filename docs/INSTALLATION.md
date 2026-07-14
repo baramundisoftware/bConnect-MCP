@@ -15,7 +15,7 @@ This guide covers installing and configuring the bConnect MCP Suite (13 servers)
 
 ### Option A — Linux (Node.js)
 
-**Requirements:** Node.js 20+
+**Requirements:** Node.js 20+ (Node.js **22.15+ recommended** — honors the OS/Windows CA trust store; see TLS / SSL Configuration)
 
 ```bash
 # 1. Clone or extract the suite
@@ -173,6 +173,20 @@ The bConnect MCP Suite connects to your bMS server over HTTPS. Most baramundi de
 
 TLS certificate verification is **enabled by default**. If your bMS server uses a certificate from a public CA (Let's Encrypt, DigiCert, etc.), no TLS configuration is needed.
 
+**OS/client trust store (Node.js ≥ 22.15).** When you run the suite on Node.js 22.15 or
+newer, it also honors your **operating-system certificate store** automatically. So if
+the machine already trusts the bMD/corporate CA (as a domain-joined Windows client
+typically does), connections work **without** any manual certificate export — the OS
+store is merged with Node's bundled public CAs. On older Node the suite falls back to
+Node's bundled CA list only, and you must supply the CA yourself (see below). This is
+why Node **22.15+** is recommended.
+
+> **Why this matters.** Node does *not* read the Windows/macOS trust store on its own —
+> below 22.15 it validates against a built-in public-CA list only, so an internally
+> signed bMS certificate looks untrusted even though Windows itself trusts it. Upgrading
+> Node to ≥ 22.15 is the simplest fix; the options below cover locked-down or older
+> environments.
+
 ### Production: Using BCONNECT_CA_CERT_PATH (Recommended)
 
 Set `BCONNECT_CA_CERT_PATH` to the path of a PEM-encoded CA certificate file. The server loads this cert at startup and uses it to verify the bMS server's certificate.
@@ -192,6 +206,23 @@ BCONNECT_CA_CERT_PATH=/run/secrets/bms-ca.pem
 ```
 
 > **Never use `NODE_TLS_REJECT_UNAUTHORIZED=0` in production.** It disables all certificate validation and exposes every connection to man-in-the-middle attacks.
+
+`BCONNECT_CA_CERT_PATH` is an **override**: when set, the server trusts exactly that CA.
+Use it when you want an explicit, pinned trust anchor regardless of what the host trusts —
+e.g. hardened servers, containers, or Node < 22.15 where the OS store is not consulted.
+
+### Alternative: NODE_EXTRA_CA_CERTS (any Node version)
+
+If you can't run Node ≥ 22.15 but don't want to change the server config, point Node's
+own `NODE_EXTRA_CA_CERTS` at a PEM file. Node **appends** it to its bundled CA list at
+startup, so it works alongside public CAs:
+
+```env
+NODE_EXTRA_CA_CERTS=/etc/ssl/certs/bms-ca.pem
+```
+
+This still requires exporting the CA to a file (like `BCONNECT_CA_CERT_PATH`); the
+zero-export path is running on Node ≥ 22.15 so the OS trust store is honored directly.
 
 ### Development Only: Disable TLS Verification
 

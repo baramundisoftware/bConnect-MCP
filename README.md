@@ -14,7 +14,7 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 - Your **bMS server address** (e.g. `https://bms.company.com:443/bconnect`)
 - A **bMS user account** with API access, or an **API key**
   (generate one in the baramundi mangement console under **Server Management > API Keys**)
-- **Node.js 20 or later** ([download](https://nodejs.org/))
+- **Node.js 20 or later** ([download](https://nodejs.org/)) — **22.15+ recommended** so the OS/Windows CA trust store is honored automatically
 
 ### Network Requirements
 
