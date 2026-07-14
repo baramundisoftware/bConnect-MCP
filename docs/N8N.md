@@ -232,7 +232,7 @@ Client node per domain you need and leave the rest out.
 
 ### Never connect all 13 domains to a single AI Agent
 
-Even with a large-context model, loading all 212 tool definitions wastes tokens
+Even with a large-context model, loading all 276 tool definitions wastes tokens
 on tools the workflow will never call, increases latency, and reduces the model's
 effective reasoning budget for actual work.
 
