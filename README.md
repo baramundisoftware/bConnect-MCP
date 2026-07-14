@@ -173,8 +173,8 @@ All servers use the same environment variables:
 | `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (network) |
 | `MCP_PORT` | — | `3000` | HTTP port (when `MCP_TRANSPORT=http`) |
 | `MCP_GATEWAY_PORT` | — | `3001` | Gateway listen port (when using `bconnect-mcp-gateway`) |
-| `MCP_GATEWAY_BIND` | — | `127.0.0.1` | Gateway bind address |
-| `MCP_AUTH_CONFIG` | — | — | Path to token map JSON; enables per-user auth in gateway mode (see below) |
+| `MCP_GATEWAY_BIND` | — | `127.0.0.1` | Gateway bind address (loopback-only unless behind a proxy) |
+| `MCP_ALLOW_NO_AUTH` | — | `false` | Allow a non-loopback gateway bind; asserts an authenticating proxy is in front |
 
 > \* **Authentication**: provide either `BCONNECT_API_KEY` alone, or both `BCONNECT_USERNAME` and `BCONNECT_PASSWORD`. API key takes precedence if both are set.
 
@@ -234,49 +234,52 @@ Edit `claude_desktop_config.json`:
 ```
 
 
-### Centralized Gateway (HTTP, multi-user, authenticated)
+### Centralized Gateway (HTTP, multi-user)
 
-`bconnect-mcp-gateway` serves all 13 servers on a single HTTP port and supports
-per-user authentication via a token map. This is the recommended approach when
-multiple users or teams need access with different bConnect API credentials.
+`bconnect-mcp-gateway` serves all 13 servers on a single HTTP port — the option for
+teams and n8n.
 
-**1. Create the token map** (`/etc/mcp/tokens.json`):
+> ## ⚠️ Security: you MUST put authentication in front of the gateway
+>
+> **The gateway has no built-in authentication.** On its own it is an unauthenticated
+> HTTP proxy to bConnect — anyone who can reach its port can call every tool using the
+> gateway's bMS credential. Securing it is **your responsibility as the operator** (the
+> standard model for self-hosted infrastructure services).
+>
+> **How to solve it — front the gateway with a TLS-terminating, authenticating reverse
+> proxy or your IdP's application proxy** (nginx, Caddy, Traefik, Entra Application
+> Proxy, oauth2-proxy, …). That proxy must:
+> - **terminate TLS** — tokens and data must never travel in cleartext;
+> - **authenticate every caller** against your identity provider (OIDC / SAML / SSO);
+> - **reach the gateway only over a private/loopback network** — publish the proxy, not the gateway;
+> - **strip any client-supplied identity headers** before forwarding.
+>
+> As a fail-closed safeguard the gateway **refuses to start on a non-loopback bind**
+> unless you set `MCP_ALLOW_NO_AUTH=true` — your explicit assertion that an
+> authenticating proxy is in front. Details: [docs/DOCKER.md](docs/DOCKER.md) → "TLS and authentication".
 
-```json
-{
-  "tok_alice_<random>": { "apiKey": "bconnect-key-team-a" },
-  "tok_bob_<random>":   { "username": "svc-readonly", "password": "secret" },
-  "tok_carol_<random>": { "apiKey": "bconnect-key-team-a" }
-}
-```
+**Credentials.** The gateway uses a single bConnect service credential (`BCONNECT_*`)
+for all downstream calls, and **bMS RBAC governs what it can do** — scope that account
+to least privilege. (Per-user bConnect credentials keyed by the proxy-asserted identity
+are a planned option.)
 
-> Set `BCONNECT_BASE_URL` once in `.env.gateway` — all tokens share it automatically.
-> Only add `"baseUrl"` to a token entry if that user needs a different bMS server.
-
-Multiple MCP tokens can share the same bConnect API key (n:m mapping).
-bConnect credentials stay on the server — clients only know their own token.
-
-**2. Start the gateway:**
+**Start:**
 
 ```bash
 cp .env.gateway.example .env.gateway
-# Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
+# Edit .env.gateway — set BCONNECT_BASE_URL and the BCONNECT_* service credential
 
 docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 ```
 
-**3. Configure each client** with its own token:
+**Configure each client** to connect *through your authenticating proxy* (which supplies
+whatever credential/session the proxy requires):
 
 ```json
 {
   "mcpServers": {
     "bconnect-endpoints": {
-      "url": "http://mcp-gateway.company.com:3001/endpoints/mcp",
-      "headers": { "Authorization": "Bearer tok_alice_<random>" }
-    },
-    "bconnect-assets": {
-      "url": "http://mcp-gateway.company.com:3001/assets/mcp",
-      "headers": { "Authorization": "Bearer tok_alice_<random>" }
+      "url": "https://mcp-gateway.company.com/endpoints/mcp"
     }
   }
 }
@@ -285,8 +288,6 @@ docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 Available domains: `activedirectory`, `assets`, `compliance`, `defensecontrol`,
 `endpoints`, `groups`, `jobs`, `operatingsystems`, `servermanagement`, `software`,
 `universaldynamicgroups`, `updatemanagement`, `variables`.
-
-> **Security note:** Use TLS in front of the gateway (nginx, Caddy) and keep the token map file readable only by the gateway process.
 
 For using the gateway from **n8n workflows**, see [docs/N8N.md](docs/N8N.md).
 

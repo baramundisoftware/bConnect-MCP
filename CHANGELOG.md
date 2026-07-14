@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed (breaking)
+- **Gateway token-map authentication (`MCP_AUTH_CONFIG`).** The gateway no longer
+  authenticates callers or maps Bearer tokens to bConnect credentials. Per ADR-0003,
+  **authentication is the operator's responsibility** — front the gateway with an
+  authenticating, TLS-terminating reverse proxy / IdP — and the gateway uses a single
+  `BCONNECT_*` **service credential** (bMS RBAC governs it). Removed `MCP_AUTH_CONFIG`,
+  the token map, hashed-token mode, and the `hash-token` helper.
+
+### Changed
+- Gateway fail-closed default: a non-loopback bind now requires `MCP_ALLOW_NO_AUTH=true`
+  (asserting an authenticating proxy is in front). Loopback bind is otherwise unchanged.
+- Inbound rate limiting is now keyed **per client IP** (was per Bearer token).
+- `docker-compose.gateway.yml` publishes the host port on **loopback only** by default.
+- README / `docs/DOCKER.md` / `docs/INSTALLATION.md` / `docs/N8N.md` updated to the
+  proxy-fronted, service-credential model, with a prominent operator-security notice.
+
 ## [26.1.6] - 2026-06-17
 
 ### Added

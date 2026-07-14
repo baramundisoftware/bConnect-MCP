@@ -4,13 +4,14 @@
  * Tests createApp() end-to-end via real HTTP requests against a server
  * started on a random port. Uses Node 22 native fetch.
  *
- * What is tested here (not covered by auth.test.ts):
- *   - GET /health — status, shape, authEnabled flag
- *   - POST /:domain/mcp — 404 for unknown domain, 401 when auth enabled,
- *     valid MCP JSON-RPC response for known domain with valid token
+ * The gateway has no built-in auth (ADR-0003) — authentication is the fronting
+ * proxy's job — so requests carry no Authorization header and every request
+ * routes straight through. What is tested here:
+ *   - GET /health — status, shape
+ *   - POST /:domain/mcp — 404 for unknown domain, valid MCP JSON-RPC response
  *   - GET /:domain/mcp  — 405 Method Not Allowed
  *   - DELETE /:domain/mcp — 405 Method Not Allowed
- *   - Credentials from token map flow through to the MCP server factory
+ *   - Domain routing resolves to the correct MCP server (serverInfo.name)
  *
  * The MCP server factories are NOT mocked — createServer() is safe to call
  * in tests because the startup connectivity check only runs inside main(),
@@ -20,13 +21,12 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import http from "node:http";
 import { createApp, domains } from "../app.js";
-import type { TokenMap } from "../auth.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /** Start app on a random OS-assigned port, return base URL + cleanup fn. */
-async function startApp(tokenMap: TokenMap = {}): Promise<{ baseUrl: string; close: () => void }> {
-  const app = createApp(tokenMap);
+async function startApp(): Promise<{ baseUrl: string; close: () => void }> {
+  const app = createApp();
   const server = http.createServer(app);
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const addr = server.address() as { port: number };
@@ -114,42 +114,11 @@ describe("GET /health", () => {
     expect(body.servers).toContain("compliance");
     expect(body.servers).toContain("variables");
   });
-
-  it("reports authEnabled: false when no token map configured", async () => {
-    const res = await fetch(`${baseUrl}/health`);
-    const body = await res.json() as Record<string, unknown>;
-    expect(body.authEnabled).toBe(false);
-  });
-
-  it("reports authEnabled: true when token map is loaded", async () => {
-    const { baseUrl: url, close: c } = await startApp({
-      "tok-test": { apiKey: "key" },
-    });
-    try {
-      const res = await fetch(`${url}/health`);
-      const body = await res.json() as Record<string, unknown>;
-      expect(body.authEnabled).toBe(true);
-    } finally {
-      c();
-    }
-  });
-
-  it("is always accessible without Authorization header even when auth is enabled", async () => {
-    const { baseUrl: url, close: c } = await startApp({
-      "tok-test": { apiKey: "key" },
-    });
-    try {
-      const res = await fetch(`${url}/health`);
-      expect(res.status).toBe(200);
-    } finally {
-      c();
-    }
-  });
 });
 
 // ─── POST /:domain/mcp — routing ─────────────────────────────────────────────
 
-describe("POST /:domain/mcp — routing (auth disabled)", () => {
+describe("POST /:domain/mcp — routing", () => {
   let baseUrl: string;
   let close: () => void;
 
@@ -206,71 +175,6 @@ describe("POST /:domain/mcp — routing (auth disabled)", () => {
   });
 });
 
-// ─── POST /:domain/mcp — auth enabled ────────────────────────────────────────
-
-describe("POST /:domain/mcp — auth enabled", () => {
-  const tokenMap: TokenMap = {
-    "valid-token": { apiKey: "test-api-key" },
-  };
-  let baseUrl: string;
-  let close: () => void;
-
-  beforeAll(async () => {
-    ({ baseUrl, close } = await startApp(tokenMap));
-  });
-  afterAll(() => close());
-
-  it("returns 401 with no Authorization header", async () => {
-    const res = await fetch(`${baseUrl}/endpoints/mcp`, {
-      method: "POST",
-      headers: MCP_HEADERS,
-      body: JSON.stringify(MCP_INITIALIZE),
-    });
-    expect(res.status).toBe(401);
-  });
-
-  it("returns 401 for an invalid token", async () => {
-    const res = await fetch(`${baseUrl}/endpoints/mcp`, {
-      method: "POST",
-      headers: {
-        ...MCP_HEADERS,
-        "Authorization": "Bearer wrong-token",
-      },
-      body: JSON.stringify(MCP_INITIALIZE),
-    });
-    expect(res.status).toBe(401);
-  });
-
-  it("returns 200 for a valid token", async () => {
-    const res = await fetch(`${baseUrl}/endpoints/mcp`, {
-      method: "POST",
-      headers: {
-        ...MCP_HEADERS,
-        "Authorization": "Bearer valid-token",
-      },
-      body: JSON.stringify(MCP_INITIALIZE),
-    });
-    expect(res.status).toBe(200);
-  });
-
-  it("returns 404 for unknown domain even with valid token", async () => {
-    const res = await fetch(`${baseUrl}/nonexistent/mcp`, {
-      method: "POST",
-      headers: {
-        ...MCP_HEADERS,
-        "Authorization": "Bearer valid-token",
-      },
-      body: JSON.stringify(MCP_INITIALIZE),
-    });
-    expect(res.status).toBe(404);
-  });
-
-  it("health endpoint remains accessible without token", async () => {
-    const res = await fetch(`${baseUrl}/health`);
-    expect(res.status).toBe(200);
-  });
-});
-
 // ─── Method guards ────────────────────────────────────────────────────────────
 
 describe("Method Not Allowed guards", () => {
@@ -299,27 +203,21 @@ describe("Method Not Allowed guards", () => {
   });
 });
 
-// ─── Credential flow ──────────────────────────────────────────────────────────
+// ─── Domain routing → serverInfo.name ─────────────────────────────────────────
 
-describe("Credential flow — token resolves to serverName in MCP response", () => {
-  const tokenMap: TokenMap = {
-    "tok-endpoints": { apiKey: "key-for-endpoints" },
-  };
+describe("Domain routing resolves to the correct MCP server", () => {
   let baseUrl: string;
   let close: () => void;
 
   beforeAll(async () => {
-    ({ baseUrl, close } = await startApp(tokenMap));
+    ({ baseUrl, close } = await startApp());
   });
   afterAll(() => close());
 
-  it("MCP initialize response contains correct serverInfo.name for endpoints domain", async () => {
+  it("endpoints domain → serverInfo.name bconnect-endpoints-mcp", async () => {
     const res = await fetch(`${baseUrl}/endpoints/mcp`, {
       method: "POST",
-      headers: {
-        ...MCP_HEADERS,
-        "Authorization": "Bearer tok-endpoints",
-      },
+      headers: MCP_HEADERS,
       body: JSON.stringify(MCP_INITIALIZE),
     });
     expect(res.status).toBe(200);
@@ -327,13 +225,10 @@ describe("Credential flow — token resolves to serverName in MCP response", () 
     expect(body.result?.serverInfo?.name).toBe("bconnect-endpoints-mcp");
   });
 
-  it("MCP initialize response contains correct serverInfo.name for compliance domain", async () => {
+  it("compliance domain → serverInfo.name bconnect-compliance-mcp", async () => {
     const res = await fetch(`${baseUrl}/compliance/mcp`, {
       method: "POST",
-      headers: {
-        ...MCP_HEADERS,
-        "Authorization": "Bearer tok-endpoints",
-      },
+      headers: MCP_HEADERS,
       body: JSON.stringify(MCP_INITIALIZE),
     });
     expect(res.status).toBe(200);

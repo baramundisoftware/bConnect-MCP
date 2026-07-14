@@ -7,7 +7,6 @@ import type { Request, Response } from "express";
 
 import { createLogger } from "../logger.js";
 import { createAccessLogMiddleware } from "../access-log.js";
-import { hashToken } from "../auth.js";
 
 /** Capture stderr writes during fn(). */
 function captureStderr(fn: () => void): string[] {
@@ -54,39 +53,30 @@ describe("createLogger", () => {
 });
 
 describe("createAccessLogMiddleware", () => {
-  function makeReqRes(path: string, authToken?: string) {
+  function makeReqRes(path: string) {
     const handlers: Record<string, () => void> = {};
     const req = { method: "POST", path, ip: "127.0.0.1" } as unknown as Request;
     const res = {
       statusCode: 200,
-      locals: (authToken ? { authToken } : {}) as Record<string, unknown>,
+      locals: {} as Record<string, unknown>,
       on(event: string, cb: () => void) { handlers[event] = cb; return res; },
     } as unknown as Response;
     return { req, res, finish: () => handlers["finish"]?.() };
   }
 
-  it("logs a request with status, duration and a NON-raw caller id", () => {
+  it("logs a request with status, duration and the client IP as caller", () => {
     process.env.LOG_FORMAT = "json";
     const log = createLogger();
     const mw = createAccessLogMiddleware(log);
-    const { req, res, finish } = makeReqRes("/endpoints/mcp", "tok_secret_value");
+    const { req, res, finish } = makeReqRes("/endpoints/mcp");
     const out = captureStderr(() => { mw(req, res, vi.fn()); finish(); });
     const obj = JSON.parse(out[0]);
     expect(obj.msg).toBe("request");
     expect(obj.status).toBe(200);
     expect(obj.method).toBe("POST");
     expect(typeof obj.durationMs).toBe("number");
-    // caller is a hash prefix, never the raw token
-    expect(obj.caller).toBe(`tok:${hashToken("tok_secret_value").slice(0, 12)}`);
-    expect(out.join("")).not.toContain("tok_secret_value");
-  });
-
-  it("falls back to IP when there is no token", () => {
-    process.env.LOG_FORMAT = "json";
-    const mw = createAccessLogMiddleware(createLogger());
-    const { req, res, finish } = makeReqRes("/endpoints/mcp");
-    const out = captureStderr(() => { mw(req, res, vi.fn()); finish(); });
-    expect(JSON.parse(out[0]).caller).toBe("127.0.0.1");
+    // The gateway has no built-in auth; callers are identified by client IP.
+    expect(obj.caller).toBe("127.0.0.1");
   });
 
   it("logs /health at debug (suppressed at default info level)", () => {

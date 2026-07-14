@@ -34,11 +34,16 @@ cd bconnect-assets-mcp    && npm ci && npm run build && cd ..
 
 See [DOCKER.md](DOCKER.md) for Docker Compose and individual container setup.
 
-### Option C — Gateway (HTTP, multi-user, authenticated)
+### Option C — Gateway (HTTP, multi-user)
 
-`bconnect-mcp-gateway` serves all 13 bConnect MCP servers on a single HTTP port
-with per-user authentication. Use this when multiple users or teams need access,
-each with their own bConnect credentials or API key.
+`bconnect-mcp-gateway` serves all 13 bConnect MCP servers on a single HTTP port —
+for teams and n8n.
+
+> **⚠️ Security: the gateway has no built-in authentication.** You MUST front it with a
+> TLS-terminating, authenticating reverse proxy / IdP (nginx, Caddy, Traefik, Entra
+> Application Proxy, oauth2-proxy, …) before exposing it — see [DOCKER.md](DOCKER.md) →
+> "TLS and authentication". Downstream bMS calls use a single `BCONNECT_*` **service
+> credential**; scope that account to least privilege (bMS RBAC governs it).
 
 #### Step 1 — Build the gateway
 
@@ -49,114 +54,49 @@ npm run build
 cd ..
 ```
 
-#### Step 2 — Generate Bearer tokens
-
-Each user needs a unique Bearer token. Generate one per user with:
-
-```bash
-node -e "console.log('tok_' + require('crypto').randomBytes(32).toString('hex'))"
-```
-
-**Token requirements:**
-- Must be unique per user — never reuse tokens across users
-- Minimum 32 random bytes (64 hex characters) after the prefix
-- Use a descriptive prefix (e.g. `tok_alice_`, `tok_teamA_`) to identify the user
-- Treat tokens like passwords — do not share or log them
-
-Example output:
-```
-tok_alice_a3f8c2d1e4b7f09a2c5e8d3b6f1a4c7e2d5b8f3a6c9e2d5b8f1a4c7e0d3b6f9
-```
-
-#### Step 3 — Create the token map
-
-Create `/etc/mcp/tokens.json`. Each key is a Bearer token; each value contains
-only the credentials for that user. **The bMS server URL is set once in `.env.gateway`
-as `BCONNECT_BASE_URL` — do not repeat it here.**
-
-```json
-{
-  "tok_alice_a3f8c2d1e4b7f09a2c5e8d3b6f1a4c7e2d5b8f3a6c9e2d5b8f1a4c7e0d3b6f9": {
-    "apiKey": "PASTE-BCONNECT-API-KEY-FOR-ALICE-HERE"
-  },
-  "tok_bob_1c4e7a0d3f6b9e2c5a8d1f4b7e0c3a6d9f2b5e8c1d4a7f0b3e6c9d2a5f8b1e4c7": {
-    "username": "svc-bob",
-    "password": "PASTE-BOBS-BCONNECT-PASSWORD-HERE"
-  }
-}
-```
-
-> **Why no `baseUrl` here?** Most organizations have one baramundi server. Set
-> `BCONNECT_BASE_URL` once in `.env.gateway` and all tokens share it automatically.
-> Only add `"baseUrl"` to a token entry if that specific user must reach a
-> **different** bMS server.
-
-**What to replace:**
-
-| Placeholder | Replace with |
-|-------------|-------------|
-| Token keys (`tok_alice_…`, `tok_bob_…`) | Your generated tokens from Step 2 |
-| `PASTE-BCONNECT-API-KEY-FOR-ALICE-HERE` | API key from baramundi Management Center → Server Management → API Keys |
-| `svc-bob` / `PASTE-BOBS-BCONNECT-PASSWORD-HERE` | bMS username and password (alternative to API key) |
-
-**Authentication options per user** — use one, not both:
-- `"apiKey": "..."` — recommended; generate in baramundi Management Center
-- `"username": "..."` + `"password": "..."` — use an existing bMS user account
-
-**n:m mapping** — multiple tokens can share the same bConnect API key. For example,
-all members of one team can each have their own token that maps to a single shared
-team API key.
-
-Restrict file access:
-```bash
-chmod 600 /etc/mcp/tokens.json
-```
-
-#### Step 4 — Start the gateway
+#### Step 2 — Configure and start
 
 **Docker Compose (recommended):**
 
 ```bash
 cp .env.gateway.example .env.gateway
-# Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
+# Edit .env.gateway — set BCONNECT_BASE_URL and the BCONNECT_* service credential
 
 docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 ```
 
-**Node.js (bare):**
+**Node.js (bare)** — binds loopback; front it with your proxy:
 
 ```bash
 cd bconnect-mcp-gateway
-MCP_AUTH_CONFIG=/etc/mcp/tokens.json \
+BCONNECT_BASE_URL=https://bms.company.com/bconnect \
+BCONNECT_API_KEY=your-service-key \
 MCP_GATEWAY_PORT=3001 \
-MCP_GATEWAY_BIND=0.0.0.0 \
 node --import ./build/preload.js build/gateway.js
 ```
 
 Verify the gateway is running:
 ```bash
 curl http://localhost:3001/health
-# → {"status":"ok","servers":[...],"count":13,"authEnabled":true}
+# → {"status":"ok","servers":[...],"count":13}
 ```
-
-`authEnabled: true` confirms the token map was loaded successfully.
 
 #### Gateway environment variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MCP_AUTH_CONFIG` | — | Path to token map JSON. When unset, auth is disabled (env-var fallback). |
+| `BCONNECT_BASE_URL` + `BCONNECT_API_KEY` (or `BCONNECT_USERNAME`+`BCONNECT_PASSWORD`) | — | The single bConnect service credential |
 | `MCP_GATEWAY_PORT` | `3001` | Listen port |
-| `MCP_GATEWAY_BIND` | `127.0.0.1` | Bind address (`0.0.0.0` to accept remote connections) |
-| `MCP_GATEWAY_RATE_LIMIT_ENABLED` | `true` | Per-token inbound rate limiting; set `false` to disable |
-| `MCP_GATEWAY_RATE_LIMIT_MAX` | `300` | Max requests per window, **per token** (per client IP when auth disabled) |
+| `MCP_GATEWAY_BIND` | `127.0.0.1` | Bind address (loopback-only unless behind a proxy) |
+| `MCP_ALLOW_NO_AUTH` | `false` | Allow a non-loopback bind; asserts an authenticating proxy is in front |
+| `MCP_GATEWAY_RATE_LIMIT_ENABLED` | `true` | Per-client-IP inbound rate limiting; set `false` to disable |
+| `MCP_GATEWAY_RATE_LIMIT_MAX` | `300` | Max requests per window, per client IP |
 | `MCP_GATEWAY_RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window in ms |
 | `MCP_GATEWAY_MAX_BODY` | `1mb` | Max accepted request body size |
 
-> **Security:** Always put a TLS-terminating reverse proxy (nginx, Caddy) in front
-> of the gateway in production — Bearer tokens travel in HTTP headers and must be
-> encrypted in transit. The token map file should be readable only by the gateway
-> process user.
+> **Security:** front the gateway with an authenticating, TLS-terminating reverse proxy
+> before exposing it (see [DOCKER.md](DOCKER.md)). The gateway refuses a non-loopback
+> bind unless `MCP_ALLOW_NO_AUTH=true`.
 
 ---
 
@@ -382,19 +322,17 @@ Add one entry per server. You do not need to load all 13 — load only the domai
 
 ### Gateway (Claude Desktop or Claude Code, HTTP)
 
-When using the gateway, point each server at `/<domain>/mcp` and supply the user's
-Bearer token in the `Authorization` header:
+When using the gateway, point each server at `/<domain>/mcp` **through your
+authenticating proxy** (which supplies whatever credential/session it requires):
 
 ```json
 {
   "mcpServers": {
     "bconnect-endpoints": {
-      "url": "http://mcp-gateway.company.com:3001/endpoints/mcp",
-      "headers": { "Authorization": "Bearer tok_alice_<random>" }
+      "url": "https://mcp-gateway.company.com/endpoints/mcp"
     },
     "bconnect-assets": {
-      "url": "http://mcp-gateway.company.com:3001/assets/mcp",
-      "headers": { "Authorization": "Bearer tok_alice_<random>" }
+      "url": "https://mcp-gateway.company.com/assets/mcp"
     }
   }
 }

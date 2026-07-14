@@ -1,23 +1,26 @@
 # bConnect MCP Gateway — HTTP deployment (multi-user, n8n, teams)
 #
 # Use case: shared MCP access over HTTP for multiple users or workflows.
-# A single container bundles all 13 MCP servers behind one authenticated
-# HTTP endpoint. Clients authenticate with a Bearer token; the gateway
-# resolves each token to the appropriate bConnect API credentials.
+# A single container bundles all 13 MCP servers behind one HTTP endpoint.
+#
+# ⚠️ The gateway has NO built-in authentication. This compose publishes the port
+# on LOOPBACK ONLY. Before exposing it beyond the host you MUST front it with a
+# TLS-terminating, authenticating reverse proxy (see README / docs/DOCKER.md).
+# Downstream bMS calls use a single BCONNECT_* service credential.
 #
 # For single-developer stdio use (Claude Desktop / Claude Code) use
 # docker-compose.yml instead.
 #
-# See docs/INSTALLATION.md — Option D and docs/N8N.md for full setup.
+# See docs/INSTALLATION.md and docs/N8N.md for full setup.
 #
 # Usage:
 #   cp .env.gateway.example .env.gateway
-#   # Edit .env.gateway — set BCONNECT_BASE_URL and MCP_AUTH_CONFIG_PATH
+#   # Edit .env.gateway — set BCONNECT_BASE_URL and the BCONNECT_* service credential
 #   docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 #
 # Health check:
 #   curl http://localhost:3001/health
-#   # → {"status":"ok","count":13,"authEnabled":true}
+#   # → {"status":"ok","count":13}
 
 services:
 
@@ -28,15 +31,17 @@ services:
     image: bconnect-mcp-gateway:26.1.5
     container_name: mcp-gateway
     ports:
-      - "${MCP_GATEWAY_HOST_PORT:-3001}:3001"
+      # Loopback-only by default — reachable from the host / a co-located proxy,
+      # not the network. Override MCP_GATEWAY_HOST_BIND only once a proxy is in front.
+      - "${MCP_GATEWAY_HOST_BIND:-127.0.0.1}:${MCP_GATEWAY_HOST_PORT:-3001}:3001"
     environment:
       MCP_GATEWAY_PORT: "3001"
+      # The container binds 0.0.0.0 so a co-located proxy can reach it; the port
+      # above is published on loopback. MCP_ALLOW_NO_AUTH asserts a proxy handles
+      # auth — the gateway has no built-in auth (ADR-0003).
       MCP_GATEWAY_BIND: "0.0.0.0"
-      # Token map auth — set MCP_AUTH_CONFIG_PATH in .env.gateway to your tokens.json path.
-      # The file is mounted read-only at /run/secrets/tokens.json inside the container.
-      # When unset, the gateway falls back to BCONNECT_* vars (single-credential mode).
-      MCP_AUTH_CONFIG: ${MCP_AUTH_CONFIG_PATH:+/run/secrets/tokens.json}
-      # Fallback credentials (used when MCP_AUTH_CONFIG_PATH is not set).
+      MCP_ALLOW_NO_AUTH: "true"
+      # Single bConnect service credential (bMS RBAC governs it).
       BCONNECT_BASE_URL: ${BCONNECT_BASE_URL:-https://bms-server/bconnect}
       BCONNECT_USERNAME: ${BCONNECT_USERNAME:-}
       BCONNECT_PASSWORD: ${BCONNECT_PASSWORD:-}
@@ -46,9 +51,6 @@ services:
       NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-1}
       BCONNECT_CA_CERT_PATH: ${BCONNECT_CA_CERT_PATH:-}
     volumes:
-      # Token map — mounted read-only when MCP_AUTH_CONFIG_PATH is set in .env.gateway.
-      # Falls back to /dev/null (harmless) when not set.
-      - ${MCP_AUTH_CONFIG_PATH:-/dev/null}:/run/secrets/tokens.json:ro
       # CA certificate for self-signed bMS certificates (optional).
       - ${BCONNECT_CA_CERT_PATH:-/dev/null}:${BCONNECT_CA_CERT_PATH:-/dev/null}:ro
     restart: unless-stopped
