@@ -23,7 +23,9 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "audit": "for d in . bconnect-*-mcp bconnect-server-template; do echo \"--- $d ---\"; (cd \"$d\" && npm audit --audit-level=high) || true; done",
-    "sbom": "for d in . bconnect-*-mcp bconnect-server-template bconnect-mcp-gateway; do echo \"--- $d ---\"; (cd \"$d\" && npx @cyclonedx/cyclonedx-npm --output-file sbom.json --spec-version 1.6) || exit 1; done"
+    "sbom": "for d in . bconnect-*-mcp bconnect-server-template bconnect-mcp-gateway; do echo \"--- $d ---\"; (cd \"$d\" && npx @cyclonedx/cyclonedx-npm --output-file sbom.json --spec-version 1.6) || exit 1; done",
+    "publish:image": "bash scripts/publish-image.sh",
+    "publish:image:dry": "bash scripts/publish-image.sh --dry-run"
   },
   "repository": {
     "type": "git",
