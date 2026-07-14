@@ -33,9 +33,44 @@ Include as much of the following as possible:
 
 ## Security Considerations
 
-### Credentials in `.env`
+### Credentials at rest (`.env` and client config)
 
-Each MCP server reads `BCONNECT_USERNAME` and `BCONNECT_PASSWORD` from the environment. Never commit `.env` files to source control. The `.gitignore` already excludes `.env`.
+Each MCP server reads `BCONNECT_USERNAME`/`BCONNECT_PASSWORD` (or `BCONNECT_API_KEY`)
+from the environment — typically a `.env` file, or, for Claude Desktop, the
+`env` block of `claude_desktop_config.json`. **These are stored in plaintext.**
+Until an encrypted-at-rest option ships (tracked in
+[issue #60](https://github.com/baramundisoftware/bConnect-MCP/issues/60)), harden
+the file so a plaintext credential is not casually readable:
+
+**1. Least privilege first (limits the blast radius).** Use a dedicated bMS service
+account scoped to only what the deployment needs — bMS RBAC governs it, so a leaked
+credential can do no more than that account can. Leave `ALLOW_WRITE_OPERATIONS` /
+`ALLOW_SECRET_READ` unset unless required.
+
+**2. Restrict file permissions.**
+
+- **Linux / macOS:** make the file owner-only and keep it out of shared paths:
+  ```bash
+  chmod 600 .env            # or the claude_desktop_config.json
+  chmod 700 "$(dirname .env)"
+  ```
+- **Windows:** tighten the NTFS ACL to the running user only (remove inherited
+  `Users`/`Everyone` access):
+  ```powershell
+  icacls "$env:APPDATA\Claude\claude_desktop_config.json" /inheritance:r /grant:r "$($env:USERNAME):(R,W)"
+  ```
+
+**3. Never commit or export it.** `.gitignore` already excludes `.env`. Avoid leaking
+it via shell history, process listings, logs, or backups.
+
+**4. Prefer a secret mechanism where available.** For the **gateway**, supply
+credentials from mounted secrets via the `*_FILE` convention (e.g. Docker/Kubernetes
+secrets) instead of plain env vars — see [HTTP Gateway](#http-gateway-bconnect-mcp-gateway).
+
+> **Before customer / GA hand-off:** file permissions are a mitigation, not encryption.
+> A non-plaintext, decrypted-at-runtime option (OS credential store — Windows DPAPI /
+> Credential Manager, macOS Keychain — or an external secret store) is planned in #60
+> and should land before leaving credential configuration to customers.
 
 ### TLS Configuration
 
