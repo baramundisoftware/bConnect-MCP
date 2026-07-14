@@ -41,10 +41,10 @@ bconnect-<domain>-mcp/
     <domain>.mock.test.ts                            # 2–5 tests
 ```
 
-The helpers and `vitest.mock.config.ts` are identical across servers — embraced
-duplication, since each server pulls its own `BConnectClient` from a sibling
-path that no shared package can reach without restructuring the repo as a
-workspace.
+The helpers and `vitest.mock.config.ts` are identical across servers. Each server's
+`BConnectClient` (`src/bconnect-client.ts`) is a thin wrapper over the shared
+`BConnectClientBase` in `@bconnect/mcp-core`, so this tier exercises the real
+production client path per server against the mock.
 
 ## Recipe (per server)
 

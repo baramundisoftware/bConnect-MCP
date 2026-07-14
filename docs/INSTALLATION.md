@@ -120,10 +120,7 @@ BCONNECT_RELEASE=26R1          # or 25R2
 ### Optional Variables
 
 ```env
-BCONNECT_TIMEOUT=30000               # Request timeout in ms (default: 30000)
-BCONNECT_MAX_RETRIES=3               # Retry attempts for 429/5xx errors
-BCONNECT_RETRY_DELAY=100             # Base delay between retries in ms
-BCONNECT_AUDIT_LEVEL=off             # Audit logging: off | basic | full
+BCONNECT_AUDIT_LEVEL=none            # Audit logging: none | security | write | all
 ALLOW_WRITE_OPERATIONS=false         # Enable write/destructive tools (default: off)
 ALLOW_SECRET_READ=false              # Enable secret-returning reads (default: off) — see below
 
@@ -282,7 +279,7 @@ Add each server you want to use to your Claude MCP configuration.
 
 ```bash
 claude mcp add bconnect-endpoints \
-  node /path/to/bconnect-endpoints-mcp/dist/index.js \
+  node /path/to/bconnect-endpoints-mcp/build/index.js \
   -e BCONNECT_BASE_URL=https://your-bms-server:443/bconnect \
   -e BCONNECT_USERNAME=your-username \
   -e BCONNECT_PASSWORD=your-password \
@@ -296,7 +293,7 @@ claude mcp add bconnect-endpoints \
   "mcpServers": {
     "bconnect-endpoints": {
       "command": "node",
-      "args": ["/path/to/bconnect-endpoints-mcp/dist/index.js"],
+      "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
       "env": {
         "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
         "BCONNECT_USERNAME": "your-username",
@@ -306,7 +303,7 @@ claude mcp add bconnect-endpoints \
     },
     "bconnect-assets": {
       "command": "node",
-      "args": ["/path/to/bconnect-assets-mcp/dist/index.js"],
+      "args": ["/path/to/bconnect-assets-mcp/build/index.js"],
       "env": {
         "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
         "BCONNECT_USERNAME": "your-username",
@@ -351,7 +348,7 @@ Start a server and confirm it responds:
 
 ```bash
 cd bconnect-endpoints-mcp
-node dist/index.js
+node build/index.js
 # Expected: bconnect-endpoints-mcp running on stdio
 ```
 

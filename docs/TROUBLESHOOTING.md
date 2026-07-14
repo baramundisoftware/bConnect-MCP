@@ -24,7 +24,7 @@ Each server is a standalone Node.js process. Example for `bconnect-endpoints-mcp
 
 ```bash
 cd bconnect-endpoints-mcp
-node dist/index.js
+node build/index.js
 ```
 
 Expected output: `bconnect-endpoints-mcp running on stdio`
@@ -83,13 +83,9 @@ curl -k -u "username:password" \
 
 ### Error: "Token expired" or "Session timeout"
 
-**Cause:** Long-running operations with expired sessions
+**Cause:** A long-running operation exceeded the request timeout.
 
-**Solution:**
-```env
-BCONNECT_TIMEOUT=60000     # 60 seconds
-BCONNECT_TIMEOUT=300000    # 5 minutes for very long operations
-```
+**Solution:** Each request uses a fixed **30-second** timeout (not configurable via an env var). For large datasets, page through results with a smaller `PageSize` so each call completes well within the timeout instead of requesting everything at once.
 
 ---
 
@@ -111,11 +107,8 @@ BCONNECT_TIMEOUT=300000    # 5 minutes for very long operations
 
 3. **Wrong port?** 443 is the default, but bConnect can be configured on a different port. Older or test installations commonly use **444**. Confirm the port in the baramundi Management Center (bConnect settings) and make sure it matches the port in `BCONNECT_BASE_URL`. A `curl` to the wrong port typically hangs (timeout) or is refused.
 
-4. **Enable retry logic:**
-   ```env
-   BCONNECT_MAX_RETRIES=3
-   BCONNECT_RETRY_DELAY=100
-   ```
+4. **Check the URL path.** `BCONNECT_BASE_URL` must end in `/bconnect`
+   (e.g. `https://your-bms-server:443/bconnect`).
 
 ### Error: "ECONNREFUSED" or "Connection refused"
 
@@ -127,13 +120,10 @@ Get-Service | Where-Object {$_.Name -like "*baramundi*"}
 
 ### Error: "ETIMEDOUT" or "Request timeout"
 
-**Solutions:**
+Requests use a fixed 30-second timeout. If calls time out:
 
-```env
-BCONNECT_TIMEOUT=60000
-BCONNECT_MAX_RETRIES=3
-BCONNECT_RETRY_DELAY=200
-```
+- Check network latency / reachability to the bMS server (the `curl` test above).
+- Reduce `PageSize` and page through large result sets so each call returns quickly.
 
 ### Error: "SSL certificate verify failed" or "CERT_HAS_EXPIRED"
 
@@ -170,14 +160,17 @@ The resource doesn't exist. List resources first to get a valid ID:
 
 ### 429 Too Many Requests
 
-The MCP server retries 429 automatically with exponential backoff. To reduce frequency:
+The bMS API is throttling requests. Reduce them by enabling the server's **outbound** rate limiter so it self-throttles its calls to bMS:
 ```env
-BCONNECT_RETRY_DELAY=500
+BCONNECT_RATE_LIMIT_ENABLED=true
+BCONNECT_RATE_LIMIT_MAX_REQUESTS=100
+BCONNECT_RATE_LIMIT_WINDOW_MS=60000
 ```
+Also reduce request volume — a smaller `PageSize` and fewer parallel calls.
 
 ### 500 / 503 Server Errors
 
-Retried automatically. If persistent, check bConnect service status:
+Transient server-side errors. If persistent, check the bConnect service status:
 
 ```powershell
 # On the BMS server
@@ -198,7 +191,7 @@ MCP configuration must list each server individually. Example `claude_desktop_co
   "mcpServers": {
     "bconnect-endpoints": {
       "command": "node",
-      "args": ["/path/to/bconnect-endpoints-mcp/dist/index.js"],
+      "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
       "env": {
         "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
         "BCONNECT_USERNAME": "your-username",
@@ -208,7 +201,7 @@ MCP configuration must list each server individually. Example `claude_desktop_co
     },
     "bconnect-assets": {
       "command": "node",
-      "args": ["/path/to/bconnect-assets-mcp/dist/index.js"],
+      "args": ["/path/to/bconnect-assets-mcp/build/index.js"],
       "env": {
         "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
         "BCONNECT_USERNAME": "your-username",
@@ -265,11 +258,7 @@ The correct server is not loaded in Claude. Verify the MCP configuration include
 
 ### Error: "Tool execution timeout"
 
-```env
-BCONNECT_TIMEOUT=120000   # 2 minutes
-```
-
-Use pagination with a smaller `PageSize` for large datasets.
+Requests use a fixed 30-second timeout. Use pagination with a smaller `PageSize` for large datasets so each call returns well within it.
 
 ---
 
@@ -286,11 +275,9 @@ Use filters and specific queries to reduce result set size.
 
 ### Frequent Timeouts
 
-```env
-BCONNECT_TIMEOUT=60000
-BCONNECT_MAX_RETRIES=3
-BCONNECT_RETRY_DELAY=200
-```
+- Use a smaller `PageSize` and page through results.
+- Enable the outbound rate limiter (`BCONNECT_RATE_LIMIT_*`) if request bursts overload the bMS server.
+- Check network latency between the MCP host and the bMS server.
 
 ---
 
@@ -372,7 +359,7 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 - **README.md** — project overview and quick start
 - **docs/DOCKER.md** — Docker deployment
 - **docs/INSTALLATION.md** — full installation and TLS setup
-- **baramundi Support**: https://www.baramundi.com/en/support/
+- **bConnect-MCP support**: bernd.wiedemann@baramundi.de (bConnect-MCP is **not** supported through baramundi Support — see [../SUPPORT.md](../SUPPORT.md))
 - **GitHub Issues**: open an issue in this repository
 
 ---
