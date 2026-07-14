@@ -1,13 +1,14 @@
 #!/usr/bin/env bash
 #
-# Local CI — mirrors .github/workflows/ci.yml without consuming GitHub Actions
+# Local CI — the project's validation gate (GitHub Actions is not used; this
+# replaces it). Build + test all workspaces + gateway, jscpd, audit, semgrep.
 # minutes. Run before merging when hosted CI is unavailable.
 #
 #   npm run ci            # full run
 #   npm run ci -- --fast  # skip the semgrep SAST step (no docker pull)
 #
 # Exit non-zero if build, tests, or the duplication guard fail. Audit and
-# semgrep are reported but non-blocking (matching the hosted workflow).
+# semgrep are reported but non-blocking.
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
