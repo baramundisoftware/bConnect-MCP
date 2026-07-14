@@ -117,6 +117,12 @@ BCONNECT_PASSWORD=your-password
 BCONNECT_RELEASE=26R1          # or 25R2
 ```
 
+> **These credentials are stored in plaintext** (in `.env` or the Claude Desktop
+> config). Restrict the file to the running user (`chmod 600 .env`, or an NTFS ACL on
+> Windows), use a least-privilege bMS service account, and never commit it. See
+> [SECURITY.md → Credentials at rest](../SECURITY.md#credentials-at-rest-env-and-client-config)
+> for the full hardening guide.
+
 ### Optional Variables
 
 ```env
