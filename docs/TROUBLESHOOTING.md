@@ -125,19 +125,32 @@ Requests use a fixed 30-second timeout. If calls time out:
 - Check network latency / reachability to the bMS server (the `curl` test above).
 - Reduce `PageSize` and page through large result sets so each call returns quickly.
 
-### Error: "SSL certificate verify failed" or "CERT_HAS_EXPIRED"
+### Error: "SSL certificate verify failed", "UNABLE_TO_VERIFY_LEAF_SIGNATURE", "SELF_SIGNED_CERT_IN_CHAIN"
 
-**For development only:**
+These mean the bMS server's certificate isn't trusted by the **Node.js process**. Node
+does not read the OS/Windows trust store below Node 22.15, so an internally signed bMS
+cert looks untrusted even when Windows itself trusts it. Pick one:
+
+**1. Run on Node.js ≥ 22.15 (recommended, zero export).** The suite then honors the
+machine's OS certificate store automatically — if the client already trusts the bMD/CA,
+it just works. Check with `node --version`.
+
+**2. Provide the CA explicitly (any Node version):**
+```env
+BCONNECT_CA_CERT_PATH=/path/to/bms-ca.pem
+```
+or, without changing the server config, use Node's own env var:
+```env
+NODE_EXTRA_CA_CERTS=/path/to/bms-ca.pem
+```
+
+**3. Development only** — disables all verification (never in production):
 ```env
 NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
-**For production (recommended):** Provide the CA certificate:
-```env
-BCONNECT_CA_CERT_PATH=/path/to/bms-ca.pem
-```
-
-See [INSTALLATION.md](INSTALLATION.md) for the full TLS setup guide.
+See [INSTALLATION.md](INSTALLATION.md) → "TLS / SSL Configuration" for the full guide and
+how to export the baramundi CA.
 
 ---
 

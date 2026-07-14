@@ -8,7 +8,76 @@
 import axios, { AxiosInstance, AxiosError, CreateAxiosDefaults, InternalAxiosRequestConfig } from "axios";
 import axiosRetry from "axios-retry";
 import https from "https";
-import { PeerCertificate } from "tls";
+import tls, { PeerCertificate } from "node:tls";
+
+/**
+ * Build the default CA trust list when no explicit CA is configured.
+ *
+ * Node validates TLS against its *bundled* CA list only — it never consults the
+ * operating-system certificate store. On Windows/macOS that means an internal or
+ * corporate CA that already signs the bMS certificate is invisible to Node unless
+ * the admin manually exports it and points `BCONNECT_CA_CERT_PATH` at the PEM
+ * (see issue #59). When available (Node >= 22.15 / 23.5) `tls.getCACertificates`
+ * lets us read the OS trust store ("system") and merge it with Node's bundled
+ * list ("default", which also includes any `NODE_EXTRA_CA_CERTS`), so both public
+ * and enterprise CAs validate out of the box.
+ *
+ * Returns `undefined` on older Node (or if the store can't be read) so the agent
+ * keeps Node's existing bundled-only behavior — no regression.
+ */
+function buildDefaultTrustStore(): string[] | undefined {
+  const getCACertificates = (tls as unknown as {
+    getCACertificates?: (type: "default" | "system" | "bundled" | "extra") => string[];
+  }).getCACertificates;
+
+  if (typeof getCACertificates !== "function") {
+    return undefined; // Node < 22.15 — leave Node's default trust behavior untouched.
+  }
+
+  try {
+    const merged = [...getCACertificates("default"), ...getCACertificates("system")];
+    return merged.length > 0 ? merged : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * OpenSSL error codes that mean "the peer certificate chain was not trusted".
+ * These surface as `error.code` (or `error.cause.code`) on a failed request and
+ * are worth translating into an actionable message instead of a generic
+ * "cannot connect" (see issue #59).
+ */
+const TLS_UNTRUSTED_CERT_CODES = new Set([
+  "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+  "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+  "SELF_SIGNED_CERT_IN_CHAIN",
+  "DEPTH_ZERO_SELF_SIGNED_CERT",
+  "CERT_UNTRUSTED",
+]);
+
+/**
+ * If `error` is a TLS "certificate not trusted" failure, return a remediation
+ * message; otherwise `undefined`. Deliberately does not echo the target hostname.
+ */
+function tlsUntrustedCertHint(error: AxiosError): string | undefined {
+  const code =
+    (error.code as string | undefined) ??
+    (error.cause as { code?: string } | undefined)?.code;
+
+  if (!code || !TLS_UNTRUSTED_CERT_CODES.has(code)) {
+    return undefined;
+  }
+
+  return (
+    `TLS certificate verification failed (${code}): the bConnect server's ` +
+    "certificate is not trusted by this process. Resolve it one of these ways:\n" +
+    "  1. Run on Node.js >= 22.15 so the OS/Windows trust store is honored automatically.\n" +
+    "  2. Set BCONNECT_CA_CERT_PATH to a PEM file containing the signing CA.\n" +
+    "  3. Set NODE_EXTRA_CA_CERTS to a PEM file with the signing CA (appended to Node's bundle).\n" +
+    "Never set NODE_TLS_REJECT_UNAUTHORIZED=0 in production — it disables all certificate checks."
+  );
+}
 
 /**
  * Extended Axios request config to carry internal metadata through interceptors.
@@ -90,13 +159,21 @@ export class BConnectClientBase {
   constructor(config: BConnectConfig) {
     this.config = config;
 
+    // Resolve the CA trust list. An explicit CA (e.g. BCONNECT_CA_CERT_PATH) always
+    // wins. Otherwise, when verification is on, fall back to the OS trust store
+    // merged with Node's bundle so an already-trusted enterprise CA works without a
+    // manual export (issue #59); this is a no-op on Node < 22.15.
+    const caList: BConnectConfig["ca"] | undefined =
+      config.ca ??
+      (config.rejectUnauthorized !== false ? buildDefaultTrustStore() : undefined);
+
     // Create HTTPS agent with SSL/TLS configuration
     const httpsAgentOptions: https.AgentOptions = {
       // Default to secure (reject unauthorized certificates)
       rejectUnauthorized: config.rejectUnauthorized !== false,
 
       // Custom CA certificate(s) for self-signed or corporate certificates
-      ...(config.ca && { ca: config.ca }),
+      ...(caList && { ca: caList }),
 
       // Client certificate authentication
       ...(config.cert && { cert: config.cert }),
@@ -374,7 +451,13 @@ export class BConnectClientBase {
           throw new Error(`bConnect API error (HTTP ${status}).`);
       }
     } else if (error instanceof AxiosError && error.request) {
-      // Request made but no response received — do not expose internal hostname
+      // Request made but no response received. A TLS trust failure lands here —
+      // give an actionable message before the generic connectivity one (issue #59).
+      const certHint = tlsUntrustedCertHint(error);
+      if (certHint) {
+        throw new Error(certHint);
+      }
+      // do not expose internal hostname
       throw new Error(
         "Cannot connect to the bConnect API. " +
         "Check network connectivity and BCONNECT_BASE_URL configuration."
