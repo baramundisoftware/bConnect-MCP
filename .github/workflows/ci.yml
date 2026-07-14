@@ -12,7 +12,7 @@ env:
 jobs:
   test:
     name: Test ${{ matrix.server }}
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -74,7 +74,7 @@ jobs:
 
   security:
     name: Security Audit
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout
@@ -110,7 +110,7 @@ jobs:
 
   sast:
     name: SAST (Semgrep)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     # Static analysis of first-party code (complements the dependency-only audit).
     # Non-blocking: findings are surfaced (the step reports failure via --error)
     # but continue-on-error keeps them from gating the build.
@@ -140,7 +140,7 @@ jobs:
 
   duplication:
     name: Duplication guard (jscpd)
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     # Guards the Q1/Q2 shared-core extraction: fails if client/util code is
     # copy-pasted back across servers. Config + threshold live in .jscpd.json
     # (generated types and the server-specific validation rules are excluded).
