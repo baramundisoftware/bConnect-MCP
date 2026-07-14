@@ -43,15 +43,26 @@ Production deployments must use proper TLS certificate verification. Never set `
 
 ### Audit Logging
 
-Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`off` / `basic` / `full`). Enable audit logging in production environments to track API calls.
+Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`none` / `security` / `write` / `all`). Enable it in production to track API calls.
 
-### Read-Only Profile
+### Write-Operation Gating
 
-The `standard-readonly` profile restricts all write operations at the server level. Use this profile in environments where mutation must be prevented (monitoring, reporting dashboards).
+Write/mutating tools are **disabled by default**. A server exposes them only when `ALLOW_WRITE_OPERATIONS=true` is set; otherwise every write tool returns a clear "disabled" error. Leave it unset for monitoring / reporting deployments where mutation must be prevented. Secret-returning tools (BitLocker recovery keys, LAPS local-admin passwords) are additionally gated behind `ALLOW_SECRET_READ`.
 
 ### Rate Limiting
 
-Each server enforces a token-bucket rate limiter to prevent API abuse. The limit is configurable via `BCONNECT_MAX_RETRIES` and `BCONNECT_RETRY_DELAY`.
+Each server can enforce a token-bucket rate limiter to protect the bConnect API. Enable and tune it via `BCONNECT_RATE_LIMIT_ENABLED`, `BCONNECT_RATE_LIMIT_MAX_REQUESTS`, and `BCONNECT_RATE_LIMIT_WINDOW_MS`.
+
+### HTTP Gateway (`bconnect-mcp-gateway`)
+
+The optional `bconnect-mcp-gateway` exposes all 13 servers over **HTTP** for multi-user / n8n use (the individual servers remain stdio-only). Its security model, hardened per the 2026-06-22 internal audit:
+
+- **No built-in authentication — by design.** The gateway is an unopinionated HTTP component; **authentication and TLS are the operator's responsibility.** Front it with a TLS-terminating, authenticating reverse proxy / IdP (nginx, Caddy, Traefik, Entra Application Proxy, …) that terminates TLS, authenticates every caller, reaches the gateway only over a private/loopback network, and strips client-supplied identity headers. (The former per-user token map was removed — see ADR-0003.)
+- **Fail-closed default.** The gateway binds `127.0.0.1` and **refuses to start on a non-loopback bind** unless `MCP_ALLOW_NO_AUTH=true` is set — an explicit operator assertion that a proxy is in front. This prevents an accidentally-exposed, unauthenticated bMS proxy.
+- **Single service credential.** Downstream bMS calls use one `BCONNECT_*` service credential; **bMS RBAC governs what it can do**, so scope that account to least privilege. Credentials can be supplied from mounted secrets via the `*_FILE` convention instead of plain env vars.
+- **Tenant isolation.** The gateway is stateless and builds a fresh MCP server + bConnect client per request; the response cache is per-request, so there is no cross-caller leakage.
+- **Rate limiting / body cap.** A per-client-IP token-bucket limiter (`MCP_GATEWAY_RATE_LIMIT_*`) plus a request body-size cap (`MCP_GATEWAY_MAX_BODY`) bound abuse; richer edge/flood limiting belongs at the proxy.
+- **Structured access log.** Every request is logged with method / path / status / duration and a client-IP caller id (`LOG_LEVEL` / `LOG_FORMAT`).
 
 ### Operational Hardening
 
@@ -65,7 +76,7 @@ These items are not exploitable as written, but are recommended practices to kee
 
 - Per-tool rules live in `src/utils/mcp-tool-validation-rules.ts` as a domain-named object (e.g. `EndpointsRules`, `JobsRules`, `AssetsRules`) whose methods return `ValidationRule[]` per tool.
 - The request handler dispatches arguments through a `validateToolArguments(name, args)` pre-pass that runs **before** the write-operation gate and **before** `getBconnect()`. Argument validation is pure; bConnect setup has side effects; the pure step runs first.
-- `validateOrThrow` (`src/utils/parameter-validator.ts`, byte-identical across all servers) raises an `McpError` with `ErrorCode.InvalidParams` on any rule violation.
+- `validateOrThrow` (from the shared `@bconnect/mcp-core` package, used by all servers) raises an `McpError` with `ErrorCode.InvalidParams` on any rule violation.
 
 This boundary blocks malformed or attacker-influenced arguments from reaching the bConnect REST call. An audit (2026-05-05) confirmed 0 bypassing tool cases across all 13 servers, and 50 explicit validator regression tests prove every server rejects its known-bad-argument shapes. Removing or weakening the pre-pass on any tool case re-opens the prompt-injection-via-arguments surface — treat changes to `index.ts` dispatch logic as security-relevant.
 
@@ -80,8 +91,8 @@ A baseline `npm audit` after the SDK and axios bumps surfaced one transitive mod
 - **[GHSA-v2v4-37r5-5v8g](https://github.com/advisories/GHSA-v2v4-37r5-5v8g)** — `ip-address`, XSS in `Address6` HTML-emitting methods. Reaches us via `@modelcontextprotocol/sdk@1.29.0` → `express-rate-limit` → `ip-address`.
 
 **Why it is unreachable here:**
-- `express-rate-limit` is the SDK's HTTP/SSE transport rate-limiter. bConnect-MCP servers use only the **stdio transport** (`StdioServerTransport`); the HTTP/SSE code path is never instantiated.
-- The vulnerable methods in `ip-address` are HTML-emitting renderers. bConnect-MCP renders no HTML anywhere.
+- The vulnerable methods in `ip-address` are **HTML-emitting renderers** (`Address6` HTML output). **No component renders HTML** — the stdio servers speak JSON-RPC over stdio and the HTTP gateway serves MCP JSON-RPC only, so the `Address6` HTML path is never invoked on any transport.
+- The stdio servers never instantiate the SDK's HTTP transport at all. The HTTP gateway *does* use an HTTP transport and carries `express-rate-limit` transitively, but it applies its own token-bucket limiter and still never reaches the HTML-emitting `ip-address` methods.
 
 **Why we are not "fixing" it:** `npm audit fix --force` resolves this advisory by **downgrading** the SDK from `1.29.0` to `1.25.3`, which is a breaking change going backwards over the very upgrade we just landed in `a991dce`. Carrying a dormant transitive at the latest SDK is preferable to rolling back into an older SDK that may itself contain unrelated issues.
 
@@ -110,7 +121,7 @@ The host process that **launches** bConnect-MCP servers is the relevant attack s
 2. **Pin server invocation paths.** Configure hosts to launch bConnect-MCP servers by their absolute path (e.g. `node /opt/bconnect-mcp/bconnect-endpoints-mcp/build/index.js`), not via `npx` or other resolver shims that accept argument injection.
 3. **Reject untrusted MCP server configurations.** Do not load MCP server entries from prompts, web pages, or downloaded files. Only add servers reviewed by the deploying organisation.
 4. **Run hosts with least privilege.** Run the MCP host process as a non-administrative user; consider container or sandbox isolation for hosts that load third-party MCP servers.
-5. **Verify host auth boundaries.** Hosts that expose an HTTP/SSE proxy to a browser (e.g. MCP Inspector pre-fix) must require authentication and origin checks. bConnect-MCP itself only exposes stdio.
+5. **Verify host auth boundaries.** Hosts that expose an HTTP/SSE proxy to a browser (e.g. MCP Inspector pre-fix) must require authentication and origin checks. The bConnect-MCP **servers** expose only stdio; the optional **`bconnect-mcp-gateway`** exposes HTTP and must be fronted by an authenticating reverse proxy (see the "HTTP Gateway" section above).
 
 This advisory will be updated if a server-side regression of this vulnerability class is identified.
 

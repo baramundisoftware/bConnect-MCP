@@ -28,26 +28,26 @@ only when a new bMS release changes the API.
 3. Copy the generated types file from `openapi-specs/` generation output into `src/generated/`
 4. Implement the module class in `src/modules/{domain}.ts`
 5. Register tools in `src/index.ts`
-6. Add an isolation test in `src/__tests__/isolation.test.ts`
-7. Run `npm install && npm run build` — must succeed with zero errors
+6. Add a tool-registration test in `src/__tests__/server.test.ts`
+7. Run `npm ci && npm run build` from the repo root — must succeed with zero errors
 
-## Shared Infrastructure Propagation
+## Shared Infrastructure (`@bconnect/mcp-core`)
 
-The following files are **replicated** across all servers. When a bug is fixed or a feature is
-added to any of them, the change must be propagated to all 13 servers:
+Shared logic is **not** copy-pasted across servers. It lives once in the workspace package
+[`packages/mcp-core`](packages/mcp-core) (`@bconnect/mcp-core`), and every server imports it:
 
-| File | Description |
+| Concern | Location |
 |---|---|
-| `src/bconnect-client.ts` | Axios HTTP client, auth, retry, rate limiting, caching |
-| `src/utils/parameter-validator.ts` | Input validation framework |
-| `src/utils/rate-limiter.ts` | Token bucket rate limiter |
-| `src/utils/audit-logger.ts` | Configurable audit logger |
-| `src/utils/response-cache.ts` | LRU response cache with TTL |
-| `src/utils/batch-operations.ts` | Concurrent batch execution with backoff |
+| `BConnectClientBase` — axios HTTP client, auth, retry, rate limiting, caching | `@bconnect/mcp-core` |
+| Input validation (`parameter-validator`), rate limiter, audit logger, response cache, batch operations | `@bconnect/mcp-core` |
+| Per-server tool validation rules (`src/utils/mcp-tool-validation-rules.ts`) | each server (domain-specific) |
 
-**Protocol**: when you change a shared file, open a PR that updates the file in
-`bconnect-server-template/` and all affected servers simultaneously. Do not merge partial
-propagation.
+**Protocol:** fix shared logic **once** in `packages/mcp-core`; every server picks it up through
+the npm workspace. A CI **jscpd duplication guard** fails the build if client/util code is
+copy-pasted back into a server, so partial/divergent copies cannot land.
+
+> `bconnect-mcp-gateway` is a standalone project (not a workspace member); it depends on the
+> servers and `@bconnect/mcp-core` via `file:` references.
 
 ## 26R1-Only Servers
 
@@ -71,7 +71,7 @@ the server table in the root `README.md` lists every server and its tool count.
 ## Testing
 
 Each server requires:
-- An isolation test (`src/__tests__/isolation.test.ts`) verifying the server starts, lists tools,
-  and handles an unknown tool gracefully — no live API required
+- A tool-registration test (`src/__tests__/server.test.ts`) verifying `listTools()` returns
+  exactly that server's tools and excludes other domains — no live API required
 - `npm run build` succeeds with zero TypeScript errors
 - `npm test` passes with zero failures
