@@ -25,45 +25,45 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build all servers
+      - name: Install dependencies (workspaces)
+        run: npm ci
+
+      - name: Build shared core + all servers
         run: |
-          for dir in bconnect-*-mcp bconnect-server-template; do
-            echo "=== Building $dir ==="
-            (cd "$dir" && npm ci && npm run build)
-          done
+          npm run build -w @bconnect/mcp-core
+          npm run build
 
       - name: Run tests
-        run: |
-          for dir in bconnect-*-mcp; do
-            echo "=== Testing $dir ==="
-            (cd "$dir" && npm test)
-          done
+        run: npm test
 
       - name: Create release archive
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           ARCHIVE="bconnect-mcp-suite-${VERSION}.zip"
-
-          # Collect all servers into a release directory
           mkdir -p release-package
 
+          # Root workspace files — `npm ci` at the extracted root wires the shared
+          # @bconnect/mcp-core package that every server imports.
+          cp package.json package-lock.json README.md LICENSE CHANGELOG.md .env.example release-package/
+
+          # Shared core (built) + the server-template manifest. Both are workspace
+          # members, so their package.json must be present for `npm ci` to validate
+          # the lockfile.
+          mkdir -p release-package/packages/mcp-core release-package/bconnect-server-template
+          cp -r packages/mcp-core/build release-package/packages/mcp-core/
+          cp packages/mcp-core/package.json release-package/packages/mcp-core/
+          cp bconnect-server-template/package.json release-package/bconnect-server-template/
+
+          # Each server: built output + manifest + docs
           for dir in bconnect-*-mcp; do
             echo "Packaging $dir..."
             mkdir -p "release-package/$dir"
             cp -r "$dir/build" "release-package/$dir/"
             cp "$dir/package.json" "release-package/$dir/"
-            cp "$dir/package-lock.json" "release-package/$dir/"
-            [ -f "$dir/.env.example" ] && cp "$dir/.env.example" "release-package/$dir/"
-            [ -f "$dir/README.md" ] && cp "$dir/README.md" "release-package/$dir/"
+            [ -f "$dir/.env.example" ] && cp "$dir/.env.example" "release-package/$dir/" || true
+            [ -f "$dir/README.md" ] && cp "$dir/README.md" "release-package/$dir/" || true
           done
 
-          # Add root files
-          cp README.md release-package/
-          cp LICENSE release-package/
-          cp CHANGELOG.md release-package/
-          cp .env.example release-package/
-
-          # Add install instructions
           cat > release-package/INSTALL.md << 'INSTALLEOF'
           # Installation
 
@@ -72,21 +72,21 @@ jobs:
           - Your bMS server address and credentials
 
           ## Steps
-          1. Extract this archive
-          2. For each server you need, run:
-             cd bconnect-<name>-mcp
-             npm ci --production
-          3. Copy .env.example to .env and fill in your credentials
-          4. Start: node build/index.js
+          1. Extract this archive.
+          2. From the extracted root, install runtime dependencies for the whole suite:
 
-          See README.md for full documentation.
+                 npm ci --omit=dev
+
+             This wires the shared `@bconnect/mcp-core` package that every server imports.
+          3. Copy `.env.example` to `.env` and fill in your credentials.
+          4. Start a server, e.g.:
+
+                 node bconnect-endpoints-mcp/build/index.js
+
+          For the HTTP gateway and Docker options, see README.md and the docs/ folder.
           INSTALLEOF
 
-          cd release-package
-          zip -r "../${ARCHIVE}" .
-          cd ..
-
-          # Generate checksums
+          cd release-package && zip -r "../${ARCHIVE}" . && cd ..
           sha256sum "${ARCHIVE}" > "${ARCHIVE}.sha256"
 
           echo "ARCHIVE=${ARCHIVE}" >> $GITHUB_ENV

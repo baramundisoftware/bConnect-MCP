@@ -8,9 +8,14 @@
 
 ## Getting Help
 
-### GitHub Issues
+> **bConnect-MCP is not supported through baramundi Support.** It is a separate project.
+> Do not contact the baramundi support portal for questions about these MCP servers.
 
-For bugs, unexpected behaviour, or feature requests — open an issue in this repository. Please include:
+For questions, bugs, or feature requests specific to **bConnect-MCP**, contact:
+
+**bernd.wiedemann@baramundi.de**
+
+You can also open a GitHub issue in this repository. Please include:
 
 - bConnect MCP Suite version (`package.json` → `version`)
 - baramundi Management Suite version (`BCONNECT_RELEASE` value)
@@ -18,15 +23,9 @@ For bugs, unexpected behaviour, or feature requests — open an issue in this re
 - Steps to reproduce
 - Relevant log output
 
-### baramundi Support
-
-For questions about the bConnect REST API itself, baramundi licensing, or the baramundi Management Suite:
-
-- **Support portal**: https://www.baramundi.com/en/support/
-- **Documentation**: https://serviceportal.baramundi.com
-
 ## What Is Out of Scope
 
-- Issues with the baramundi Management Suite itself (contact baramundi support)
+- The **baramundi Management Suite** and the **bConnect REST API** themselves — these are a
+  separate baramundi product, not part of bConnect-MCP.
 - General MCP protocol questions (see https://modelcontextprotocol.io)
 - Claude / Anthropic product questions (see https://support.anthropic.com)
