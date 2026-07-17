@@ -133,17 +133,7 @@ The **gateway** (multi-user / n8n) is published as a multi-arch image (linux/amd
 docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
 ```
 
-See [docs/DOCKER.md](docs/DOCKER.md) for the full guide (gateway Compose + building the stdio servers as containers). Running a single stdio server via Docker — only the gateway is published, so build this image locally first (see DOCKER.md):
-
-```bash
-docker run -d \
-  -p 3000:3000 \
-  -e BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
-  -e BCONNECT_API_KEY=your-api-key \
-  -e MCP_TRANSPORT=http \
-  -e MCP_PORT=3000 \
-  bconnect-endpoints-mcp
-```
+Only the gateway is distributed as a container; the 13 stdio servers run via Node.js / Claude Desktop (see [Getting Started](#getting-started-step-by-step) above). See [docs/DOCKER.md](docs/DOCKER.md) for the full gateway guide — Compose, `docker run`, TLS/auth, and mounted secrets.
 
 ---
 
