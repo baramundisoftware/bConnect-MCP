@@ -99,6 +99,10 @@ export interface BConnectConfig {
   apiKey?: string;
   timeout?: number;
 
+  // Path probed by testConnection(). bConnect exposes no global health route, so
+  // this must be a lightweight list endpoint the configured credentials can read.
+  healthCheckPath?: string;
+
   // SSL/TLS Configuration
   rejectUnauthorized?: boolean;  // Reject unauthorized certificates (default: true)
   ca?: string | Buffer | Array<string | Buffer>;  // Custom CA certificate(s)
@@ -149,6 +153,9 @@ export interface BConnectConfig {
 
 export class BConnectClientBase {
   protected client: AxiosInstance;
+  // Probed by testConnection(). WindowsEndpoints exists on every bMS; a domain
+  // whose credentials cannot read it should override via config.healthCheckPath.
+  protected healthCheckPath: string;
   private config: BConnectConfig;
   private rateLimiter: RateLimiter | null = null;
   private auditLogger: AuditLogger | null = null;
@@ -158,6 +165,7 @@ export class BConnectClientBase {
 
   constructor(config: BConnectConfig) {
     this.config = config;
+    this.healthCheckPath = config.healthCheckPath ?? "/v2.0/WindowsEndpoints";
 
     // Resolve the CA trust list. An explicit CA (e.g. BCONNECT_CA_CERT_PATH) always
     // wins. Otherwise, when verification is on, fall back to the OS trust store
@@ -474,8 +482,7 @@ export class BConnectClientBase {
   async testConnection(): Promise<boolean> {
     if (process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK === 'true') {return true;}
     try {
-      // TODO: Replace with a lightweight call to the domain's list endpoint
-      await this.client.get('/info');
+      await this.client.get(this.healthCheckPath, { params: { $top: 1 } });
       return true;
     } catch (error) {
       console.error("Connection test failed:", error);
