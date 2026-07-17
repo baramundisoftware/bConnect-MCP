@@ -31,21 +31,26 @@ git clone https://github.com/baramundisoftware/bConnect-MCP.git
 cd bConnect-MCP
 ```
 
-### Step 2: Build a Server
+### Step 2: Build the Suite
 
-Start with `bconnect-endpoints-mcp` — it covers endpoint management, the most common use case:
+The 13 servers share a common package (`@bconnect/mcp-core`), so they build **together from the repo root** — the shared core first, then the servers. Building a single server directory on its own fails with `Cannot find module '@bconnect/mcp-core'`.
 
 ```bash
-cd bconnect-endpoints-mcp
+# from the repo root (bConnect-MCP) — NOT a server subdirectory
 npm ci
-npm run build
+npm run build -w @bconnect/mcp-core   # build the shared core first
+npm run build                          # then all servers
 ```
+
+> Only need one server? After the `npm ci` + core build above, build just that one:
+> `npm run build -w bconnect-endpoints-mcp`.
 
 ### Step 3: Configure Your bMS Connection
 
-Copy the example config and fill in your values:
+We'll start with `bconnect-endpoints-mcp` (endpoint management — the most common use case). Copy its example config and fill in your values:
 
 ```bash
+cd bconnect-endpoints-mcp
 cp .env.example .env
 ```
 
@@ -337,11 +342,12 @@ Most MCP clients use the same JSON format. Add to your client's configuration fi
 
 ## Build All Servers
 
+From the repo root — install the workspace once, build the shared core, then all servers:
+
 ```bash
-for dir in bconnect-*-mcp; do
-  echo "Building $dir..."
-  (cd "$dir" && npm ci && npm run build)
-done
+npm ci
+npm run build -w @bconnect/mcp-core   # shared core first
+npm run build                          # all servers
 ```
 
 ## Testing
