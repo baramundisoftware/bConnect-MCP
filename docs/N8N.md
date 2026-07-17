@@ -244,9 +244,9 @@ effective reasoning budget for actual work.
 |---------|-------|-----|
 | `404 Unknown MCP domain` | Wrong domain in the URL | Check the URL path matches one of the domains listed above |
 | `405 Method Not Allowed` | GET request sent instead of POST | Ensure the HTTP Request node uses method POST |
-| Gateway not reachable | Network or firewall issue | Verify `curl http://mcp-gateway:3001/health` returns `{"status":"ok"}` |
+| Gateway not reachable | Network or firewall issue | Verify `curl http://mcp-gateway:3001/health` returns `{"status":"ok","servers":[…],"count":13}` |
 | Gateway refuses to start | Non-loopback bind without `MCP_ALLOW_NO_AUTH=true` | Bind loopback, or set `MCP_ALLOW_NO_AUTH=true` once a proxy is in front |
-| Tool call fails with credential error | bConnect rejects the service credential | Verify the `BCONNECT_API_KEY` in `.env.gateway` is valid in baramundi Management Center → Server Management → API Keys |
+| Tool call fails with credential error | bConnect rejects the service credential | Verify the `BCONNECT_API_KEY` (or `BCONNECT_USERNAME`/`BCONNECT_PASSWORD`) in `.env.gateway` is valid in baramundi Management Center → Server Management → API Keys |
 
 ---
 

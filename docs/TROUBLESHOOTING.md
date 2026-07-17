@@ -5,14 +5,15 @@ Complete guide for diagnosing and resolving common issues with the bConnect MCP 
 ## Table of Contents
 
 1. [Quick Diagnostics](#quick-diagnostics)
-2. [Authentication Errors](#authentication-errors)
-3. [Network & Connection Errors](#network--connection-errors)
-4. [API Errors (4xx / 5xx)](#api-errors-4xx--5xx)
-5. [Configuration Issues](#configuration-issues)
-6. [MCP Tool Errors](#mcp-tool-errors)
-7. [Performance Issues](#performance-issues)
-8. [Debugging Techniques](#debugging-techniques)
-9. [Getting Help](#getting-help)
+2. [Build Errors](#build-errors)
+3. [Authentication Errors](#authentication-errors)
+4. [Network & Connection Errors](#network--connection-errors)
+5. [API Errors (4xx / 5xx)](#api-errors-4xx--5xx)
+6. [Configuration Issues](#configuration-issues)
+7. [MCP Tool Errors](#mcp-tool-errors)
+8. [Performance Issues](#performance-issues)
+9. [Debugging Techniques](#debugging-techniques)
+10. [Getting Help](#getting-help)
 
 ---
 
@@ -46,6 +47,25 @@ BCONNECT_RELEASE=26R1          # or 25R2
 curl -k -u "username:password" \
   "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
 ```
+
+---
+
+## Build Errors
+
+### Error: `TS2307: Cannot find module '@bconnect/mcp-core'`
+
+**Cause:** You tried to build a **single server directory** (e.g. `cd bconnect-endpoints-mcp && npm ci && npm run build`). The suite is an npm workspaces monorepo — every server imports the shared `@bconnect/mcp-core` package, which must be built from the repo **root**, core first. A server directory cannot be built on its own.
+
+**Solution:** Build from the repository root:
+
+```bash
+cd bConnect-MCP          # the repo root, NOT a server subdirectory
+npm ci
+npm run build -w @bconnect/mcp-core   # build the shared core first
+npm run build                          # then all servers (or -w bconnect-endpoints-mcp for one)
+```
+
+> Prefer to skip building? Download the pre-built `bconnect-mcp-suite-<version>.zip` from the [Releases page](https://github.com/baramundisoftware/bConnect-MCP/releases) — it ships compiled output; just run `npm ci --omit=dev` at the extracted root.
 
 ---
 

@@ -26,6 +26,10 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 
 ### Step 1: Download
 
+**Prefer a pre-built download?** Grab the latest `bconnect-mcp-suite-<version>.zip` from the [**Releases page**](https://github.com/baramundisoftware/bConnect-MCP/releases) — it ships the compiled output, so you can **skip the build (Step 2)**: extract it, run `npm ci --omit=dev` at the extracted root, then jump to Step 3. See the bundled `INSTALL.md`.
+
+To build from source instead:
+
 ```bash
 git clone https://github.com/baramundisoftware/bConnect-MCP.git
 cd bConnect-MCP
@@ -123,7 +127,13 @@ Restart your AI assistant. You can now ask it questions like:
 
 ## Docker Deployment
 
-See [docs/DOCKER.md](docs/DOCKER.md) for the full guide. Quick start:
+The **gateway** (multi-user / n8n) is published as a multi-arch image (linux/amd64 + arm64) on GHCR — browse it on the [**Packages page**](https://github.com/orgs/baramundisoftware/packages?repo_name=bConnect-MCP):
+
+```bash
+docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
+```
+
+See [docs/DOCKER.md](docs/DOCKER.md) for the full guide (gateway Compose + building the stdio servers as containers). Running a single stdio server via Docker — only the gateway is published, so build this image locally first (see DOCKER.md):
 
 ```bash
 docker run -d \
@@ -393,7 +403,7 @@ See [SECURITY.md](SECURITY.md) for the full security policy.
 
 ## Architecture
 
-Each server is an independent Node.js process. Servers share no state — each connects directly to the bConnect REST API.
+Each server is an independent Node.js process that connects directly to the bConnect REST API. Servers share no **runtime** state — but they are built from a shared code library (`@bconnect/mcp-core`); see [Repository layout](#repository-layout) below.
 
 ```
 AI Assistant (Claude, VS Code, etc.)
@@ -410,6 +420,27 @@ AI Assistant (Claude, VS Code, etc.)
     ├── bconnect-compliance-mcp             → CVE vulnerabilities (26R1 only)
     ├── bconnect-universaldynamicgroups-mcp → Dynamic groups (26R1 only)
     └── bconnect-updatemanagement-mcp       → Windows Update management
+```
+
+### Repository layout
+
+This repo is an **npm workspaces monorepo**: all workspace members share one root `package-lock.json` and a common library, which is why builds run from the root (`@bconnect/mcp-core` first, then the servers).
+
+```
+bConnect-MCP/
+├── packages/
+│   └── mcp-core/              @bconnect/mcp-core — the shared library every server
+│                             imports: BConnectClientBase (HTTP / auth / TLS / retry),
+│                             parameter validation, rate limiting, audit logging,
+│                             response caching, batch operations.
+├── bconnect-endpoints-mcp/   ┐  the 13 domain MCP servers (stdio) — each a workspace
+│   … (13 servers) …          │  member depending on @bconnect/mcp-core. A fix in the
+├── bconnect-variables-mcp/   ┘  core applies to all 13 at once.
+├── bconnect-server-template/    scaffold for adding a new server (workspace member)
+├── bconnect-mcp-gateway/        optional HTTP gateway (multi-user / n8n); NOT a
+│                                workspace member — it bundles the core + all servers.
+├── docs/                        installation, Docker, n8n, troubleshooting
+└── scripts/                     local CI, image publish, release (see package.json)
 ```
 
 ## Contributing

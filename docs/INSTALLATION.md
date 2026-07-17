@@ -1,6 +1,6 @@
 # Installation Guide — bConnect MCP Suite
 
-This guide covers installing and configuring the bConnect MCP Suite (13 servers) on Linux, Windows, and Docker.
+This guide covers installing and configuring the bConnect MCP Suite (13 servers on 26R1; 11 on 25R2) on Linux, Windows, and Docker.
 
 ## Prerequisites
 
@@ -49,7 +49,15 @@ for teams and n8n.
 
 #### Step 1 — Build the gateway
 
+The gateway depends on the shared `@bconnect/mcp-core` package, so build the core
+from the repo **root** first, then the gateway:
+
 ```bash
+# from the repo root — build the shared core first
+npm ci
+npm run build -w @bconnect/mcp-core
+
+# then build the gateway
 cd bconnect-mcp-gateway
 npm ci
 npm run build
