@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **`BCONNECT_RELEASE` now defaults to `26R1`** (was `25R2`), matching the documented
+  default and the advertised tool counts (e.g. 66 endpoints tools, 276 total). Following
+  the README with no `BCONNECT_RELEASE` set previously registered the smaller 25R2 subset
+  (60 endpoints tools) silently. Set `BCONNECT_RELEASE=25R2` explicitly on older servers;
+  the 26R1-only tools 404 there. Added `BCONNECT_RELEASE` to the endpoints/jobs
+  `.env.example` files.
+
 ### Removed
 - **Per-server container files** (aligning with ADR-0003 — only the gateway is
   distributed as a container; the 13 servers run over stdio via Node/Claude Desktop).

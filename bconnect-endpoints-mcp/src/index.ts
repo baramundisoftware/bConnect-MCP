@@ -34,7 +34,7 @@ export interface BConnectCredentials {
 }
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
-  const release = process.env.BCONNECT_RELEASE ?? "25R2";
+  const release = process.env.BCONNECT_RELEASE ?? "26R1";
   const is26R1 = release === "26R1";
 
   const server = new Server(
