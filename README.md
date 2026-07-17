@@ -80,6 +80,9 @@ BCONNECT_RELEASE=26R1
 
 ### Step 4: Start the Server
 
+From the `bconnect-endpoints-mcp` directory (where you are after Step 3 — it holds
+your `.env` and the `build/` output):
+
 ```bash
 node build/index.js
 ```
@@ -88,16 +91,17 @@ You should see: `bconnect-endpoints-mcp running on stdio`
 
 ### Step 5: Verify It Works
 
-In another terminal, send a test request:
+In another terminal, send a test request. Run this **from the repo root** and point at
+the server's build output — credentials are passed inline, so no `.env` is needed:
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
   BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
   BCONNECT_API_KEY=your-api-key \
-  node build/index.js
+  node bconnect-endpoints-mcp/build/index.js
 ```
 
-You should see a JSON response listing all available tools (e.g. `list_windows_endpoints`, `get_endpoint_by_id`, etc.).
+You should see a JSON response listing all available tools (e.g. `list_windows_endpoints`, `get_endpoint_by_id`, etc.). (`build/index.js` lives inside each **server** directory, never at the repo root.)
 
 ### Step 6: Connect to Your AI Assistant
 
@@ -297,13 +301,14 @@ For using the gateway from **n8n workflows**, see [docs/N8N.md](docs/N8N.md).
 
 ### Centralized Server (HTTP, single credential set)
 
-Run a single server on a central machine when all users share one bConnect credential:
+Run a single server on a central machine when all users share one bConnect credential
+(from the repo root — point at the server's build output):
 
 ```bash
 MCP_TRANSPORT=http MCP_PORT=3000 \
 BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
 BCONNECT_API_KEY=your-api-key \
-node build/index.js
+node bconnect-endpoints-mcp/build/index.js
 ```
 
 Then configure each workstation's AI assistant to connect to the central server:
