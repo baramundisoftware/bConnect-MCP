@@ -5,6 +5,24 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Removed
+- **Per-server container files** (aligning with ADR-0003 — only the gateway is
+  distributed as a container; the 13 servers run over stdio via Node/Claude Desktop).
+  Removed `docker-compose.yml`, the 13 per-server `Dockerfile`s, and
+  `build-tests/docker-smoke.test.sh`. These built each server from its own directory,
+  which stopped working after the workspace refactor (no per-server lockfile;
+  `@bconnect/mcp-core` is a private `file:` dependency). The gateway image
+  (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
+
+### Fixed
+- **esbuild** dev dependency bumped `0.27.7` → `0.28.1` (Dependabot alerts; dev-only).
+- **TLS: honor the OS/client CA trust store on Node ≥ 22.15** (issue #59) — an
+  already-trusted enterprise CA now works without a manual export; clearer TLS errors.
+- **Docs** actualized: build-from-root (workspaces) instructions, Node 22 baseline,
+  gateway-only Docker guide, credentials-at-rest hardening, and a Repository layout section.
+
 ## [26.1.7] - 2026-07-14
 
 > Version bumped `26.1.5` → `26.1.7` across the suite (26.1.6 was documented but
