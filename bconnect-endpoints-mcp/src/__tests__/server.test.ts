@@ -7,7 +7,7 @@
  * And does NOT contain tools from any other domain server.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 
 import { createServer } from '../index.js';
 
@@ -97,8 +97,8 @@ const ENDPOINTS_TOOLS_26R1_ONLY = [
   'unlink_entra_id_data',
 ] as const;
 
-const ALL_EXPECTED_TOOLS: string[] = [...ENDPOINTS_TOOLS];
-const _ALL_EXPECTED_TOOLS_26R1: string[] = [...ENDPOINTS_TOOLS, ...ENDPOINTS_TOOLS_26R1_ONLY];
+// The default is BCONNECT_RELEASE=26R1, so the full set includes the 26R1-only tools.
+const ALL_EXPECTED_TOOLS: string[] = [...ENDPOINTS_TOOLS, ...ENDPOINTS_TOOLS_26R1_ONLY];
 
 // ── Tool names that must NOT appear in this server ─────────────────────────
 
@@ -252,6 +252,11 @@ async function getToolNames(): Promise<string[]> {
 
 // ── Test suite ─────────────────────────────────────────────────────────────
 
+// Keep the default (26R1) for most tests; the explicit-25R2 case restores it.
+afterEach(() => {
+  delete process.env.BCONNECT_RELEASE;
+});
+
 describe('bconnect-endpoints-mcp server — tool registration', () => {
   describe('listTools() response', () => {
     it('contains all expected endpoints module tools', async () => {
@@ -262,16 +267,21 @@ describe('bconnect-endpoints-mcp server — tool registration', () => {
       }
     });
 
-    it('returns exactly 60 tools in 25R2 mode (endpoints module, no 26R1-only)', async () => {
+    it('returns all endpoints tools in default (26R1) mode, including 26R1-only', async () => {
       const toolNames = await getToolNames();
 
-      // Without BCONNECT_RELEASE=26R1, 26R1-only tools (unmanaged, EntraID) are excluded
+      // Default is BCONNECT_RELEASE=26R1, so the 26R1-only tools (unmanaged, EntraID) are included.
       expect(toolNames).toHaveLength(ALL_EXPECTED_TOOLS.length);
+      for (const tool of ENDPOINTS_TOOLS_26R1_ONLY) {
+        expect(toolNames, `26R1-only tool "${tool}" should appear in default (26R1) mode`).toContain(tool);
+      }
     });
 
-    it('does not contain 26R1-only tools in default (25R2) mode', async () => {
+    it('excludes 26R1-only tools when BCONNECT_RELEASE=25R2', async () => {
+      process.env.BCONNECT_RELEASE = '25R2';
       const toolNames = await getToolNames();
 
+      expect(toolNames).toHaveLength(ENDPOINTS_TOOLS.length);
       for (const tool of ENDPOINTS_TOOLS_26R1_ONLY) {
         expect(toolNames, `26R1-only tool "${tool}" must NOT appear in 25R2 mode`).not.toContain(tool);
       }
