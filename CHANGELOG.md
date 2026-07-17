@@ -17,6 +17,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Startup connectivity check.** `BConnectClientBase.testConnection()` probed a
+  non-existent `/info` route (always 404) — latent because every deployment either set
+  `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` or ran the gateway (which never probes). A
+  standalone server started from a plain `.env` (no skip flag) failed at startup. It now
+  probes a real lightweight list endpoint (`/v2.0/WindowsEndpoints?$top=1`), overridable
+  via `healthCheckPath` for credentials scoped away from endpoints.
 - **esbuild** dev dependency bumped `0.27.7` → `0.28.1` (Dependabot alerts; dev-only).
 - **TLS: honor the OS/client CA trust store on Node ≥ 22.15** (issue #59) — an
   already-trusted enterprise CA now works without a manual export; clearer TLS errors.
