@@ -22,10 +22,12 @@ This guide covers installing and configuring the bConnect MCP Suite (13 servers)
 git clone <repository-url> bConnect-MCP
 cd bConnect-MCP
 
-# 2. Install dependencies for each server you need
-cd bconnect-endpoints-mcp && npm ci && npm run build && cd ..
-cd bconnect-assets-mcp    && npm ci && npm run build && cd ..
-# Repeat for each server you want to use
+# 2. Build from the repo ROOT. The servers import the shared @bconnect/mcp-core
+#    package, so build the core first, then the servers — a single server
+#    directory cannot be built on its own.
+npm ci
+npm run build -w @bconnect/mcp-core     # shared core first
+npm run build                            # all servers (or -w bconnect-endpoints-mcp for one)
 
 # 3. Configure credentials (see Configuration section below)
 ```
