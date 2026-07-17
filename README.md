@@ -46,6 +46,10 @@ npm run build -w @bconnect/mcp-core   # build the shared core first
 npm run build                          # then all servers
 ```
 
+> **On Windows:** run these from **Git Bash**, not PowerShell or cmd. `npm run build` loops over the
+> server directories using shell syntax that `cmd.exe` cannot parse, so PowerShell and cmd fail with
+> `d was unexpected at this time`. Git Bash ships with [Git for Windows](https://gitforwindows.org/).
+
 > Only need one server? After the `npm ci` + core build above, build just that one:
 > `npm run build -w bconnect-endpoints-mcp`.
 
@@ -377,6 +381,10 @@ npm ci
 npm run build -w @bconnect/mcp-core   # shared core first
 npm run build                          # all servers
 ```
+
+> **On Windows:** run these from **Git Bash** — `npm run build` uses shell syntax `cmd.exe` cannot
+> parse, so PowerShell and cmd fail with `d was unexpected at this time`. Same applies to
+> `npm run audit` and `npm run sbom`.
 
 ## Testing
 
