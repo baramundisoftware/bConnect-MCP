@@ -28,7 +28,7 @@ cd bconnect-endpoints-mcp
 node build/index.js
 ```
 
-Expected output: `bconnect-endpoints-mcp running on stdio`
+Expected output: `bconnect-endpoints-mcp started on stdio`
 
 ### Verify Configuration
 

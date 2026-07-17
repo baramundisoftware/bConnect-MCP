@@ -87,7 +87,13 @@ your `.env` and the `build/` output):
 node build/index.js
 ```
 
-You should see: `bconnect-endpoints-mcp running on stdio`
+You should see (these status lines go to **stderr**):
+
+```
+bconnect-endpoints-mcp: verifying bConnect API connectivity...
+bconnect-endpoints-mcp: API connectivity verified.
+bconnect-endpoints-mcp started on stdio
+```
 
 ### Step 5: Verify It Works
 
@@ -101,11 +107,11 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
   node bconnect-endpoints-mcp/build/index.js
 ```
 
-You should see a JSON response listing all available tools (e.g. `list_windows_endpoints`, `get_endpoint_by_id`, etc.). (`build/index.js` lives inside each **server** directory, never at the repo root.)
+You should see a JSON response listing all available tools (e.g. `list_windows_endpoints`, `get_windows_endpoint`, etc.). (`build/index.js` lives inside each **server** directory, never at the repo root.)
 
 ### Step 6: Connect to Your AI Assistant
 
-Add the server to your AI assistant's MCP configuration. Example for Claude Desktop — edit `claude_desktop_config.json`:
+**Claude Desktop** — edit `claude_desktop_config.json`:
 
 ```json
 {
@@ -115,12 +121,29 @@ Add the server to your AI assistant's MCP configuration. Example for Claude Desk
       "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
       "env": {
         "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
-        "BCONNECT_API_KEY": "your-api-key"
+        "BCONNECT_API_KEY": "your-api-key",
+        "BCONNECT_RELEASE": "26R1"
       }
     }
   }
 }
 ```
+
+**Claude Code (CLI)** — register the server with `claude mcp add` (use an **absolute** path to `build/index.js`):
+
+```bash
+claude mcp add bconnect-endpoints \
+  --scope user \
+  --env BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
+  --env BCONNECT_API_KEY=your-api-key \
+  --env BCONNECT_RELEASE=26R1 \
+  -- node /path/to/bconnect-endpoints-mcp/build/index.js
+```
+
+> **Scope matters.** The default `--scope local` keys the config to the directory you
+> run `claude` from, so the server loads only in that project (and won't appear if you
+> start `claude` elsewhere). Use `--scope user` to make it available in every project,
+> or `--scope project` to commit it to the repo's `.mcp.json` for the team.
 
 Restart your AI assistant. You can now ask it questions like:
 - *"List all Windows endpoints"*

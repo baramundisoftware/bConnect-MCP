@@ -418,7 +418,7 @@ Start a server and confirm it responds:
 ```bash
 cd bconnect-endpoints-mcp
 node build/index.js
-# Expected: bconnect-endpoints-mcp running on stdio
+# Expected: bconnect-endpoints-mcp started on stdio
 ```
 
 Test API connectivity:
