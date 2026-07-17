@@ -44,7 +44,7 @@ curl http://localhost:3001/health
 
 ## Building Images
 
-Each server has its own `Dockerfile` based on `node:20-alpine` with a non-root user.
+Each server has its own `Dockerfile` based on `node:22-alpine` with a non-root user.
 
 ```bash
 # Build a single server
@@ -198,7 +198,7 @@ request rate. Tune via `.env.gateway`: `MCP_GATEWAY_MEM_LIMIT` (default `512m`) 
 
 ### Reproducible base images
 
-All Dockerfiles pin `node:20-alpine` to a SHA256 **digest** (audit M3), so image builds
+All Dockerfiles pin `node:22-alpine` to a SHA256 **digest** (audit M3), so image builds
 are reproducible and don't silently absorb upstream base-image changes. Dependabot bumps
 the digest like any other dependency.
 
