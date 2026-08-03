@@ -46,9 +46,9 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@types/node-cache": "^4.2.5",
-    "axios": "^1.18.1",
+    "axios": "^1.19.0",
     "axios-retry": "^4.5.0",
     "dotenv": "^16.4.0",
     "limiter": "^3.0.0",
@@ -58,7 +58,7 @@
     "winston": "^3.18.3"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-arm64-gnu": "^4.62.2"
+    "@rollup/rollup-linux-arm64-gnu": "^4.62.3"
   },
   "devDependencies": {
     "@cyclonedx/cyclonedx-npm": "^6.0.0",
