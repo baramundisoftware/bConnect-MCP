@@ -11,10 +11,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all android endpoints */
+        /**
+         * Gets all android endpoints
+         * @description Powershell function: `Get-bCEndpointsAndroidEndpoints`
+         */
         get: operations["GetAndroidEndpoints"];
         put?: never;
-        /** Creates an android endpoint according to the specified properties */
+        /**
+         * Creates an android endpoint according to the specified properties
+         * @description Powershell function: `New-bCEndpointsAndroidEndpoint`
+         */
         post: operations["CreateAndroidEndpoint"];
         delete?: never;
         options?: never;
@@ -29,15 +35,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets an android endpoint by id */
+        /**
+         * Gets an android endpoint by id
+         * @description Powershell function: `Get-bCEndpointsAndroidEndpoint`
+         */
         get: operations["GetAndroidEndpoint"];
         put?: never;
         post?: never;
-        /** Deletes an endpoint by id */
+        /**
+         * Deletes an endpoint by id
+         * @description Powershell function: `Remove-bCEndpointsAndroidEndpoint`
+         */
         delete: operations["DeleteAndroidEndpoint"];
         options?: never;
         head?: never;
-        /** Modifies an android endpoint according to the specified properties */
+        /**
+         * Modifies an android endpoint according to the specified properties
+         * @description Powershell function: `Update-bCEndpointsAndroidEndpoint`
+         */
         patch: operations["UpdateAndroidEndpoint"];
         trace?: never;
     };
@@ -48,7 +63,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all android endpoints contained by a logical group */
+        /**
+         * Gets all android endpoints contained by a logical group
+         * @description Powershell function: `Get-bCEndpointsAndroidEndpointsByLogicalGroupId`
+         */
         get: operations["GetAndroidEndpointsByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -65,7 +83,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all android endpoints contained by a static group */
+        /**
+         * Gets all android endpoints contained by a static group
+         * @description Powershell function: `Get-bCEndpointsAndroidEndpointsByStaticGroupId`
+         */
         get: operations["GetAndroidEndpointsByStaticGroupId"];
         put?: never;
         post?: never;
@@ -82,7 +103,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all android endpoints assigned to a specific registered user */
+        /**
+         * Gets all android endpoints assigned to a specific registered user
+         * @description Powershell function: `Get-bCEndpointsAndroidEndpointsByADObjectId`
+         */
         get: operations["GetAndroidEndpointsByADObjectId"];
         put?: never;
         post?: never;
@@ -99,7 +123,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all android endpoints contained by a universal dynamic group */
+        /**
+         * Gets all android endpoints contained by a universal dynamic group
+         * @description Powershell function: `Get-bCEndpointsAndroidEndpointsByUniversalDynamicGroupId`
+         */
         get: operations["GetAndroidEndpointsByUniversalDynamicGroupId"];
         put?: never;
         post?: never;
@@ -118,7 +145,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Provides functionality to trigger enrollment state of a Android endpoint.By specifying an e-mail recipient, you can also have a corresponding e-mail with the enrollment information sent automatically.The EmailLanguageId holds the identifier of the email template, which will be used for the email enrollment message sent to the recipient.By default “de-DE” and “en-US” are available. If this property is not set, the Email template with the Id “en-US” will be used. */
+        /**
+         * Provides functionality to trigger enrollment state of a Android endpoint.By specifying an e-mail recipient, you can also have a corresponding e-mail with the enrollment information sent automatically.The EmailLanguageId holds the identifier of the email template, which will be used for the email enrollment message sent to the recipient.By default “de-DE” and “en-US” are available. If this property is not set, the Email template with the Id “en-US” will be used.
+         * @description Powershell function: `Start-bCEndpointsAndroidEndpointEnrollment`
+         */
         post: operations["StartAndroidEndpointEnrollment"];
         delete?: never;
         options?: never;
@@ -133,7 +163,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all endpoints */
+        /**
+         * Gets all endpoints
+         * @description Powershell function: `Get-bCEndpointsEndpoints`
+         */
         get: operations["GetEndpoints"];
         put?: never;
         post?: never;
@@ -150,11 +183,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets an endpoint by id */
+        /**
+         * Gets an endpoint by id
+         * @description Powershell function: `Get-bCEndpointsEndpoint`
+         */
         get: operations["GetEndpoint"];
         put?: never;
         post?: never;
-        /** Deletes an endpoint by id */
+        /**
+         * Deletes an endpoint by id
+         * @description Powershell function: `Remove-bCEndpointsEndpoint`
+         */
         delete: operations["DeleteEndpoint"];
         options?: never;
         head?: never;
@@ -168,7 +207,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all endpoints assigned to a specific registered user */
+        /**
+         * Gets all endpoints assigned to a specific registered user
+         * @description Powershell function: `Get-bCEndpointsEndpointsByADObjectId`
+         */
         get: operations["GetEndpointsByADObjectId"];
         put?: never;
         post?: never;
@@ -185,7 +227,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all endpoints contained by a logical group */
+        /**
+         * Gets all endpoints contained by a logical group
+         * @description Powershell function: `Get-bCEndpointsEndpointsByLogicalGroupId`
+         */
         get: operations["GetEndpointsByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -202,7 +247,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all endpoints contained by a static group */
+        /**
+         * Gets all endpoints contained by a static group
+         * @description Powershell function: `Get-bCEndpointsEndpointsByStaticGroupId`
+         */
         get: operations["GetEndpointsByStaticGroupId"];
         put?: never;
         post?: never;
@@ -219,7 +267,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all endpoints contained by a dynamic group */
+        /**
+         * Gets all endpoints contained by a dynamic group
+         * @description Powershell function: `Get-bCEndpointsEndpointsByDynamicGroupId`
+         */
         get: operations["GetEndpointsByDynamicGroupId"];
         put?: never;
         post?: never;
@@ -236,7 +287,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all endpoints contained by a universal dynamic group */
+        /**
+         * Gets all endpoints contained by a universal dynamic group
+         * @description Powershell function: `Get-bCEndpointsEndpointsByUniversalDynamicGroupId`
+         */
         get: operations["GetEndpointsByUniversalDynamicGroupId"];
         put?: never;
         post?: never;
@@ -253,99 +307,67 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets the maintenance window of the endpoint */
+        /**
+         * Gets the maintenance window of the endpoint
+         * @description Powershell function: `Get-bCEndpointsMaintenanceWindowForEndpointById`
+         */
         get: operations["GetMaintenanceWindowForEndpointById"];
-        /** Updates the maintenance window of the endpoint */
-        put: operations["UpdateMaintenanceWindowForEndpointById"];
-        /** Creates a maintenance window for the endpoint */
+        put?: never;
+        /**
+         * Creates a maintenance window for the endpoint
+         * @description Powershell function: `New-bCEndpointsMaintenanceWindowForEndpointById`
+         */
         post: operations["CreateMaintenanceWindowForEndpointById"];
-        /** Deletes the maintenance window of the endpoint */
+        /**
+         * Deletes the maintenance window of the endpoint
+         * @description Powershell function: `Remove-bCEndpointsMaintenanceWindowForEndpointById`
+         */
         delete: operations["DeleteMaintenanceWindowForEndpointById"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Updates the maintenance window of the endpoint
+         * @description Powershell function: `Update-bCEndpointsMaintenanceWindowForEndpointById`
+         */
+        patch: operations["UpdateMaintenanceWindowForEndpointById"];
         trace?: never;
     };
-    "/v2.0/IndustrialEndpoints": {
+    "/v2.0/Endpoints/{endpointId}/EntraIdData": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Gets all industrial endpoints */
-        get: operations["GetIndustrialEndpoints"];
+        get?: never;
         put?: never;
-        /** Creates an industrial endpoint according to the specified properties */
-        post: operations["CreateIndustrialEndpoint"];
-        delete?: never;
+        /**
+         * (Temporary method) Create or update EntraIdEndpointData
+         * @description Powershell function: `Set-bCEndpointsEntraIdEndpointData`
+         */
+        post: operations["SetEntraIdEndpointData"];
+        /**
+         * (Temporary method) Deletes EntraIdEndpointData by endpoint id
+         * @description Powershell function: `Remove-bCEndpointsEntraIdEndpointData`
+         */
+        delete: operations["DeleteEntraIdEndpointData"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/v2.0/IndustrialEndpoints/{id}": {
+    "/v2.0/EntraIdData/{deviceId}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Gets an industrial endpoint by id */
-        get: operations["GetIndustrialEndpoint"];
-        put?: never;
-        post?: never;
-        /** Deletes an endpoint by id */
-        delete: operations["DeleteIndustrialEndpoint"];
-        options?: never;
-        head?: never;
-        /** Updates an industrial endpoint according to the specified properties */
-        patch: operations["UpdateIndustrialEndpoint"];
-        trace?: never;
-    };
-    "/v2.0/LogicalGroups/{logicalGroupId}/IndustrialEndpoints": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Gets all industrial endpoints contained by a logical group */
-        get: operations["GetIndustrialEndpointsByLogicalGroupId"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v2.0/StaticGroups/{staticGroupId}/IndustrialEndpoints": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Gets all industrial endpoints contained by a static group */
-        get: operations["GetIndustrialEndpointsByStaticGroupId"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/IndustrialEndpoints": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Gets all industrial endpoints contained by a universal dynamic group */
-        get: operations["GetIndustrialEndpointsByUniversalDynamicGroupId"];
+        /**
+         * (Temporary method) Gets the Entra ID endpoint data for a mobile device by it's Entra ID device ID
+         * @description Powershell function: `Get-bCEndpointsEntraIdEndpointDataByDeviceId`
+         */
+        get: operations["GetEntraIdEndpointDataByDeviceId"];
         put?: never;
         post?: never;
         delete?: never;
@@ -361,10 +383,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all iOS endpoints */
+        /**
+         * Gets all iOS endpoints
+         * @description Powershell function: `Get-bCEndpointsIOSEndpoints`
+         */
         get: operations["GetIOSEndpoints"];
         put?: never;
-        /** Creates an iOS endpoint according to the specified properties */
+        /**
+         * Creates an iOS endpoint according to the specified properties
+         * @description Powershell function: `New-bCEndpointsIOSEndpoint`
+         */
         post: operations["CreateIOSEndpoint"];
         delete?: never;
         options?: never;
@@ -379,15 +407,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets an iOS endpoint by id */
+        /**
+         * Gets an iOS endpoint by id
+         * @description Powershell function: `Get-bCEndpointsIOSEndpoint`
+         */
         get: operations["GetIOSEndpoint"];
         put?: never;
         post?: never;
-        /** Deletes an endpoint by id */
+        /**
+         * Deletes an endpoint by id
+         * @description Powershell function: `Remove-bCEndpointsIOSEndpoint`
+         */
         delete: operations["DeleteIOSEndpoint"];
         options?: never;
         head?: never;
-        /** Modifies an iOS endpoint according to the specified properties */
+        /**
+         * Modifies an iOS endpoint according to the specified properties
+         * @description Powershell function: `Update-bCEndpointsIOSEndpoint`
+         */
         patch: operations["UpdateIOSEndpoint"];
         trace?: never;
     };
@@ -398,7 +435,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all iOS endpoints contained by a logical group */
+        /**
+         * Gets all iOS endpoints contained by a logical group
+         * @description Powershell function: `Get-bCEndpointsIOSEndpointsByLogicalGroupId`
+         */
         get: operations["GetIOSEndpointsByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -415,7 +455,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all iOS endpoints contained by a static group */
+        /**
+         * Gets all iOS endpoints contained by a static group
+         * @description Powershell function: `Get-bCEndpointsIOSEndpointsByStaticGroupId`
+         */
         get: operations["GetIOSEndpointsByStaticGroupId"];
         put?: never;
         post?: never;
@@ -432,7 +475,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all iOS endpoints assigned to a specific registered user */
+        /**
+         * Gets all iOS endpoints assigned to a specific registered user
+         * @description Powershell function: `Get-bCEndpointsIOSEndpointsByADObjectId`
+         */
         get: operations["GetIOSEndpointsByADObjectId"];
         put?: never;
         post?: never;
@@ -449,7 +495,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all iOS endpoints contained by a universal dynamic group */
+        /**
+         * Gets all iOS endpoints contained by a universal dynamic group
+         * @description Powershell function: `Get-bCEndpointsIOSEndpointsByUniversalDynamicGroupId`
+         */
         get: operations["GetIOSEndpointsByUniversalDynamicGroupId"];
         put?: never;
         post?: never;
@@ -468,7 +517,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Provides functionality to trigger enrollment state of a iOS endpoint.By specifying an e-mail recipient, you can also have a corresponding e-mail with the enrollment information sent automatically.The EmailLanguageId holds the identifier of the email template, which will be used for the email enrollment message sent to the recipient.By default “de-DE” and “en-US” are available. If this property is not set, the Email template with the Id “en-US” will be used. */
+        /**
+         * Provides functionality to trigger enrollment state of a iOS endpoint.By specifying an e-mail recipient, you can also have a corresponding e-mail with the enrollment information sent automatically.The EmailLanguageId holds the identifier of the email template, which will be used for the email enrollment message sent to the recipient.By default “de-DE” and “en-US” are available. If this property is not set, the Email template with the Id “en-US” will be used.
+         * @description Powershell function: `Start-bCEndpointsIosEndpointEnrollment`
+         */
         post: operations["StartIosEndpointEnrollment"];
         delete?: never;
         options?: never;
@@ -483,10 +535,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all Linux endpoints */
+        /**
+         * Gets all Linux endpoints
+         * @description Powershell function: `Get-bCEndpointsLinuxEndpoints`
+         */
         get: operations["GetLinuxEndpoints"];
         put?: never;
-        /** Creates a Linux endpoint according to the specified properties */
+        /**
+         * Creates a Linux endpoint according to the specified properties
+         * @description Powershell function: `New-bCEndpointsLinuxEndpoint`
+         */
         post: operations["CreateLinuxEndpoint"];
         delete?: never;
         options?: never;
@@ -501,15 +559,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a Linux endpoint by ID */
+        /**
+         * Gets a Linux endpoint by ID
+         * @description Powershell function: `Get-bCEndpointsLinuxEndpoint`
+         */
         get: operations["GetLinuxEndpoint"];
         put?: never;
         post?: never;
-        /** Deletes an endpoint by ID */
+        /**
+         * Deletes an endpoint by ID
+         * @description Powershell function: `Remove-bCEndpointsLinuxEndpoint`
+         */
         delete: operations["DeleteLinuxEndpoint"];
         options?: never;
         head?: never;
-        /** Updates a Linux endpoint according to the specified properties */
+        /**
+         * Updates a Linux endpoint according to the specified properties
+         * @description Powershell function: `Update-bCEndpointsLinuxEndpoint`
+         */
         patch: operations["UpdateLinuxEndpoint"];
         trace?: never;
     };
@@ -520,7 +587,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all Linux endpoints assigned to a specific AD user */
+        /**
+         * Gets all Linux endpoints assigned to a specific AD user
+         * @description Powershell function: `Get-bCEndpointsLinuxEndpointsByADObjectId`
+         */
         get: operations["GetLinuxEndpointsByADObjectId"];
         put?: never;
         post?: never;
@@ -537,7 +607,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all Linux endpoints contained by a logical group */
+        /**
+         * Gets all Linux endpoints contained by a logical group
+         * @description Powershell function: `Get-bCEndpointsLinuxEndpointsByLogicalGroupId`
+         */
         get: operations["GetLinuxEndpointsByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -554,7 +627,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all Linux endpoints contained by a static group */
+        /**
+         * Gets all Linux endpoints contained by a static group
+         * @description Powershell function: `Get-bCEndpointsLinuxEndpointsByStaticGroupId`
+         */
         get: operations["GetLinuxEndpointsByStaticGroupId"];
         put?: never;
         post?: never;
@@ -571,7 +647,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all Linux endpoints contained by a universal dynamic group */
+        /**
+         * Gets all Linux endpoints contained by a universal dynamic group
+         * @description Powershell function: `Get-bCEndpointsLinuxEndpointsByUniversalDynamicGroupId`
+         */
         get: operations["GetLinuxEndpointsByUniversalDynamicGroupId"];
         put?: never;
         post?: never;
@@ -588,10 +667,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all logical groups */
+        /**
+         * Gets all logical groups
+         * @description Powershell function: `Get-bCEndpointsLogicalGroups`
+         */
         get: operations["GetLogicalGroups"];
         put?: never;
-        /** Creates a logical group according to the specified properties */
+        /**
+         * Creates a logical group according to the specified properties
+         * @description Powershell function: `New-bCEndpointsLogicalGroup`
+         */
         post: operations["CreateLogicalGroup"];
         delete?: never;
         options?: never;
@@ -606,15 +691,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a logical group by id */
+        /**
+         * Gets a logical group by id
+         * @description Powershell function: `Get-bCEndpointsLogicalGroup`
+         */
         get: operations["GetLogicalGroup"];
         put?: never;
         post?: never;
-        /** Deletes a logical group by id. Group must be empty in order to be deleted */
+        /**
+         * Deletes a logical group by id. Group must be empty in order to be deleted
+         * @description Powershell function: `Remove-bCEndpointsLogicalGroup`
+         */
         delete: operations["DeleteLogicalGroup"];
         options?: never;
         head?: never;
-        /** Updates a logical group according to the specified properties */
+        /**
+         * Updates a logical group according to the specified properties
+         * @description Powershell function: `Update-bCEndpointsLogicalGroup`
+         */
         patch: operations["UpdateLogicalGroup"];
         trace?: never;
     };
@@ -625,7 +719,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all logical groups contained by a logical group */
+        /**
+         * Gets all logical groups contained by a logical group
+         * @description Powershell function: `Get-bCEndpointsLogicalGroupsByLogicalGroupId`
+         */
         get: operations["GetLogicalGroupsByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -642,17 +739,29 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets the maintenance window of the logical group */
+        /**
+         * Gets the maintenance window of the logical group
+         * @description Powershell function: `Get-bCEndpointsMaintenanceWindowForLogicalGroupById`
+         */
         get: operations["GetMaintenanceWindowForLogicalGroupById"];
-        /** Updates the maintenance window of the logical group */
-        put: operations["UpdateMaintenanceWindowForLogicalGroupById"];
-        /** Creates a maintenance window for the logical group */
+        put?: never;
+        /**
+         * Creates a maintenance window for the logical group
+         * @description Powershell function: `New-bCEndpointsMaintenanceWindowForLogicalGroupById`
+         */
         post: operations["CreateMaintenanceWindowForLogicalGroupById"];
-        /** Deletes the maintenance window of the logical group */
+        /**
+         * Deletes the maintenance window of the logical group
+         * @description Powershell function: `Remove-bCEndpointsMaintenanceWindowForLogicalGroupById`
+         */
         delete: operations["DeleteMaintenanceWindowForLogicalGroupById"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Updates the maintenance window of the logical group
+         * @description Powershell function: `Update-bCEndpointsMaintenanceWindowForLogicalGroupById`
+         */
+        patch: operations["UpdateMaintenanceWindowForLogicalGroupById"];
         trace?: never;
     };
     "/v2.0/MacEndpoints": {
@@ -662,10 +771,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all macOS endpoints */
+        /**
+         * Gets all macOS endpoints
+         * @description Powershell function: `Get-bCEndpointsMacEndpoints`
+         */
         get: operations["GetMacEndpoints"];
         put?: never;
-        /** Creates an mac endpoint according to the specified properties */
+        /**
+         * Creates an mac endpoint according to the specified properties
+         * @description Powershell function: `New-bCEndpointsMacEndpoint`
+         */
         post: operations["CreateMacEndpoint"];
         delete?: never;
         options?: never;
@@ -680,15 +795,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets an macOS endpoint by id */
+        /**
+         * Gets an macOS endpoint by id
+         * @description Powershell function: `Get-bCEndpointsMacEndpoint`
+         */
         get: operations["GetMacEndpoint"];
         put?: never;
         post?: never;
-        /** Deletes an endpoint by id */
+        /**
+         * Deletes an endpoint by id
+         * @description Powershell function: `Remove-bCEndpointsMacEndpoint`
+         */
         delete: operations["DeleteMacEndpoint"];
         options?: never;
         head?: never;
-        /** Updates an mac endpoint according to the specified properties */
+        /**
+         * Updates an mac endpoint according to the specified properties
+         * @description Powershell function: `Update-bCEndpointsMacEndpoint`
+         */
         patch: operations["UpdateMacEndpoint"];
         trace?: never;
     };
@@ -699,7 +823,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all macOS endpoints contained by a logical group */
+        /**
+         * Gets all macOS endpoints contained by a logical group
+         * @description Powershell function: `Get-bCEndpointsMacEndpointsByLogicalGroupId`
+         */
         get: operations["GetMacEndpointsByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -716,7 +843,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all macOS endpoints contained by a static group */
+        /**
+         * Gets all macOS endpoints contained by a static group
+         * @description Powershell function: `Get-bCEndpointsMacEndpointsByStaticGroupId`
+         */
         get: operations["GetMacEndpointsByStaticGroupId"];
         put?: never;
         post?: never;
@@ -733,7 +863,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all macOS endpoints assigned to a specific registered user */
+        /**
+         * Gets all macOS endpoints assigned to a specific registered user
+         * @description Powershell function: `Get-bCEndpointsMacEndpointsByADObjectId`
+         */
         get: operations["GetMacEndpointsByADObjectId"];
         put?: never;
         post?: never;
@@ -750,7 +883,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all macOS endpoints contained by a universal dynamic group */
+        /**
+         * Gets all macOS endpoints contained by a universal dynamic group
+         * @description Powershell function: `Get-bCEndpointsMacEndpointsByUniversalDynamicGroupId`
+         */
         get: operations["GetMacEndpointsByUniversalDynamicGroupId"];
         put?: never;
         post?: never;
@@ -769,7 +905,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Provides functionality to trigger enrollment state of a mac endpoint.By specifying an e-mail recipient, you can also have a corresponding e-mail with the enrollment information sent automatically.The EmailLanguageId holds the identifier of the email template, which will be used for the email enrollment message sent to the recipient.By default “de-DE” and “en-US” are available. If this property is not set, the Email template with the Id “en-US” will be used. */
+        /**
+         * Provides functionality to trigger enrollment state of a mac endpoint.By specifying an e-mail recipient, you can also have a corresponding e-mail with the enrollment information sent automatically.The EmailLanguageId holds the identifier of the email template, which will be used for the email enrollment message sent to the recipient.By default “de-DE” and “en-US” are available. If this property is not set, the Email template with the Id “en-US” will be used.
+         * @description Powershell function: `Start-bCEndpointsMacEndpointEnrollment`
+         */
         post: operations["StartMacEndpointEnrollment"];
         delete?: never;
         options?: never;
@@ -784,10 +923,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all network endpoints */
+        /**
+         * Gets all network endpoints
+         * @description Powershell function: `Get-bCEndpointsNetworkEndpoints`
+         */
         get: operations["GetNetworkEndpoints"];
         put?: never;
-        /** Creates a network endpoint */
+        /**
+         * Creates a network endpoint
+         * @description Powershell function: `New-bCEndpointsNetworkEndpoint`
+         */
         post: operations["CreateNetworkEndpoint"];
         delete?: never;
         options?: never;
@@ -802,15 +947,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a network endpoint by id */
+        /**
+         * Gets a network endpoint by id
+         * @description Powershell function: `Get-bCEndpointsNetworkEndpoint`
+         */
         get: operations["GetNetworkEndpoint"];
         put?: never;
         post?: never;
-        /** Deletes an endpoint by id */
+        /**
+         * Deletes an endpoint by id
+         * @description Powershell function: `Remove-bCEndpointsNetworkEndpoint`
+         */
         delete: operations["DeleteNetworkEndpoint"];
         options?: never;
         head?: never;
-        /** Updates an network endpoint */
+        /**
+         * Updates an network endpoint
+         * @description Powershell function: `Update-bCEndpointsNetworkEndpoint`
+         */
         patch: operations["UpdateNetworkEndpoint"];
         trace?: never;
     };
@@ -821,7 +975,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all network endpoints contained by a logical group */
+        /**
+         * Gets all network endpoints contained by a logical group
+         * @description Powershell function: `Get-bCEndpointsNetworkEndpointsByLogicalGroupId`
+         */
         get: operations["GetNetworkEndpointsByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -838,7 +995,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all network endpoints contained by a static group */
+        /**
+         * Gets all network endpoints contained by a static group
+         * @description Powershell function: `Get-bCEndpointsNetworkEndpointsByStaticGroupId`
+         */
         get: operations["GetNetworkEndpointsByStaticGroupId"];
         put?: never;
         post?: never;
@@ -855,11 +1015,58 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all network endpoints contained by a universal dynamic group */
+        /**
+         * Gets all network endpoints contained by a universal dynamic group
+         * @description Powershell function: `Get-bCEndpointsNetworkEndpointsByUniversalDynamicGroupId`
+         */
         get: operations["GetNetworkEndpointsByUniversalDynamicGroupId"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/UnmanagedEndpoints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets all unmanaged endpoints
+         * @description Powershell function: `Get-bCEndpointsAllUnmanagedEndpoints`
+         */
+        get: operations["GetAllUnmanagedEndpoints"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/UnmanagedEndpoints/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets unmanaged endpoint with the given id
+         * @description Powershell function: `Get-bCEndpointsUnmanagedEndpoint`
+         */
+        get: operations["GetUnmanagedEndpoint"];
+        put?: never;
+        post?: never;
+        /**
+         * Deletes unmanaged endpoint with the given id
+         * @description Powershell function: `Remove-bCEndpointsUnmanagedEndpoint`
+         */
+        delete: operations["DeleteUnmanagedEndpoint"];
         options?: never;
         head?: never;
         patch?: never;
@@ -872,10 +1079,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all windows endpoints */
+        /**
+         * Gets all windows endpoints
+         * @description Powershell function: `Get-bCEndpointsWindowsEndpoints`
+         */
         get: operations["GetWindowsEndpoints"];
         put?: never;
-        /** Creates a windows endpoint */
+        /**
+         * Creates a windows endpoint
+         * @description Powershell function: `New-bCEndpointsWindowsEndpoint`
+         */
         post: operations["CreateWindowsEndpoint"];
         delete?: never;
         options?: never;
@@ -890,15 +1103,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a windows endpoint by id */
+        /**
+         * Gets a windows endpoint by id
+         * @description Powershell function: `Get-bCEndpointsWindowsEndpoint`
+         */
         get: operations["GetWindowsEndpoint"];
         put?: never;
         post?: never;
-        /** Deletes an endpoint by id */
+        /**
+         * Deletes an endpoint by id
+         * @description Powershell function: `Remove-bCEndpointsWindowsEndpoint`
+         */
         delete: operations["DeleteWindowsEndpoint"];
         options?: never;
         head?: never;
-        /** Updates an windows endpoint */
+        /**
+         * Updates an windows endpoint
+         * @description Powershell function: `Update-bCEndpointsWindowsEndpoint`
+         */
         patch: operations["UpdateWindowsEndpoint"];
         trace?: never;
     };
@@ -911,7 +1133,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Provides functionality to trigger enrollment state of a Windows endpoint. This means the endpoint will be set to Internet mode, the public key (if existing) is deleted and the enrollment data is generated / overwritten. By specifying an e-mail recipient, you can also have a corresponding e-mail with the enrollment information sent automatically. */
+        /**
+         * Provides functionality to trigger enrollment state of a Windows endpoint. This means the endpoint will be set to Internet mode, the public key (if existing) is deleted and the enrollment data is generated / overwritten. By specifying an e-mail recipient, you can also have a corresponding e-mail with the enrollment information sent automatically.
+         * @description Powershell function: `Start-bCEndpointsWindowsEndpointEnrollment`
+         */
         post: operations["StartWindowsEndpointEnrollment"];
         delete?: never;
         options?: never;
@@ -928,7 +1153,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Provides functionality to trigger the installation and the enrollment of the baramundi Management Agent on a Windows endpoint, which is managed with Intune.Co-management must be configured for this operation. */
+        /**
+         * Provides functionality to trigger the installation and the enrollment of the baramundi Management Agent on a Windows endpoint, which is managed with Intune.Co-management must be configured for this operation.
+         * @description Powershell function: `Invoke-bCEndpointsTriggerInstallationViaIntune`
+         */
         post: operations["TriggerInstallationViaIntune"];
         delete?: never;
         options?: never;
@@ -943,7 +1171,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all windows endpoints assigned to a specific registered user */
+        /**
+         * Gets all windows endpoints assigned to a specific registered user
+         * @description Powershell function: `Get-bCEndpointsWindowsEndpointsByADObjectId`
+         */
         get: operations["GetWindowsEndpointsByADObjectId"];
         put?: never;
         post?: never;
@@ -960,7 +1191,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all windows endpoints contained by a logical group */
+        /**
+         * Gets all windows endpoints contained by a logical group
+         * @description Powershell function: `Get-bCEndpointsWindowsEndpointsByLogicalGroupId`
+         */
         get: operations["GetWindowsEndpointsByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -977,7 +1211,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all windows endpoints contained by a static group */
+        /**
+         * Gets all windows endpoints contained by a static group
+         * @description Powershell function: `Get-bCEndpointsWindowsEndpointsByStaticGroupId`
+         */
         get: operations["GetWindowsEndpointsByStaticGroupId"];
         put?: never;
         post?: never;
@@ -994,7 +1231,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all windows endpoints contained by a dynamic group */
+        /**
+         * Gets all windows endpoints contained by a dynamic group
+         * @description Powershell function: `Get-bCEndpointsWindowsEndpointsByDynamicGroupId`
+         */
         get: operations["GetWindowsEndpointsByDynamicGroupId"];
         put?: never;
         post?: never;
@@ -1011,7 +1251,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all windows endpoints contained by a universal dynamic group */
+        /**
+         * Gets all windows endpoints contained by a universal dynamic group
+         * @description Powershell function: `Get-bCEndpointsWindowsEndpointsByUniversalDynamicGroupId`
+         */
         get: operations["GetWindowsEndpointsByUniversalDynamicGroupId"];
         put?: never;
         post?: never;
@@ -1032,7 +1275,12 @@ export interface components {
              * @description The id of the endpoint
              */
             id?: string;
-            /** @description The type of an endpoint */
+            /**
+             * @description The type of an endpoint
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+             */
             type?: components["schemas"]["EndpointType"];
             /** @description The name of the endpoint */
             displayName?: string;
@@ -1059,6 +1307,8 @@ export interface components {
             operatingSystem?: string | null;
             /** @description OS version */
             osVersionString?: string | null;
+            /** @description Version details of the installed OS */
+            osVersionText?: string | null;
             /**
              * Format: guid
              * @description The id of the device's logical group
@@ -1208,7 +1458,12 @@ export interface components {
              * @description The id of the endpoint
              */
             id?: string;
-            /** @description The type of an endpoint */
+            /**
+             * @description The type of an endpoint
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+             */
             type?: components["schemas"]["EndpointType"];
             /** @description The name of the endpoint */
             displayName?: string;
@@ -1235,6 +1490,8 @@ export interface components {
             operatingSystem?: string | null;
             /** @description OS version */
             osVersionString?: string | null;
+            /** @description Version details of the installed OS */
+            osVersionText?: string | null;
             /**
              * Format: guid
              * @description The id of the device's logical group
@@ -1270,6 +1527,8 @@ export interface components {
         /** @enum {string} */
         EndpointManagementState: "Unknown" | "Enrollable" | "Enrolling" | "Managed" | "Unmanaged";
         /** @enum {string} */
+        EndpointMode: "LAN" | "Internet" | "Dynamic";
+        /** @enum {string} */
         EndpointOwner: "Company" | "Private";
         EndpointPagedList: {
             /** Format: int32 */
@@ -1284,10 +1543,55 @@ export interface components {
             readonly hasNextPage?: boolean;
             readonly data?: components["schemas"]["Endpoint"][];
         };
-        /** @enum {string} */
-        EndpointType: "WindowsEndpoint" | "AndroidEndpoint" | "IOSEndpoint" | "MacEndpoint" | "NetworkEndpoint" | "IndustrialEndpoint" | "LinuxEndpoint";
+        /**
+         * @description **Note:** The following values are deprecated and should no longer be used.
+         *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+         * @enum {string}
+         */
+        EndpointType: "WindowsEndpoint" | "AndroidEndpoint" | "IOSEndpoint" | "MacEndpoint" | "NetworkEndpoint" | "Deprecated_IndustrialEndpoint" | "LinuxEndpoint";
         /** @enum {string} */
         EnrollmentType: "Unenrolled" | "SSH" | "SSHAndNative" | "Native";
+        /** @description Properties of the mapping of an Entra ID endpoint to a baramundi mobile endpoint */
+        EntraIdEndpointData: {
+            /**
+             * Format: guid
+             * @description The baramundi endpoint ID
+             */
+            endpointId?: string;
+            /**
+             * Format: guid
+             * @description The Entra ID endpoint ID
+             */
+            entraIdDeviceId?: string;
+            /**
+             * Format: guid
+             * @description The Entra ID tenant ID
+             */
+            entraIdTenantId?: string;
+            /**
+             * Format: guid
+             * @description The Entra ID user ID
+             */
+            entraIdUserId?: string;
+        };
+        /** @description Properties to create a mapping of an Entra ID endpoint to a baramundi mobile endpoint */
+        EntraIdEndpointDataForCreation: {
+            /**
+             * Format: guid
+             * @description The Entra ID endpoint ID
+             */
+            entraIdDeviceId?: string;
+            /**
+             * Format: guid
+             * @description The Entra ID tenant ID
+             */
+            entraIdTenantId?: string;
+            /**
+             * Format: guid
+             * @description The Entra ID user ID
+             */
+            entraIdUserId?: string;
+        };
         /** @enum {string} */
         FileSystemType: "Unknown" | "FAT" | "FAT32" | "NTFS" | "EXFAT" | "CSVFS" | "REFS";
         /** @description Properties for Industrial Device Information */
@@ -1307,155 +1611,6 @@ export interface components {
             /** @description Industrial device property for Order Number */
             orderNumber?: string | null;
         };
-        /** @description An industrial endpoint with describing fields */
-        IndustrialEndpoint: {
-            /**
-             * Format: guid
-             * @description The id of the endpoint
-             */
-            id?: string;
-            /** @description The type of an endpoint */
-            type?: components["schemas"]["EndpointType"];
-            /** @description The name of the endpoint */
-            displayName?: string;
-            /** @description The host name of an endpoint */
-            hostName?: string | null;
-            /** @description The primary MAC-address of an endpoint */
-            primaryMAC?: string | null;
-            /** @description The list of all MAC-addresses of an endpoint */
-            macList?: string | null;
-            /** @description The primary IP-address of an endpoint */
-            primaryIP?: string | null;
-            /** @description The primary subnet mask of an endpoint */
-            primarySubnetMask?: string | null;
-            /** @description Freely editable text field */
-            comment?: string | null;
-            /** @description The current activity of the client agent */
-            activity?: string | null;
-            /**
-             * Format: date-time
-             * @description Date and time of last successful communication with the client agent
-             */
-            lastSeen?: string | null;
-            /** @description The name of an installed OS */
-            operatingSystem?: string | null;
-            /** @description OS version */
-            osVersionString?: string | null;
-            /**
-             * Format: guid
-             * @description The id of the device's logical group
-             */
-            logicalGroupId?: string;
-            /** @description The name of the device's logical group */
-            logicalGroup?: string;
-            /** @description The manufacturer of the device */
-            manufacturer?: string | null;
-            /** @description The model name of the device */
-            modelName?: string | null;
-            /** @description Client agent version */
-            clientAgentVersion?: string | null;
-            /** @description The serial number of the device */
-            serialNumber?: string | null;
-            /** @description The name of the registered user of an endpoint */
-            registeredUser?: string | null;
-            /**
-             * Format: guid
-             * @description The id of the registered user of an endpoint
-             */
-            registeredUserId?: string | null;
-            /** @description The time zone of the device */
-            timeZone?: string | null;
-            /**
-             * Format: guid
-             * @description The id of the assigned scanner of an endpoint
-             */
-            assignedScannerId?: string | null;
-            /** @description The name of the assigned scanner of an endpoint */
-            assignedScannerName?: string | null;
-            /**
-             * Format: date-time
-             * @description Date and time of first successful communication with the client agent
-             */
-            firstSeen?: string | null;
-            /** @description The web interface URL */
-            webInterfaceUrl?: string | null;
-            /**
-             * Format: int32
-             * @description The communication port
-             */
-            port?: number;
-            /**
-             * Format: date-time
-             * @description The last inventory date
-             */
-            lastInventory?: string | null;
-            /** @description The contact person */
-            contact?: string | null;
-            /** @description The firmware version */
-            firmwareVersion?: string | null;
-            /** @description The hardware version */
-            hardwareVersion?: string | null;
-            /** @description The CPU description */
-            industrialCPU?: string | null;
-            /** @description Location */
-            location?: string | null;
-            /** @description The model type */
-            modelType?: string | null;
-            /** @description The order number */
-            orderNumber?: string | null;
-            /**
-             * Format: int64
-             * @description The time since a device has been running in seconds.
-             */
-            upTime?: number;
-            /** @description Vendor */
-            vendor?: string | null;
-            /** @description The article number */
-            articleNumber?: string | null;
-            /** @description The SNMP configuration */
-            snmpConfiguration?: components["schemas"]["SnmpConfiguration"];
-            /** @description The OPCUA information */
-            opcuaInformation?: components["schemas"]["OpcuaInformation"] | null;
-        };
-        IndustrialEndpointForCreation: {
-            /** @description Display name of an endpoint */
-            displayName: string;
-            /**
-             * Format: guid
-             * @description ID of Logical Group, a client should be managed with
-             */
-            logicalGroupId?: string | null;
-            /** @description Text field for creating comments on the endpoint */
-            comment?: string | null;
-            /** @description The name of the endpoint */
-            hostName?: string | null;
-            /**
-             * Format: int32
-             * @description The communication port
-             */
-            port: number;
-            /** @description Primary IP-address of an endpoint */
-            primaryIP: string;
-            /** @description The primary MAC-address of an endpoint. Supported format: IEEE MAC-48, IEEE EUI-48 and misc. vendor formats (MMMM:MMMM:MMMM, MMMM-MMMM-MMMM, MMMM.MMMM.MMMM). Each «M» stands for one hexadecimal digit */
-            primaryMAC?: string | null;
-            /** @description The web interface URL */
-            webInterfaceUrl?: string | null;
-            /** @description The SNMP configuration */
-            snmpConfiguration: components["schemas"]["SnmpConfigurationForCreation"];
-        };
-        IndustrialEndpointPagedList: {
-            /** Format: int32 */
-            readonly currentPage?: number | null;
-            /** Format: int32 */
-            readonly pageSize?: number | null;
-            /** Format: int32 */
-            readonly totalPages?: number | null;
-            /** Format: int32 */
-            readonly totalItems?: number;
-            readonly hasPreviousPage?: boolean;
-            readonly hasNextPage?: boolean;
-            readonly data?: components["schemas"]["IndustrialEndpoint"][];
-        };
         /** @description An iOS endpoint with describing fields */
         IosEndpoint: {
             /**
@@ -1463,7 +1618,12 @@ export interface components {
              * @description The id of the endpoint
              */
             id?: string;
-            /** @description The type of an endpoint */
+            /**
+             * @description The type of an endpoint
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+             */
             type?: components["schemas"]["EndpointType"];
             /** @description The name of the endpoint */
             displayName?: string;
@@ -1490,6 +1650,8 @@ export interface components {
             operatingSystem?: string | null;
             /** @description OS version */
             osVersionString?: string | null;
+            /** @description Version details of the installed OS */
+            osVersionText?: string | null;
             /**
              * Format: guid
              * @description The id of the device's logical group
@@ -1614,7 +1776,12 @@ export interface components {
              * @description The id of the endpoint
              */
             id?: string;
-            /** @description The type of an endpoint */
+            /**
+             * @description The type of an endpoint
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+             */
             type?: components["schemas"]["EndpointType"];
             /** @description The name of the endpoint */
             displayName?: string;
@@ -1641,6 +1808,8 @@ export interface components {
             operatingSystem?: string | null;
             /** @description OS version */
             osVersionString?: string | null;
+            /** @description Version details of the installed OS */
+            osVersionText?: string | null;
             /**
              * Format: guid
              * @description The id of the device's logical group
@@ -1771,6 +1940,10 @@ export interface components {
             readonly hasNextPage?: boolean;
             readonly data?: components["schemas"]["LogicalGroup"][];
         };
+        MacAddress: {
+            /** @description The MAC address string in standard format (e.g. 00:1A:2B:3C:4D:5E) */
+            address?: string;
+        };
         /** @description A macOS endpoint with describing fields */
         MacEndpoint: {
             /**
@@ -1778,7 +1951,12 @@ export interface components {
              * @description The id of the endpoint
              */
             id?: string;
-            /** @description The type of an endpoint */
+            /**
+             * @description The type of an endpoint
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+             */
             type?: components["schemas"]["EndpointType"];
             /** @description The name of the endpoint */
             displayName?: string;
@@ -1805,6 +1983,8 @@ export interface components {
             operatingSystem?: string | null;
             /** @description OS version */
             osVersionString?: string | null;
+            /** @description Version details of the installed OS */
+            osVersionText?: string | null;
             /**
              * Format: guid
              * @description The id of the device's logical group
@@ -1911,7 +2091,7 @@ export interface components {
             qrCodeText?: string | null;
             qrCodeImageBase64?: string | null;
         };
-        /** @description Specifies a period during which the job can be executed on endpoint. Maintenance window types other than 'unrestricted' require at least one maintenance interval. */
+        /** @description Specifies a period during which the job can be executed on endpoint. Maintenance window types other than 'unrestricted', 'anytime', and 'never' require at least one maintenance interval. */
         MaintenanceInterval: {
             /** @description Type of maintenance period */
             maintenancePeriod?: components["schemas"]["MaintenancePeriods"];
@@ -1921,21 +2101,40 @@ export interface components {
             end: components["schemas"]["TimePoint"];
         };
         /**
-         * @description Represents all possible maintenance periods for all types of maintenance window.
+         * @description Represents all possible maintenance periods for all types of maintenance windows.
          * @enum {string}
          */
         MaintenancePeriods: "Everyday" | "Workdays" | "Weekends" | "Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday";
         MaintenanceWindow: {
-            /** @description Maintenance window type */
+            /**
+             * @description Maintenance window type
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Unrestricted -> Use 'Anytime' instead
+             */
             maintenanceWindowDefinitionType?: components["schemas"]["MaintenanceWindowType"];
-            /** @description Maintenance intervals. Interval is optional for the 'unrestricted' type, but at least one interval is required for all other types */
+            /** @description Maintenance intervals. Interval is optional for the 'unrestricted', 'anytime', and 'never' types, but at least one interval is required for all other types */
+            intervals?: components["schemas"]["MaintenanceInterval"][] | null;
+        };
+        MaintenanceWindowForCreation: {
+            /**
+             * @description Maintenance window type
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Unrestricted -> Use 'Anytime' instead
+             */
+            maintenanceWindowDefinitionType?: components["schemas"]["MaintenanceWindowType"];
+            /** @description Maintenance intervals. Interval is optional for the 'unrestricted', 'anytime', and 'never' types, but at least one interval is required for all other types */
             intervals?: components["schemas"]["MaintenanceInterval"][] | null;
         };
         /**
-         * @description Unrestricted: Maintenance slot is not configured (default)<br />Everyday: Maintenance slot is the same for all days of week<br />WorkdayWeekend: Maintenance slot is different for workday and for weekend<br />IndividualWeekday: Maintenance slot is individual for all days
+         * @description Anytime/[Unrestricted] (see note): Maintenance can occur any day and time (default)<br />Everyday: Maintenance slot is the same for all days of week<br />WorkdayWeekend: Maintenance slot is different for workday and for weekend<br />IndividualWeekday: Maintenance slot is individual for all days<br />Never: Maintenance never occurs
+         *
+         *     **Note:** The following values are deprecated and should no longer be used.
+         *     - Unrestricted -> Use 'Anytime' instead
          * @enum {string}
          */
-        MaintenanceWindowType: "Everyday" | "WorkdayWeekend" | "IndividualWeekday" | "Unrestricted";
+        MaintenanceWindowType: "Everyday" | "WorkdayWeekend" | "IndividualWeekday" | "Unrestricted" | "Anytime" | "Never";
         /**
          * @description NotManaged: Modern Management interface is not managed<br />Managed: Modern Management interface is managed<br />ManagedAndBaramundiAgentInstalling: Modern Management interface is managed and the bMA is installing on the device<br />ManagedAndBaramundiAgentInstalled: Modern Management interface is managed and the bMA is installed on the device
          * @enum {string}
@@ -1948,7 +2147,12 @@ export interface components {
              * @description The id of the endpoint
              */
             id?: string;
-            /** @description The type of an endpoint */
+            /**
+             * @description The type of an endpoint
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+             */
             type?: components["schemas"]["EndpointType"];
             /** @description The name of the endpoint */
             displayName?: string;
@@ -1975,6 +2179,8 @@ export interface components {
             operatingSystem?: string | null;
             /** @description OS version */
             osVersionString?: string | null;
+            /** @description Version details of the installed OS */
+            osVersionText?: string | null;
             /**
              * Format: guid
              * @description The id of the device's logical group
@@ -2030,8 +2236,6 @@ export interface components {
             sshConfiguration?: components["schemas"]["SshConfiguration"] | null;
             /** @description SNMP Properties */
             snmpProperties?: components["schemas"]["SnmpProperty"][] | null;
-            /** @description Version details of the installed OS */
-            osVersionText?: string | null;
             /** @description OS details */
             osDetails?: string | null;
             /** @description System language */
@@ -2268,8 +2472,8 @@ export interface components {
             authenticationMethod?: components["schemas"]["SshAuthenticationMethod"];
             /** @description SSH Credentials - Username */
             username?: string | null;
-            /** @description SSH Keys */
-            keys?: components["schemas"]["SshKey"][] | null;
+            /** @description SSH Host keys */
+            hostKeys?: components["schemas"]["SshKey"][] | null;
         };
         /** @description The SSH configuration details of the endpoint */
         SshConfigurationForCreation: {
@@ -2284,8 +2488,8 @@ export interface components {
             username?: string | null;
             /** @description SSH Credentials - Password */
             password?: string | null;
-            /** @description SSH Keys */
-            keys?: components["schemas"]["SshKey"][] | null;
+            /** @description SSH Host keys */
+            hostKeys?: components["schemas"]["SshKey"][] | null;
         };
         SshKey: {
             /** @description Key type */
@@ -2355,6 +2559,69 @@ export interface components {
              */
             minute: number;
         };
+        /** @description An unmanaged endpoint with describing fields */
+        UnmanagedEndpoint: {
+            /**
+             * Format: guid
+             * @description The id of the unmanaged endpoint
+             */
+            id?: string;
+            /** @description The unmanaged endpoint certificate public key */
+            clientCertificatePublicKey?: string;
+            /** @description The hostname of an unmanaged endpoint */
+            networkHostname?: string | null;
+            /** @description The name of the network group. Can be either a WORKGROUP (e.g. 'WORKGROUP') or a domain name (e.g. 'company.local') */
+            networkGroupName?: string | null;
+            /** @description The MAC addresses of an unmanaged endpoint */
+            macAddresses?: components["schemas"]["MacAddress"][];
+            /**
+             * Format: uuid
+             * @description The universally unique identifier of an unmanaged endpoint
+             */
+            uuid?: string | null;
+            /**
+             * Format: guid
+             * @description Unique device ID assigned by Microsoft Entra ID (formerly Azure AD). Only set if the device is registered in Entra ID.
+             */
+            entraIdDeviceId?: string | null;
+            /**
+             * @description The type of an unmanaged endpoint
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+             */
+            endpointType?: components["schemas"]["EndpointType"];
+            /** @description The OS version as text of an unmanaged endpoint */
+            osVersionText?: string | null;
+            /** @description The OS version number of an unmanaged endpoint. For Insider builds, the revision or patch level may contain a non-numeric identifier (e.g. fbl_awesome1) instead of a numeric value. */
+            osVersionNumber?: string | null;
+            /** @description The hardware model name of an unmanaged endpoint */
+            hardwareModelName?: string | null;
+            /** @description The serial number of an unmanaged endpoint */
+            serialNumber?: string | null;
+            /**
+             * Format: date-time
+             * @description The date and time of last enrollment request
+             */
+            creationDate?: string;
+            /** @description Specifies the mode the endpoint is operating under */
+            endpointMode?: components["schemas"]["EndpointMode"];
+            /** @description Describes the reason for a conflict, for example, if an unmanaged endpoint was found based on hostname and group mapping, but is already mapped to a different public key */
+            conflictReason?: string | null;
+        };
+        UnmanagedEndpointPagedList: {
+            /** Format: int32 */
+            readonly currentPage?: number | null;
+            /** Format: int32 */
+            readonly pageSize?: number | null;
+            /** Format: int32 */
+            readonly totalPages?: number | null;
+            /** Format: int32 */
+            readonly totalItems?: number;
+            readonly hasPreviousPage?: boolean;
+            readonly hasNextPage?: boolean;
+            readonly data?: components["schemas"]["UnmanagedEndpoint"][];
+        };
         /**
          * @description Always: Always execute user related jobs<br />Never: Never execute user related jobs<br />ForRegisteredUser: Execute user related jobs if the primary user is logged in (default)
          * @enum {string}
@@ -2367,7 +2634,12 @@ export interface components {
              * @description The id of the endpoint
              */
             id?: string;
-            /** @description The type of an endpoint */
+            /**
+             * @description The type of an endpoint
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+             */
             type?: components["schemas"]["EndpointType"];
             /** @description The name of the endpoint */
             displayName?: string;
@@ -2394,6 +2666,8 @@ export interface components {
             operatingSystem?: string | null;
             /** @description OS version */
             osVersionString?: string | null;
+            /** @description Version details of the installed OS */
+            osVersionText?: string | null;
             /**
              * Format: guid
              * @description The id of the device's logical group
@@ -2425,8 +2699,6 @@ export interface components {
             assignedScannerId?: string | null;
             /** @description The name of the assigned scanner of an endpoint */
             assignedScannerName?: string | null;
-            /** @description Version details of the installed OS */
-            osVersionText?: string | null;
             /** @description The name of the domain the client is joined to */
             domain?: string | null;
             /** @description The logical MAC-address of the endpoint */
@@ -2638,7 +2910,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -2689,7 +2961,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The android endpoint to be created */
+        /**
+         * @description The android endpoint to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsAndroidEndpointForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AndroidEndpointForCreation"];
@@ -2857,10 +3133,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Android endpoint properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Android endpoint properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "Pixel 9",
                  *         "path": "/DisplayName",
@@ -2891,7 +3172,8 @@ export interface operations {
                  *         "path": "/RegisteredUser",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -2957,7 +3239,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3018,7 +3300,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3078,7 +3360,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3138,7 +3420,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3202,7 +3484,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description The information required to request enrollment for the specified Android endpoint. */
+        /**
+         * @description The information required to request enrollment for the specified Android endpoint.
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsAndroidEnrollmentRequest`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AndroidEnrollmentRequest"];
@@ -3270,7 +3556,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3417,7 +3703,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3479,7 +3765,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3542,7 +3828,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3604,7 +3890,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3666,7 +3952,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -3741,7 +4027,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /** @example {
+                    /**
+                     * @example {
                      *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
                      *       "intervals": [
                      *         {
@@ -3778,239 +4065,13 @@ export interface operations {
                      *           }
                      *         }
                      *       ]
-                     *     } */
+                     *     }
+                     */
                     "application/json": components["schemas"]["MaintenanceWindow"];
                 };
             };
             /** @description Bad Request */
             400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description An endpoint with the specified ID does not exist. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description The endpoint with the specified ID has no maintenance window. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    UpdateMaintenanceWindowForEndpointById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The ID of the endpoint. Only windows endpoints are supported at the moment. */
-                id: string;
-            };
-            cookie?: never;
-        };
-        /** @description Contents which the existing maintenance window will be overwritten with. Maintenance windows are defined in respect to the local time of a client. Start and end of a maintenance period are defined using a 24-hour clock in intervals of 15 minutes (e.g. 00:00, 00:15, 17:45, 24:00). */
-        requestBody: {
-            content: {
-                /** @example {
-                 *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
-                 *       "intervals": [
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 7,
-                 *             "minute": 45
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 18,
-                 *             "minute": 30
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Weekends",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         }
-                 *       ]
-                 *     } */
-                "application/json-patch+json": components["schemas"]["MaintenanceWindow"];
-                /** @example {
-                 *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
-                 *       "intervals": [
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 7,
-                 *             "minute": 45
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 18,
-                 *             "minute": 30
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Weekends",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         }
-                 *       ]
-                 *     } */
-                "application/json": components["schemas"]["MaintenanceWindow"];
-                /** @example {
-                 *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
-                 *       "intervals": [
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 7,
-                 *             "minute": 45
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 18,
-                 *             "minute": 30
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Weekends",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         }
-                 *       ]
-                 *     } */
-                "application/*+json": components["schemas"]["MaintenanceWindow"];
-            };
-        };
-        responses: {
-            /** @description The maintenance window was updated as requested and can be seen in the body of the response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /** @example {
-                     *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
-                     *       "intervals": [
-                     *         {
-                     *           "maintenancePeriod": "Workdays",
-                     *           "start": {
-                     *             "hour": 0,
-                     *             "minute": 0
-                     *           },
-                     *           "end": {
-                     *             "hour": 7,
-                     *             "minute": 45
-                     *           }
-                     *         },
-                     *         {
-                     *           "maintenancePeriod": "Workdays",
-                     *           "start": {
-                     *             "hour": 18,
-                     *             "minute": 30
-                     *           },
-                     *           "end": {
-                     *             "hour": 24,
-                     *             "minute": 0
-                     *           }
-                     *         },
-                     *         {
-                     *           "maintenancePeriod": "Weekends",
-                     *           "start": {
-                     *             "hour": 0,
-                     *             "minute": 0
-                     *           },
-                     *           "end": {
-                     *             "hour": 24,
-                     *             "minute": 0
-                     *           }
-                     *         }
-                     *       ]
-                     *     } */
-                    "application/json": components["schemas"]["MaintenanceWindow"];
-                };
-            };
-            /** @description The input is not well-formed */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description The user does not have the necessary permission to modify the endpoint in order to update the maintenance window. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4057,10 +4118,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description The maintenance window to be created. Maintenance windows are defined in respect to the local time of a client. Start and end of a maintenance period are defined using a 24-hour clock in intervals of 15 minutes (e.g. 00:00, 00:15, 17:45, 24:00). */
+        /**
+         * @description The maintenance window to be created. Maintenance windows are defined in respect to the local time of an endpoint. Start and end of a maintenance period are defined using a 24-hour clock in intervals of 15 minutes (e.g. 00:00, 00:15, 17:45, 24:00).
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsMaintenanceWindowForCreation`
+         */
         requestBody: {
             content: {
-                /** @example {
+                /**
+                 * @example {
                  *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
                  *       "intervals": [
                  *         {
@@ -4097,8 +4163,9 @@ export interface operations {
                  *           }
                  *         }
                  *       ]
-                 *     } */
-                "application/json": components["schemas"]["MaintenanceWindow"];
+                 *     }
+                 */
+                "application/json": components["schemas"]["MaintenanceWindowForCreation"];
             };
         };
         responses: {
@@ -4108,7 +4175,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /** @example {
+                    /**
+                     * @example {
                      *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
                      *       "intervals": [
                      *         {
@@ -4145,7 +4213,8 @@ export interface operations {
                      *           }
                      *         }
                      *       ]
-                     *     } */
+                     *     }
+                     */
                     "application/json": components["schemas"]["MaintenanceWindow"];
                 };
             };
@@ -4253,38 +4322,125 @@ export interface operations {
             };
         };
     };
-    GetIndustrialEndpoints: {
+    UpdateMaintenanceWindowForEndpointById: {
         parameters: {
-            query?: {
-                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
-                OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
-                SearchQuery?: string;
-                /** @description Filters result by matching the exact value against DisplayName. */
-                DisplayName?: string;
-                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
-                Page?: number;
-                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
-                PageSize?: number;
-                /** @description Filters result by matching the exact value against HostName. */
-                HostName?: string;
-            };
+            query?: never;
             header?: never;
-            path?: never;
+            path: {
+                /** @description The ID of the endpoint. Only windows endpoints are supported at the moment. */
+                id: string;
+            };
             cookie?: never;
         };
-        requestBody?: never;
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. Maintenance windows are defined in respect to the local time of an endpoint. Start and end of a maintenance period are defined using a 24-hour clock in intervals of 15 minutes (e.g. 00:00, 00:15, 17:45, 24:00).
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
+        requestBody: {
+            content: {
+                /**
+                 * @example [
+                 *       {
+                 *         "value": "WorkdayWeekend",
+                 *         "path": "/maintenancewindowdefinitiontype",
+                 *         "op": "replace"
+                 *       },
+                 *       {
+                 *         "value": [
+                 *           {
+                 *             "maintenancePeriod": "Workdays",
+                 *             "start": {
+                 *               "hour": 0,
+                 *               "minute": 0
+                 *             },
+                 *             "end": {
+                 *               "hour": 7,
+                 *               "minute": 45
+                 *             }
+                 *           },
+                 *           {
+                 *             "maintenancePeriod": "Workdays",
+                 *             "start": {
+                 *               "hour": 18,
+                 *               "minute": 30
+                 *             },
+                 *             "end": {
+                 *               "hour": 24,
+                 *               "minute": 0
+                 *             }
+                 *           },
+                 *           {
+                 *             "maintenancePeriod": "Weekends",
+                 *             "start": {
+                 *               "hour": 0,
+                 *               "minute": 0
+                 *             },
+                 *             "end": {
+                 *               "hour": 24,
+                 *               "minute": 0
+                 *             }
+                 *           }
+                 *         ],
+                 *         "path": "/intervals",
+                 *         "op": "replace"
+                 *       }
+                 *     ]
+                 */
+                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
+            };
+        };
         responses: {
-            /** @description Returns all industrial endpoints */
+            /** @description The maintenance window was updated as requested and can be seen in the body of the response. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IndustrialEndpointPagedList"];
+                    /**
+                     * @example {
+                     *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
+                     *       "intervals": [
+                     *         {
+                     *           "maintenancePeriod": "Workdays",
+                     *           "start": {
+                     *             "hour": 0,
+                     *             "minute": 0
+                     *           },
+                     *           "end": {
+                     *             "hour": 7,
+                     *             "minute": 45
+                     *           }
+                     *         },
+                     *         {
+                     *           "maintenancePeriod": "Workdays",
+                     *           "start": {
+                     *             "hour": 18,
+                     *             "minute": 30
+                     *           },
+                     *           "end": {
+                     *             "hour": 24,
+                     *             "minute": 0
+                     *           }
+                     *         },
+                     *         {
+                     *           "maintenancePeriod": "Weekends",
+                     *           "start": {
+                     *             "hour": 0,
+                     *             "minute": 0
+                     *           },
+                     *           "end": {
+                     *             "hour": 24,
+                     *             "minute": 0
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MaintenanceWindow"];
                 };
             };
-            /** @description Bad Request */
+            /** @description The input is not well-formed */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -4293,50 +4449,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    CreateIndustrialEndpoint: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** @description The industrial endpoint to be created */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["IndustrialEndpointForCreation"];
-            };
-        };
-        responses: {
-            /** @description Creates the industrial endpoint */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IndustrialEndpoint"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Object creation rights are missing for parent object */
+            /** @description The user does not have the necessary permission to modify the endpoint in order to update the maintenance window. */
             403: {
                 headers: {
                     [name: string]: unknown;
@@ -4345,7 +4458,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description Either invalid input or the parent of the endpoint does not exist or is not visible due to missing read rights */
+            /** @description An endpoint with the specified ID does not exist. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -4354,7 +4467,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description A value was tried to be set twice where duplicates are not allowed */
+            /** @description The endpoint with the specified ID has no maintenance window. */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -4374,24 +4487,34 @@ export interface operations {
             };
         };
     };
-    GetIndustrialEndpoint: {
+    SetEntraIdEndpointData: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description The ID of the endpoint. Only mobile endpoints (iOS, Android and macOS) are supported. */
+                endpointId: string;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        /**
+         * @description The Entra ID related data for a baramundi endpoint (DeviceId, TenantId and UserId)
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsEntraIdEndpointDataForCreation`
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EntraIdEndpointDataForCreation"];
+            };
+        };
         responses: {
-            /** @description Returns the industrial endpoint with the specified id */
-            200: {
+            /** @description EntraIdEndpointData successfully created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IndustrialEndpoint"];
+                    "application/json": components["schemas"]["EntraIdEndpointData"];
                 };
             };
             /** @description Bad Request */
@@ -4403,7 +4526,16 @@ export interface operations {
                     "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description An industrial endpoint with the specified id does not exist */
+            /** @description The user does not have the necessary permission to modify the endpoint in order to create the Entra ID data. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description There is no endpoint with the specified ID. */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -4423,18 +4555,19 @@ export interface operations {
             };
         };
     };
-    DeleteIndustrialEndpoint: {
+    DeleteEntraIdEndpointData: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: string;
+                /** @description The ID of the endpoint. Only mobile endpoints (iOS, Android and macOS) are supported. */
+                endpointId: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Endpoint successfully deleted or does not exist */
+            /** @description EntraIdEndpointData successfully deleted or does not exist */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -4470,197 +4603,25 @@ export interface operations {
             };
         };
     };
-    UpdateIndustrialEndpoint: {
+    GetEntraIdEndpointDataByDeviceId: {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable industrial endpoint properties. */
-        requestBody: {
-            content: {
-                /** @example [
-                 *       {
-                 *         "value": "Siemens SIMATIC S7",
-                 *         "path": "/displayName",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "140E02FB-7B23-4E83-8D60-11C7456EE686",
-                 *         "path": "/logicalGroupId",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "This is an example comment.",
-                 *         "path": "/comment",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "Siemens SIMATIC S7",
-                 *         "path": "/hostName",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": 161,
-                 *         "path": "/port",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "10.10.5.200",
-                 *         "path": "/primaryIP",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "AA:BB:CC:DD:EE:FF",
-                 *         "path": "/primaryMAC",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "https://10.10.5.200/webInterface",
-                 *         "path": "/webInterfaceUrl",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "V3",
-                 *         "path": "/snmpConfiguration/Version",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "john.doe@example.com",
-                 *         "path": "/snmpConfiguration/Username",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "SHA",
-                 *         "path": "/snmpConfiguration/Authentication",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "Password",
-                 *         "path": "/snmpConfiguration/AuthenticationPassword",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "AES256",
-                 *         "path": "/snmpConfiguration/Encryption",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": "Password",
-                 *         "path": "/snmpConfiguration/EncryptionPassword",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": null,
-                 *         "path": "/snmpConfiguration/Community",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": null,
-                 *         "path": "/snmpConfiguration/ContextName",
-                 *         "op": "replace"
-                 *       },
-                 *       {
-                 *         "value": null,
-                 *         "path": "/snmpConfiguration/ContextEngineId",
-                 *         "op": "replace"
-                 *       }
-                 *     ] */
-                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
-            };
-        };
-        responses: {
-            /** @description Updates the industrial endpoint */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IndustrialEndpoint"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Modify rights are missing for the endpoint object */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Either invalid input or the endpoint does not exist or is not visible due to missing read rights */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description A value was tried to be set twice where duplicates are not allowed */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetIndustrialEndpointsByLogicalGroupId: {
-        parameters: {
-            query?: {
-                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
-                OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
-                SearchQuery?: string;
-                /** @description Filters result by matching the exact value against DisplayName. */
-                DisplayName?: string;
-                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
-                Page?: number;
-                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
-                PageSize?: number;
-                /** @description Filters result by matching the exact value against HostName. */
-                HostName?: string;
-                includeSubfolders?: boolean;
-            };
-            header?: never;
-            path: {
-                logicalGroupId: string;
+                /** @description The Entra ID device ID of the device. */
+                deviceId: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Returns the industrial endpoints assigned to the specified logical group */
+            /** @description Returns Entra ID endpoint data for a mobile device by it's Entra ID device ID */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["IndustrialEndpointPagedList"];
+                    "application/json": components["schemas"]["EntraIdEndpointData"];
                 };
             };
             /** @description Bad Request */
@@ -4672,131 +4633,7 @@ export interface operations {
                     "application/json": components["schemas"]["ProblemDetails"];
                 };
             };
-            /** @description The specified logical group can not be found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetIndustrialEndpointsByStaticGroupId: {
-        parameters: {
-            query?: {
-                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
-                OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
-                SearchQuery?: string;
-                /** @description Filters result by matching the exact value against DisplayName. */
-                DisplayName?: string;
-                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
-                Page?: number;
-                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
-                PageSize?: number;
-                /** @description Filters result by matching the exact value against HostName. */
-                HostName?: string;
-            };
-            header?: never;
-            path: {
-                staticGroupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Returns the industrial endpoints assigned to the specified static group */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IndustrialEndpointPagedList"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description The specified static group can not be found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    GetIndustrialEndpointsByUniversalDynamicGroupId: {
-        parameters: {
-            query?: {
-                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
-                OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
-                SearchQuery?: string;
-                /** @description Filters result by matching the exact value against DisplayName. */
-                DisplayName?: string;
-                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
-                Page?: number;
-                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
-                PageSize?: number;
-                /** @description Filters result by matching the exact value against HostName. */
-                HostName?: string;
-            };
-            header?: never;
-            path: {
-                universalDynamicGroupId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Returns the industrial endpoints assigned to the specified universal dynamic group */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["IndustrialEndpointPagedList"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description The specified universal dynamic group can not be found */
+            /** @description No device found for the given Entra ID device ID */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -4821,7 +4658,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -4872,7 +4709,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The iOS endpoint to be created */
+        /**
+         * @description The iOS endpoint to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsIosEndpointForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["IosEndpointForCreation"];
@@ -5040,10 +4881,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable iOS endpoint properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable iOS endpoint properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "Pixel 9",
                  *         "path": "/DisplayName",
@@ -5074,7 +4920,8 @@ export interface operations {
                  *         "path": "/RegisteredUser",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -5140,7 +4987,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -5201,7 +5048,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -5261,7 +5108,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -5321,7 +5168,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -5385,7 +5232,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description The information required to request enrollment for the specified iOS endpoint. */
+        /**
+         * @description The information required to request enrollment for the specified iOS endpoint.
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsIosEnrollmentRequest`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["IosEnrollmentRequest"];
@@ -5444,7 +5295,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -5497,7 +5348,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The Linux endpoint to be created */
+        /**
+         * @description The Linux endpoint to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsLinuxEndpointForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["LinuxEndpointForCreation"];
@@ -5665,10 +5520,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "Ubuntu Server 22 - test machine",
                  *         "path": "/displayName",
@@ -5709,7 +5569,8 @@ export interface operations {
                  *         "path": "/managementMode",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -5775,7 +5636,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -5837,7 +5698,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -5900,7 +5761,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -5962,7 +5823,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, OSVersionText, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -6079,7 +5940,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The logical group to be created */
+        /**
+         * @description The logical group to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsLogicalGroupForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["LogicalGroupForCreation"];
@@ -6247,10 +6112,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable logical group properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable logical group properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "MyLogicalGroup",
                  *         "path": "/name",
@@ -6276,7 +6146,8 @@ export interface operations {
                  *         "path": "/defaultDomain",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -6420,7 +6291,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /** @example {
+                    /**
+                     * @example {
                      *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
                      *       "intervals": [
                      *         {
@@ -6457,239 +6329,13 @@ export interface operations {
                      *           }
                      *         }
                      *       ]
-                     *     } */
+                     *     }
+                     */
                     "application/json": components["schemas"]["MaintenanceWindow"];
                 };
             };
             /** @description Bad Request */
             400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description A logical group with the specified ID does not exist. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description The logical group with the specified ID has no maintenance window. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description Internal Server Error */
-            500: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-        };
-    };
-    UpdateMaintenanceWindowForLogicalGroupById: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The ID of the logical group. At the moment, only windows endpoints are affected by the maintenance window. */
-                id: string;
-            };
-            cookie?: never;
-        };
-        /** @description Contents which the existing maintenance window will be overwritten with. Maintenance windows are defined in respect to the local time of a client. Start and end of a maintenance period are defined using a 24-hour clock in intervals of 15 minutes (e.g. 00:00, 00:15, 17:45, 24:00). */
-        requestBody: {
-            content: {
-                /** @example {
-                 *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
-                 *       "intervals": [
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 7,
-                 *             "minute": 45
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 18,
-                 *             "minute": 30
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Weekends",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         }
-                 *       ]
-                 *     } */
-                "application/json-patch+json": components["schemas"]["MaintenanceWindow"];
-                /** @example {
-                 *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
-                 *       "intervals": [
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 7,
-                 *             "minute": 45
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 18,
-                 *             "minute": 30
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Weekends",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         }
-                 *       ]
-                 *     } */
-                "application/json": components["schemas"]["MaintenanceWindow"];
-                /** @example {
-                 *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
-                 *       "intervals": [
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 7,
-                 *             "minute": 45
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Workdays",
-                 *           "start": {
-                 *             "hour": 18,
-                 *             "minute": 30
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         },
-                 *         {
-                 *           "maintenancePeriod": "Weekends",
-                 *           "start": {
-                 *             "hour": 0,
-                 *             "minute": 0
-                 *           },
-                 *           "end": {
-                 *             "hour": 24,
-                 *             "minute": 0
-                 *           }
-                 *         }
-                 *       ]
-                 *     } */
-                "application/*+json": components["schemas"]["MaintenanceWindow"];
-            };
-        };
-        responses: {
-            /** @description The maintenance window was updated as requested and can be seen in the body of the response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /** @example {
-                     *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
-                     *       "intervals": [
-                     *         {
-                     *           "maintenancePeriod": "Workdays",
-                     *           "start": {
-                     *             "hour": 0,
-                     *             "minute": 0
-                     *           },
-                     *           "end": {
-                     *             "hour": 7,
-                     *             "minute": 45
-                     *           }
-                     *         },
-                     *         {
-                     *           "maintenancePeriod": "Workdays",
-                     *           "start": {
-                     *             "hour": 18,
-                     *             "minute": 30
-                     *           },
-                     *           "end": {
-                     *             "hour": 24,
-                     *             "minute": 0
-                     *           }
-                     *         },
-                     *         {
-                     *           "maintenancePeriod": "Weekends",
-                     *           "start": {
-                     *             "hour": 0,
-                     *             "minute": 0
-                     *           },
-                     *           "end": {
-                     *             "hour": 24,
-                     *             "minute": 0
-                     *           }
-                     *         }
-                     *       ]
-                     *     } */
-                    "application/json": components["schemas"]["MaintenanceWindow"];
-                };
-            };
-            /** @description Bad Request */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ProblemDetails"];
-                };
-            };
-            /** @description The user does not have the necessary permission to modify the logical group in order to update the maintenance window. */
-            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6736,10 +6382,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description The maintenance window to be created. Maintenance windows are defined in respect to the local time of a client. Start and end of a maintenance period are defined using a 24-hour clock in intervals of 15 minutes (e.g. 00:00, 00:15, 17:45, 24:00). */
+        /**
+         * @description The maintenance window to be created. Maintenance windows are defined in respect to the local time of an endpoint. Start and end of a maintenance period are defined using a 24-hour clock in intervals of 15 minutes (e.g. 00:00, 00:15, 17:45, 24:00).
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsMaintenanceWindowForCreation`
+         */
         requestBody: {
             content: {
-                /** @example {
+                /**
+                 * @example {
                  *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
                  *       "intervals": [
                  *         {
@@ -6776,8 +6427,9 @@ export interface operations {
                  *           }
                  *         }
                  *       ]
-                 *     } */
-                "application/json": components["schemas"]["MaintenanceWindow"];
+                 *     }
+                 */
+                "application/json": components["schemas"]["MaintenanceWindowForCreation"];
             };
         };
         responses: {
@@ -6787,7 +6439,8 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /** @example {
+                    /**
+                     * @example {
                      *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
                      *       "intervals": [
                      *         {
@@ -6824,7 +6477,8 @@ export interface operations {
                      *           }
                      *         }
                      *       ]
-                     *     } */
+                     *     }
+                     */
                     "application/json": components["schemas"]["MaintenanceWindow"];
                 };
             };
@@ -6932,12 +6586,177 @@ export interface operations {
             };
         };
     };
+    UpdateMaintenanceWindowForLogicalGroupById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID of the logical group. At the moment, only windows endpoints are affected by the maintenance window. */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. Maintenance windows are defined in respect to the local time of an endpoint. Start and end of a maintenance period are defined using a 24-hour clock in intervals of 15 minutes (e.g. 00:00, 00:15, 17:45, 24:00).
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
+        requestBody: {
+            content: {
+                /**
+                 * @example [
+                 *       {
+                 *         "value": "WorkdayWeekend",
+                 *         "path": "/maintenancewindowdefinitiontype",
+                 *         "op": "replace"
+                 *       },
+                 *       {
+                 *         "value": [
+                 *           {
+                 *             "maintenancePeriod": "Workdays",
+                 *             "start": {
+                 *               "hour": 0,
+                 *               "minute": 0
+                 *             },
+                 *             "end": {
+                 *               "hour": 7,
+                 *               "minute": 45
+                 *             }
+                 *           },
+                 *           {
+                 *             "maintenancePeriod": "Workdays",
+                 *             "start": {
+                 *               "hour": 18,
+                 *               "minute": 30
+                 *             },
+                 *             "end": {
+                 *               "hour": 24,
+                 *               "minute": 0
+                 *             }
+                 *           },
+                 *           {
+                 *             "maintenancePeriod": "Weekends",
+                 *             "start": {
+                 *               "hour": 0,
+                 *               "minute": 0
+                 *             },
+                 *             "end": {
+                 *               "hour": 24,
+                 *               "minute": 0
+                 *             }
+                 *           }
+                 *         ],
+                 *         "path": "/intervals",
+                 *         "op": "replace"
+                 *       }
+                 *     ]
+                 */
+                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
+            };
+        };
+        responses: {
+            /** @description The maintenance window was updated as requested and can be seen in the body of the response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "maintenanceWindowDefinitionType": "WorkdayWeekend",
+                     *       "intervals": [
+                     *         {
+                     *           "maintenancePeriod": "Workdays",
+                     *           "start": {
+                     *             "hour": 0,
+                     *             "minute": 0
+                     *           },
+                     *           "end": {
+                     *             "hour": 7,
+                     *             "minute": 45
+                     *           }
+                     *         },
+                     *         {
+                     *           "maintenancePeriod": "Workdays",
+                     *           "start": {
+                     *             "hour": 18,
+                     *             "minute": 30
+                     *           },
+                     *           "end": {
+                     *             "hour": 24,
+                     *             "minute": 0
+                     *           }
+                     *         },
+                     *         {
+                     *           "maintenancePeriod": "Weekends",
+                     *           "start": {
+                     *             "hour": 0,
+                     *             "minute": 0
+                     *           },
+                     *           "end": {
+                     *             "hour": 24,
+                     *             "minute": 0
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["MaintenanceWindow"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The user does not have the necessary permission to modify the logical group in order to update the maintenance window. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A logical group with the specified ID does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The logical group with the specified ID has no maintenance window. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetMacEndpoints: {
         parameters: {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -6990,7 +6809,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The Mac endpoint to be created */
+        /**
+         * @description The Mac endpoint to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsMacEndpointForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MacEndpointForCreation"];
@@ -7158,10 +6981,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Mac endpoint properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Mac endpoint properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "Pixel 9",
                  *         "path": "/DisplayName",
@@ -7192,7 +7020,8 @@ export interface operations {
                  *         "path": "/RegisteredUser",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -7258,7 +7087,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -7321,7 +7150,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -7383,7 +7212,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -7445,7 +7274,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -7511,7 +7340,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description The information required to request enrollment for the specified Mac endpoint. */
+        /**
+         * @description The information required to request enrollment for the specified Mac endpoint.
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsMacEnrollmentRequest`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["MacEnrollmentRequest"];
@@ -7570,7 +7403,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, UpTime and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber, SnmpDeviceData and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber, SnmpDeviceData and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -7623,7 +7456,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The network endpoint to be created */
+        /**
+         * @description The network endpoint to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsNetworkEndpointForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["NetworkEndpointForCreation"];
@@ -7782,10 +7619,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable network endpoint properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable network endpoint properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "Network Endpoint 701",
                  *         "path": "/displayName",
@@ -7827,11 +7669,22 @@ export interface operations {
                  *         "op": "replace"
                  *       },
                  *       {
-                 *         "value": "public",
-                 *         "path": "/snmpConfiguration/community",
+                 *         "value": {
+                 *           "version": "V3",
+                 *           "community": null,
+                 *           "username": "snmpuser",
+                 *           "authentication": "SHA256",
+                 *           "encryption": "DES",
+                 *           "contextName": "contextName",
+                 *           "contextEngineId": "contextEngineId",
+                 *           "authenticationPassword": "123456789",
+                 *           "encryptionPassword": "123456789"
+                 *         },
+                 *         "path": "/snmpConfiguration",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -7897,7 +7750,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, UpTime and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber, SnmpDeviceData and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber, SnmpDeviceData and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -7960,7 +7813,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, UpTime and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber, SnmpDeviceData and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber, SnmpDeviceData and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -8022,7 +7875,7 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, UpTime and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber, SnmpDeviceData and Comment. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, OSVersionString, SerialNumber, SnmpDeviceData and Comment. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
@@ -8079,15 +7932,178 @@ export interface operations {
             };
         };
     };
+    GetAllUnmanagedEndpoints: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns all unmanaged endpoints */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnmanagedEndpointPagedList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Enrollment service is not available */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetUnmanagedEndpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns unmanaged endpoint */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnmanagedEndpoint"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Unmanaged endpoint was not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Enrollment service is not available */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteUnmanagedEndpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unmanaged endpoint successfully deleted or does not exist */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Delete rights are missing for endpoint object */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Enrollment service is not available */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetWindowsEndpoints: {
         parameters: {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, LogicalMAC, OSVersionString, SerialNumber, Comments and UUID. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, LogicalMAC, OSVersionString, OSVersionText, SerialNumber, Comments and UUID. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against Domain. */
                 Domain?: string;
+                /** @description Filters result by matching the exact value against the deviceId from EntraId. */
+                EntraIdDeviceId?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
                 /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
@@ -8139,7 +8155,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The Windows endpoint to be created */
+        /**
+         * @description The Windows endpoint to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsWindowsEndpointForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["WindowsEndpointForCreation"];
@@ -8307,10 +8327,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Windows endpoint properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Windows endpoint properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "Windows 11 test machine",
                  *         "path": "/displayName",
@@ -8416,7 +8441,8 @@ export interface operations {
                  *         "path": "/CoManagement",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -8486,7 +8512,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description The information required to request enrollment for the specified Windows endpoint. */
+        /**
+         * @description The information required to request enrollment for the specified Windows endpoint.
+         *
+         *     Initialize in PowerShell with `Initialize-bCEndpointsWindowsEnrollmentRequest`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["WindowsEnrollmentRequest"];
@@ -8621,10 +8651,12 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, LogicalMAC, OSVersionString, SerialNumber, Comments and UUID. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, LogicalMAC, OSVersionString, OSVersionText, SerialNumber, Comments and UUID. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against Domain. */
                 Domain?: string;
+                /** @description Filters result by matching the exact value against the deviceId from EntraId. */
+                EntraIdDeviceId?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
                 /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
@@ -8685,10 +8717,12 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, LogicalMAC, OSVersionString, SerialNumber, Comments and UUID. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, LogicalMAC, OSVersionString, OSVersionText, SerialNumber, Comments and UUID. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against Domain. */
                 Domain?: string;
+                /** @description Filters result by matching the exact value against the deviceId from EntraId. */
+                EntraIdDeviceId?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
                 /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
@@ -8750,10 +8784,12 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, LogicalMAC, OSVersionString, SerialNumber, Comments and UUID. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, LogicalMAC, OSVersionString, OSVersionText, SerialNumber, Comments and UUID. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against Domain. */
                 Domain?: string;
+                /** @description Filters result by matching the exact value against the deviceId from EntraId. */
+                EntraIdDeviceId?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
                 /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
@@ -8814,10 +8850,12 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, LogicalMAC, OSVersionString, SerialNumber, Comments and UUID. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, LogicalMAC, OSVersionString, OSVersionText, SerialNumber, Comments and UUID. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against Domain. */
                 Domain?: string;
+                /** @description Filters result by matching the exact value against the deviceId from EntraId. */
+                EntraIdDeviceId?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
                 /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
@@ -8878,10 +8916,12 @@ export interface operations {
             query?: {
                 /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc). */
                 OrderBy?: string;
-                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, LogicalMAC, OSVersionString, SerialNumber, Comments and UUID. */
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are DisplayName, HostName, PrimaryIP, PrimaryMAC, LogicalMAC, OSVersionString, OSVersionText, SerialNumber, Comments and UUID. */
                 SearchQuery?: string;
                 /** @description Filters result by matching the exact value against Domain. */
                 Domain?: string;
+                /** @description Filters result by matching the exact value against the deviceId from EntraId. */
+                EntraIdDeviceId?: string;
                 /** @description Filters result by matching the exact value against DisplayName. */
                 DisplayName?: string;
                 /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */

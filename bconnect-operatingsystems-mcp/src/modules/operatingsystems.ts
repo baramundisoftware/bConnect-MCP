@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import type { components, operations } from '../generated/operatingsystems-types.js';
+import { readSubResource, notOverloaded404 } from "@bconnect/mcp-core";
 
 // Type aliases
 type FolderPagedList = components['schemas']['FolderPagedList'];
@@ -17,6 +18,19 @@ type FolderForCreation = components['schemas']['FolderForCreation'];
 type FolderUpdate = operations['UpdateFolder']['requestBody']['content']['application/json-patch+json'];
 type WindowsEndpointUpdate = operations['UpdateWindowsEndpoint']['requestBody']['content']['application/json-patch+json'];
 
+/**
+ * The ONLY content type any bConnect PATCH route accepts.
+ *
+ * Measured 2026-08-19 across all 26R1 specs: 25 PATCH operations, every one
+ * declaring `application/json-patch+json` and nothing else. axios sends
+ * `application/json` when no config is passed (measured against a capturing
+ * adapter), which those routes answer with 415.
+ *
+ * Enforced by `__tests__/suite-patch-content-type.test.ts`, which reads call-site
+ * ARGUMENTS rather than grepping for this string — the string also appears in
+ * generated type aliases, and counting it wrongly cleared two modules.
+ */
+const JSON_PATCH_REQUEST = { headers: { 'Content-Type': 'application/json-patch+json' } } as const;
 export class OperatingSystemsModule {
   private basePath = '/operatingsystems/v2.0';
 
@@ -39,11 +53,19 @@ export class OperatingSystemsModule {
     folderId: string,
     params: GetFoldersByFolderIdParams = {}
   ): Promise<FolderPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/Folders/${folderId}/Folders`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/Folders/${folderId}/Folders`,
+          { params }
+        );
+        return response.data;
+      },
+      folderId,
+      notOverloaded404(
+        "Measured 2026-08-14: 1 of 1 parents answer 200 (1 with totalItems 0); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   // Windows Endpoints OS Installation Info
@@ -77,7 +99,7 @@ export class OperatingSystemsModule {
    * Update an OS folder
    */
   async updateFolder(id: string, updateData: FolderUpdate): Promise<Folder> {
-    const response = await this.httpClient.patch<Folder>(`${this.basePath}/Folders/${id}`, updateData);
+    const response = await this.httpClient.patch<Folder>(`${this.basePath}/Folders/${id}`, updateData, JSON_PATCH_REQUEST);
     return response.data;
   }
 
@@ -92,7 +114,7 @@ export class OperatingSystemsModule {
    * Update Windows endpoint OS install configuration
    */
   async updateWindowsEndpoint(id: string, updateData: WindowsEndpointUpdate): Promise<WindowsEndpoint> {
-    const response = await this.httpClient.patch<WindowsEndpoint>(`${this.basePath}/WindowsEndpoints/${id}`, updateData);
+    const response = await this.httpClient.patch<WindowsEndpoint>(`${this.basePath}/WindowsEndpoints/${id}`, updateData, JSON_PATCH_REQUEST);
     return response.data;
   }
 }

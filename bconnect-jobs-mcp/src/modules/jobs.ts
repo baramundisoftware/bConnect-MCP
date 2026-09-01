@@ -5,6 +5,7 @@
  */
 
 import type { AxiosInstance } from "axios";
+import { readSubResource, notOverloaded404, readSubResourceWhereEmptyIsAmbiguous } from "@bconnect/mcp-core";
 import type { paths } from "../generated/jobs-types.js";
 
 // Type aliases for cleaner code
@@ -46,6 +47,19 @@ export interface JobsQueryParams {
   PageSize?: number;
 }
 
+/**
+ * The ONLY content type any bConnect PATCH route accepts.
+ *
+ * Measured 2026-08-19 across all 26R1 specs: 25 PATCH operations, every one
+ * declaring `application/json-patch+json` and nothing else. axios sends
+ * `application/json` when no config is passed (measured against a capturing
+ * adapter), which those routes answer with 415.
+ *
+ * Enforced by `__tests__/suite-patch-content-type.test.ts`, which reads call-site
+ * ARGUMENTS rather than grepping for this string — the string also appears in
+ * generated type aliases, and counting it wrongly cleared two modules.
+ */
+const JSON_PATCH_REQUEST = { headers: { 'Content-Type': 'application/json-patch+json' } } as const;
 export class JobsModule {
   private basePath = "/jobs/v2.0";
 
@@ -79,11 +93,19 @@ export class JobsModule {
     folderId: string,
     params?: JobsQueryParams
   ): Promise<JobDefinitionsByFolderList> {
-    const response = await this.client.get<JobDefinitionsByFolderList>(
-      `${this.basePath}/Folders/${folderId}/JobDefinitions`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.client.get<JobDefinitionsByFolderList>(
+          `${this.basePath}/Folders/${folderId}/JobDefinitions`,
+          { params }
+        );
+        return response.data;
+      },
+      folderId,
+      notOverloaded404(
+        "Measured 2026-08-14: 36 of 36 parents answer 200 (5 with totalItems 0, 31 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   /**
@@ -114,11 +136,19 @@ export class JobsModule {
     endpointId: string,
     params?: JobsQueryParams
   ): Promise<EndpointJobInstances> {
-    const response = await this.client.get<EndpointJobInstances>(
-      `${this.basePath}/Endpoints/${endpointId}/JobInstances`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.client.get<EndpointJobInstances>(
+          `${this.basePath}/Endpoints/${endpointId}/JobInstances`,
+          { params }
+        );
+        return response.data;
+      },
+      endpointId,
+      notOverloaded404(
+        "Measured 2026-08-14: 26 of 26 parents answer 200 (2 with totalItems 0, 24 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   /**
@@ -128,11 +158,19 @@ export class JobsModule {
     jobDefinitionId: string,
     params?: JobsQueryParams
   ): Promise<JobInstancesByJobDefinitionList> {
-    const response = await this.client.get<JobInstancesByJobDefinitionList>(
-      `${this.basePath}/JobDefinitions/${jobDefinitionId}/JobInstances`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.client.get<JobInstancesByJobDefinitionList>(
+          `${this.basePath}/JobDefinitions/${jobDefinitionId}/JobInstances`,
+          { params }
+        );
+        return response.data;
+      },
+      jobDefinitionId,
+      notOverloaded404(
+        "Measured 2026-08-14: 170 of 170 parents answer 200 (105 with totalItems 0, 65 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   /**
@@ -142,11 +180,19 @@ export class JobsModule {
     logicalGroupId: string,
     params?: JobsQueryParams
   ): Promise<JobInstancesByLogicalGroupList> {
-    const response = await this.client.get<JobInstancesByLogicalGroupList>(
-      `${this.basePath}/LogicalGroups/${logicalGroupId}/JobInstances`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.client.get<JobInstancesByLogicalGroupList>(
+          `${this.basePath}/LogicalGroups/${logicalGroupId}/JobInstances`,
+          { params }
+        );
+        return response.data;
+      },
+      logicalGroupId,
+      notOverloaded404(
+        "Measured 2026-08-14: 19 of 19 parents answer 200 (14 with totalItems 0, 5 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   // ============================================================================
@@ -217,7 +263,8 @@ export class JobsModule {
   async updateFolder(id: string, data: JsonPatchDocument): Promise<Folder> {
     const response = await this.client.patch<Folder>(
       `${this.basePath}/Folders/${id}`,
-      data
+      data,
+      JSON_PATCH_REQUEST
     );
     return response.data;
   }
@@ -351,11 +398,19 @@ export class JobsModule {
    * Get subfolders of a specific folder
    */
   async getJobSubfolders(folderId: string, params?: JobsQueryParams): Promise<FolderSubfoldersList> {
-    const response = await this.client.get<FolderSubfoldersList>(
-      `${this.basePath}/Folders/${folderId}/Folders`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.client.get<FolderSubfoldersList>(
+          `${this.basePath}/Folders/${folderId}/Folders`,
+          { params }
+        );
+        return response.data;
+      },
+      folderId,
+      notOverloaded404(
+        "Measured 2026-08-14: 36 of 36 parents answer 200 (30 with totalItems 0, 6 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   // ============================================================================
@@ -363,14 +418,47 @@ export class JobsModule {
   // ============================================================================
 
   /**
-   * Get kiosk releases for a specific job definition
+   * Get kiosk releases for a specific job definition.
+   *
+   * ── This route's 200 lies, and only this one ────────────────────────────
+   * Measured live 2026-08-14 against 26.1.161.0: it answers **200 with
+   * totalItems 0 for a job definition that does not exist** — reproduced with
+   * two independent well-formed nonexistent GUIDs. Its own sibling
+   * `/JobDefinitions/{id}/JobInstances` answers 404 for those same ids, and
+   * the other three KioskReleases parents (Endpoints, LogicalGroups,
+   * ADObjects) all answer 404. Alone in it across the 78 routes probed.
+   *
+   * Unguarded, a stale or mistyped id reads as "this job has no kiosk
+   * releases" — a wrong id arriving as a factual zero, with no error and
+   * nothing for a caller to notice.
+   *
+   * The parent is confirmed ONLY when the page comes back empty: a non-empty
+   * page proves the parent exists, so the ordinary call costs nothing extra.
+   * `getJobDefinition` is the discriminator, measured on the same estate at
+   * 200 / 404 / 400 for a real, a nonexistent and a malformed id.
+   *
+   * A genuine job definition with zero kiosk releases DOES exist here, so the
+   * benign case is real and must keep answering zero.
    */
   async getKioskReleasesByJobDefinition(jobDefinitionId: string, params?: JobsQueryParams): Promise<KioskReleasesByJobDefinition> {
-    const response = await this.client.get<KioskReleasesByJobDefinition>(
-      `${this.basePath}/JobDefinitions/${jobDefinitionId}/KioskReleases`,
-      { params }
+    return readSubResourceWhereEmptyIsAmbiguous(
+      async () => {
+        const response = await this.client.get<KioskReleasesByJobDefinition>(
+          `${this.basePath}/JobDefinitions/${jobDefinitionId}/KioskReleases`,
+          { params }
+        );
+        return response.data;
+      },
+      jobDefinitionId,
+      () => this.getJobDefinition(jobDefinitionId),
+      {
+        subject: "kiosk releases",
+        parentKind: "job definition",
+        reason:
+          "Measured 2026-08-14: 200 with totalItems 0 for two independent nonexistent GUIDs, " +
+          "while /JobDefinitions/{id}/JobInstances answers 404 for the same ids.",
+      }
     );
-    return response.data;
   }
 
   /**
@@ -388,11 +476,19 @@ export class JobsModule {
    * Get kiosk releases for a specific AD object
    */
   async getKioskReleasesByAdObject(adObjectId: string, params?: JobsQueryParams): Promise<KioskReleasesByAdObject> {
-    const response = await this.client.get<KioskReleasesByAdObject>(
-      `${this.basePath}/ADObjects/${adObjectId}/KioskReleases`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.client.get<KioskReleasesByAdObject>(
+          `${this.basePath}/ADObjects/${adObjectId}/KioskReleases`,
+          { params }
+        );
+        return response.data;
+      },
+      adObjectId,
+      notOverloaded404(
+        "Measured 2026-08-14: 60 of 60 parents answer 200 (59 with totalItems 0, 1 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   /**
@@ -436,11 +532,19 @@ export class JobsModule {
    * Get job instances for a specific universal dynamic group
    */
   async getJobInstancesByUniversalDynamicGroup(universalDynamicGroupId: string, params?: JobsQueryParams): Promise<unknown> {
-    const response = await this.client.get<unknown>(
-      `${this.basePath}/UniversalDynamicGroups/${universalDynamicGroupId}/JobInstances`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.client.get<unknown>(
+          `${this.basePath}/UniversalDynamicGroups/${universalDynamicGroupId}/JobInstances`,
+          { params }
+        );
+        return response.data;
+      },
+      universalDynamicGroupId,
+      notOverloaded404(
+        "Measured 2026-08-14: 55 of 55 parents answer 200 (15 with totalItems 0, 40 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 }
 

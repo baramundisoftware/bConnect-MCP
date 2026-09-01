@@ -1,8 +1,20 @@
 version: 2
-# No github-actions ecosystem: CI/publish/release run locally (npm run ci,
-# make publish, npm run release), not via GitHub Actions — there are no
-# workflow files for Dependabot to keep pinned.
+# CI now runs in GitHub Actions (.github/workflows/ci.yml) as well as locally
+# (`npm run ci`). Publish and release are still local.
+#
+# The github-actions ecosystem below is not optional hygiene. A workflow's
+# `uses:` lines are dependencies with write access to the build, and a
+# major-version tag like `actions/checkout@v4` is a MOVING reference — whoever
+# controls that tag controls what runs in CI. Dependabot pinning them, and
+# raising a PR when a pin should move, is the same property `npm ci` gives the
+# JavaScript dependency graph: what runs is what was reviewed.
 updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+
   - package-ecosystem: "npm"
     # Cover the root, the gateway, the template, and all 13 domain servers.
     # Glob support in `directories` fans this single entry across every manifest.

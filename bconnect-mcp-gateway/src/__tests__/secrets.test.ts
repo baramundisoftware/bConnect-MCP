@@ -7,7 +7,8 @@ import { writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { resolveFileSecrets } from "../secrets.js";
+import { resolveFileSecrets, SECRET_ENV_KEYS } from "../secrets.js";
+import { resolveAuthConfig } from "../auth.js";
 
 function tmp(name: string, content: string): string {
   const p = join(tmpdir(), name);
@@ -46,5 +47,24 @@ describe("resolveFileSecrets", () => {
   it("throws if the referenced file is missing", () => {
     const env: NodeJS.ProcessEnv = { BCONNECT_API_KEY_FILE: "/nonexistent/__m2_missing" };
     expect(() => resolveFileSecrets(["BCONNECT_API_KEY"], env)).toThrow();
+  });
+
+  // SEC-7 — the gateway's bearer token is a secret in the same sense as the bMS
+  // password: passed as a variable it shows up in `docker inspect`. INSTALL.md
+  // tells operators MCP_GATEWAY_AUTH_TOKEN_FILE works, so it has to.
+  it("covers MCP_GATEWAY_AUTH_TOKEN by default", () => {
+    expect(SECRET_ENV_KEYS).toContain("MCP_GATEWAY_AUTH_TOKEN");
+  });
+
+  it("hydrates MCP_GATEWAY_AUTH_TOKEN from a mounted Docker secret", () => {
+    const value = "mounted-secret-token-of-sufficient-length";
+    const p = tmp("sec7-token.secret", `${value}\n`);
+    created.push(p);
+    const env: NodeJS.ProcessEnv = { MCP_GATEWAY_AUTH_TOKEN_FILE: p };
+    resolveFileSecrets(SECRET_ENV_KEYS, env);
+    expect(env.MCP_GATEWAY_AUTH_TOKEN).toBe(value);
+    // And the auth layer accepts what the secrets layer produced — the trailing
+    // newline a `printf` or an editor leaves must not become part of the token.
+    expect(resolveAuthConfig(env).tokens).toEqual([value]);
   });
 });

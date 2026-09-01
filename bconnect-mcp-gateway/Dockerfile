@@ -54,7 +54,27 @@ USER bconnect
 
 ENV NODE_ENV=production
 ENV MCP_GATEWAY_PORT=3001
-ENV MCP_GATEWAY_BIND=0.0.0.0
+
+# SEC-7 — the bind defaults to LOOPBACK, not 0.0.0.0.
+#
+# This image used to set MCP_GATEWAY_BIND=0.0.0.0, and the shipped compose paired
+# it with MCP_ALLOW_NO_AUTH=true. Together those two lines meant the gateway's
+# own fail-closed guard was satisfied before the operator ever saw it: the
+# artifact disarmed its own authentication.
+#
+# The image now ships the safe default and the compose file widens it explicitly,
+# next to the MCP_GATEWAY_AUTH_TOKEN that makes widening legitimate. A published
+# port cannot reach a loopback listener inside a container, so if you run this
+# image directly you must set BOTH:
+#
+#   docker run -p 127.0.0.1:3001:3001 \
+#     -e MCP_GATEWAY_BIND=0.0.0.0 \
+#     -e MCP_GATEWAY_AUTH_TOKEN=<24+ random chars> \
+#     ... bconnect-mcp-gateway
+#
+# Set MCP_GATEWAY_BIND=0.0.0.0 without a token and the gateway refuses to start
+# and tells you how to generate one. That refusal is the feature.
+ENV MCP_GATEWAY_IN_CONTAINER=true
 
 EXPOSE 3001
 

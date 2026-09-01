@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import type { components, operations } from '../generated/activedirectory-types.js';
+import { readSubResource, notOverloaded404 } from "@bconnect/mcp-core";
 
 // Type aliases
 type ADGroupPagedList = components['schemas']['ADGroupPagedList'];
@@ -81,87 +82,151 @@ export class ActiveDirectoryModule {
     adGroupId: string,
     params: GetADUsersParams = {}
   ): Promise<ADUserPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/ADGroups/${adGroupId}/ADUsers`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/ADGroups/${adGroupId}/ADUsers`,
+          { params }
+        );
+        return response.data;
+      },
+      adGroupId,
+      notOverloaded404(
+        "Measured 2026-08-14: 52 of 52 parents answer 200 (42 with totalItems 0, 10 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   async getADGroupsByOrgUnit(
     orgUnitId: string,
     params: GetADGroupsParams = {}
   ): Promise<ADGroupPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/OrgUnits/${orgUnitId}/ADGroups`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/OrgUnits/${orgUnitId}/ADGroups`,
+          { params }
+        );
+        return response.data;
+      },
+      orgUnitId,
+      notOverloaded404(
+        "Measured 2026-08-14: 133 of 133 parents answer 200 (129 with totalItems 0, 4 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   async getADObjectMemberships(
     id: string,
     params: GetADObjectMembershipsParams = {}
   ): Promise<ADGroupMembershipPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/ADObjects/${id}/ADGroupMemberships`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/ADObjects/${id}/ADGroupMemberships`,
+          { params }
+        );
+        return response.data;
+      },
+      id,
+      notOverloaded404(
+        "Measured 2026-08-14: 60 of 60 parents answer 200 (44 with totalItems 0, 16 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   async getADGroupsByAdGroup(
     adGroupId: string,
     params: GetADGroupsByADGroupIdParams = {}
   ): Promise<ADGroupPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/ADGroups/${adGroupId}/ADGroups`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/ADGroups/${adGroupId}/ADGroups`,
+          { params }
+        );
+        return response.data;
+      },
+      adGroupId,
+      notOverloaded404(
+        "Measured 2026-08-14: 52 of 52 parents answer 200 (49 with totalItems 0, 3 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   async getADObjectsByAdGroup(
     adGroupId: string,
     params: GetADObjectsByADGroupIdParams = {}
   ): Promise<ADObjectPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/ADGroups/${adGroupId}/ADObjects`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/ADGroups/${adGroupId}/ADObjects`,
+          { params }
+        );
+        return response.data;
+      },
+      adGroupId,
+      notOverloaded404(
+        "Measured 2026-08-14: 52 of 52 parents answer 200 (42 with totalItems 0, 10 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   async getADObjectsByOrgUnit(
     orgUnitId: string,
     params: GetADObjectsByOrgUnitIdParams = {}
   ): Promise<ADObjectPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/OrgUnits/${orgUnitId}/ADObjects`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/OrgUnits/${orgUnitId}/ADObjects`,
+          { params }
+        );
+        return response.data;
+      },
+      orgUnitId,
+      notOverloaded404(
+        "Measured 2026-08-14: 133 of 133 parents answer 200 (128 with totalItems 0, 5 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   async getADUsersByOrgUnit(
     orgUnitId: string,
     params: GetADUsersByOrgUnitIdParams = {}
   ): Promise<ADUserPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/OrgUnits/${orgUnitId}/ADUsers`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/OrgUnits/${orgUnitId}/ADUsers`,
+          { params }
+        );
+        return response.data;
+      },
+      orgUnitId,
+      notOverloaded404(
+        "Measured 2026-08-14: 133 of 133 parents answer 200 (130 with totalItems 0, 3 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   async getOrgUnitsByOrgUnit(
     orgUnitId: string,
     params: GetOrgUnitsByOrgUnitIdParams = {}
   ): Promise<OrgUnitPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/OrgUnits/${orgUnitId}/OrgUnits`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/OrgUnits/${orgUnitId}/OrgUnits`,
+          { params }
+        );
+        return response.data;
+      },
+      orgUnitId,
+      notOverloaded404(
+        "Measured 2026-08-14: 133 of 133 parents answer 200 (121 with totalItems 0, 12 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 }

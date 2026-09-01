@@ -25,8 +25,8 @@ beforeAll(async () => {
 });
 
 describe('Endpoints — list Endpoints', () => {
-  it('returns paged data with totalItems', async () => {
-    if (!available) {return;}
+  it('returns paged data with totalItems', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.endpoints.getEndpoints({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -37,8 +37,8 @@ describe('Endpoints — list Endpoints', () => {
 });
 
 describe('Endpoints — get Endpoint by id', () => {
-  it('returns the same endpoint surfaced by the list', async () => {
-    if (!available) {return;}
+  it('returns the same endpoint surfaced by the list', async (ctx) => {
+    if (!available) {ctx.skip();}
     const list = await client.endpoints.getEndpoints({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
     if (!id) {throw new Error('mock returned empty Endpoints list');}
@@ -48,8 +48,8 @@ describe('Endpoints — get Endpoint by id', () => {
 });
 
 describe('Endpoints — list WindowsEndpoints', () => {
-  it('returns paged data', async () => {
-    if (!available) {return;}
+  it('returns paged data', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.endpoints.getWindowsEndpoints({ PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -57,8 +57,8 @@ describe('Endpoints — list WindowsEndpoints', () => {
 });
 
 describe('Endpoints — unknown id', () => {
-  it('rejects on get with nonexistent GUID', async () => {
-    if (!available) {return;}
+  it('rejects on get with nonexistent GUID', async (ctx) => {
+    if (!available) {ctx.skip();}
     await expect(client.endpoints.getEndpoint(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

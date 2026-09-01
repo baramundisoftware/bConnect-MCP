@@ -14,10 +14,15 @@ type SecurityGroup = components['schemas']['SecurityGroup'];
 type SecurityProfilePagedList = components['schemas']['SecurityProfilePagedList'];
 type SecurityProfile = components['schemas']['SecurityProfile'];
 type ObjectPermissions = components['schemas']['ObjectPermissions'];
+type CleanupSimulationResult = components['schemas']['CleanupSimulationResult'];
+type CleanupResult = components['schemas']['CleanupResult'];
 
 // Query parameter types
 type GetSecurityGroupsParams = operations['GetSecurityGroups']['parameters']['query'];
 type GetSecurityProfilesParams = operations['GetSecurityProfiles']['parameters']['query'];
+// LOCAL FIX — D14b / D3: taken straight from the generated operation rather
+// than hand-written, so it cannot drift from what the API declares.
+type DownloadJobsQueryParams = operations['GetDownloadJobs']['parameters']['query'];
 
 // Write operation types - Phase 2
 type SecurityGroupForCreation = operations['CreateSecurityGroup']['requestBody']['content']['application/json'];
@@ -26,6 +31,19 @@ type SecurityProfileForCreation = operations['CreateSecurityProfile']['requestBo
 type SecurityProfileUpdate = operations['UpdateSecurityProfile']['requestBody']['content']['application/json-patch+json'];
 type ObjectPermissionUpdate = operations['UpdateObjectPermission']['requestBody']['content']['application/json-patch+json'];
 
+/**
+ * The ONLY content type any bConnect PATCH route accepts.
+ *
+ * Measured 2026-08-19 across all 26R1 specs: 25 PATCH operations, every one
+ * declaring `application/json-patch+json` and nothing else. axios sends
+ * `application/json` when no config is passed (measured against a capturing
+ * adapter), which those routes answer with 415.
+ *
+ * Enforced by `__tests__/suite-patch-content-type.test.ts`, which reads call-site
+ * ARGUMENTS rather than grepping for this string — the string also appears in
+ * generated type aliases, and counting it wrongly cleared two modules.
+ */
+const JSON_PATCH_REQUEST = { headers: { 'Content-Type': 'application/json-patch+json' } } as const;
 export class ServerManagementModule {
   private basePath = '/servermanagement/v2.0';
 
@@ -118,8 +136,18 @@ export class ServerManagementModule {
    * Restart the baramundi Management Server
    * Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)
    */
-  async restartManagementServer(): Promise<void> {
-    await this.httpClient.post(`${this.basePath}/Restart`);
+  /**
+   * ARCH-2 — was `Promise<void>`, discarding the one fact worth having.
+   *
+   * `POST /v2.0/Restart` answers 200 with a bare date-time string described as
+   * "Restart time of the management server". The handler said "Management server restart
+   * initiated." — which asserts an IMMEDIATE restart the response never claims. If the
+   * server schedules it instead, the returned timestamp is the only thing that says so,
+   * and it was being thrown away in favour of the assertion it would have corrected.
+   */
+  async restartManagementServer(): Promise<string> {
+    const response = await this.httpClient.post<string>(`${this.basePath}/Restart`);
+    return response.data;
   }
 
   /**
@@ -168,8 +196,16 @@ export class ServerManagementModule {
   /**
    * Update an existing security group
    */
-  async updateSecurityGroup(id: string, data: SecurityGroupUpdate): Promise<void> {
-    await this.httpClient.patch(`${this.basePath}/SecurityGroups/${id}`, data);
+  /**
+   * ARCH-2 — was `Promise<void>`, discarding a declared 200 body.
+   *
+   * 200 is "Returns the new values of the security group with the specified id". This is a
+   * PERMISSIONS surface: a JSON-Patch that quietly failed to apply and one that applied were
+   * the same `{success: true}` to the caller, which is the worst place for that to be true.
+   */
+  async updateSecurityGroup(id: string, data: SecurityGroupUpdate): Promise<SecurityGroup> {
+    const response = await this.httpClient.patch<SecurityGroup>(`${this.basePath}/SecurityGroups/${id}`, data, JSON_PATCH_REQUEST);
+    return response.data;
   }
 
   /**
@@ -193,8 +229,15 @@ export class ServerManagementModule {
   /**
    * Update an existing security profile
    */
-  async updateSecurityProfile(id: string, data: SecurityProfileUpdate): Promise<void> {
-    await this.httpClient.patch(`${this.basePath}/SecurityProfiles/${id}`, data);
+  /**
+   * ARCH-2 — was `Promise<void>`, discarding a declared 200 body.
+   *
+   * 200 is "Returns the new values of the security profile with the specified id". Same
+   * permissions-surface argument as updateSecurityGroup above.
+   */
+  async updateSecurityProfile(id: string, data: SecurityProfileUpdate): Promise<SecurityProfile> {
+    const response = await this.httpClient.patch<SecurityProfile>(`${this.basePath}/SecurityProfiles/${id}`, data, JSON_PATCH_REQUEST);
+    return response.data;
   }
 
   /**
@@ -207,8 +250,14 @@ export class ServerManagementModule {
   /**
    * Update object permissions
    */
-  async updateObjectPermission(id: string, data: ObjectPermissionUpdate): Promise<void> {
-    await this.httpClient.patch(`${this.basePath}/Objects/${id}`, data);
+  /**
+   * ARCH-2 — was `Promise<void>`, discarding a declared 200 body.
+   *
+   * 200 is "Returns the new values of the object permission with the specified id". Same again.
+   */
+  async updateObjectPermission(id: string, data: ObjectPermissionUpdate): Promise<ObjectPermissions> {
+    const response = await this.httpClient.patch<ObjectPermissions>(`${this.basePath}/Objects/${id}`, data, JSON_PATCH_REQUEST);
+    return response.data;
   }
 
   // ============================================================================
@@ -221,19 +270,44 @@ export class ServerManagementModule {
     return response.data;
   }
 
-  /** Simulate MSW cleanup on a DIP server (26R1 only) */
-  async simulateMSWCleanup(): Promise<void> {
-    await this.httpClient.post(`${this.basePath}/Dips/SimulateMSWCleanup`);
+  /**
+   * Simulate MSW cleanup on a DIP server (26R1 only).
+   *
+   * Returns the body, which is the whole point of a simulation: the 200
+   * carries `filesToDelete[]`. Until 2026-08-11 this returned void — a
+   * dry-run whose only product was discarded (TOOL-REVIEW-MATRIX.md H5).
+   */
+  async simulateMSWCleanup(): Promise<CleanupSimulationResult> {
+    const response = await this.httpClient.post<CleanupSimulationResult>(
+      `${this.basePath}/Dips/SimulateMSWCleanup`
+    );
+    return response.data;
   }
 
-  /** Trigger MSW cleanup on a DIP server (26R1 only) */
-  async mswCleanup(): Promise<void> {
-    await this.httpClient.post(`${this.basePath}/Dips/MSWCleanup`);
+  /**
+   * Trigger MSW cleanup on a DIP server (26R1 only).
+   *
+   * Returns the body: the 200 carries `wasSuccessful`, and discarding it
+   * (as this did until 2026-08-11) reported a failed cleanup as done —
+   * the verify-install exit-0 defect class.
+   */
+  async mswCleanup(): Promise<CleanupResult> {
+    const response = await this.httpClient.post<CleanupResult>(
+      `${this.basePath}/Dips/MSWCleanup`
+    );
+    return response.data;
   }
 
-  /** Get all download jobs in baramundi Management Suite (26R1 only) */
-  async getDownloadJobs(): Promise<unknown[]> {
-    const response = await this.httpClient.get(`${this.basePath}/DownloadJobs`);
+  /**
+   * Get all download jobs in baramundi Management Suite (26R1 only)
+   *
+   * LOCAL FIX — D14b / D3: this method took no arguments, so the filters
+   * GET /v2.0/DownloadJobs declares (Name, StateValue, LastExecution) and its
+   * paging were unreachable. `params` is optional and additive; see
+   * operations.GetDownloadJobs in src/generated/servermanagement-types.ts.
+   */
+  async getDownloadJobs(params?: DownloadJobsQueryParams): Promise<unknown[]> {
+    const response = await this.httpClient.get(`${this.basePath}/DownloadJobs`, { params });
     return response.data;
   }
 

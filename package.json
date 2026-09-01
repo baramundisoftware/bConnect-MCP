@@ -1,29 +1,43 @@
 {
   "name": "bconnect-mcp-server",
-  "version": "26.1.7",
+  "version": "26.1.8",
   "description": "Meta package for the bConnect-MCP suite (13 servers + template). Real code lives in bconnect-*-mcp/ subdirectories.",
   "private": true,
   "type": "module",
   "workspaces": [
     "packages/*",
     "bconnect-*-mcp",
+    "bconnect-mcp-gateway",
     "bconnect-server-template"
   ],
   "overrides": {
     "esbuild": "0.28.1",
     "form-data": "^4.0.6",
-    "hono": "^4.12.27",
-    "js-yaml": "^4.2.0"
+    "hono": "^4.12.34",
+    "@hono/node-server": "^2.0.5",
+    "js-yaml": "^4.3.1",
+    "fast-uri": "^3.1.5",
+    "nanoid": "^3.3.18",
+    "postcss": "^8.5.25",
+    "tar": "^7.5.22",
+    "ip-address": "^10.4.0",
+    "brace-expansion@2": "^2.1.4",
+    "brace-expansion@5": "^5.0.9"
   },
   "scripts": {
     "ci": "bash scripts/ci-local.sh",
-    "build": "for d in bconnect-*-mcp bconnect-server-template; do (cd \"$d\" && npm run build) || exit 1; done",
+    "generate": "node scripts/generate-types.mjs",
+    "generate:check": "node scripts/generate-types.mjs --check",
+    "specs:download": "bash scripts/download-openapi-specs.sh",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc -p tsconfig.typecheck.json",
+    "build": "npm run build --workspaces --if-present",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "audit": "for d in . bconnect-*-mcp bconnect-server-template; do echo \"--- $d ---\"; (cd \"$d\" && npm audit --audit-level=high) || true; done",
-    "sbom": "for d in . bconnect-*-mcp bconnect-server-template bconnect-mcp-gateway; do echo \"--- $d ---\"; (cd \"$d\" && npx @cyclonedx/cyclonedx-npm --output-file sbom.json --spec-version 1.6) || exit 1; done",
+    "audit": "npm audit --audit-level=high --workspaces --include-workspace-root || true",
+    "sbom": "npm exec --workspaces --include-workspace-root -c \"cyclonedx-npm --output-file sbom.json --spec-version 1.6\"",
     "publish:image": "bash scripts/publish-image.sh",
     "publish:image:dry": "bash scripts/publish-image.sh --dry-run",
     "release": "bash scripts/release.sh",
@@ -41,21 +55,15 @@
   ],
   "author": {
     "name": "baramundi software GmbH",
-    "email": "bernd.wiedemann@baramundi.de",
+    "email": "support@baramundi.com",
     "url": "https://www.baramundi.com"
   },
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
-    "@types/node-cache": "^4.2.5",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "axios": "^1.18.1",
     "axios-retry": "^4.5.0",
-    "dotenv": "^16.4.0",
-    "limiter": "^3.0.0",
-    "node-cache": "^5.1.2",
-    "openapi-fetch": "^0.17.0",
-    "openapi-typescript": "^7.0.0",
-    "winston": "^3.18.3"
+    "dotenv": "^16.4.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-arm64-gnu": "^4.62.2"
@@ -68,6 +76,8 @@
     "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^10.7.0",
     "msw": "^2.15.0",
+    "openapi-fetch": "^0.17.0",
+    "openapi-typescript": "^7.0.0",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }

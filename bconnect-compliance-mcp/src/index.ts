@@ -11,20 +11,39 @@
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
+// OPT-32 — the unified bootstrap. Read packages/mcp-core/src/run-server.ts
+// before changing anything below: it records which behaviour each of the
+// thirteen hand-written main()s had and which one survived.
+import { runServer, shouldAutoStart, describeConnectionFailure } from "@bconnect/mcp-core";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  ErrorCode,
-  McpError
+  ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
-import * as fs from "fs";
-import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow } from "@bconnect/mcp-core";
-import { ComplianceRules } from "./utils/mcp-tool-validation-rules.js";
+import { createClientProvider, BareMcpError } from "@bconnect/mcp-core";
+// TOK-20 / TOK-25 / TOK-10 / INT-53 — the shared composition layer. See
+// packages/mcp-core/src/{tool-catalogue,count-only,schema-fragments,tool-error}.ts.
+import {
+  defineToolCatalogue,
+  handleToolError,
+  toolTextResult,
+  apiParams,
+  isCountOnlyRequest,
+  fetchCount,
+  createListShaper,
+} from "@bconnect/mcp-core";
+// LOCAL ADDITION — composite exposure analysis (see modules/exposure.ts).
+import { getVulnerabilityExposure } from "./modules/exposure.js";
+// LOCAL ADDITION — patch-queue join (see modules/unpatched.ts).
+import { getUnpatchedEndpoints } from "./modules/unpatched.js";
+import { shapeDetectionsGrouped } from "./modules/detection-grouping.js";
+import { serializeToolResult } from "@bconnect/mcp-core";
+// OPT-31 — the catalogue and its validation rules, declared once. This import
+// replaces both the hand-written TOOLS array and ComplianceRules: the rules are
+// now derived from the same operation the schema is, so they cannot disagree.
+import { DECLARED } from "./declared-tools.js";
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
@@ -35,11 +54,11 @@ export interface BConnectCredentials {
   apiKey?: string;
 }
 
-export function createServer(credentials?: BConnectCredentials): { server: Server } {
+export function createServer(credentials?: BConnectCredentials): { server: Server; getClient: () => BConnectClient } {
   const server = new Server(
     {
       name: "bconnect-compliance-mcp",
-      version: "26.1.7"
+      version: "26.1.8"
     },
     {
       capabilities: {
@@ -48,206 +67,98 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
   );
 
+  // ── Tool catalogue (OPT-31) ───────────────────────────────────────────────
+  //
+  // Declared in src/declared-tools.ts and derived from the 26R1 spec, so the
+  // advertised schema and the validation rules come from ONE statement instead
+  // of two that had to be kept in step by hand. The two composites pass through
+  // composite() by identity. Read that file before changing anything here.
+  //
+  // This server is read-only: every route it reaches is a GET. The catalogue is
+  // still used, for the duplicate-name check and so that a write tool added here
+  // later is gated by construction rather than by remembering to add it to a
+  // hand-maintained set (the F21 drift class).
+
+  const catalogue = defineToolCatalogue(DECLARED);
+
+  // ── Response shaping for list_vulnerabilities (AUD-optimization-1) ────────
+  //
+  // This is the whole CVE library — totalItems 37,571 measured live, the
+  // largest resource in the API. On a 20-row page, affectedOperatingSystems
+  // alone ran 6,751 of 16,039 B (42.1%). Dropped from the compact projection
+  // and named in meta.dropped: -41.6% measured. detail:true is exact — same
+  // "drop it, name it, detail:true restores it" pattern as the WMI __PATH
+  // fold and OPT-3/OPT-4.
+  const shapeVulnerabilities = createListShaper({
+    alwaysDrop: ["affectedOperatingSystems"],
+    fullModeHint: "Pass detail:true for the full record including affectedOperatingSystems, or fields:[...] to choose columns.",
+  });
+
+
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
   server.setRequestHandler(ListToolsRequestSchema, async () => {
-    return {
-      tools: [
-
-        // ── Rule Violations ───────────────────────────────────────────────
-        {
-          name: "list_detected_rule_violations",
-          description: "List all detected compliance rule violations for Android, iOS, and macOS endpoints managed in baramundi Management Suite. Returns a paged list of rule violations with endpoint names, rule names, violation states, and detection timestamps.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'RuleName asc'). Possible values: EndpointName, RuleName." },
-              SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or RuleName." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
-            },
-            required: []
-          }
-        },
-        {
-          name: "list_detected_rule_violations_for_endpoint",
-          description: "List all detected compliance rule violations for a specific Android, iOS, or macOS endpoint identified by its GUID. Returns a paged list of violations including rule names, violation states, and detection timestamps for the specified endpoint.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              endpointId: { type: "string", description: "GUID of the Android, iOS, or macOS endpoint to retrieve rule violations for." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: EndpointName, RuleName." },
-              SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or RuleName." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
-            },
-            required: ["endpointId"]
-          }
-        },
-
-        // ── Detected Vulnerabilities ──────────────────────────────────────
-        {
-          name: "list_detected_vulnerabilities",
-          description: "List all detected CVE vulnerabilities across all Windows endpoints managed in baramundi Management Suite. Returns a paged list of detected vulnerabilities including CVE identifiers, endpoint names, detection timestamps, and whether vulnerabilities are ignored.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: EndpointName, CveId." },
-              SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or CveId." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
-            },
-            required: []
-          }
-        },
-        {
-          name: "list_detected_vulnerabilities_for_endpoint",
-          description: "List all detected CVE vulnerabilities for a specific Windows endpoint identified by its GUID. Returns a paged list of vulnerabilities including CVE identifiers, detection timestamps, and ignored status for that specific managed Windows endpoint.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve detected vulnerabilities for." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible value: CveId." },
-              SearchQuery: { type: "string", description: "Filter results by matching against CveId." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
-            },
-            required: ["endpointId"]
-          }
-        },
-
-        // ── Mobile Device Rules ───────────────────────────────────────────
-        {
-          name: "list_mobile_device_rules",
-          description: "List all mobile device compliance rules configured in baramundi Management Suite for Android, iOS, and macOS endpoints. Returns a paged list of rules with names, types, severity levels, and descriptions used to evaluate endpoint compliance status.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: RuleName, Description." },
-              SearchQuery: { type: "string", description: "Filter results by matching against RuleName or Description." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
-            },
-            required: []
-          }
-        },
-        {
-          name: "get_mobile_device_rule",
-          description: "Get the details of a specific mobile device compliance rule by its GUID. Returns the rule name, type, severity level, and description for the specified compliance rule configured in baramundi Management Suite for mobile endpoint compliance evaluation.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              ruleId: { type: "string", description: "GUID of the mobile device compliance rule to retrieve." }
-            },
-            required: ["ruleId"]
-          }
-        },
-
-        // ── Vulnerabilities (CVE Library) ─────────────────────────────────
-        {
-          name: "list_vulnerabilities",
-          description: "List all CVE vulnerabilities in the baramundi vulnerability library for Windows endpoints. Returns a paged list of vulnerabilities with CVE identifiers, CVSS scores, severity ratings, descriptions, and affected products and operating systems.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: CveId, Severity." },
-              SearchQuery: { type: "string", description: "Filter results by matching against searchable vulnerability properties." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
-            },
-            required: []
-          }
-        },
-        {
-          name: "get_vulnerability",
-          description: "Get the details of a specific CVE vulnerability from the baramundi vulnerability library by its GUID. Returns the CVE identifier, CVSS score, severity rating, description, and lists of affected products and operating systems.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              vulnerabilityId: { type: "string", description: "GUID of the CVE vulnerability to retrieve from the baramundi library." }
-            },
-            required: ["vulnerabilityId"]
-          }
-        },
-
-      ]
-    };
+    return { tools: catalogue.listTools() };
   });
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
-  // ── Argument-validation pre-pass (runs before getBconnect) ─────────────────
-  function validateToolArguments(name: string, args: Record<string, unknown> | undefined): void {
-    switch (name) {
-      case "list_detected_rule_violations":
-        validateOrThrow(args, ComplianceRules.listDetectedRuleViolations());
-        return;
-      case "list_detected_rule_violations_for_endpoint":
-        validateOrThrow(args, ComplianceRules.listDetectedRuleViolationsForEndpoint());
-        return;
-      case "list_detected_vulnerabilities":
-        validateOrThrow(args, ComplianceRules.listDetectedVulnerabilities());
-        return;
-      case "list_detected_vulnerabilities_for_endpoint":
-        validateOrThrow(args, ComplianceRules.listDetectedVulnerabilitiesForEndpoint());
-        return;
-      case "list_mobile_device_rules":
-        validateOrThrow(args, ComplianceRules.listMobileDeviceRules());
-        return;
-      case "get_mobile_device_rule":
-        validateOrThrow(args, ComplianceRules.getMobileDeviceRule());
-        return;
-      case "list_vulnerabilities":
-        validateOrThrow(args, ComplianceRules.listVulnerabilities());
-        return;
-      case "get_vulnerability":
-        validateOrThrow(args, ComplianceRules.getVulnerability());
-        return;
-      // Unknown tool names are not validated here; dispatch handles MethodNotFound.
-    }
-  }
+  // ── Argument validation (OPT-31) ──────────────────────────────────────────
+  //
+  // This used to be an eight-case switch mapping each tool name to a
+  // hand-written ComplianceRules.* rule set. Both sides restated one OpenAPI
+  // operation and nothing made them agree. DECLARED.validate() looks the rules
+  // up by name from the same declaration the schema came from, so a tool cannot
+  // be advertised with one shape and validated against another, and a tool
+  // added without rules is impossible rather than merely unlikely.
+  // ── Client lifetime (upstream finding R3) ─────────────────────────────────
+  // Built lazily on first tool call, but held HERE, in createServer() scope,
+  // not inside the tool-call handler where this used to live. A client
+  // constructed per call rebuilt everything stateful it owned on every call,
+  // which is why rate limiting never limited (B8) and why the response cache
+  // could not have worked even once wired up (B7). The provider is per
+  // session and re-keys itself if the resolved credentials change, so a
+  // longer-lived client cannot leak across differently-credentialed callers.
+  // See packages/mcp-core/src/client-provider.ts.
+  const getBconnect = createClientProvider<BConnectClient>({
+    // Enables the optional per-server credential convention
+    // (BCONNECT_API_KEY__COMPLIANCE); with no such variable set this
+    // changes nothing. See mcp-core/server-scoped-credentials.ts.
+    serverName: "bconnect-compliance-mcp",
+    factory: (config) => new BConnectClient(config),
+    credentials,
+    defaultBaseUrl: "https://bms-server/bconnect",
+    onMissingCredentials: () => {
+      throw new BareMcpError(
+        ErrorCode.InternalError,
+        "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required"
+      );
+    },
+  });
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
     // Validate arguments first — pure, no side effects, fails fast on bad input.
-    validateToolArguments(name, args);
+    DECLARED.validate(name, args);
 
-    // Lazily create BConnect client — allows server instantiation in tests without real credentials.
-    const getBconnect = (): BConnectClient => {
-      dotenv.config();
-      const baseUrl = credentials?.baseUrl ?? process.env.BCONNECT_BASE_URL ?? "https://bms-server/bconnect";
-      const username = credentials?.username ?? process.env.BCONNECT_USERNAME;
-      const password = credentials?.password ?? process.env.BCONNECT_PASSWORD;
-      const apiKey = credentials?.apiKey ?? process.env.BCONNECT_API_KEY;
+    // D6 — refuse an argument key this tool's schema does not declare.
+    // validateParameters() iterates over RULES, so a key with no rule was never
+    // examined by anything; bConnect then answers 200 and silently ignores an
+    // unrecognised query key. Measured live, one transposed character in a filter
+    // name returned 37,571 rows instead of 1, labelled as a filtered result.
+    catalogue.assertKnownParameters(name, args);
+    // SEC-0 — every id-shaped argument must be a single, traversal-free path
+    // segment. This lived in 3 of 13 servers; it is on the catalogue now so a
+    // server cannot be built without it.
+    catalogue.assertSafePathParameters(name, args);
 
-      if (!apiKey && (!username || !password)) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required"
-        );
-      }
-
-      const caCertPath = process.env.BCONNECT_CA_CERT_PATH;
-      const caCert = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
-
-      const auditLevelRaw = process.env.BCONNECT_AUDIT_LEVEL ?? "none";
-      const auditLevel = (["none", "security", "write", "all"] as const).includes(auditLevelRaw as never)
-        ? (auditLevelRaw as "none" | "security" | "write" | "all")
-        : "none";
-
-      return new BConnectClient({
-        baseUrl,
-        username,
-        password,
-        apiKey,
-        rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
-        ...(caCert && { ca: caCert }),
-        auditLog: {
-          level: auditLevel,
-        },
-      });
-    };
+    // Write gate. This server declares no writes, so this never refuses today —
+    // it is here so that adding one cannot skip the gate.
+    const denied = catalogue.gateWriteTool(name);
+    if (denied) {
+      return denied;
+    }
 
     try {
       const bconnect = getBconnect();
@@ -258,154 +169,156 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // ── Rule Violations ─────────────────────────────────────────────
         case "list_detected_rule_violations": {
-          const result = await compliance.getDetectedRuleViolations((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => compliance.getDetectedRuleViolations(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await compliance.getDetectedRuleViolations(apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
-        case "list_detected_rule_violations_for_endpoint": {
+        case "list_detected_rule_violations_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await compliance.getDetectedRuleViolationsForEndpoint(endpointId as string, params as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount(
+              (p) => compliance.getDetectedRuleViolationsForEndpoint(endpointId as string, p as never),
+              params
+            );
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await compliance.getDetectedRuleViolationsForEndpoint(endpointId as string, apiParams(params) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         // ── Detected Vulnerabilities ────────────────────────────────────
         case "list_detected_vulnerabilities": {
-          const result = await compliance.getAllDetectedVulnerabilities((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => compliance.getAllDetectedVulnerabilities(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await compliance.getAllDetectedVulnerabilities(apiParams(args) as never);
+          // Grouped by endpoint unless the caller asked for the raw record.
+          // See modules/detection-grouping.ts for what was measured and why
+          // grouping was chosen over interning the repeated identifiers.
+          const grouped = shapeDetectionsGrouped(result as never, args?.detail === true);
+          return { content: [{ type: "text", text: serializeToolResult(grouped) }] };
         }
 
-        case "list_detected_vulnerabilities_for_endpoint": {
+        case "list_detected_vulnerabilities_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await compliance.getDetectedVulnerabilitiesByEndpoint(endpointId as string, params as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount(
+              (p) => compliance.getDetectedVulnerabilitiesByEndpoint(endpointId as string, p as never),
+              params
+            );
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await compliance.getDetectedVulnerabilitiesByEndpoint(endpointId as string, apiParams(params) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         // ── Mobile Device Rules ─────────────────────────────────────────
         case "list_mobile_device_rules": {
-          const result = await compliance.getAllMobileDeviceRules((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => compliance.getAllMobileDeviceRules(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await compliance.getAllMobileDeviceRules(apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "get_mobile_device_rule": {
-          const result = await compliance.getMobileDeviceRule(args!.ruleId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          // `id`, not `ruleId` — the route is /v2.0/Rules/{id}. See declared-tools.ts.
+          const result = await compliance.getMobileDeviceRule(args!.id as string);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         // ── Vulnerabilities (CVE Library) ───────────────────────────────
+        // LOCAL ADDITION — composite exposure analysis.
+        case "get_vulnerability_exposure": {
+          // The raw axios client is handed through for the scan-age lookup, which
+          // has to read /jobs/v2.0 — the compliance module wraps /compliance/v2.0
+          // only, and that split is exactly what makes D17 expensive by hand.
+          const result = await getVulnerabilityExposure(
+            compliance,
+            (args ?? {}) as never,
+            bconnect.getHttpClient()
+          );
+          return { content: [{ type: "text" as const, text: serializeToolResult(result) }] };
+        }
+
+        // LOCAL ADDITION — patch-queue join.
+        case "get_unpatched_endpoints": {
+          const result = await getUnpatchedEndpoints(
+            compliance,
+            bconnect.getHttpClient(),
+            (args ?? {}) as never
+          );
+          return { content: [{ type: "text" as const, text: serializeToolResult(result) }] };
+        }
+
         case "list_vulnerabilities": {
-          const result = await compliance.getAllVulnerabilities((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          // The CVE library measured 37,571 items live. `countOnly` is the
+          // difference between 122 bytes and a 700 B-per-row page here.
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => compliance.getAllVulnerabilities(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const all = (args ?? {}) as Record<string, unknown>;
+          const result = await compliance.getAllVulnerabilities(apiParams(all) as never);
+          const shaped = shapeVulnerabilities(result as never, {
+            full: all.detail === true,
+            fields: all.fields as string[] | undefined,
+            args: all,
+          });
+          return toolTextResult(serializeToolResult(shaped));
         }
 
         case "get_vulnerability": {
-          const result = await compliance.getVulnerability(args!.vulnerabilityId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          // `id`, not `vulnerabilityId` — the route is /v2.0/Vulnerabilities/{id}.
+          const result = await compliance.getVulnerability(args!.id as string);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         default:
-          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+          throw new BareMcpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error) {
-      if (error instanceof McpError) {throw error;}
-      throw new McpError(
-        ErrorCode.InternalError,
-        `bConnect API error: ${error instanceof Error ? error.message : String(error)}`
-      );
+      // INT-53 — one error channel: 400/403/404/429 come back as a readable
+      // isError tool result, validation/gate errors stay protocol errors, and
+      // 401/5xx/TLS/bugs become protocol InternalError.
+      return handleToolError(error);
     }
   });
 
-  return { server };
+  // Difference 3 — hand the memoised provider back so runServer's startup
+  // connectivity check probes the very client tool dispatch will use.
+  return { server, getClient: getBconnect };
 }
 
-// ─── Entry point ─────────────────────────────────────────────────────────────
-
-async function main(): Promise<void> {
-  dotenv.config();
-
-  
-
-  
-  // Startup connectivity check (REQ-SRV-013)
-  dotenv.config();
-  {
-    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:443/bconnect";
-    const _startupUser = process.env.BCONNECT_USERNAME;
-    const _startupPass = process.env.BCONNECT_PASSWORD;
-    const _startupApiKey = process.env.BCONNECT_API_KEY;
-    if (!_startupApiKey && (!_startupUser || !_startupPass)) {
-      console.error("bconnect-compliance-mcp: Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
-      process.exit(1);
-    }
-    const _caCertPath = process.env.BCONNECT_CA_CERT_PATH;
-    const _caCert = _caCertPath ? fs.readFileSync(_caCertPath, "utf8") : undefined;
-    const _startupClient = new BConnectClient({
-      baseUrl: _startupUrl,
-      username: _startupUser,
-      password: _startupPass,
-      apiKey: _startupApiKey,
-      rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
-      ...(_caCert && { ca: _caCert }),
-    });
-    console.error(`bconnect-compliance-mcp: verifying bConnect API connectivity...`);
-    const _connected = await _startupClient.testConnection();
-    if (!_connected) {
-      console.error(`bconnect-compliance-mcp: cannot reach bConnect API at ${_startupUrl}. Check BCONNECT_BASE_URL, credentials, and network.`);
-      process.exit(1);
-    }
-    console.error(`bconnect-compliance-mcp: API connectivity verified.`);
-  }
-
-  const transportMode = process.env.MCP_TRANSPORT ?? "stdio";
-  const port = parseInt(process.env.MCP_PORT ?? "3000", 10);
-  const serverName = "bconnect-compliance-mcp";
-
-  if (transportMode === "http") {
-    const app = express();
-    app.use(express.json());
-
-    app.post("/mcp", async (req, res) => {
-      const { server } = createServer();
-      const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-      res.on("close", () => { transport.close(); server.close(); });
-      await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
-    });
-
-    app.get("/mcp", async (req, res) => {
-      res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Use POST for MCP requests." }));
-    });
-
-    app.delete("/mcp", async (req, res) => {
-      res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Session management not supported in stateless mode." }));
-    });
-
-    const bind = process.env.MCP_BIND ?? "127.0.0.1";
-    // Standalone HTTP mode has no client authentication. Binding to a non-loopback
-    // address would expose an unauthenticated bConnect proxy, so fail closed unless
-    // the operator explicitly opts in (front it with the authenticated gateway instead).
-    const isLoopbackBind = bind === "127.0.0.1" || bind === "::1" || bind === "localhost";
-    if (!isLoopbackBind && process.env.MCP_ALLOW_NO_AUTH !== "true") {
-      console.error(
-        `${serverName}: refusing to bind ${bind} — standalone HTTP mode is unauthenticated. ` +
-          `Bind to loopback (the default) and front it with the authenticated gateway, ` +
-          `or set MCP_ALLOW_NO_AUTH=true to override.`,
-      );
-      process.exit(1);
-    }
-    app.listen(port, bind, () => {
-      console.error(`${serverName} listening on http://${bind}:${port}/mcp`);
-    });
-  } else {
-    const { server } = createServer();
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error(`${serverName} started on stdio`);
-  }
-}
-
-if (!process.env.VITEST) {
-  main().catch((err) => {
-    console.error("Fatal error:", err);
+// ─── Entry point (OPT-32) ────────────────────────────────────────────────────
+//
+// This server used to hand-write ~85 lines of bootstrap. Every line of it is
+// now in `runServer()`, which resolves the six ways the thirteen copies had
+// drifted. Two consequences are visible from here and are deliberate:
+//
+//   - BCONNECT_BASE_URL has NO default any more. The old
+//     `|| "https://bms.example.com:443/bconnect"` fallback sent real
+//     credentials to a host the vendor does not control whenever the variable
+//     was unset. Absent base URL is now exit 1, before any client is built.
+//   - The startup connectivity check probes `getClient()` above — the client
+//     tool dispatch uses — not a throwaway built from a second reading of the
+//     environment. That is why `createServer` returns it.
+//
+// `express` is injected because mcp-core does not depend on it: this package
+// pins ^4.21.0 while the workspace root hoists 5.x.
+if (shouldAutoStart()) {
+  void runServer({
+    name: "bconnect-compliance-mcp",
+    createServer,
+    http: { express },
+  }).catch((error) => {
+    console.error(`Fatal error: ${describeConnectionFailure(error)}`);
     process.exit(1);
   });
 }

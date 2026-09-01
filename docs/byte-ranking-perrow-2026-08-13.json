@@ -1,0 +1,1007 @@
+[
+ {
+  "server": "jobs",
+  "tool": "list_job_instances",
+  "bytes": 11747,
+  "rows": 20,
+  "perRow": 587,
+  "ms": 29,
+  "fields": 13,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "initiator",
+   "nextExecution",
+   "state"
+  ],
+  "lowCardBytes": 2240,
+  "topField": {
+   "name": "stateDescription",
+   "bytes": 1541,
+   "pct": 13
+  }
+ },
+ {
+  "server": "assets",
+  "tool": "list_assets",
+  "bytes": 11532,
+  "rows": 20,
+  "perRow": 577,
+  "ms": 164,
+  "fields": 11,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [
+   "additionalProperties"
+  ],
+  "nestedBytes": 2096,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "assetTypeId",
+   "assetTypeName",
+   "ownerType",
+   "name"
+  ],
+  "lowCardBytes": 2770,
+  "topField": {
+   "name": "additionalProperties",
+   "bytes": 2096,
+   "pct": 18
+  }
+ },
+ {
+  "server": "compliance",
+  "tool": "list_vulnerabilities",
+  "bytes": 9496,
+  "rows": 20,
+  "perRow": 475,
+  "ms": 13,
+  "fields": 6,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "severity"
+  ],
+  "lowCardBytes": 307,
+  "topField": {
+   "name": "description",
+   "bytes": 4942,
+   "pct": 52
+  }
+ },
+ {
+  "server": "endpoints",
+  "tool": "list_endpoints",
+  "bytes": 9111,
+  "rows": 20,
+  "perRow": 456,
+  "ms": 14,
+  "fields": 11,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "type",
+   "operatingSystem",
+   "logicalGroup",
+   "logicalGroupId"
+  ],
+  "lowCardBytes": 2467,
+  "topField": {
+   "name": "activity",
+   "bytes": 1630,
+   "pct": 18
+  }
+ },
+ {
+  "server": "activedirectory",
+  "tool": "list_ad_users",
+  "bytes": 3536,
+  "rows": 8,
+  "perRow": 442,
+  "ms": 17,
+  "fields": 10,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "ldapPath",
+   "bytes": 594,
+   "pct": 17
+  }
+ },
+ {
+  "server": "jobs",
+  "tool": "list_kiosk_releases",
+  "bytes": 6718,
+  "rows": 16,
+  "perRow": 420,
+  "ms": 8,
+  "fields": 9,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [
+   "jobDefinitionSupportedPlatforms"
+  ],
+  "nestedBytes": 704,
+  "constant": [
+   "jobDefinitionSupportedPlatforms"
+  ],
+  "constantBytes": 704,
+  "allNull": [],
+  "lowCard": [
+   "assignmentTargetId",
+   "assignmentTargetName",
+   "assignmentTargetType",
+   "jobDefinitionCategory"
+  ],
+  "lowCardBytes": 2551,
+  "topField": {
+   "name": "assignmentTargetId",
+   "bytes": 896,
+   "pct": 13
+  }
+ },
+ {
+  "server": "updatemanagement",
+  "tool": "list_update_management_endpoints",
+  "bytes": 8049,
+  "rows": 20,
+  "perRow": 402,
+  "ms": 63,
+  "fields": 12,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "missingCriticalUpdates",
+   "deferredUpdates",
+   "blockedUpdates",
+   "featureUpdatesAvailable",
+   "updateState",
+   "targetReleaseVersion"
+  ],
+  "lowCardBytes": 2827,
+  "topField": {
+   "name": "endpointId",
+   "bytes": 960,
+   "pct": 12
+  }
+ },
+ {
+  "server": "software",
+  "tool": "list_bundle_applications",
+  "bytes": 396,
+  "rows": 1,
+  "perRow": 396,
+  "ms": 10,
+  "fields": 8,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "id",
+   "bundleId",
+   "bundleName",
+   "applicationId",
+   "applicationName",
+   "applicationVendor",
+   "applicationVersion",
+   "order"
+  ],
+  "constantBytes": 250,
+  "allNull": [],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "applicationId",
+   "bytes": 51,
+   "pct": 13
+  }
+ },
+ {
+  "server": "servermanagement",
+  "tool": "list_download_jobs",
+  "bytes": 3807,
+  "rows": 10,
+  "perRow": 381,
+  "ms": 16,
+  "fields": 9,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [
+   "interval"
+  ],
+  "nestedBytes": 408,
+  "constant": [
+   "stateMessage"
+  ],
+  "constantBytes": 140,
+  "allNull": [],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "url",
+   "bytes": 646,
+   "pct": 17
+  }
+ },
+ {
+  "server": "software",
+  "tool": "list_installed_windows_software",
+  "bytes": 7554,
+  "rows": 20,
+  "perRow": 378,
+  "ms": 65,
+  "fields": 11,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "vendor",
+   "category",
+   "source",
+   "installed",
+   "applicationId"
+  ],
+  "lowCardBytes": 2067,
+  "topField": {
+   "name": "detectionRuleId",
+   "bytes": 1028,
+   "pct": 14
+  }
+ },
+ {
+  "server": "defensecontrol",
+  "tool": "list_defender_windows_endpoints",
+  "bytes": 7209,
+  "rows": 20,
+  "perRow": 360,
+  "ms": 11,
+  "fields": 11,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "lastFullScan"
+  ],
+  "constantBytes": 360,
+  "allNull": [
+   "lastFullScan"
+  ],
+  "lowCard": [
+   "isMicrosoftDefenderActive",
+   "isRealTimeProtectionActive",
+   "isTamperProtectionActive",
+   "highestSeverity",
+   "activeThreats",
+   "resolvedThreats"
+  ],
+  "lowCardBytes": 2976,
+  "topField": {
+   "name": "endpointId",
+   "bytes": 960,
+   "pct": 13
+  }
+ },
+ {
+  "server": "activedirectory",
+  "tool": "list_ad_objects",
+  "bytes": 7127,
+  "rows": 20,
+  "perRow": 356,
+  "ms": 15,
+  "fields": 8,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "orgUnitId"
+  ],
+  "lowCardBytes": 940,
+  "topField": {
+   "name": "ldapPath",
+   "bytes": 1514,
+   "pct": 21
+  }
+ },
+ {
+  "server": "activedirectory",
+  "tool": "list_ad_groups",
+  "bytes": 6853,
+  "rows": 20,
+  "perRow": 343,
+  "ms": 65,
+  "fields": 7,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "orgUnitId",
+   "orgUnit"
+  ],
+  "lowCardBytes": 1242,
+  "topField": {
+   "name": "ldapPath",
+   "bytes": 1528,
+   "pct": 22
+  }
+ },
+ {
+  "server": "software",
+  "tool": "list_software_bundles",
+  "bytes": 328,
+  "rows": 1,
+  "perRow": 328,
+  "ms": 12,
+  "fields": 7,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "id",
+   "name",
+   "type",
+   "ignoreDependencies",
+   "parentId",
+   "parentName",
+   "comment"
+  ],
+  "constantBytes": 186,
+  "allNull": [],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "parentId",
+   "bytes": 46,
+   "pct": 14
+  }
+ },
+ {
+  "server": "assets",
+  "tool": "list_asset_types",
+  "bytes": 4843,
+  "rows": 15,
+  "perRow": 323,
+  "ms": 18,
+  "fields": 10,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "guidParent",
+   "parentName"
+  ],
+  "lowCardBytes": 1042,
+  "topField": {
+   "name": "guidParent",
+   "bytes": 720,
+   "pct": 15
+  }
+ },
+ {
+  "server": "operatingsystems",
+  "tool": "list_os_windows_endpoints",
+  "bytes": 6404,
+  "rows": 20,
+  "perRow": 320,
+  "ms": 14,
+  "fields": 9,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "inheritsAutoInstallation",
+   "bootEnvironmentId"
+  ],
+  "constantBytes": 1060,
+  "allNull": [
+   "bootEnvironmentId"
+  ],
+  "lowCard": [
+   "osName",
+   "osDisplayVersion",
+   "isOSInstallAllowed",
+   "hardwareProfileId"
+  ],
+  "lowCardBytes": 2306,
+  "topField": {
+   "name": "endpointId",
+   "bytes": 960,
+   "pct": 15
+  }
+ },
+ {
+  "server": "variables",
+  "tool": "list_variable_instances",
+  "bytes": 6325,
+  "rows": 20,
+  "perRow": 316,
+  "ms": 15,
+  "fields": 10,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "scope",
+   "isDefault"
+  ],
+  "lowCardBytes": 697,
+  "topField": {
+   "name": "variableDefinitionId",
+   "bytes": 1160,
+   "pct": 18
+  }
+ },
+ {
+  "server": "jobs",
+  "tool": "list_job_definitions",
+  "bytes": 6151,
+  "rows": 20,
+  "perRow": 308,
+  "ms": 81,
+  "fields": 10,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "type",
+   "validity"
+  ],
+  "constantBytes": 800,
+  "allNull": [
+   "validity"
+  ],
+  "lowCard": [
+   "description"
+  ],
+  "lowCardBytes": 540,
+  "topField": {
+   "name": "folderId",
+   "bytes": 920,
+   "pct": 15
+  }
+ },
+ {
+  "server": "operatingsystems",
+  "tool": "list_os_folders",
+  "bytes": 284,
+  "rows": 1,
+  "perRow": 284,
+  "ms": 60,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "id",
+   "name",
+   "comment",
+   "parentId",
+   "parent"
+  ],
+  "constantBytes": 150,
+  "allNull": [
+   "comment"
+  ],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "parentId",
+   "bytes": 46,
+   "pct": 16
+  }
+ },
+ {
+  "server": "defensecontrol",
+  "tool": "list_bitlocker_windows_endpoints",
+  "bytes": 5572,
+  "rows": 20,
+  "perRow": 279,
+  "ms": 23,
+  "fields": 5,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [
+   "systemVolume"
+  ],
+  "nestedBytes": 2340,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "isSecureBootEnabled",
+   "tpmStatus",
+   "systemVolume"
+  ],
+  "lowCardBytes": 3266,
+  "topField": {
+   "name": "systemVolume",
+   "bytes": 2358,
+   "pct": 42
+  }
+ },
+ {
+  "server": "assets",
+  "tool": "list_asset_stock_folders",
+  "bytes": 277,
+  "rows": 1,
+  "perRow": 277,
+  "ms": 11,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "id",
+   "name",
+   "comment",
+   "parentId",
+   "parent"
+  ],
+  "constantBytes": 143,
+  "allNull": [
+   "comment"
+  ],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "parentId",
+   "bytes": 46,
+   "pct": 17
+  }
+ },
+ {
+  "server": "software",
+  "tool": "list_bundle_folders",
+  "bytes": 277,
+  "rows": 1,
+  "perRow": 277,
+  "ms": 13,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "id",
+   "name",
+   "comment",
+   "parentId",
+   "parent"
+  ],
+  "constantBytes": 143,
+  "allNull": [
+   "comment"
+  ],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "parentId",
+   "bytes": 46,
+   "pct": 17
+  }
+ },
+ {
+  "server": "endpoints",
+  "tool": "list_logical_groups",
+  "bytes": 4961,
+  "rows": 19,
+  "perRow": 261,
+  "ms": 11,
+  "fields": 7,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "defaultDomain"
+  ],
+  "lowCardBytes": 370,
+  "topField": {
+   "name": "comment",
+   "bytes": 1499,
+   "pct": 30
+  }
+ },
+ {
+  "server": "compliance",
+  "tool": "list_mobile_device_rules",
+  "bytes": 260,
+  "rows": 1,
+  "perRow": 260,
+  "ms": 8,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "id",
+   "ruleName",
+   "type",
+   "severity",
+   "description"
+  ],
+  "constantBytes": 124,
+  "allNull": [],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "id",
+   "bytes": 40,
+   "pct": 15
+  }
+ },
+ {
+  "server": "compliance",
+  "tool": "list_detected_vulnerabilities",
+  "bytes": 4431,
+  "rows": 20,
+  "perRow": 222,
+  "ms": 8,
+  "fields": 6,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "ignored"
+  ],
+  "constantBytes": 280,
+  "allNull": [],
+  "lowCard": [
+   "endpointId",
+   "endpointName",
+   "detected"
+  ],
+  "lowCardBytes": 2076,
+  "topField": {
+   "name": "vulnerabilityId",
+   "bytes": 1060,
+   "pct": 24
+  }
+ },
+ {
+  "server": "servermanagement",
+  "tool": "list_security_groups",
+  "bytes": 888,
+  "rows": 4,
+  "perRow": 222,
+  "ms": 12,
+  "fields": 3,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [
+   "assignedSecurityProfiles"
+  ],
+  "nestedBytes": 449,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "assignedSecurityProfiles"
+  ],
+  "lowCardBytes": 449,
+  "topField": {
+   "name": "assignedSecurityProfiles",
+   "bytes": 449,
+   "pct": 51
+  }
+ },
+ {
+  "server": "servermanagement",
+  "tool": "get_dip_status",
+  "bytes": 1264,
+  "rows": 6,
+  "perRow": 211,
+  "ms": 13,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "state"
+  ],
+  "constantBytes": 72,
+  "allNull": [],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "details",
+   "bytes": 524,
+   "pct": 41
+  }
+ },
+ {
+  "server": "assets",
+  "tool": "list_asset_type_folders",
+  "bytes": 581,
+  "rows": 3,
+  "perRow": 194,
+  "ms": 14,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "comment"
+  ],
+  "constantBytes": 39,
+  "allNull": [
+   "comment"
+  ],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "parentId",
+   "bytes": 138,
+   "pct": 24
+  }
+ },
+ {
+  "server": "universaldynamicgroups",
+  "tool": "list_universal_dynamic_groups",
+  "bytes": 3739,
+  "rows": 20,
+  "perRow": 187,
+  "ms": 78,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "folderId",
+   "bytes": 920,
+   "pct": 25
+  }
+ },
+ {
+  "server": "variables",
+  "tool": "list_variable_definitions",
+  "bytes": 3638,
+  "rows": 20,
+  "perRow": 182,
+  "ms": 62,
+  "fields": 7,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [
+   "scopes"
+  ],
+  "nestedBytes": 449,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "scopes"
+  ],
+  "lowCardBytes": 449,
+  "topField": {
+   "name": "id",
+   "bytes": 800,
+   "pct": 22
+  }
+ },
+ {
+  "server": "universaldynamicgroups",
+  "tool": "list_udg_folders",
+  "bytes": 1731,
+  "rows": 10,
+  "perRow": 173,
+  "ms": 11,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "comment"
+  ],
+  "constantBytes": 130,
+  "allNull": [
+   "comment"
+  ],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "parentId",
+   "bytes": 460,
+   "pct": 27
+  }
+ },
+ {
+  "server": "servermanagement",
+  "tool": "list_security_profiles",
+  "bytes": 1710,
+  "rows": 10,
+  "perRow": 171,
+  "ms": 12,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "comment",
+   "displayAdministratorIdentities"
+  ],
+  "constantBytes": 490,
+  "allNull": [
+   "comment"
+  ],
+  "lowCard": [
+   "displayEndpointUserIdentities"
+  ],
+  "lowCardBytes": 358,
+  "topField": {
+   "name": "id",
+   "bytes": 400,
+   "pct": 23
+  }
+ },
+ {
+  "server": "activedirectory",
+  "tool": "list_org_units",
+  "bytes": 3296,
+  "rows": 20,
+  "perRow": 165,
+  "ms": 17,
+  "fields": 4,
+  "shaped": true,
+  "hasMeta": true,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "parentId",
+   "bytes": 920,
+   "pct": 28
+  }
+ },
+ {
+  "server": "jobs",
+  "tool": "list_job_folders",
+  "bytes": 3262,
+  "rows": 20,
+  "perRow": 163,
+  "ms": 10,
+  "fields": 5,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "parentId",
+   "parent"
+  ],
+  "lowCardBytes": 1351,
+  "topField": {
+   "name": "parentId",
+   "bytes": 920,
+   "pct": 28
+  }
+ },
+ {
+  "server": "servermanagement",
+  "tool": "list_microservices",
+  "bytes": 9341,
+  "rows": 79,
+  "perRow": 118,
+  "ms": 15,
+  "fields": 4,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [],
+  "constantBytes": 0,
+  "allNull": [],
+  "lowCard": [
+   "state",
+   "message"
+  ],
+  "lowCardBytes": 3013,
+  "topField": {
+   "name": "id",
+   "bytes": 3160,
+   "pct": 34
+  }
+ },
+ {
+  "server": "servermanagement",
+  "tool": "list_cloud_connectors",
+  "bytes": 210,
+  "rows": 3,
+  "perRow": 70,
+  "ms": 14,
+  "fields": 2,
+  "shaped": false,
+  "hasMeta": false,
+  "nestedFields": [],
+  "nestedBytes": 0,
+  "constant": [
+   "state"
+  ],
+  "constantBytes": 42,
+  "allNull": [],
+  "lowCard": [],
+  "lowCardBytes": 0,
+  "topField": {
+   "name": "name",
+   "bytes": 137,
+   "pct": 65
+  }
+ }
+]

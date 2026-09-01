@@ -53,9 +53,9 @@ describe("createLogger", () => {
 });
 
 describe("createAccessLogMiddleware", () => {
-  function makeReqRes(path: string) {
+  function makeReqRes(path: string, headers: Record<string, string> = {}) {
     const handlers: Record<string, () => void> = {};
-    const req = { method: "POST", path, ip: "127.0.0.1" } as unknown as Request;
+    const req = { method: "POST", path, ip: "127.0.0.1", headers } as unknown as Request;
     const res = {
       statusCode: 200,
       locals: {} as Record<string, unknown>,
@@ -77,6 +77,34 @@ describe("createAccessLogMiddleware", () => {
     expect(typeof obj.durationMs).toBe("number");
     // The gateway has no built-in auth; callers are identified by client IP.
     expect(obj.caller).toBe("127.0.0.1");
+  });
+
+  // SEC-8 — behind the mandated proxy, req.ip names a hop; the principal the
+  // proxy authenticated is what an audit record actually needs.
+  it("logs the proxy-supplied principal when the header is present", () => {
+    process.env.LOG_FORMAT = "json";
+    const mw = createAccessLogMiddleware(createLogger());
+    const { req, res, finish } = makeReqRes("/endpoints/mcp", { "x-forwarded-user": "alice@corp" });
+    const out = captureStderr(() => { mw(req, res, vi.fn()); finish(); });
+    expect(JSON.parse(out[0]).principal).toBe("alice@corp");
+  });
+
+  it("omits principal entirely when no identity header is present", () => {
+    process.env.LOG_FORMAT = "json";
+    const mw = createAccessLogMiddleware(createLogger());
+    const { req, res, finish } = makeReqRes("/endpoints/mcp");
+    const out = captureStderr(() => { mw(req, res, vi.fn()); finish(); });
+    expect(JSON.parse(out[0])).not.toHaveProperty("principal");
+  });
+
+  it("honours MCP_GATEWAY_IDENTITY_HEADER", () => {
+    process.env.LOG_FORMAT = "json";
+    process.env.MCP_GATEWAY_IDENTITY_HEADER = "X-Auth-Request-Email";
+    const mw = createAccessLogMiddleware(createLogger());
+    const { req, res, finish } = makeReqRes("/endpoints/mcp", { "x-auth-request-email": "bob@corp" });
+    const out = captureStderr(() => { mw(req, res, vi.fn()); finish(); });
+    expect(JSON.parse(out[0]).principal).toBe("bob@corp");
+    delete process.env.MCP_GATEWAY_IDENTITY_HEADER;
   });
 
   it("logs /health at debug (suppressed at default info level)", () => {

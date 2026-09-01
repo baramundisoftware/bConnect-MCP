@@ -108,6 +108,50 @@ for dir in bconnect-*-mcp; do
   [ -f "${dir}/README.md" ] && cp "${dir}/README.md" "${PKG}/${dir}/" || true
 done
 
+# The Windows installer. It ships WITH the suite: this archive is the install
+# route README recommends, and the installer is what that route documents —
+# credential storage, host auto-detection, the write-gate confirmation, and
+# uninstall all live here and nowhere else.
+#
+# The directory is RESOLVED rather than hardcoded. It sits beside the suite in
+# the working tree and inside it once the layout change lands; a package built
+# after that move must not quietly lose it. `git ls-files` keeps the same
+# tracked-files-only property the rest of this script relies on, which is what
+# excludes `install/state/` (a machine's own installation record).
+INSTALL_SRC=""
+for candidate in "install" "../install"; do
+  if [ -f "${candidate}/Install-BConnectMcp.ps1" ]; then INSTALL_SRC="${candidate}"; break; fi
+done
+[ -n "${INSTALL_SRC}" ] || die "installer not found in ./install or ../install — refusing to build a package without it"
+
+log "Packaging the installer from ${INSTALL_SRC}/"
+git ls-files "${INSTALL_SRC}" | while read -r f; do
+  rel="${f#"${INSTALL_SRC}"/}"
+  case "${rel}" in .gitignore) continue ;; esac
+  mkdir -p "${PKG}/install/$(dirname "${rel}")"
+  cp "$f" "${PKG}/install/${rel}"
+done
+
+# Assert what landed. The failure this guards against is silent: an untracked
+# or renamed installer file produces a package that extracts, installs, and is
+# missing the half of the product the documentation is about.
+for required in \
+  install/Install-BConnectMcp.ps1 \
+  install/Install-BConnectMcp-UI.ps1 \
+  install/INSTALL.md \
+  install/bconnect.ps1 \
+  install/lib/hosts.json \
+  install/lib/merge-config.mjs \
+  install/lib/verify-install.mjs \
+  install/assets/logo.png
+do
+  [ -f "${PKG}/${required}" ] || die "release package is missing ${required} — is it tracked in git?"
+done
+
+# Root INSTALL.md routes rather than instructs. The full Windows procedure is
+# install/INSTALL.md and is not duplicated here; the manual path below is what
+# a non-Windows deployer needs, because the installer is PowerShell-on-Windows
+# and there is no equivalent for them to be pointed at.
 cat > "${PKG}/INSTALL.md" <<'INSTALLEOF'
 # Installation
 
@@ -115,7 +159,19 @@ cat > "${PKG}/INSTALL.md" <<'INSTALLEOF'
 - Node.js 20 or later (https://nodejs.org/) — 22.15+ recommended (honors the OS/Windows CA trust store)
 - Your bMS server address and credentials
 
-## Steps
+## Windows — use the installer
+
+Extract this archive, then:
+
+    cd <extracted folder>\install
+    .\Install-BConnectMcp.ps1
+
+It builds the suite, stores your credential with DPAPI, detects and configures your
+MCP client, verifies the result, and can uninstall itself again. Full guide, including
+the graphical wizard and the offline path: **[install/INSTALL.md](install/INSTALL.md)**.
+
+## Any platform — manual setup
+
 1. Extract this archive.
 2. From the extracted root, install runtime dependencies for the whole suite:
 
@@ -126,6 +182,9 @@ cat > "${PKG}/INSTALL.md" <<'INSTALLEOF'
 4. Start a server, e.g.:
 
        node bconnect-endpoints-mcp/build/index.js
+
+5. Register that command with your MCP client. Any MCP client works — the servers are
+   ordinary stdio JSON-RPC servers; see README.md for the configuration shapes.
 
 For the HTTP gateway and Docker options, see README.md and the docs/ folder.
 INSTALLEOF

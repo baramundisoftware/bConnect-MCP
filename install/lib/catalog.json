@@ -1,0 +1,321 @@
+{
+  "_comment": [
+    "Server catalog for the bConnect-MCP guided installer.",
+    "",
+    "  dir           directory under the suite root (build output is <dir>/build/index.js)",
+    "  default       part of the recommended starting selection",
+    "  readProbe     a zero-required-argument read tool, used to prove the live API path.",
+    "                null means the server has no such tool and the live read cannot be",
+    "                proven without inventing an ID -- reported as SKIPPED, not as a pass.",
+    "  writeProbe    a write tool used ONLY to prove the write gate is closed. Its arguments",
+    "                pass schema validation (validation runs before the gate) but the call is",
+    "                refused in-process and never reaches bConnect. Null when the server has",
+    "                no write tools at all.",
+    "  writeTools    the server's full WRITE_TOOLS set, mirrored from its index.ts.",
+    "  allowlist     true only where ALLOWED_WRITE_TOOLS is implemented. That is the local",
+    "                D4 patch, and today it exists in bconnect-jobs-mcp ONLY. Every other",
+    "                server's write gate is all-or-nothing."
+  ],
+  "zeroGuid": "00000000-0000-0000-0000-000000000000",
+  "servers": [
+    {
+      "name": "bconnect-activedirectory",
+      "dir": "bconnect-activedirectory-mcp",
+      "default": false,
+      "summary": "AD users, groups, objects, OUs (read-only server)",
+      "readProbe": "list_org_units",
+      "writeProbe": null,
+      "allowlist": false,
+      "writeTools": []
+    },
+    {
+      "name": "bconnect-assets",
+      "dir": "bconnect-assets-mcp",
+      "default": false,
+      "summary": "Asset stock, asset types and folders",
+      "readProbe": "list_asset_stock_folders",
+      "writeProbe": {
+        "tool": "delete_asset",
+        "args": {
+          "id": "$ZERO"
+        }
+      },
+      "allowlist": false,
+      "writeTools": [
+        "create_asset",
+        "update_asset",
+        "delete_asset",
+        "create_asset_stock_folder",
+        "update_asset_stock_folder",
+        "delete_asset_stock_folder",
+        "create_asset_type_folder",
+        "update_asset_type_folder",
+        "delete_asset_type_folder",
+        "create_asset_type",
+        "delete_asset_type"
+      ]
+    },
+    {
+      "name": "bconnect-compliance",
+      "dir": "bconnect-compliance-mcp",
+      "default": true,
+      "summary": "Vulnerabilities, rule violations; exposure/unpatched composites (read-only server)",
+      "readProbe": "list_detected_rule_violations",
+      "writeProbe": null,
+      "allowlist": false,
+      "writeTools": []
+    },
+    {
+      "name": "bconnect-defensecontrol",
+      "dir": "bconnect-defensecontrol-mcp",
+      "default": true,
+      "summary": "BitLocker, Defender, local admin accounts; security-posture composite",
+      "readProbe": "list_defender_windows_endpoints",
+      "writeProbe": {
+        "tool": "refresh_local_admin_account_expiry",
+        "args": {
+          "endpointId": "$ZERO"
+        }
+      },
+      "allowlist": false,
+      "writeTools": [
+        "update_bitlocker_pin",
+        "patch_local_admin_user_credentials",
+        "refresh_local_admin_account_expiry"
+      ]
+    },
+    {
+      "name": "bconnect-endpoints",
+      "dir": "bconnect-endpoints-mcp",
+      "default": true,
+      "summary": "Endpoints, logical groups, maintenance windows, fleet/stale composites",
+      "readProbe": "list_endpoints",
+      "writeProbe": {
+        "tool": "delete_endpoint",
+        "args": {
+          "id": "$ZERO",
+          "type": "WindowsEndpoint"
+        }
+      },
+      "allowlist": false,
+      "writeTools": [
+        "update_endpoint",
+        "delete_endpoint",
+        "start_enrollment",
+        "create_windows_endpoint",
+        "create_linux_endpoint",
+        "create_mac_endpoint",
+        "create_android_endpoint",
+        "create_ios_endpoint",
+        "create_network_endpoint",
+        "trigger_intune_installation",
+        "create_logical_group",
+        "update_logical_group",
+        "delete_logical_group",
+        "create_maintenance_window_for_endpoint",
+        "update_maintenance_window_for_endpoint",
+        "delete_maintenance_window_for_endpoint",
+        "create_maintenance_window_for_logical_group",
+        "update_maintenance_window_for_logical_group",
+        "delete_maintenance_window_for_logical_group",
+        "link_entra_id_data",
+        "unlink_entra_id_data"
+      ],
+      "v11Tools": [
+        "get_endpoint_registry_inventory",
+        "get_endpoint_file_inventory",
+        "get_endpoint_wmi_inventory"
+      ]
+    },
+    {
+      "name": "bconnect-groups",
+      "dir": "bconnect-groups-mcp",
+      "default": false,
+      "summary": "Membership listings by logical/static/dynamic/UDG/AD-user (read-only server)",
+      "readProbe": null,
+      "readProbeSkipReason": "every tool in this server requires a group ID; there is no zero-argument read",
+      "writeProbe": null,
+      "allowlist": false,
+      "writeTools": []
+    },
+    {
+      "name": "bconnect-insights",
+      "dir": "bconnect-insights-mcp",
+      "default": false,
+      "summary": "Cross-module estate risk briefing (read-only; reads other modules, owns none)",
+      "readProbe": "get_estate_risk_briefing",
+      "writeProbe": null,
+      "allowlist": false,
+      "writeTools": []
+    },
+    {
+      "name": "bconnect-jobs",
+      "dir": "bconnect-jobs-mcp",
+      "default": true,
+      "summary": "Job definitions, instances, folders, assignment; preview/diagnose composites",
+      "readProbe": "list_job_definitions",
+      "writeProbe": {
+        "tool": "delete_job_folder",
+        "args": {
+          "id": "$ZERO"
+        }
+      },
+      "allowlist": true,
+      "allowlistDefault": [
+        "create_job_instance",
+        "assign_job_to_logical_group",
+        "delete_job_instance",
+        "start_job_instance"
+      ],
+      "writeTools": [
+        "create_job_instance",
+        "start_job_instance",
+        "stop_job_instance",
+        "resume_job_instance",
+        "delete_job_instance",
+        "create_job_folder",
+        "update_job_folder",
+        "delete_job_folder",
+        "assign_job_to_logical_group",
+        "assign_job_to_static_group",
+        "assign_job_to_dynamic_group",
+        "assign_job_to_universal_dynamic_group",
+        "create_kiosk_release",
+        "withdraw_kiosk_release"
+      ],
+      "v11Enriched": true
+    },
+    {
+      "name": "bconnect-operatingsystems",
+      "dir": "bconnect-operatingsystems-mcp",
+      "default": false,
+      "summary": "OS deployment folders and OS-managed Windows endpoints",
+      "readProbe": "list_os_folders",
+      "writeProbe": {
+        "tool": "delete_os_folder",
+        "args": {
+          "id": "$ZERO"
+        }
+      },
+      "allowlist": false,
+      "writeTools": [
+        "create_os_folder",
+        "update_os_folder",
+        "delete_os_folder",
+        "update_os_windows_endpoint"
+      ]
+    },
+    {
+      "name": "bconnect-servermanagement",
+      "dir": "bconnect-servermanagement-mcp",
+      "default": false,
+      "summary": "Management server, gateways, microservices, security groups/profiles",
+      "readProbe": "list_microservices",
+      "writeProbe": {
+        "tool": "delete_security_group",
+        "args": {
+          "id": "$ZERO"
+        }
+      },
+      "allowlist": false,
+      "writeTools": [
+        "start_microservice",
+        "stop_microservice",
+        "restart_microservice",
+        "create_security_group",
+        "update_security_group",
+        "delete_security_group",
+        "create_security_profile",
+        "update_security_profile",
+        "delete_security_profile",
+        "update_object_permission",
+        "restart_management_server",
+        "cancel_scheduled_restart",
+        "simulate_msw_cleanup",
+        "msw_cleanup"
+      ]
+    },
+    {
+      "name": "bconnect-software",
+      "dir": "bconnect-software-mcp",
+      "default": true,
+      "summary": "Installed software inventory, software bundles",
+      "readProbe": "list_installed_windows_software",
+      "writeProbe": {
+        "tool": "delete_software_bundle",
+        "args": {
+          "bundleId": "$ZERO"
+        }
+      },
+      "allowlist": false,
+      "writeTools": [
+        "create_software_bundle",
+        "delete_software_bundle",
+        "add_application_to_bundle",
+        "delete_bundle_application",
+        "replace_application_in_bundle",
+        "create_bundle_folder",
+        "delete_bundle_folder",
+        "update_bundle_folder"
+      ]
+    },
+    {
+      "name": "bconnect-universaldynamicgroups",
+      "dir": "bconnect-universaldynamicgroups-mcp",
+      "default": false,
+      "summary": "Universal dynamic groups and their folders (read-only server, 26R1 only)",
+      "readProbe": "list_udg_folders",
+      "writeProbe": null,
+      "allowlist": false,
+      "writeTools": []
+    },
+    {
+      "name": "bconnect-updatemanagement",
+      "dir": "bconnect-updatemanagement-mcp",
+      "default": false,
+      "summary": "Microsoft update management state per endpoint",
+      "readProbe": "list_update_management_endpoints",
+      "writeProbe": {
+        "tool": "update_update_management_endpoint",
+        "args": {
+          "id": "$ZERO",
+          "patchOperations": [
+            {
+              "op": "test",
+              "path": "/installMode",
+              "value": "x"
+            }
+          ]
+        }
+      },
+      "allowlist": false,
+      "writeTools": [
+        "update_update_management_endpoint"
+      ],
+      "v11Tools": [
+        "list_microsoft_update_profiles",
+        "get_endpoint_microsoft_update_inventory"
+      ]
+    },
+    {
+      "name": "bconnect-variables",
+      "dir": "bconnect-variables-mcp",
+      "default": false,
+      "summary": "Variable definitions and instances",
+      "readProbe": "list_variable_definitions",
+      "writeProbe": {
+        "tool": "delete_variable_definition",
+        "args": {
+          "id": "$ZERO"
+        }
+      },
+      "allowlist": false,
+      "writeTools": [
+        "create_variable_definition",
+        "update_variable_definition",
+        "delete_variable_definition",
+        "update_variable_instance"
+      ]
+    }
+  ]
+}

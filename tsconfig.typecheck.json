@@ -1,0 +1,44 @@
+{
+  // Type-checks everything the BUILD deliberately excludes — every test file in
+  // every workspace — with no emit.
+  //
+  // Why this exists as a separate project: the build configs exclude
+  // `src/__tests__/**` for a good reason (tests must not land in `build/`), and
+  // eslint runs without `project`/`projectService`, so there is no type-aware
+  // linting either. The combined effect was that NO test in this repository was
+  // ever type-checked. That was found the hard way: adding a required field to
+  // `ExposureAnalysis` broke a hand-built fixture in
+  // `unpatched-reachability-and-caveats.test.ts` and every gate stayed green —
+  // "builds green, lint 0" was true and did not mean what it appeared to.
+  //
+  // A test fixture that no longer matches the interface it claims to implement
+  // is exactly the drift this suite spends its effort on elsewhere: the fixture
+  // silently yields `undefined` for the new field, and a test written against
+  // that fixture proves something about a shape the product does not have.
+  //
+  // Run with `npm run typecheck`. It is part of `npm run ci`.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    // The base sets rootDir/outDir for a single package's build; neither is
+    // meaningful when checking the whole tree, and rootDir would reject every
+    // file outside it.
+    "rootDir": ".",
+    "outDir": "./build/.typecheck",
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false
+  },
+  "include": [
+    "__tests__/**/*",
+    "packages/*/src/**/*",
+    "packages/*/__tests__/**/*",
+    "bconnect-*/src/**/*",
+    "bconnect-*/__tests__/**/*",
+    "bconnect-server-template/src/**/*",
+    "vitest.shared.ts",
+    "vitest.mock.shared.ts",
+    "vitest.config.ts"
+  ],
+  "exclude": ["node_modules", "**/node_modules/**", "**/build/**", "coverage"]
+}

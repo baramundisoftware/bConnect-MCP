@@ -11,7 +11,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get information concerning Microsoft Update Management for all windows endpoints */
+        /**
+         * Get information concerning Microsoft Update Management for all windows endpoints
+         * @description Powershell function: `Get-bCUpdatemanagementWindowsEndpoints`
+         */
         get: operations["GetWindowsEndpoints"];
         put?: never;
         post?: never;
@@ -28,14 +31,20 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get information concerning Microsoft Update Management for a specific windows endpoint */
+        /**
+         * Get information concerning Microsoft Update Management for a specific windows endpoint
+         * @description Powershell function: `Get-bCUpdatemanagementWindowsEndpoint`
+         */
         get: operations["GetWindowsEndpoint"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** Sets Microsoft Update Management update profile for windows endpoint. Can be resetted with null as given value. */
+        /**
+         * Sets Microsoft Update Management update profile for windows endpoint. Can be resetted with null as given value.
+         * @description Powershell function: `Update-bCUpdatemanagementWindowsEndpoint`
+         */
         patch: operations["UpdateWindowsEndpoint"];
         trace?: never;
     };
@@ -261,16 +270,22 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Windows endpoint properties concerning update management. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Windows endpoint properties concerning update management.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "671BBBED-BF25-4FAA-83FF-F5ABFDFD3F95",
                  *         "path": "/updateProfileId",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };

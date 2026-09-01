@@ -1,11 +1,26 @@
 {
   "name": "@bconnect/mcp-core",
-  "version": "0.0.0",
+  "version": "26.1.8",
   "private": true,
   "type": "module",
   "main": "./build/index.js",
   "types": "./build/index.d.ts",
-  "exports": { ".": { "types": "./build/index.d.ts", "default": "./build/index.js" } },
-  "scripts": { "build": "tsc" },
-  "devDependencies": { "typescript": "^5.9.3" }
+  "exports": {
+    ".": {
+      "types": "./build/index.d.ts",
+      "default": "./build/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "axios": "^1.18.1",
+    "axios-retry": "^4.5.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
 }

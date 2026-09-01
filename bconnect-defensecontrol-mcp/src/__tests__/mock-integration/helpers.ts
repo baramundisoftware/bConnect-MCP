@@ -46,11 +46,21 @@ export function createClient(baseUrl = MOCK_BASE_URL): BConnectClient {
   });
 }
 
+/**
+ * Untyped JSON straight off the wire.
+ *
+ * This helper exists to probe RAW routes, so it deliberately does not pretend
+ * to know the response shape. `unknown` made `body?.data?.[0]?.id` a type
+ * error, and because no test in this repo was type-checked, nobody found out.
+ * `any` rows are the honest description of 'whatever the server sent'.
+ */
+export type RawJsonBody = { data?: any[]; [key: string]: any } | null;
+
 export async function rawGet(
   path: string,
   params: Record<string, string | number> = {},
   baseUrl = MOCK_BASE_URL,
-): Promise<{ status: number; body: unknown }> {
+): Promise<{ status: number; body: RawJsonBody }> {
   const url = new URL(path, baseUrl);
   for (const [k, v] of Object.entries(params)) {url.searchParams.set(k, String(v));}
   const res = await fetch(url.toString());

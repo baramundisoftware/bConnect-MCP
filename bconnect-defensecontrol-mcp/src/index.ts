@@ -7,25 +7,61 @@
  * bConnect REST API for Defense Control — BitLocker encryption management,
  * Local Admin account credentials, and Microsoft Defender threat monitoring.
  *
- * Supports both 25R2 and 26R1. Operations exclusive to 26R1 (get_bitlocker_secrets,
- * update_bitlocker_pin) are only registered when BCONNECT_RELEASE === '26R1'.
+ * Requires bConnect 26R1 or later. 25R2 is no longer supported and the
+ * BCONNECT_RELEASE switch that used to select between them is gone:
+ * `get_bitlocker_secrets` and `update_bitlocker_pin` are now registered
+ * unconditionally, as is every other tool here.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
+// OPT-32 — the unified bootstrap. Read packages/mcp-core/src/run-server.ts
+// before changing anything below: it records which behaviour each of the
+// thirteen hand-written main()s had and which one survived.
+import { runServer, shouldAutoStart, describeConnectionFailure } from "@bconnect/mcp-core";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  ErrorCode,
-  McpError
+  ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
-import * as fs from "fs";
-import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow } from "@bconnect/mcp-core";
+import { createClientProvider } from "@bconnect/mcp-core";
+// LOCAL ADDITION — composite security posture (see modules/security-posture.ts).
+import { getSecurityPosture } from "./modules/security-posture.js";
+import { validateOrThrow, serializeToolResult } from "@bconnect/mcp-core";
+// A2/INT-53: `McpError` bakes "MCP error <code>: " into `.message`, and the SDK
+// client adds it again when it rebuilds the error from the wire — so anything
+// thrown out of a request handler reaches the model doubled. `BareMcpError` is
+// an `McpError` subclass carrying the bare message, so the prefix appears once.
+// It is still `instanceof McpError`, which the catch-all below relies on.
+import { BareMcpError } from "@bconnect/mcp-core";
+// TOK-20 / TOK-25 / TOK-10 / INT-53 — the shared composition layer. See
+// packages/mcp-core/src/{tool-catalogue,count-only,schema-fragments,tool-error}.ts.
+// `handleToolError` applies `stripMcpErrorPrefix` itself, which is why this file
+// no longer imports it directly.
+import {
+  defineToolCatalogue,
+  handleToolError,
+  toolTextResult,
+  apiParams,
+  isCountOnlyRequest,
+  fetchCount,
+  countOnlyProperty,
+  pageProperties,
+  includeSubfoldersProperty,
+  // Response shaping (TOK-24 gap closed here — this was one of 8 servers with
+  // zero response shaping; see the shaper declarations below for why).
+  createListShaper,
+  projectionProperties,
+  type ListEnvelope,
+  type Row,
+} from "@bconnect/mcp-core";
 import { DefenseControlRules } from "./utils/mcp-tool-validation-rules.js";
+// INT4-14 — a removed/renamed tool explains itself rather than falling
+// through to a bare "Unknown tool". Modelled on
+// bconnect-endpoints-mcp/src/removed-tools.ts, the one server that already
+// had this.
+import { removalReason } from "./removed-tools.js";
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
@@ -36,14 +72,11 @@ export interface BConnectCredentials {
   apiKey?: string;
 }
 
-export function createServer(credentials?: BConnectCredentials): { server: Server } {
-  const release = process.env.BCONNECT_RELEASE ?? "26R1";
-  const is26R1 = release === "26R1";
-
+export function createServer(credentials?: BConnectCredentials): { server: Server; getClient: () => BConnectClient } {
   const server = new Server(
     {
       name: "bconnect-defensecontrol-mcp",
-      version: "26.1.7"
+      version: "26.1.8"
     },
     {
       capabilities: {
@@ -52,22 +85,132 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
   );
 
-  // ── ListToolsRequestSchema handler ────────────────────────────────────────
+  // ── Response shaping (Phase 4 token-consumption §3) ─────────────────────
+  //
+  // Measured live against labcorp.local (PageSize:20, 20 of 23 endpoints):
+  //   list_bitlocker_windows_endpoints  24,621 B -> compact ~5,100 B  (-79%)
+  //   list_defender_windows_endpoints   18,519 B -> compact ~6,800 B  (-63%)
+  // Both rows are deeply nested (per-disk/per-volume BitLocker data, four
+  // Defender engine sub-blocks that repeat the same definitionVersion), and
+  // `shapeRows`'s flat `compactFields` cannot reach into a nested path — so
+  // each row is flattened to the handful of top-level facts a fleet question
+  // actually asks for BEFORE the shaper runs, and only on the non-`detail`
+  // path: `detail:true` is passed the untouched raw envelope, so the escape
+  // hatch stays exact byte-for-byte, per this module's own contract.
+  // `meta.projectedAway` (shape-response.ts) then names every field the
+  // flattening/projection removed from what the API actually returned —
+  // nothing is dropped without saying so.
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-    const tools = [
+  /**
+   * One Windows endpoint's system volume, out of `storageMedia[].storageVolumes[]`
+   * (EFI/Recovery volumes carry no BitLocker data and are not a BitLocker fact).
+   */
+  function systemVolumeOf(row: Row): Record<string, unknown> | null {
+    const disks = Array.isArray(row.storageMedia) ? (row.storageMedia as Row[]) : [];
+    for (const disk of disks) {
+      const volumes = Array.isArray(disk.storageVolumes) ? (disk.storageVolumes as Row[]) : [];
+      const system = volumes.find((v) => v.isSystemVolume === true);
+      if (system) {
+        const bl = (system.bitLockerVolumeData as Row | null) ?? null;
+        return {
+          driveLetter: system.driveLetter ?? null,
+          protectionStatus: bl?.protectionStatus ?? null,
+          conversionStatus: bl?.conversionStatus ?? null,
+          lockStatus: bl?.lockStatus ?? null,
+        };
+      }
+    }
+    return null;
+  }
+
+  function flattenBitlockerRow(row: Row): Row {
+    const tpmData = (row.tpmData as Row | undefined) ?? undefined;
+    return {
+      ...row,
+      tpmStatus: tpmData?.tpmStatus ?? null,
+      systemVolume: systemVolumeOf(row),
+    };
+  }
+
+  const shapeBitlockerEndpoints = createListShaper({
+    compactFields: ["endpointId", "endpointName", "isSecureBootEnabled", "tpmStatus", "systemVolume"],
+    fullModeHint: "Pass detail:true for the full record, including every disk/volume.",
+  });
+
+  function flattenDefenderRow(row: Row): Row {
+    const state = (row.microsoftDefenderState as Row | undefined) ?? {};
+    const antivirus = (state.antivirus as Row | undefined) ?? {};
+    return {
+      ...row,
+      isRealTimeProtectionActive: state.isRealTimeProtectionActive ?? null,
+      isTamperProtectionActive: state.isTamperProtectionActive ?? null,
+      highestSeverity: state.highestSeverity ?? null,
+      activeThreats: state.activeThreats ?? null,
+      resolvedThreats: state.resolvedThreats ?? null,
+      definitionVersion: antivirus.definitionVersion ?? null,
+      lastQuickScan: state.lastQuickScan ?? null,
+      lastFullScan: state.lastFullScan ?? null,
+    };
+  }
+
+  const shapeDefenderEndpoints = createListShaper({
+    compactFields: [
+      "endpointId", "endpointName", "isMicrosoftDefenderActive",
+      "isRealTimeProtectionActive", "isTamperProtectionActive", "highestSeverity",
+      "activeThreats", "resolvedThreats", "definitionVersion", "lastQuickScan", "lastFullScan",
+    ],
+    fullModeHint: "Pass detail:true for the full record, including every engine sub-block.",
+  });
+
+  /** Flatten every row unless the caller asked for the untouched record. */
+  function forShaping<T extends ListEnvelope>(
+    payload: T, full: boolean, flatten: (row: Row) => Row
+  ): T {
+    if (full || !Array.isArray(payload.data)) {return payload;}
+    return { ...payload, data: payload.data.map((r) => flatten(r as Row)) };
+  }
+
+  // ── Tool catalogue ────────────────────────────────────────────────────────
+
+  const TOOLS = [
+
+      // ── Composite analysis (LOCAL ADDITION) ─────────────────────────────
+      {
+        name: "get_security_posture",
+        description:
+          "Security posture of the whole estate in one compact response: BitLocker encryption, TPM and " +
+          "Secure Boot state, Microsoft Defender activity, antivirus definition age, and detected threats. " +
+          "Prefer this over the individual list_* tools for questions like 'how secure are we', 'what is our " +
+          "encryption coverage', 'are our AV signatures current' or 'what security gaps do we have' — the raw " +
+          "listings are deeply nested and run to tens of kilobytes to answer what is really a handful of " +
+          "counts. Read-only.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            staleDefinitionsAfterDays: {
+              type: "number",
+              description: "Antivirus definitions older than this many days count as stale (default: 7)."
+            },
+            maxNamed: {
+              type: "number",
+              description: "How many endpoints to name in each problem list (default: 10)."
+            },
+          },
+          required: []
+        }
+      },
 
       // ── BitLocker ──────────────────────────────────────────────────────
       {
         name: "list_bitlocker_windows_endpoints",
-        description: "List all Windows endpoints with BitLocker encryption status managed in baramundi Management Suite. Returns a paged list with volume data, encryption status, BitLocker version, and protection state for each endpoint.",
+        description: "List all Windows endpoints with BitLocker encryption status managed in baramundi Management Suite. Compact rows by default: endpoint id/name, Secure Boot state, TPM status, and the system volume's protection/conversion/lock status. Per-disk and per-volume detail (EFI/Recovery partitions, capacity, free space) is dropped and named in meta.projectedAway. Pass detail:true for the full record, fields:[...] to pick columns, countOnly:true for the count alone.",
         inputSchema: {
           type: "object",
           properties: {
             OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'EndpointName asc')." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            ...pageProperties,
+            ...projectionProperties,
           },
           required: []
         }
@@ -87,7 +230,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Local Admin ────────────────────────────────────────────────────
       {
         name: "get_local_admin_accounts",
-        description: "Get the Local Administrator account credentials for a specific Windows endpoint managed in baramundi Management Suite. Returns the current local admin account details including username and password managed by baramundi LAPS.",
+        description: "Get the Local Administrator account credentials for a specific Windows endpoint managed in baramundi Management Suite. Returns the current local admin account details including username and password managed by baramundi LAPS. This is a READ that can still fail: answers HTTP 409 'This action can not be executed on a disabled device' for a disabled endpoint.",
         inputSchema: {
           type: "object",
           properties: {
@@ -98,27 +241,27 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "patch_local_admin_user_credentials",
-        description: "Update the Local Administrator account credentials for a specific Windows endpoint using a JSON Patch document. Allows modifying password or username for the managed local admin account on the specified baramundi-managed Windows endpoint.",
+        description: "baramundi LAPS only. The ONLY patchable path is /LocalAdminAccount/RequestedExpirationDate (ISO 8601), nested and case-sensitive exactly as the 26R1 example writes it — username and password cannot be set directly, baramundi LAPS generates them. Setting the date in the PAST forces the endpoint to generate NEW credentials, which is how a rotation is requested; any currently distributed password stops working. The request stays pending until the client acknowledges it — refresh_local_admin_account_expiry asks the client to acknowledge immediately. WARNING: this can rotate live credentials on a production endpoint.",
         inputSchema: {
           type: "object",
           properties: {
             endpointId: { type: "string", description: "GUID of the Windows endpoint to patch local admin credentials for." },
             patchOperations: {
               type: "array",
-              description: "JSON Patch operations array. Each item has op (replace/add/remove), path (JSON path), and value fields."
+              description: "JSON Patch operations array. The only legal path is /LocalAdminAccount/RequestedExpirationDate (op=replace, value=ISO 8601 date-time) — a nested path, exactly as the 26R1 patch example writes it, and case-sensitive. Any other path returns HTTP 400."
             }
           },
           required: ["endpointId", "patchOperations"]
         }
       },
       {
-        name: "trigger_update_on_client",
-        description: "Trigger an immediate update of managed information on a specific Windows endpoint client in baramundi Management Suite. Forces the baramundi client to refresh its managed data from the server, with an optional timeout for the operation.",
+        name: "refresh_local_admin_account_expiry",
+        description: "baramundi LAPS only. Ask ONE Windows endpoint to immediately update the expiration date of its baramundi-managed local administrator account. The endpoint must be ONLINE: the call waits up to 'timeout' seconds (0-60, default 30) and answers HTTP 409 'This action can not be executed on a disabled device' for a disabled endpoint. The 200 body is a bare boolean: true means the client changed its expiration date, false means the client could NOT be reached within the timeout — a false result is not an error and must be reported as 'not confirmed', not as success. This does NOT install software or Windows updates, does NOT re-run inventory, and does NOT refresh any other managed data — for those use start_job_instance in bconnect-jobs, or list_update_management_endpoints in bconnect-updatemanagement to see what an endpoint is missing. WARNING: this changes credential state on a production endpoint.",
         inputSchema: {
           type: "object",
           properties: {
             endpointId: { type: "string", description: "GUID of the Windows endpoint to trigger the update on." },
-            timeout: { type: "number", description: "Optional timeout in seconds to wait for the update to complete." }
+            timeout: { type: "number", description: "Timeout in seconds, 0-60 (default 30). Must be between 0 and 60 per the bConnect API." }
           },
           required: ["endpointId"]
         }
@@ -133,8 +276,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           properties: {
             OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'ThreatName asc')." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable threat properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            ...pageProperties,
+            ...countOnlyProperty,
           },
           required: []
         }
@@ -159,8 +302,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve Defender threats for." },
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against threat properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            ...pageProperties,
+            ...countOnlyProperty,
           },
           required: ["endpointId"]
         }
@@ -174,8 +317,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             logicalGroupId: { type: "string", description: "GUID of the logical group to retrieve Defender threats for." },
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against threat properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            ...pageProperties,
+            ...includeSubfoldersProperty,
+            ...countOnlyProperty,
           },
           required: ["logicalGroupId"]
         }
@@ -184,14 +328,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Microsoft Defender States ──────────────────────────────────────
       {
         name: "list_defender_windows_endpoints",
-        description: "List all Windows endpoints with Microsoft Defender status managed in baramundi Management Suite. Returns a paged list of endpoints with Defender protection state, real-time protection status, signature version, and last scan information.",
+        description: "List all Windows endpoints with Microsoft Defender status managed in baramundi Management Suite. Compact rows by default: endpoint id/name, whether Defender is active, real-time/tamper protection, highest threat severity, active/resolved threat counts, antivirus definition version, and last quick/full scan. The per-engine (antimalware/antispyware/antivirus/network-inspection) sub-blocks are dropped and named in meta.projectedAway. Pass detail:true for the full record, fields:[...] to pick columns, countOnly:true for the count alone.",
         inputSchema: {
           type: "object",
           properties: {
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            ...pageProperties,
+            ...projectionProperties,
           },
           required: []
         }
@@ -207,41 +351,58 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           required: ["endpointId"]
         }
       },
-    ];
+  ];
 
-    // 26R1-only tools
-    if (is26R1) {
-      tools.splice(2, 0,
-        {
-          name: "get_bitlocker_secrets",
-          description: "[26R1] Get the BitLocker secrets including recovery keys and startup PIN for a specific Windows endpoint. Returns the initial startup PIN and BitLocker recovery keys stored for the specified managed Windows endpoint. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve BitLocker secrets for." }
-            },
-            required: ["endpointId"]
+  // Spliced in at index 2 rather than appended, to keep the BitLocker tools
+  // adjacent in tools/list. This used to be `if (is26R1)`; the product is 26R1
+  // -only, so it is unconditional and the "[26R1]" description prefix and the
+  // "Available in bConnect 26R1 and later." sentence have gone with the switch —
+  // both said something that is now true of every tool in the suite.
+  TOOLS.splice(2, 0,
+    {
+      name: "get_bitlocker_secrets",
+      description: "Returns LIVE recovery keys and startup PIN — for encryption STATUS (is it encrypted, protection state) use get_bitlocker_windows_endpoint instead; this call exposes credentials and is gated by ALLOW_SECRET_READ. Get the BitLocker secrets for a specific Windows endpoint. Returns the initial startup PIN and BitLocker recovery keys stored for the specified managed Windows endpoint.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve BitLocker secrets for." }
+        },
+        required: ["endpointId"]
+      }
+    },
+    {
+      name: "update_bitlocker_pin",
+      description: "Update the BitLocker startup PIN for a specific Windows endpoint using a JSON Patch document. Modifies the InitialStartupPin field for the specified managed Windows endpoint and returns the updated BitLocker secrets.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          endpointId: { type: "string", description: "GUID of the Windows endpoint to update the BitLocker PIN for." },
+          patchOperations: {
+            type: "array",
+            description: "JSON Patch operations array. Use op=replace, path=/InitialStartupPin, value=<new-pin>."
           }
         },
-        {
-          name: "update_bitlocker_pin",
-          description: "[26R1] Update the BitLocker startup PIN for a specific Windows endpoint using a JSON Patch document. Modifies the InitialStartupPin field for the specified managed Windows endpoint and returns the updated BitLocker secrets. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              endpointId: { type: "string", description: "GUID of the Windows endpoint to update the BitLocker PIN for." },
-              patchOperations: {
-                type: "array",
-                description: "JSON Patch operations array. Use op=replace, path=/InitialStartupPin, value=<new-pin>."
-              }
-            },
-            required: ["endpointId", "patchOperations"]
-          }
-        }
-      );
+        required: ["endpointId", "patchOperations"]
+      }
     }
+  );
 
-    return { tools };
+  const catalogue = defineToolCatalogue({
+    tools: TOOLS,
+    write: [
+      // `update_bitlocker_pin` used to be spread in conditionally, because naming
+      // a write that is absent from `tools` is a hard error in
+      // defineToolCatalogue (the F21 drift class). It is always present now.
+      "update_bitlocker_pin",
+      "patch_local_admin_user_credentials",
+      "refresh_local_admin_account_expiry",
+    ],
+  });
+
+  // ── ListToolsRequestSchema handler ────────────────────────────────────────
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return { tools: catalogue.listTools() };
   });
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -267,7 +428,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       case "patch_local_admin_user_credentials":
         validateOrThrow(args, DefenseControlRules.patchLocalAdminUserCredentials());
         return;
-      case "trigger_update_on_client":
+      case "refresh_local_admin_account_expiry":
         validateOrThrow(args, DefenseControlRules.triggerUpdateOnClient());
         return;
       case "list_defender_threats":
@@ -292,79 +453,90 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
   }
 
+  // ── Client lifetime (upstream finding R3) ─────────────────────────────────
+  // Built lazily on first tool call, but held HERE, in createServer() scope,
+  // not inside the tool-call handler where this used to live. A client
+  // constructed per call rebuilt everything stateful it owned on every call,
+  // which is why rate limiting never limited (B8) and why the response cache
+  // could not have worked even once wired up (B7). The provider is per
+  // session and re-keys itself if the resolved credentials change, so a
+  // longer-lived client cannot leak across differently-credentialed callers.
+  // See packages/mcp-core/src/client-provider.ts.
+  const getBconnect = createClientProvider<BConnectClient>({
+    // Enables the optional per-server credential convention
+    // (BCONNECT_API_KEY__DEFENSECONTROL); with no such variable set this
+    // changes nothing. See mcp-core/server-scoped-credentials.ts.
+    serverName: "bconnect-defensecontrol-mcp",
+    factory: (config) => new BConnectClient(config),
+    credentials,
+    defaultBaseUrl: "https://bms-server/bconnect",
+    onMissingCredentials: () => {
+      throw new BareMcpError(
+        ErrorCode.InternalError,
+        "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required"
+      );
+    },
+  });
+
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
     // 1. Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(name, args);
 
-    // 2. Write-operation gate (REQ-SRV-012).
-    const WRITE_TOOLS = new Set<string>([
-    "update_bitlocker_pin",
-    "patch_local_admin_user_credentials",
-    "trigger_update_on_client",
-    ]);
-    if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
-      return {
-        content: [{
-          type: "text" as const,
-          text: `Write operation '${name}' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.`
-        }],
-        isError: true
-      };
+    // D6 — refuse an argument key this tool's schema does not declare.
+    // validateParameters() iterates over RULES, so a key with no rule was never
+    // examined by anything; bConnect then answers 200 and silently ignores an
+    // unrecognised query key. Measured live, one transposed character in a filter
+    // name returned 37,571 rows instead of 1, labelled as a filtered result.
+    catalogue.assertKnownParameters(name, args);
+    // SEC-0 — every id-shaped argument must be a single, traversal-free path
+    // segment. This lived in 3 of 13 servers; it is on the catalogue now so a
+    // server cannot be built without it.
+    catalogue.assertSafePathParameters(name, args);
+
+    // 2. Write-operation gate (REQ-SRV-012). Hiding a write tool from
+    //    tools/list is a token optimisation; this is the security control, and
+    //    it still answers a client that calls a hidden tool by name.
+    const denied = catalogue.gateWriteTool(name);
+    if (denied) {
+      return denied;
     }
 
-    // 3. Secret-read gate (security audit C3). These GETs return live secrets
-    // (BitLocker recovery keys/PIN, cleartext LAPS admin passwords) that would
-    // otherwise land in the model context/transcript unredacted. Off by default;
-    // an operator must opt in explicitly.
+    // 3. Secret-read gate (security audit C3, extended by SEC-3). These calls
+    // return live secrets (BitLocker recovery keys/PIN, cleartext LAPS admin
+    // passwords) that would otherwise land in the model context/transcript
+    // unredacted. Off by default; an operator must opt in explicitly.
+    //
+    // The two write tools are here as well as in WRITE_TOOLS above, so BOTH
+    // gates must be open for them. They are not read tools, but their
+    // *responses* are secret-bearing: updateBitLockerPin() resolves to
+    // BitLockerSecrets (the recovery key set) and patchLocalAdminUserCredentials()
+    // resolves to LocalAdminAccountWindowsEndpoint (the LAPS username/password),
+    // and both are serialised into the tool result unmodified. Without this,
+    // the documented remediation posture (ALLOW_WRITE_OPERATIONS=true,
+    // ALLOW_SECRET_READ unset) let an effectively no-op JSON Patch return
+    // exactly the secrets this gate exists to withhold.
     const SECRET_READ_TOOLS = new Set<string>([
       "get_bitlocker_secrets",
       "get_local_admin_accounts",
+      "update_bitlocker_pin",
+      "patch_local_admin_user_credentials",
     ]);
     if (SECRET_READ_TOOLS.has(name) && process.env.ALLOW_SECRET_READ !== "true") {
+      // INT4-15 — name the actor, the location, and the restart, not just the
+      // variable. A model relaying "set ALLOW_SECRET_READ=true" cannot tell an
+      // administrator WHERE to set it or that a running server will not pick
+      // it up — this MCP server's own failure mode, per DEMO-RUN-OF-SHOW.md.
       return {
         content: [{
           type: "text" as const,
-          text: `Secret-returning operation '${name}' is disabled because it exposes live credentials (BitLocker keys / LAPS passwords). Set ALLOW_SECRET_READ=true to enable it.`
+          text: `Secret-returning operation '${name}' is disabled because it exposes live credentials (BitLocker keys / LAPS passwords). This MCP server was started without ALLOW_SECRET_READ. An operator must set ALLOW_SECRET_READ=true in the server's environment — the MCP host's 'env' block for this server, or the container/service environment — and RESTART the server; the change is not picked up by a running process, and the model cannot set it. This gate is independent of ALLOW_WRITE_OPERATIONS: opening writes alone does not enable this.`
         }],
         isError: true
       };
     }
 
-
-    const getBconnect = (): BConnectClient => {
-      dotenv.config();
-      const baseUrl = credentials?.baseUrl ?? process.env.BCONNECT_BASE_URL ?? "https://bms-server/bconnect";
-      const username = credentials?.username ?? process.env.BCONNECT_USERNAME;
-      const password = credentials?.password ?? process.env.BCONNECT_PASSWORD;
-      const apiKey = credentials?.apiKey ?? process.env.BCONNECT_API_KEY;
-
-      if (!apiKey && (!username || !password)) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required"
-        );
-      }
-
-      const caCertPath = process.env.BCONNECT_CA_CERT_PATH;
-      const caCert = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
-
-      const auditLevelRaw = process.env.BCONNECT_AUDIT_LEVEL ?? "none";
-      const auditLevel = (["none", "security", "write", "all"] as const).includes(auditLevelRaw as never)
-        ? (auditLevelRaw as "none" | "security" | "write" | "all")
-        : "none";
-
-      return new BConnectClient({
-        baseUrl,
-        username,
-        password,
-        apiKey,
-        rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
-        ...(caCert && { ca: caCert }),
-        auditLog: { level: auditLevel },
-      });
-    };
 
     try {
       const bconnect = getBconnect();
@@ -373,183 +545,151 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // Dispatch — arguments already validated by validateToolArguments above.
       switch (name) {
 
+        // LOCAL ADDITION — composite posture aggregate; read-only.
+        case "get_security_posture": {
+          const result = await getSecurityPosture(dc, (args ?? {}) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
+        }
+
         case "list_bitlocker_windows_endpoints": {
-          const result = await dc.getBitLockerWindowsEndpoints((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => dc.getBitLockerWindowsEndpoints(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const raw = await dc.getBitLockerWindowsEndpoints(apiParams(args) as never);
+          const full = args?.detail === true;
+          const shaped = shapeBitlockerEndpoints(
+            forShaping(raw as unknown as ListEnvelope, full, flattenBitlockerRow),
+            { full, fields: args?.fields as string[] | undefined, args }
+          );
+          return toolTextResult(serializeToolResult(shaped));
         }
 
         case "get_bitlocker_windows_endpoint": {
           const result = await dc.getBitLockerWindowsEndpoint(args!.endpointId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "get_bitlocker_secrets": {
-          if (!is26R1) {
-            throw new McpError(ErrorCode.MethodNotFound, "get_bitlocker_secrets is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
-          }
           const result = await dc.getBitLockerSecrets(args!.endpointId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "update_bitlocker_pin": {
-          if (!is26R1) {
-            throw new McpError(ErrorCode.MethodNotFound, "update_bitlocker_pin is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
-          }
           const result = await dc.updateBitLockerPin(args!.endpointId as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "get_local_admin_accounts": {
           const result = await dc.getLocalAdministrativeAccounts(args!.endpointId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "patch_local_admin_user_credentials": {
           const result = await dc.patchLocalAdminUserCredentials(args!.endpointId as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
-        case "trigger_update_on_client": {
+        case "refresh_local_admin_account_expiry": {
           const timeout = typeof args?.timeout === "number" ? args.timeout : undefined;
           const result = await dc.triggerUpdateOnClient(args!.endpointId as string, timeout);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "list_defender_threats": {
-          const result = await dc.getMicrosoftDefenderThreats((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => dc.getMicrosoftDefenderThreats(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await dc.getMicrosoftDefenderThreats(apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "get_defender_threat": {
           const result = await dc.getMicrosoftDefenderThreat(args!.threatId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "list_defender_threats_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await dc.getMicrosoftDefenderThreatsByEndpoint(endpointId as string, params as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => dc.getMicrosoftDefenderThreatsByEndpoint(endpointId as string, p as never), params);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await dc.getMicrosoftDefenderThreatsByEndpoint(endpointId as string, apiParams(params) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "list_defender_threats_by_logical_group": {
           const { logicalGroupId, ...params } = args as Record<string, unknown>;
-          const result = await dc.getMicrosoftDefenderThreatsByLogicalGroup(logicalGroupId as string, params as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => dc.getMicrosoftDefenderThreatsByLogicalGroup(logicalGroupId as string, p as never), params);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await dc.getMicrosoftDefenderThreatsByLogicalGroup(logicalGroupId as string, apiParams(params) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "list_defender_windows_endpoints": {
-          const result = await dc.getMicrosoftDefenderWindowsEndpoints((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => dc.getMicrosoftDefenderWindowsEndpoints(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const raw = await dc.getMicrosoftDefenderWindowsEndpoints(apiParams(args) as never);
+          const full = args?.detail === true;
+          const shaped = shapeDefenderEndpoints(
+            forShaping(raw as unknown as ListEnvelope, full, flattenDefenderRow),
+            { full, fields: args?.fields as string[] | undefined, args }
+          );
+          return toolTextResult(serializeToolResult(shaped));
         }
 
         case "get_defender_windows_endpoint": {
           const result = await dc.getMicrosoftDefenderWindowsEndpoint(args!.endpointId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
-        default:
-          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+        default: {
+          // INT4-14 — a renamed/removed tool explains itself.
+          const reason = removalReason(name);
+          throw new BareMcpError(ErrorCode.MethodNotFound, reason ?? `Unknown tool: ${name}`);
+        }
       }
     } catch (error) {
-      if (error instanceof McpError) {throw error;}
-      throw new McpError(
-        ErrorCode.InternalError,
-        `bConnect API error: ${error instanceof Error ? error.message : String(error)}`
-      );
+      // INT-53 — one error channel. `handleToolError` applies stripMcpErrorPrefix
+      // (A2) on every branch. See packages/mcp-core/src/tool-error.ts.
+      return handleToolError(error);
     }
   });
 
-  return { server };
+  // Difference 3 — hand the memoised provider back so runServer's startup
+  // connectivity check probes the very client tool dispatch will use.
+  return { server, getClient: getBconnect };
 }
 
-// ─── Entry point ─────────────────────────────────────────────────────────────
-
-async function main(): Promise<void> {
-  dotenv.config();
-
-
-  
-  // Startup connectivity check (REQ-SRV-013)
-  dotenv.config();
-  {
-    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:443/bconnect";
-    const _startupUser = process.env.BCONNECT_USERNAME;
-    const _startupPass = process.env.BCONNECT_PASSWORD;
-    const _startupApiKey = process.env.BCONNECT_API_KEY;
-    if (!_startupApiKey && (!_startupUser || !_startupPass)) {
-      console.error("bconnect-defensecontrol-mcp: Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
-      process.exit(1);
-    }
-    const _caCertPath = process.env.BCONNECT_CA_CERT_PATH;
-    const _caCert = _caCertPath ? fs.readFileSync(_caCertPath, "utf8") : undefined;
-    const _startupClient = new BConnectClient({
-      baseUrl: _startupUrl,
-      username: _startupUser,
-      password: _startupPass,
-      apiKey: _startupApiKey,
-      rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
-      ...(_caCert && { ca: _caCert }),
-    });
-    console.error(`bconnect-defensecontrol-mcp: verifying bConnect API connectivity...`);
-    const _connected = await _startupClient.testConnection();
-    if (!_connected) {
-      console.error(`bconnect-defensecontrol-mcp: cannot reach bConnect API at ${_startupUrl}. Check BCONNECT_BASE_URL, credentials, and network.`);
-      process.exit(1);
-    }
-    console.error(`bconnect-defensecontrol-mcp: API connectivity verified.`);
-  }
-
-  const transportMode = process.env.MCP_TRANSPORT ?? "stdio";
-  const port = parseInt(process.env.MCP_PORT ?? "3000", 10);
-  const serverName = "bconnect-defensecontrol-mcp";
-
-  if (transportMode === "http") {
-    const app = express();
-    app.use(express.json());
-
-    app.post("/mcp", async (req, res) => {
-      const { server } = createServer();
-      const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-      res.on("close", () => { transport.close(); server.close(); });
-      await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
-    });
-
-    app.get("/mcp", async (req, res) => {
-      res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Use POST for MCP requests." }));
-    });
-
-    app.delete("/mcp", async (req, res) => {
-      res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Session management not supported in stateless mode." }));
-    });
-
-    const bind = process.env.MCP_BIND ?? "127.0.0.1";
-    // Standalone HTTP mode has no client authentication. Binding to a non-loopback
-    // address would expose an unauthenticated bConnect proxy, so fail closed unless
-    // the operator explicitly opts in (front it with the authenticated gateway instead).
-    const isLoopbackBind = bind === "127.0.0.1" || bind === "::1" || bind === "localhost";
-    if (!isLoopbackBind && process.env.MCP_ALLOW_NO_AUTH !== "true") {
-      console.error(
-        `${serverName}: refusing to bind ${bind} — standalone HTTP mode is unauthenticated. ` +
-          `Bind to loopback (the default) and front it with the authenticated gateway, ` +
-          `or set MCP_ALLOW_NO_AUTH=true to override.`,
-      );
-      process.exit(1);
-    }
-    app.listen(port, bind, () => {
-      console.error(`${serverName} listening on http://${bind}:${port}/mcp`);
-    });
-  } else {
-    const { server } = createServer();
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error(`${serverName} started on stdio`);
-  }
-}
-
-if (!process.env.VITEST) {
-  main().catch((err) => {
-    console.error("Fatal error:", err);
+// ─── Entry point (OPT-32) ────────────────────────────────────────────────────
+//
+// This server used to hand-write ~85 lines of bootstrap. Every line of it is
+// now in `runServer()`, which resolves the six ways the thirteen copies had
+// drifted. Two consequences are visible from here and are deliberate:
+//
+//   - BCONNECT_BASE_URL has NO default any more. The old
+//     `|| "https://bms.example.com:443/bconnect"` fallback sent real
+//     credentials to a host the vendor does not control whenever the variable
+//     was unset. Absent base URL is now exit 1, before any client is built.
+//   - The startup connectivity check probes `getClient()` above — the client
+//     tool dispatch uses — not a throwaway built from a second reading of the
+//     environment. That is why `createServer` returns it.
+//
+// `express` is injected because mcp-core does not depend on it: this package
+// pins ^4.21.0 while the workspace root hoists 5.x.
+if (shouldAutoStart()) {
+  void runServer({
+    name: "bconnect-defensecontrol-mcp",
+    createServer,
+    http: { express },
+  }).catch((error) => {
+    console.error(`Fatal error: ${describeConnectionFailure(error)}`);
     process.exit(1);
   });
 }

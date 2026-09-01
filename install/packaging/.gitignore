@@ -1,0 +1,8 @@
+# The Node.js runtime MSI. ~30 MB of vendor binary that is downloaded once on a
+# connected machine and verified against nodejs.org's own SHASUMS256.txt. It is
+# not ours to redistribute through source control, and a checked-in copy is a
+# copy nobody re-verifies.
+redist/
+
+# Compiler output: the .exe itself, and whatever ISCC leaves beside it.
+out/

@@ -5,11 +5,31 @@
  *   - jobs module (~24 tools)
  *
  * And does NOT contain tools from any other domain server.
+ *
+ * TOK-20: the catalogue now depends on ALLOW_WRITE_OPERATIONS. These tests pin
+ * the *whole declared* surface, so they run with the gate open; the gate-closed
+ * surface and the refusal path are pinned in tool-surface.test.ts.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 
 import { createServer } from '../index.js';
+import { listToolNames } from './lib/connect.js';
+
+let previousGate: string | undefined;
+
+beforeAll(() => {
+  previousGate = process.env.ALLOW_WRITE_OPERATIONS;
+  process.env.ALLOW_WRITE_OPERATIONS = 'true';
+});
+
+afterAll(() => {
+  if (previousGate === undefined) {
+    delete process.env.ALLOW_WRITE_OPERATIONS;
+  } else {
+    process.env.ALLOW_WRITE_OPERATIONS = previousGate;
+  }
+});
 
 // ── Expected tool sets ─────────────────────────────────────────────────────
 
@@ -19,7 +39,8 @@ const JOBS_TOOLS = [
   'get_job_definition',
   'list_job_instances',
   'get_job_instance',
-  'list_endpoint_job_instances',
+  // INT-47: was `list_endpoint_job_instances`.
+  'list_job_instances_by_endpoint',
   'list_job_instances_by_definition',
   'list_job_instances_by_logical_group',
   'list_job_definitions_by_folder',
@@ -58,7 +79,15 @@ const JOBS_TOOLS = [
   'list_job_instances_by_universal_dynamic_group',
 ] as const;
 
-const ALL_EXPECTED_TOOLS: string[] = [...JOBS_TOOLS];
+/**
+ * LOCAL ADDITIONS — composite read-only tools we added on top of the vendored
+ * suite. Kept in a separate list, not merged into JOBS_TOOLS above, so the
+ * divergence from upstream stays visible and is easy to drop on a suite
+ * upgrade. The inventory assertions still fail on any tool outside both lists.
+ */
+const LOCAL_ADDITIONS = ['preview_assignment', 'explain_job_failure', 'diagnose_job'] as const;
+
+const ALL_EXPECTED_TOOLS: string[] = [...JOBS_TOOLS, ...LOCAL_ADDITIONS];
 
 // ── Tool names that must NOT appear in this server ─────────────────────────
 
@@ -201,7 +230,7 @@ const DEFENSECONTROL_TOOLS = [
   'get_bitlocker_windows_endpoint',
   'get_local_admin_accounts',
   'trigger_local_admin_accounts_update',
-  'trigger_update_on_client',
+  'refresh_local_admin_account_expiry',
   'patch_local_admin_user_credentials',
   'list_defender_threats',
   'get_defender_threat',
@@ -250,16 +279,11 @@ const _ALL_FORBIDDEN_TOOLS: string[] = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+// OPT-39 (B1): this used to call server.request(), which only resolved because
+// createServer() replaced it with a direct reach into the SDK's private
+// _requestHandlers map. The catalogue is now read over a real transport.
 async function getToolNames(): Promise<string[]> {
-  const { server } = createServer();
-
-  const response = await server.request(
-    { method: 'tools/list', params: {} },
-    {} as never
-  );
-
-  const tools = (response as { tools: Array<{ name: string }> }).tools;
-  return tools.map((t) => t.name);
+  return listToolNames();
 }
 
 // ── Test suite ─────────────────────────────────────────────────────────────
@@ -274,7 +298,7 @@ describe('bconnect-jobs-mcp server — tool registration', () => {
       }
     });
 
-    it('returns exactly 34 tools (jobs module only)', async () => {
+    it('returns exactly the expected tool count (jobs module + local additions)', async () => {
       const toolNames = await getToolNames();
 
       expect(toolNames).toHaveLength(ALL_EXPECTED_TOOLS.length);
@@ -352,6 +376,43 @@ describe('bconnect-jobs-mcp server — tool registration', () => {
         unexpectedTools,
         `Unexpected tools found: ${unexpectedTools.join(', ')}`
       ).toHaveLength(0);
+    });
+  });
+
+  // ── OPT-39 / B1 regression ───────────────────────────────────────────────
+  //
+  // createServer() shipped a production `server.request()` override that read
+  // the SDK's private `_requestHandlers` map, purely so tests could dispatch
+  // handlers without a transport. These assert the factory hands back a stock
+  // SDK Server: nothing of its own on `.request`, and a catalogue that is only
+  // reachable over the real protocol.
+  describe('no test-only monkey-patch survives in the factory', () => {
+    it('does not install an own "request" property on the Server instance', () => {
+      const { server } = createServer();
+
+      expect(
+        Object.prototype.hasOwnProperty.call(server, 'request'),
+        'createServer() must not overwrite server.request — that override reached into the SDK internals'
+      ).toBe(false);
+      // Still the prototype method the SDK defines, not a replacement.
+      expect(server.request).toBe(Object.getPrototypeOf(server).request);
+    });
+
+    it('rejects a bare server.request() call, proving nothing dispatches handlers directly', async () => {
+      const { server } = createServer();
+
+      // With the override in place this resolved with the tool catalogue. On a
+      // stock Server an unconnected request cannot go anywhere.
+      await expect(
+        server.request({ method: 'tools/list', params: {} }, {} as never)
+      ).rejects.toThrow();
+    });
+
+    it('serves the full catalogue over a real transport instead', async () => {
+      const toolNames = await listToolNames();
+
+      expect(toolNames).toHaveLength(ALL_EXPECTED_TOOLS.length);
+      expect(toolNames).toContain('preview_assignment');
     });
   });
 });

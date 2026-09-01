@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/v2.0/ApiKeys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get API keys
+         * @description Powershell function: `Get-bCServermanagementApiKeys`
+         */
+        get: operations["GetApiKeys"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2.0/CloudConnectors": {
         parameters: {
             query?: never;
@@ -11,7 +31,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all cloud connectors */
+        /**
+         * Get all cloud connectors
+         * @description Powershell function: `Get-bCServermanagementCloudConnectors`
+         */
         get: operations["GetCloudConnectors"];
         put?: never;
         post?: never;
@@ -28,8 +51,91 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get DIP information */
+        /**
+         * Get DIP information
+         * @description Powershell function: `Get-bCServermanagementDipStatus`
+         */
         get: operations["GetDipStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/Dips/SimulateMSWCleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulates the cleanup of the Master DIP regarding managed software files
+         * @description Powershell function: `Invoke-bCServermanagementSimulateMSWCleanup`
+         */
+        post: operations["SimulateMSWCleanup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/Dips/MSWCleanup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Performs cleanup of the Master DIP regarding managed software files
+         * @description Powershell function: `Invoke-bCServermanagementMSWCleanup`
+         */
+        post: operations["MSWCleanup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/DownloadJobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets all download jobs
+         * @description Powershell function: `Get-bCServermanagementDownloadJobs`
+         */
+        get: operations["GetDownloadJobs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/DownloadJobs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets a download job by id
+         * @description Powershell function: `Get-bCServermanagementDownloadJob`
+         */
+        get: operations["GetDownloadJob"];
         put?: never;
         post?: never;
         delete?: never;
@@ -45,7 +151,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get gateway information */
+        /**
+         * Get gateway information
+         * @description Powershell function: `Get-bCServermanagementGateway`
+         */
         get: operations["GetGateway"];
         put?: never;
         post?: never;
@@ -62,7 +171,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get information about the management server */
+        /**
+         * Get information about the management server
+         * @description Powershell function: `Get-bCServermanagementManagementServer`
+         */
         get: operations["GetManagementServer"];
         put?: never;
         post?: never;
@@ -81,7 +193,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Restart the management server. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D) */
+        /**
+         * Restart the management server. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)
+         * @description Powershell function: `Restart-bCServermanagementBaramundiManagementServer`
+         */
         post: operations["RestartBaramundiManagementServer"];
         delete?: never;
         options?: never;
@@ -98,7 +213,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Cancel the scheduled restart of the management server. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D) */
+        /**
+         * Cancel the scheduled restart of the management server. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)
+         * @description Powershell function: `Stop-bCServermanagementScheduledRestartBaramundiManagementServer`
+         */
         post: operations["CancelScheduledRestartBaramundiManagementServer"];
         delete?: never;
         options?: never;
@@ -113,7 +231,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all microservices */
+        /**
+         * Get all microservices
+         * @description Powershell function: `Get-bCServermanagementMicroservices`
+         */
         get: operations["GetMicroservices"];
         put?: never;
         post?: never;
@@ -130,7 +251,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a microservice */
+        /**
+         * Get a microservice
+         * @description Powershell function: `Get-bCServermanagementMicroservice`
+         */
         get: operations["GetMicroservice"];
         put?: never;
         post?: never;
@@ -149,7 +273,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Starts microservice. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D) */
+        /**
+         * Starts microservice. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)
+         * @description Powershell function: `Start-bCServermanagementMicroservice`
+         */
         post: operations["StartMicroservice"];
         delete?: never;
         options?: never;
@@ -166,7 +293,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Stops a microservice. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D) */
+        /**
+         * Stops a microservice. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)
+         * @description Powershell function: `Stop-bCServermanagementMicroservice`
+         */
         post: operations["StopMicroservice"];
         delete?: never;
         options?: never;
@@ -183,7 +313,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Restart a microservice. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D) */
+        /**
+         * Restart a microservice. Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)
+         * @description Powershell function: `Restart-bCServermanagementMicroservice`
+         */
         post: operations["RestartMicroservice"];
         delete?: never;
         options?: never;
@@ -198,7 +331,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets the access rights for an object. */
+        /**
+         * Gets the access rights for an object.
+         * @description Powershell function: `Get-bCServermanagementAccessRights`
+         */
         get: operations["GetAccessRights"];
         put?: never;
         post?: never;
@@ -221,7 +357,10 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Updates the modifiable values of the specified object permission */
+        /**
+         * Updates the modifiable values of the specified object permission
+         * @description Powershell function: `Update-bCServermanagementObjectPermission`
+         */
         patch: operations["UpdateObjectPermission"];
         trace?: never;
     };
@@ -232,7 +371,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all PxE Relays */
+        /**
+         * Get all PxE Relays
+         * @description Powershell function: `Get-bCServermanagementPxeRelays`
+         */
         get: operations["GetPxeRelays"];
         put?: never;
         post?: never;
@@ -249,10 +391,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all security groups */
+        /**
+         * Gets all security groups
+         * @description Powershell function: `Get-bCServermanagementSecurityGroups`
+         */
         get: operations["GetSecurityGroups"];
         put?: never;
-        /** Creates a security group according to the specified properties */
+        /**
+         * Creates a security group according to the specified properties
+         * @description Powershell function: `New-bCServermanagementSecurityGroup`
+         */
         post: operations["CreateSecurityGroup"];
         delete?: never;
         options?: never;
@@ -267,15 +415,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a security group by id */
+        /**
+         * Gets a security group by id
+         * @description Powershell function: `Get-bCServermanagementSecurityGroup`
+         */
         get: operations["GetSecurityGroup"];
         put?: never;
         post?: never;
-        /** Deletes a security group by id */
+        /**
+         * Deletes a security group by id
+         * @description Powershell function: `Remove-bCServermanagementSecurityGroup`
+         */
         delete: operations["DeleteSecurityGroup"];
         options?: never;
         head?: never;
-        /** Updates the modifiable values of the specified security group */
+        /**
+         * Updates the modifiable values of the specified security group
+         * @description Powershell function: `Update-bCServermanagementSecurityGroup`
+         */
         patch: operations["UpdateSecurityGroup"];
         trace?: never;
     };
@@ -286,10 +443,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all security profiles */
+        /**
+         * Gets all security profiles
+         * @description Powershell function: `Get-bCServermanagementSecurityProfiles`
+         */
         get: operations["GetSecurityProfiles"];
         put?: never;
-        /** Creates a security profile according to the specified properties */
+        /**
+         * Creates a security profile according to the specified properties
+         * @description Powershell function: `New-bCServermanagementSecurityProfile`
+         */
         post: operations["CreateSecurityProfile"];
         delete?: never;
         options?: never;
@@ -304,15 +467,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a security profile by id */
+        /**
+         * Gets a security profile by id
+         * @description Powershell function: `Get-bCServermanagementSecurityProfile`
+         */
         get: operations["GetSecurityProfile"];
         put?: never;
         post?: never;
-        /** Deletes a security profile by id */
+        /**
+         * Deletes a security profile by id
+         * @description Powershell function: `Remove-bCServermanagementSecurityProfile`
+         */
         delete: operations["DeleteSecurityProfile"];
         options?: never;
         head?: never;
-        /** Updates the modifiable values of the specified security profile */
+        /**
+         * Updates the modifiable values of the specified security profile
+         * @description Powershell function: `Update-bCServermanagementSecurityProfile`
+         */
         patch: operations["UpdateSecurityProfile"];
         trace?: never;
     };
@@ -323,7 +495,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get VPN Appliance */
+        /**
+         * Get VPN Appliance
+         * @description Powershell function: `Get-bCServermanagementVpnAppliance`
+         */
         get: operations["GetVpnAppliance"];
         put?: never;
         post?: never;
@@ -337,6 +512,23 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ApiKey: {
+            /** @description Name of the API key */
+            name: string;
+            /**
+             * Format: date
+             * @description Expiration date
+             */
+            expirationDate?: string;
+            /** @description Comment */
+            comment?: string;
+            /** @description If true, API key is active and can be used */
+            isActive?: boolean;
+            /** @description If true, API key can be used via Gateway */
+            isAvailableViaGateway?: boolean;
+            /** @description Ids of the security profiles assigned to the API key */
+            securityProfiles?: string[];
+        };
         AssignedSecurityProfile: {
             /**
              * Format: guid
@@ -346,12 +538,33 @@ export interface components {
             /** @description The name of the security profile */
             name: string;
         };
+        CleanupResult: {
+            /** @description Indicates if the cleanup was successful */
+            wasSuccessful?: boolean;
+            /** @description The result of the cleanup. */
+            result?: string | null;
+        };
+        CleanupSimulationResult: {
+            /** @description The result of the simulated cleanup. */
+            simulationResult?: string | null;
+            /** @description A list of all the files that a cleanup would delete. */
+            filesToDelete?: string[];
+        };
         CloudConnector: {
             /** @description Name of the cloud connector */
             name: string;
             /** @description State of the cloud connector */
             state?: components["schemas"]["ServiceState"];
         };
+        DailyRepetition: Omit<components["schemas"]["RepetitionDefinition"], "type"> & Record<string, never> & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "Daily";
+        };
+        /** @enum {string} */
+        DayOfWeek: "Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday";
         DipInfo: {
             /**
              * Format: guid
@@ -372,6 +585,50 @@ export interface components {
         };
         /** @enum {string} */
         DipStatus: "Unknown" | "Idle" | "Warning" | "Error" | "Syncing" | "Initializing" | "Stopping" | "ShuttingDown" | "Unresponsive" | "CheckingSync";
+        DownloadJob: {
+            /**
+             * Format: guid
+             * @description Id of the download job
+             */
+            id?: string;
+            /** @description Name of the download job */
+            name?: string;
+            /** @description A list of configured intervals in which the download job is executed */
+            interval?: (components["schemas"]["DailyRepetition"] | components["schemas"]["WeeklyRepetition"])[];
+            /**
+             * Format: date-time
+             * @description Last execution time of download job
+             */
+            lastExecution?: string | null;
+            /**
+             * Format: date-time
+             * @description Time of the last state change of the download job
+             */
+            lastUpdate?: string | null;
+            /** @description State of the download job */
+            stateValue?: components["schemas"]["DownloadJobStatusValue"];
+            /** @description The message describing the state of the download job */
+            stateMessage?: string | null;
+            /** @description The URL of the download job */
+            url?: string | null;
+            /** @description The local pathname of the download job */
+            localPathName?: string | null;
+        };
+        DownloadJobPagedList: {
+            /** Format: int32 */
+            readonly currentPage?: number | null;
+            /** Format: int32 */
+            readonly pageSize?: number | null;
+            /** Format: int32 */
+            readonly totalPages?: number | null;
+            /** Format: int32 */
+            readonly totalItems?: number;
+            readonly hasPreviousPage?: boolean;
+            readonly hasNextPage?: boolean;
+            readonly data?: components["schemas"]["DownloadJob"][];
+        };
+        /** @enum {string} */
+        DownloadJobStatusValue: "Unknown" | "Running" | "Success" | "Error" | "RescheduledSuccess" | "RescheduledError";
         Gateway: {
             configurationStatus?: components["schemas"]["GatewayConfigurationStatus"];
             availability?: components["schemas"]["GatewayAvailability"];
@@ -430,7 +687,11 @@ export interface components {
         };
         /** @enum {string} */
         OperationType: "Add" | "Remove" | "Replace" | "Move" | "Copy" | "Test" | "Invalid";
-        /** @enum {string} */
+        /**
+         * @description **Note:** The following values are deprecated and should no longer be used.
+         *     - AutViewCollectedData -> Removed in 26.1. Keep to avoid gaps in enum values. See Commit 86f45dbc and EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+         * @enum {string}
+         */
         Permissions: "Full" | "Read" | "Modify" | "Delete" | "CreateFolder" | "CreateObject" | "JobAssignTarget" | "JobControl" | "JobEditAutoAssign" | "SystemOrAdObjectAssignJob" | "SystemRemoteControl" | "SystemBitLockerControl" | "SystemJobPrioritization" | "AutViewCollectedData" | "AutConfig" | "LicenseManagement" | "ArgusCockpit" | "LocalAdminUser" | "SystemRemoteDeskNoConfirmation";
         ProblemDetails: {
             type?: string | null;
@@ -447,6 +708,14 @@ export interface components {
             name: string;
             /** @description State of the PXE Relay */
             state?: components["schemas"]["ServiceState"];
+        };
+        RepetitionDefinition: {
+            type: string;
+            /**
+             * Format: time
+             * @description Time of the repetition
+             */
+            time?: string;
         };
         SecurityGroup: {
             /**
@@ -535,6 +804,16 @@ export interface components {
         };
         /** @enum {string} */
         VpnApplianceStatus: "Unknown" | "NotConfigured" | "Ok" | "Unreachable" | "ConfigurationOutdated" | "Error";
+        WeeklyRepetition: Omit<components["schemas"]["RepetitionDefinition"], "type"> & {
+            /** @description A set of days on which the download job will be executed */
+            weekdays?: components["schemas"]["DayOfWeek"][];
+        } & {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "Weekly";
+        };
     };
     responses: never;
     parameters: never;
@@ -544,6 +823,44 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    GetApiKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns all API keys */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKey"][];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetCloudConnectors: {
         parameters: {
             query?: never;
@@ -610,6 +927,220 @@ export interface operations {
                 };
             };
             /** @description Missing read rights for DIP management */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    SimulateMSWCleanup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns a list of files that would be deleted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupSimulationResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Missing modify rights for Managed Software settings */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Simulation or cleanup is already running */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    MSWCleanup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Performs cleanup and returns a value indicating the success */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupResult"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Missing modify rights for Managed Software settings */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Simulation or cleanup is already running */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDownloadJobs: {
+        parameters: {
+            query?: {
+                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or LastExecution (e. g. Name asc). */
+                OrderBy?: string;
+                /** @description Filters results by matching the given value against searchable properties. Searchable values are Name and LocalPathName. */
+                SearchQuery?: string;
+                /** @description Filters result by matching the exact value against Name. */
+                Name?: string;
+                /** @description Filters result by matching StateValue. */
+                StateValue?: components["schemas"]["DownloadJobStatusValue"];
+                /** @description Filters on lastExecution. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z). */
+                LastExecution?: string;
+                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
+                Page?: number;
+                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns all download jobs */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadJobPagedList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetDownloadJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns the download job with the specified id */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DownloadJob"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The download job with the specified id does not exist or is not visible due to missing read rights */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1122,10 +1653,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable object permission properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable object permission properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "false",
                  *         "path": "/InheritRights",
@@ -1165,7 +1701,8 @@ export interface operations {
                  *         "path": "/SecurityProfilePermissions/fa6e53c2-b27a-4eef-b4f7-2ccffd0110e5/Permissions/Modify",
                  *         "op": "remove"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -1311,7 +1848,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The security group to be created */
+        /**
+         * @description The security group to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCServermanagementSecurityGroupForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SecurityGroupForCreation"];
@@ -1470,10 +2011,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security group properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security group properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "user@domain.com",
                  *         "path": "/Name",
@@ -1494,7 +2040,8 @@ export interface operations {
                  *         "path": "/ProfileIds/0B7D304A-1B15-49EF-89FE-FDA03FF6437E",
                  *         "op": "remove"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -1611,7 +2158,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The security profile to be created */
+        /**
+         * @description The security profile to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCServermanagementSecurityProfileForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SecurityProfileForCreation"];
@@ -1770,10 +2321,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security profile properties.<br>Default security profile 'Administration' can not be modified. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security profile properties.<br>Default security profile 'Administration' can not be modified.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "New name",
                  *         "path": "/Name",
@@ -1794,7 +2350,8 @@ export interface operations {
                  *         "path": "/DisplayEndpointUserIdentities",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };

@@ -594,7 +594,7 @@ export interface components {
             /** @description Name of the download job */
             name?: string;
             /** @description A list of configured intervals in which the download job is executed */
-            interval?: components["schemas"]["RepetitionDefinition"][];
+            interval?: (components["schemas"]["DailyRepetition"] | components["schemas"]["WeeklyRepetition"])[];
             /**
              * Format: date-time
              * @description Last execution time of download job
@@ -688,9 +688,7 @@ export interface components {
         /** @enum {string} */
         OperationType: "Add" | "Remove" | "Replace" | "Move" | "Copy" | "Test" | "Invalid";
         /**
-         * @description
-         *
-         *     **Note:** The following values are deprecated and should no longer be used.
+         * @description **Note:** The following values are deprecated and should no longer be used.
          *     - AutViewCollectedData -> Removed in 26.1. Keep to avoid gaps in enum values. See Commit 86f45dbc and EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
          * @enum {string}
          */
@@ -1655,12 +1653,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable object permission properties.
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable object permission properties.
          *
-         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "false",
                  *         "path": "/InheritRights",
@@ -1700,7 +1701,8 @@ export interface operations {
                  *         "path": "/SecurityProfilePermissions/fa6e53c2-b27a-4eef-b4f7-2ccffd0110e5/Permissions/Modify",
                  *         "op": "remove"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -1846,9 +1848,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The security group to be created
+        /**
+         * @description The security group to be created
          *
-         *     Initialize in PowerShell with `Initialize-bCServermanagementSecurityGroupForCreation` */
+         *     Initialize in PowerShell with `Initialize-bCServermanagementSecurityGroupForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SecurityGroupForCreation"];
@@ -2007,12 +2011,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security group properties.
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security group properties.
          *
-         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "user@domain.com",
                  *         "path": "/Name",
@@ -2033,7 +2040,8 @@ export interface operations {
                  *         "path": "/ProfileIds/0B7D304A-1B15-49EF-89FE-FDA03FF6437E",
                  *         "op": "remove"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -2150,9 +2158,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The security profile to be created
+        /**
+         * @description The security profile to be created
          *
-         *     Initialize in PowerShell with `Initialize-bCServermanagementSecurityProfileForCreation` */
+         *     Initialize in PowerShell with `Initialize-bCServermanagementSecurityProfileForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SecurityProfileForCreation"];
@@ -2311,12 +2321,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security profile properties.<br>Default security profile 'Administration' can not be modified.
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable security profile properties.<br>Default security profile 'Administration' can not be modified.
          *
-         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "New name",
                  *         "path": "/Name",
@@ -2337,7 +2350,8 @@ export interface operations {
                  *         "path": "/DisplayEndpointUserIdentities",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };

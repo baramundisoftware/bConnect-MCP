@@ -5,7 +5,8 @@
  * Validates types, formats, ranges, and required fields.
  */
 
-import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
+import { BareMcpError } from "./protocol-error.js";
 
 /**
  * Validation rule definition
@@ -195,12 +196,16 @@ export function validateParameters(args: Record<string, unknown> | undefined, ru
 }
 
 /**
- * Validate and throw McpError if validation fails
+ * Validate and throw an `McpError` (`-32602`) if validation fails.
+ *
+ * `BareMcpError`, not the stock `McpError`: the SDK prefixes the message with
+ * `MCP error <code>: ` on the client side, and a stock `McpError` has already
+ * baked that prefix into `.message`, so the model would read it twice (A2).
  */
 export function validateOrThrow(args: Record<string, unknown> | undefined, rules: ValidationRule[]): void {
   const result = validateParameters(args, rules);
   if (!result.valid) {
-    throw new McpError(
+    throw new BareMcpError(
       ErrorCode.InvalidParams,
       `Invalid parameters: ${result.errors.join('; ')}`
     );

@@ -4,6 +4,210 @@
  */
 
 export interface paths {
+    "/v2.0/Bundles/{bundleId}/BundleApplications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets all bundle applications contained in a specific software bundle
+         * @description Powershell function: `Get-bCSoftwareBundleApplicationsByBundleId`
+         */
+        get: operations["GetBundleApplicationsByBundleId"];
+        put?: never;
+        /**
+         * Assigns an application to a bundle
+         * @description Powershell function: `Add-bCSoftwareApplicationToBundle`
+         */
+        post: operations["AddApplicationToBundle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/BundleApplications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets all bundle applications
+         * @description Powershell function: `Get-bCSoftwareBundleApplications`
+         */
+        get: operations["GetBundleApplications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/BundleApplications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Deletes a bundle application by id
+         * @description Powershell function: `Remove-bCSoftwareBundleApplicationById`
+         */
+        delete: operations["DeleteBundleApplicationById"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/Bundles/{bundleId}/BundleApplications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Replaces an application within a bundle with the specified application
+         * @description Powershell function: `Invoke-bCSoftwareReplaceApplicationInBundle`
+         */
+        patch: operations["ReplaceApplicationInBundle"];
+        trace?: never;
+    };
+    "/v2.0/Bundle/Folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets all folders
+         * @description Powershell function: `Get-bCSoftwareBundleFolders`
+         */
+        get: operations["GetBundleFolders"];
+        put?: never;
+        /**
+         * Creates a folder according to the specified properties
+         * @description Powershell function: `New-bCSoftwareBundleFolder`
+         */
+        post: operations["CreateBundleFolder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/Bundle/Folders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets a folder by id
+         * @description Powershell function: `Get-bCSoftwareBundleFolder`
+         */
+        get: operations["GetBundleFolder"];
+        put?: never;
+        post?: never;
+        /**
+         * Deletes a folder by id
+         * @description Powershell function: `Remove-bCSoftwareBundleFolder`
+         */
+        delete: operations["DeleteBundleFolder"];
+        options?: never;
+        head?: never;
+        /**
+         * Updates a folder according to the specified properties
+         * @description Powershell function: `Update-bCSoftwareBundleFolder`
+         */
+        patch: operations["UpdateBundleFolder"];
+        trace?: never;
+    };
+    "/v2.0/Bundle/Folders/{folderId}/Folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets all folders contained by a folder
+         * @description Powershell function: `Get-bCSoftwareBundleFoldersByFolderId`
+         */
+        get: operations["GetBundleFoldersByFolderId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/Bundles/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets a software bundle by id
+         * @description Powershell function: `Get-bCSoftwareBundle`
+         */
+        get: operations["GetBundle"];
+        put?: never;
+        post?: never;
+        /**
+         * Deletes a bundle by id
+         * @description Powershell function: `Remove-bCSoftwareBundle`
+         */
+        delete: operations["DeleteBundle"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/Bundles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets all software bundles
+         * @description Powershell function: `Get-bCSoftwareSoftwareBundles`
+         */
+        get: operations["GetSoftwareBundles"];
+        put?: never;
+        /**
+         * Creates a bundle
+         * @description Powershell function: `New-bCSoftwareBundle`
+         */
+        post: operations["CreateBundle"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2.0/InstalledWindowsSoftware": {
         parameters: {
             query?: never;
@@ -11,7 +215,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all installed Windows software */
+        /**
+         * Gets all installed Windows software
+         * @description Powershell function: `Get-bCSoftwareInstalledWindowsSoftware`
+         */
         get: operations["GetInstalledWindowsSoftware"];
         put?: never;
         post?: never;
@@ -28,7 +235,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all installed Windows software of a specific endpoint */
+        /**
+         * Gets all installed Windows software of a specific endpoint
+         * @description Powershell function: `Get-bCSoftwareInstalledWindowsSoftwareByEndpointId`
+         */
         get: operations["GetInstalledWindowsSoftwareByEndpointId"];
         put?: never;
         post?: never;
@@ -45,7 +255,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all installed Windows software of endpoints contained by a specific logical group */
+        /**
+         * Gets all installed Windows software of endpoints contained by a specific logical group
+         * @description Powershell function: `Get-bCSoftwareInstalledWindowsSoftwareByLogicalGroupId`
+         */
         get: operations["GetInstalledWindowsSoftwareByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -62,7 +275,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all installed Windows software of endpoints contained by a specific universal dynamic group */
+        /**
+         * Gets all installed Windows software of endpoints contained by a specific universal dynamic group
+         * @description Powershell function: `Get-bCSoftwareInstalledWindowsSoftwareByUniversalDynamicGroupId`
+         */
         get: operations["GetInstalledWindowsSoftwareByUniversalDynamicGroupId"];
         put?: never;
         post?: never;
@@ -76,6 +292,55 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AddApplicationRequest: {
+            /**
+             * Format: guid
+             * @description The id of the application which should be added to the bundle
+             */
+            applicationId: string;
+        };
+        BundleFolder: {
+            /**
+             * Format: guid
+             * @description The id of the folder
+             */
+            id?: string;
+            /** @description The name of the folder */
+            name?: string;
+            /** @description The comment of the folder */
+            comment?: string | null;
+            /**
+             * Format: guid
+             * @description The id of the parent folder
+             */
+            parentId?: string;
+            /** @description The name of the parent folder */
+            parent?: string;
+        };
+        BundleFolderForCreation: {
+            /** @description The name of the folder */
+            name: string;
+            /**
+             * Format: guid
+             * @description The parent of the folder
+             */
+            parentId?: string | null;
+            /** @description The comment of the folder */
+            comment?: string | null;
+        };
+        BundleFolderPagedList: {
+            /** Format: int32 */
+            readonly currentPage?: number | null;
+            /** Format: int32 */
+            readonly pageSize?: number | null;
+            /** Format: int32 */
+            readonly totalPages?: number | null;
+            /** Format: int32 */
+            readonly totalItems?: number;
+            readonly hasPreviousPage?: boolean;
+            readonly hasNextPage?: boolean;
+            readonly data?: components["schemas"]["BundleFolder"][];
+        };
         InstalledWindowsSoftware: {
             /** @description The vendor of the software */
             vendor?: string | null;
@@ -108,6 +373,23 @@ export interface components {
              */
             detectionRuleId?: string | null;
             /**
+             * Format: date-time
+             * @description Application usage tracking: Date of the first use of the software, is null when recently used or no data is available
+             */
+            autFirstUse?: string | null;
+            /**
+             * Format: date-time
+             * @description Application usage tracking: Date of the last use of the software, is null when recently used or no data is available
+             */
+            autLastUse?: string | null;
+            /**
+             * Format: date-time
+             * @description Application usage tracking: Date of the last data update
+             */
+            autLastData?: string | null;
+            /** @description Application usage tracking: Usage */
+            autUsage?: components["schemas"]["InstalledWindowsSoftwareAutUsage"] | null;
+            /**
              * Format: guid
              * @description The id of the endpoint
              */
@@ -115,6 +397,8 @@ export interface components {
             /** @description The name of the endpoint */
             endpointName?: string | null;
         };
+        /** @enum {string} */
+        InstalledWindowsSoftwareAutUsage: "Unknown" | "RecentlyUsed" | "PreviouslyUsed" | "Unused" | "DataOutdated" | "AutDeactivated";
         InstalledWindowsSoftwarePagedList: {
             /** Format: int32 */
             readonly currentPage?: number | null;
@@ -137,6 +421,8 @@ export interface components {
             value?: Record<string, never> | null;
             path?: string;
         };
+        /** @enum {string} */
+        OperationType: "Add" | "Remove" | "Replace" | "Move" | "Copy" | "Test" | "Invalid";
         ProblemDetails: {
             type?: string | null;
             title?: string | null;
@@ -147,6 +433,102 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        SoftwareBundle: {
+            /**
+             * Format: guid
+             * @description The id of the bundle
+             */
+            id?: string;
+            /** @description The name of the bundle */
+            name?: string;
+            /** @description The type of the bundle */
+            type?: components["schemas"]["SoftwareBundleType"];
+            /** @description Indicates whether application dependencies should be ignored. Always true for uninstall bundles. */
+            ignoreDependencies?: boolean;
+            /**
+             * Format: guid
+             * @description The id of the parent folder
+             */
+            parentId?: string | null;
+            /** @description The name of the parent folder */
+            parentName?: string | null;
+            /** @description Comments about the bundle */
+            comment?: string | null;
+        };
+        SoftwareBundleApplication: {
+            /**
+             * Format: guid
+             * @description The id of the bundle application
+             */
+            id?: string;
+            /**
+             * Format: guid
+             * @description The id of the bundle in which this application is contained
+             */
+            bundleId?: string;
+            /** @description The name of the bundle in which this application is contained */
+            bundleName?: string;
+            /**
+             * Format: guid
+             * @description The id of the application
+             */
+            applicationId?: string;
+            /** @description The name of the application */
+            applicationName?: string;
+            /** @description The vendor of the application */
+            applicationVendor?: string;
+            /** @description The version of the application */
+            applicationVersion?: string;
+            /**
+             * Format: int32
+             * @description The order within the bundle
+             */
+            order?: number;
+        };
+        SoftwareBundleApplicationPagedList: {
+            /** Format: int32 */
+            readonly currentPage?: number | null;
+            /** Format: int32 */
+            readonly pageSize?: number | null;
+            /** Format: int32 */
+            readonly totalPages?: number | null;
+            /** Format: int32 */
+            readonly totalItems?: number;
+            readonly hasPreviousPage?: boolean;
+            readonly hasNextPage?: boolean;
+            readonly data?: components["schemas"]["SoftwareBundleApplication"][];
+        };
+        /** @description Software bundle with fields which can be set during creation with a POST request */
+        SoftwareBundleForCreation: {
+            /** @description The name of the bundle */
+            name: string;
+            /** @description Software bundle type. Default value is Install */
+            type?: components["schemas"]["SoftwareBundleType"] | null;
+            /** @description Whether application dependencies should be ignored. Always true for uninstall bundles */
+            ignoreDependencies?: boolean | null;
+            /**
+             * Format: guid
+             * @description ID of parent folder.
+             */
+            parentId?: string | null;
+            /** @description Text field for creating comments on the software bundle */
+            comment?: string | null;
+        };
+        SoftwareBundlePagedList: {
+            /** Format: int32 */
+            readonly currentPage?: number | null;
+            /** Format: int32 */
+            readonly pageSize?: number | null;
+            /** Format: int32 */
+            readonly totalPages?: number | null;
+            /** Format: int32 */
+            readonly totalItems?: number;
+            readonly hasPreviousPage?: boolean;
+            readonly hasNextPage?: boolean;
+            readonly data?: components["schemas"]["SoftwareBundle"][];
+        };
+        /** @enum {string} */
+        SoftwareBundleType: "Install" | "Uninstall";
     };
     responses: never;
     parameters: never;
@@ -156,6 +538,914 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    GetBundleApplicationsByBundleId: {
+        parameters: {
+            query?: {
+                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are BundleName, ApplicationName, ApplicationVendor, Order. */
+                OrderBy?: string;
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are BundleName, ApplicationId, ApplicationName, ApplicationVendor. */
+                SearchQuery?: string;
+                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
+                Page?: number;
+                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
+                PageSize?: number;
+            };
+            header?: never;
+            path: {
+                bundleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns the bundle applications for the specified bundle id */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SoftwareBundleApplicationPagedList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A bundle with the specified id does not exist */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    AddApplicationToBundle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bundleId: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description Required data to assign an application to a bundle
+         *
+         *     Initialize in PowerShell with `Initialize-bCSoftwareAddApplicationRequest`
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddApplicationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created the bundle application */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SoftwareBundleApplication"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Missing rights to modify the bundle */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The specified bundle or application can not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The application is already included in the bundle */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetBundleApplications: {
+        parameters: {
+            query?: {
+                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are BundleName, ApplicationName, ApplicationVendor, Order. */
+                OrderBy?: string;
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are BundleName, ApplicationId, ApplicationName, ApplicationVendor. */
+                SearchQuery?: string;
+                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
+                Page?: number;
+                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns all bundle applications */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SoftwareBundleApplicationPagedList"];
+                };
+            };
+            /** @description Invalid sort order or search query */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteBundleApplicationById: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bundle application successfully deleted or does not exist */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Delete rights are missing for bundle object */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    ReplaceApplicationInBundle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bundleId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
+        requestBody: {
+            content: {
+                /**
+                 * @example [
+                 *       {
+                 *         "value": "e08cb41f-5701-4a44-8e31-d4e4cce7b1cf",
+                 *         "path": "/ApplicationId",
+                 *         "op": "replace"
+                 *       }
+                 *     ]
+                 */
+                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
+            };
+        };
+        responses: {
+            /** @description Updated the bundle application */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SoftwareBundleApplication"];
+                };
+            };
+            /** @description Input data is missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Modify rights are missing for the bundle object */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Either the bundle or the application does not exist or is not visible due to missing read rights */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The application is already included in the bundle or the bundle does not contain the bundle application */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetBundleFolders: {
+        parameters: {
+            query?: {
+                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible value is Name. */
+                OrderBy?: string;
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are Name and Comment. */
+                SearchQuery?: string;
+                /** @description Filters result by matching the exact value against Name. */
+                Name?: string;
+                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
+                Page?: number;
+                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns all folders */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleFolderPagedList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    CreateBundleFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description The folder to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCSoftwareBundleFolderForCreation`
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BundleFolderForCreation"];
+            };
+        };
+        responses: {
+            /** @description Creates the folder */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleFolder"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Object creation rights are missing for parent object */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Either invalid input or the parent of the folder does not exist or is not visible due to missing read rights */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A value was tried to be set twice where duplicates are not allowed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetBundleFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns the folder with the specified id */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleFolder"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A folder with the specified id does not exist */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteBundleFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Folder successfully deleted or does not exist */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Folder is not empty or can not be deleted */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Delete rights are missing for folder */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateBundleFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
+        requestBody: {
+            content: {
+                /**
+                 * @example [
+                 *       {
+                 *         "value": "My bundle folder",
+                 *         "path": "/name",
+                 *         "op": "replace"
+                 *       },
+                 *       {
+                 *         "value": "563AF2FE-2911-4E15-8B1F-55A62BFBED8C",
+                 *         "path": "/parentId",
+                 *         "op": "replace"
+                 *       },
+                 *       {
+                 *         "value": "This is an example comment.",
+                 *         "path": "/comment",
+                 *         "op": "replace"
+                 *       }
+                 *     ]
+                 */
+                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
+            };
+        };
+        responses: {
+            /** @description Updates the folder */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleFolder"];
+                };
+            };
+            /** @description Invalid input or the folder can not be changed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Object modify rights are missing */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Either invalid input or the folder does not exist or is not visible due to missing read rights */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A value was tried to be set twice where duplicates are not allowed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetBundleFoldersByFolderId: {
+        parameters: {
+            query?: {
+                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible value is Name. */
+                OrderBy?: string;
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are Name and Comment. */
+                SearchQuery?: string;
+                /** @description Filters result by matching the exact value against Name. */
+                Name?: string;
+                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
+                Page?: number;
+                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
+                PageSize?: number;
+                includeSubfolders?: boolean;
+            };
+            header?: never;
+            path: {
+                folderId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns the folders contained in a specified folder */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BundleFolderPagedList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The specified folder can not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetBundle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns the bundle with the specified id */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SoftwareBundle"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A bundle with the specified id does not exist */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    DeleteBundle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Bundle successfully deleted or does not exist */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Delete rights are missing for bundle object */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetSoftwareBundles: {
+        parameters: {
+            query?: {
+                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are Name */
+                OrderBy?: string;
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are Name, Comment, ParentName. */
+                SearchQuery?: string;
+                /** @description Filters result by matching the exact value against Name. */
+                Name?: string;
+                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
+                Page?: number;
+                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
+                PageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns all software bundles */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SoftwareBundlePagedList"];
+                };
+            };
+            /** @description Invalid sort order or search query */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    CreateBundle: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description The bundle to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCSoftwareSoftwareBundleForCreation`
+         */
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SoftwareBundleForCreation"];
+            };
+        };
+        responses: {
+            /** @description Created a bundle according to the specified properties */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SoftwareBundle"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Object creation rights are missing for parent object */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Either invalid input or the parent of the bundle does not exist or is not visible due to missing read rights */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description A value was tried to be set twice where duplicates are not allowed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetInstalledWindowsSoftware: {
         parameters: {
             query?: {

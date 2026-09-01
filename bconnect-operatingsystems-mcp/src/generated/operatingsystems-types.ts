@@ -11,10 +11,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all folders */
+        /**
+         * Gets all folders
+         * @description Powershell function: `Get-bCOperatingsystemsFolders`
+         */
         get: operations["GetFolders"];
         put?: never;
-        /** Creates a folder according to the specified properties */
+        /**
+         * Creates a folder according to the specified properties
+         * @description Powershell function: `New-bCOperatingsystemsFolder`
+         */
         post: operations["CreateFolder"];
         delete?: never;
         options?: never;
@@ -29,15 +35,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a folder by id */
+        /**
+         * Gets a folder by id
+         * @description Powershell function: `Get-bCOperatingsystemsFolder`
+         */
         get: operations["GetFolder"];
         put?: never;
         post?: never;
-        /** Deletes a folder by id */
+        /**
+         * Deletes a folder by id
+         * @description Powershell function: `Remove-bCOperatingsystemsFolder`
+         */
         delete: operations["DeleteFolder"];
         options?: never;
         head?: never;
-        /** Updates a folder according to the specified properties */
+        /**
+         * Updates a folder according to the specified properties
+         * @description Powershell function: `Update-bCOperatingsystemsFolder`
+         */
         patch: operations["UpdateFolder"];
         trace?: never;
     };
@@ -48,7 +63,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all folders contained by a folder */
+        /**
+         * Gets all folders contained by a folder
+         * @description Powershell function: `Get-bCOperatingsystemsFoldersByFolderId`
+         */
         get: operations["GetFoldersByFolderId"];
         put?: never;
         post?: never;
@@ -65,7 +83,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets OS install information for all windows endpoints */
+        /**
+         * Gets OS install information for all windows endpoints
+         * @description Powershell function: `Get-bCOperatingsystemsWindowsEndpoints`
+         */
         get: operations["GetWindowsEndpoints"];
         put?: never;
         post?: never;
@@ -82,14 +103,20 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets OS install information for a specific windows endpoint */
+        /**
+         * Gets OS install information for a specific windows endpoint
+         * @description Powershell function: `Get-bCOperatingsystemsWindowsEndpoint`
+         */
         get: operations["GetWindowsEndpoint"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** Sets the windows endpoint OS install configuration */
+        /**
+         * Sets the windows endpoint OS install configuration
+         * @description Powershell function: `Update-bCOperatingsystemsWindowsEndpoint`
+         */
         patch: operations["UpdateWindowsEndpoint"];
         trace?: never;
     };
@@ -300,7 +327,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The folder to be created */
+        /**
+         * @description The folder to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCOperatingsystemsFolderForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["FolderForCreation"];
@@ -468,10 +499,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "My operating system folder",
                  *         "path": "/name",
@@ -487,7 +523,8 @@ export interface operations {
                  *         "path": "/comment",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -714,10 +751,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Windows endpoint properties concerning operating systems. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable Windows endpoint properties concerning operating systems.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "671BBBED-BF25-4FAA-83FF-F5ABFDFD3F95",
                  *         "path": "/bootEnvironmentId",
@@ -745,7 +787,8 @@ export interface operations {
                  *         "path": "/operatingSystem",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };

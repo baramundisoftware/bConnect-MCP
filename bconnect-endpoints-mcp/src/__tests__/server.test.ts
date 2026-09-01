@@ -5,100 +5,119 @@
  *   - endpoints module (~47 tools)
  *
  * And does NOT contain tools from any other domain server.
+ *
+ * ── TOK-20: the catalogue is now gate-dependent ────────────────────────────
+ * Write tools are advertised only when ALLOW_WRITE_OPERATIONS=true. This file
+ * therefore pins the surface with the gate OPEN, which is the assertion that
+ * matters for "did a tool go missing": opening the gate must reproduce exactly
+ * the set this server declares. The gate-closed surface, and the fact that a
+ * hidden write is still callable-and-refused, are asserted in
+ * tool-surface.test.ts.
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 
-import { createServer } from '../index.js';
+import { listToolNames } from './lib/connect.js';
 
 // ── Expected tool sets ─────────────────────────────────────────────────────
 
 const ENDPOINTS_TOOLS = [
-  // Read operations
+  // ── Reads ────────────────────────────────────────────────────────────────
+  //
+  // The six per-platform read families collapsed. "list_windows_endpoints",
+  // "get_linux_endpoint" and their eighteen siblings are gone; the platform is
+  // now the "type" argument of the tool below it. The negative assertions —
+  // that each removed name is absent AND explains itself when called — live in
+  // family-collapse.test.ts, which is where the route-per-type proof is too.
   'list_endpoints',
   'get_endpoint',
-  'search_endpoints',
-  'list_windows_endpoints',
-  'get_windows_endpoint',
+  'list_endpoints_by_logical_group',
   'list_logical_groups',
   'get_logical_group',
-  'list_group_endpoints',
-  'list_linux_endpoints',
-  'list_mac_endpoints',
-  'get_linux_endpoint',
-  'get_mac_endpoint',
-  'list_endpoints_by_logical_group',
-  'list_windows_endpoints_by_logical_group',
-  // Mobile enrollment
-  'start_android_enrollment',
-  'start_ios_enrollment',
-  // Android CRUD (Phase 24: added list + get)
-  'list_android_endpoints',
-  'get_android_endpoint',
-  'create_android_endpoint',
-  'update_android_endpoint',
-  'delete_android_endpoint',
-  // iOS CRUD (Phase 24: added list + get + full CRUD)
-  'list_ios_endpoints',
-  'get_ios_endpoint',
-  'create_ios_endpoint',
-  'update_ios_endpoint',
-  'delete_ios_endpoint',
-  // Windows CRUD
+  'get_maintenance_window_for_endpoint',
+  'get_maintenance_window_for_logical_group',
+  'get_entra_id_data',
+
+  // ── Writes ───────────────────────────────────────────────────────────────
+  'update_endpoint',
+  'delete_endpoint',
+  'start_enrollment',
+  // create_* stays per platform on purpose: zero shared parameters across the
+  // six, and three different required sets. See the note in tool-catalogue.ts.
   'create_windows_endpoint',
-  'update_windows_endpoint',
-  'delete_windows_endpoint',
-  'start_windows_enrollment',
-  'trigger_intune_installation',
-  // Linux CRUD
   'create_linux_endpoint',
-  'update_linux_endpoint',
-  'delete_linux_endpoint',
-  // Mac CRUD
   'create_mac_endpoint',
-  'update_mac_endpoint',
-  'delete_mac_endpoint',
-  'start_mac_enrollment',
-  // Logical groups CRUD
+  'create_android_endpoint',
+  'create_ios_endpoint',
+  'create_network_endpoint',
+  'trigger_intune_installation',
   'create_logical_group',
   'update_logical_group',
   'delete_logical_group',
-  // Maintenance windows (Phase 24: added GET)
-  'get_maintenance_window_for_endpoint',
   'create_maintenance_window_for_endpoint',
   'update_maintenance_window_for_endpoint',
   'delete_maintenance_window_for_endpoint',
-  'get_maintenance_window_for_logical_group',
   'create_maintenance_window_for_logical_group',
   'update_maintenance_window_for_logical_group',
   'delete_maintenance_window_for_logical_group',
-  // Industrial & network endpoints (Phase 24: added list + get for industrial + network)
+  'link_entra_id_data',
+  'unlink_entra_id_data',
+] as const;
+
+/**
+ * Names this server used to register and must not register again.
+ *
+ * Five because 26R1 deleted /v2.0/IndustrialEndpoints outright (product
+ * decision 1), the rest because they collapsed into a type-taking tool. Kept
+ * here as a list rather than deleted so the removal cannot silently regress —
+ * a re-added "list_industrial_endpoints" fails this file.
+ */
+const REMOVED_TOOLS = [
   'list_industrial_endpoints',
   'get_industrial_endpoint',
   'create_industrial_endpoint',
   'update_industrial_endpoint',
   'delete_industrial_endpoint',
+  'list_windows_endpoints',
+  'list_linux_endpoints',
+  'list_mac_endpoints',
+  'list_android_endpoints',
+  'list_ios_endpoints',
   'list_network_endpoints',
-  'get_network_endpoint',
-  'create_network_endpoint',
-  'update_network_endpoint',
-  'delete_network_endpoint',
-  // Generic delete
-  'delete_endpoint',
-] as const;
-
-// 26R1-only tools (gated by BCONNECT_RELEASE=26R1)
-const ENDPOINTS_TOOLS_26R1_ONLY = [
   'list_unmanaged_endpoints',
+  'get_windows_endpoint',
+  'get_linux_endpoint',
+  'get_mac_endpoint',
+  'get_android_endpoint',
+  'get_ios_endpoint',
+  'get_network_endpoint',
   'get_unmanaged_endpoint',
+  'delete_windows_endpoint',
+  'delete_linux_endpoint',
+  'delete_mac_endpoint',
+  'delete_android_endpoint',
+  'delete_ios_endpoint',
+  'delete_network_endpoint',
   'delete_unmanaged_endpoint',
-  'get_entra_id_data',
-  'link_entra_id_data',
-  'unlink_entra_id_data',
+  'update_windows_endpoint',
+  'update_linux_endpoint',
+  'update_mac_endpoint',
+  'update_android_endpoint',
+  'update_ios_endpoint',
+  'update_network_endpoint',
+  'start_windows_enrollment',
+  'start_mac_enrollment',
+  'start_android_enrollment',
+  'start_ios_enrollment',
+  'search_endpoints',
+  'list_windows_endpoints_by_logical_group',
+  'list_group_endpoints',
 ] as const;
 
-// The default is BCONNECT_RELEASE=26R1, so the full set includes the 26R1-only tools.
-const ALL_EXPECTED_TOOLS: string[] = [...ENDPOINTS_TOOLS, ...ENDPOINTS_TOOLS_26R1_ONLY];
+/** LOCAL ADDITION — composite read-only tools, not upstream. */
+const LOCAL_ADDITIONS = ['get_fleet_summary', 'get_stale_endpoints'] as const;
+
+const ALL_EXPECTED_TOOLS: string[] = [...ENDPOINTS_TOOLS, ...LOCAL_ADDITIONS];
 
 // ── Tool names that must NOT appear in this server ─────────────────────────
 
@@ -174,7 +193,7 @@ const DEFENSECONTROL_TOOLS = [
   'get_bitlocker_windows_endpoint',
   'get_local_admin_accounts',
   'trigger_local_admin_accounts_update',
-  'trigger_update_on_client',
+  'refresh_local_admin_account_expiry',
   'patch_local_admin_user_credentials',
   'list_defender_threats',
   'get_defender_threat',
@@ -238,23 +257,32 @@ const _ALL_FORBIDDEN_TOOLS: string[] = [
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
+// Upstream finding OPT-39: this used to call server.request() directly, which
+// only worked because createServer() monkey-patched the SDK's private
+// _requestHandlers map in production code. It now goes over an
+// InMemoryTransport pair like the other servers' tests — see lib/connect.ts.
 async function getToolNames(): Promise<string[]> {
-  const { server } = createServer();
-
-  const response = await server.request(
-    { method: 'tools/list', params: {} },
-    {} as never
-  );
-
-  const tools = (response as { tools: Array<{ name: string }> }).tools;
-  return tools.map((t) => t.name);
+  return listToolNames();
 }
 
 // ── Test suite ─────────────────────────────────────────────────────────────
 
-// Keep the default (26R1) for most tests; the explicit-25R2 case restores it.
+// TOK-20 — the gate is opened for this file so the assertions below describe
+// the DECLARED surface rather than the advertised one. Restored afterwards so
+// no other file inherits an open gate.
+const savedWriteGate = process.env.ALLOW_WRITE_OPERATIONS;
+
+beforeEach(() => {
+  process.env.ALLOW_WRITE_OPERATIONS = 'true';
+});
+
 afterEach(() => {
   delete process.env.BCONNECT_RELEASE;
+  if (savedWriteGate === undefined) {
+    delete process.env.ALLOW_WRITE_OPERATIONS;
+  } else {
+    process.env.ALLOW_WRITE_OPERATIONS = savedWriteGate;
+  }
 });
 
 describe('bconnect-endpoints-mcp server — tool registration', () => {
@@ -267,23 +295,44 @@ describe('bconnect-endpoints-mcp server — tool registration', () => {
       }
     });
 
-    it('returns all endpoints tools in default (26R1) mode, including 26R1-only', async () => {
-      const toolNames = await getToolNames();
+    it('registers exactly the declared surface', async () => {
+      expect(await getToolNames()).toHaveLength(ALL_EXPECTED_TOOLS.length);
+    });
 
-      // Default is BCONNECT_RELEASE=26R1, so the 26R1-only tools (unmanaged, EntraID) are included.
-      expect(toolNames).toHaveLength(ALL_EXPECTED_TOOLS.length);
-      for (const tool of ENDPOINTS_TOOLS_26R1_ONLY) {
-        expect(toolNames, `26R1-only tool "${tool}" should appear in default (26R1) mode`).toContain(tool);
+    it('registers none of the removed names, with the gate open', async () => {
+      const toolNames = await getToolNames();
+      for (const removed of REMOVED_TOOLS) {
+        expect(toolNames, `"${removed}" was removed and must not be registered`).not.toContain(
+          removed
+        );
       }
     });
 
-    it('excludes 26R1-only tools when BCONNECT_RELEASE=25R2', async () => {
-      process.env.BCONNECT_RELEASE = '25R2';
-      const toolNames = await getToolNames();
+    // ── Product decision 2: 26R1 only, so there is no release conditional ────
+    //
+    // The catalogue used to branch on BCONNECT_RELEASE: six tools (the unmanaged
+    // trio and the three EntraID tools) were pushed only when it was unset or
+    // "26R1", and six CallTool arms threw MethodNotFound otherwise. A surface
+    // that changes shape with an environment variable is a surface no test can
+    // pin, and 25R2 is no longer supported. This asserts the variable is inert
+    // — including for the six names that used to depend on it.
+    it('ignores BCONNECT_RELEASE entirely — the surface is 26R1, always', async () => {
+      const withoutRelease = await getToolNames();
 
-      expect(toolNames).toHaveLength(ENDPOINTS_TOOLS.length);
-      for (const tool of ENDPOINTS_TOOLS_26R1_ONLY) {
-        expect(toolNames, `26R1-only tool "${tool}" must NOT appear in 25R2 mode`).not.toContain(tool);
+      for (const value of ['25R2', '24R1', 'nonsense', '']) {
+        process.env.BCONNECT_RELEASE = value;
+        expect(
+          await getToolNames(),
+          `BCONNECT_RELEASE=${JSON.stringify(value)} must not change the tool surface`
+        ).toEqual(withoutRelease);
+      }
+
+      // The six that used to be conditional, named explicitly: three are now
+      // enum VALUES of the collapsed tools rather than tools, three are tools.
+      process.env.BCONNECT_RELEASE = '25R2';
+      const under25R2 = await getToolNames();
+      for (const tool of ['get_entra_id_data', 'link_entra_id_data', 'unlink_entra_id_data']) {
+        expect(under25R2, `${tool} used to disappear under 25R2`).toContain(tool);
       }
     });
 

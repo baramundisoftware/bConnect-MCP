@@ -9,7 +9,7 @@
  * 5. Unknown tool calls return MethodNotFound
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
@@ -72,29 +72,50 @@ async function startServerWith26R1(): Promise<{ client: InstanceType<typeof Clie
   return { client };
 }
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+// TOK-20: write tools are advertised only when ALLOW_WRITE_OPERATIONS=true. The
+// counting and name assertions below are about the FULL declared surface, so
+// they open the gate; the gate-shut surface is asserted in surface.test.ts.
+function openWriteGate(): void {
+  vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
+}
+
 describe('bconnect-servermanagement-mcp', () => {
-  it('lists exactly 25 servermanagement tools in 25R2 mode', async () => {
+  // MIGRATED (Decision 2). This asserted 25 tools with BCONNECT_RELEASE unset,
+  // which was this server's REAL default posture: its flag was
+  // `process.env.BCONNECT_RELEASE === '26R1'` with no fallback, unlike the other
+  // four servers, so seven 26R1 tools were invisible unless an operator set the
+  // variable. They are unconditional now and the count is the same 30 that
+  // '26R1 mode' always produced.
+  it('lists 30 servermanagement tools with BCONNECT_RELEASE unset', async () => {
+    openWriteGate();
     const { client } = await startServer();
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(25);
+    expect(tools).toHaveLength(30);
   });
 
   it('lists exactly 30 servermanagement tools in 26R1 mode', async () => {
+    openWriteGate();
     const { client } = await startServerWith26R1();
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(30);
   });
 
-  it('registers all expected 25R2 tool names', async () => {
+  it('registers every tool name, formerly-conditional ones included', async () => {
+    openWriteGate();
     const { client } = await startServer();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
-    for (const expected of EXPECTED_25R2_TOOLS) {
+    for (const expected of [...EXPECTED_25R2_TOOLS, ...EXPECTED_26R1_ONLY_TOOLS]) {
       expect(names).toContain(expected);
     }
   });
 
   it('registers 26R1-only tools in 26R1 mode', async () => {
+    openWriteGate();
     const { client } = await startServerWith26R1();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
@@ -103,12 +124,18 @@ describe('bconnect-servermanagement-mcp', () => {
     }
   });
 
-  it('does not register 26R1-only tools in 25R2 mode', async () => {
+  // MIGRATED (Decision 2), inverted. This asserted the seven 26R1 tools were
+  // ABSENT when BCONNECT_RELEASE was unset — which was the defect, not the
+  // feature: the documented default posture silently omitted list_api_keys and
+  // the download-job tools. The inverse is now the invariant, and it is what
+  // fails if a release conditional comes back.
+  it('registers the formerly-conditional tools with BCONNECT_RELEASE unset', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
     const { client } = await startServer();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
     for (const tool of EXPECTED_26R1_ONLY_TOOLS) {
-      expect(names).not.toContain(tool);
+      expect(names).toContain(tool);
     }
   });
 

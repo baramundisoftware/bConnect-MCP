@@ -1,6 +1,7 @@
 {
   "name": "bconnect-groups-mcp",
-  "version": "26.1.7",
+  "version": "26.1.8",
+  "private": true,
   "description": "MCP server for baramundi bConnect group-scoped endpoint queries (list endpoints by group type)",
   "type": "module",
   "main": "build/index.js",
@@ -34,9 +35,7 @@
     "axios": "^1.7.0",
     "axios-retry": "^4.5.0",
     "dotenv": "^16.4.0",
-    "express": "^4.21.0",
-    "node-cache": "^5.1.2",
-    "winston": "^3.18.3"
+    "express": "^4.21.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

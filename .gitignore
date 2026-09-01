@@ -9,8 +9,22 @@ dist/
 coverage/
 
 # Environment variables
+# Every .env variant is ignored, not just .env/.env.local: the gateway's
+# documented setup (docker-compose.gateway.yml → `cp .env.gateway.example
+# .env.gateway`) creates a file holding the live BCONNECT_* service credential,
+# and .env.production/.env.staging are the same hazard. The example files are
+# re-included because they carry placeholders only. Matches .dockerignore.
 .env
-.env.local
+.env.*
+!.env.example
+!.env.gateway.example
+
+# The credential file scripts/lib/env-path.mjs falls back to.
+# `.env.*` does NOT cover it: that pattern matches names BEGINNING with `.env`,
+# and this one is `bconnect.env`, which merely ends that way. The fallback is
+# in-tree so that someone cloning this has an obvious place to put credentials —
+# which makes an ignore rule mandatory rather than tidy.
+secrets/
 
 # Logs
 *.log
@@ -72,3 +86,6 @@ sbom.json
 release-package/
 bconnect-mcp-suite-*.zip
 bconnect-mcp-suite-*.zip.sha256
+
+# Empty stderr capture files left by ad-hoc probe runs.
+err*.log
