@@ -52,6 +52,7 @@ const SERVER_DIRS = readdirSync(ROOT)
 /** Every markdown file this stream owns and ships. */
 const SHIPPING_DOCS = [
   'README.md',
+  'docs/CLIENTS.md',
   'docs/INSTALLATION.md',
   'docs/TROUBLESHOOTING.md',
   'docs/DOCKER.md',
