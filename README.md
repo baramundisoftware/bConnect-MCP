@@ -1,6 +1,16 @@
 # bConnect MCP Suite
-
 Connect your AI assistant to the **baramundi Management Suite** (bMS). This project provides MCP servers that let an MCP-capable client — Claude Desktop, Claude Code, VS Code (Copilot agent mode), Cursor, Continue, LibreChat, Open WebUI, n8n, OpenAI's Responses API / Agents SDK, Microsoft Copilot Studio, or anything else that speaks the protocol — read and manage your bMS through the bConnect REST API: endpoints, jobs, software, compliance, and more.
+
+> [!WARNING]
+> 🧪 This project is currently in **Technical Preview**.
+>
+> We're actively refining this project and welcome early feedback. Features, APIs, and behavior may change over time.
+>
+> Please perform thorough testing before deployment and use at your own risk. It is *not* recommended for production use.
+>
+> When working with AI services, carefully review permissions, data access, and information shared with models. Avoid using sensitive, confidential, or personal data unless you have verified that your security, privacy, and compliance requirements are met.
+>
+> Keep an eye on AI token usage, especially during testing, as costs can add up quickly depending on the model and workload.
 
 The servers are ordinary stdio MCP servers plus one Streamable-HTTP gateway, and nothing in them is client-specific. What differs between clients is only **which file the configuration goes in and what shape it takes** — see [Client Configuration](#client-configuration).
 
