@@ -1,13 +1,33 @@
 # Installation Guide — bConnect MCP Suite
 
-This guide covers installing and configuring the bConnect MCP Suite (13 servers on 26R1; 11 on 25R2) on Linux, Windows, and Docker.
+This guide covers installing and configuring the bConnect MCP Suite (14 servers) on Linux, Windows, and Docker.
+
+> ## ⚠️ Read this before you install: **baramundi Management Suite 26R1 or later is required**
+>
+> **25R2 and older are not supported.** Several tools call bConnect routes that only exist
+> from 26R1 on, so the suite refuses to run rather than return inaccurate data. Each server
+> reads the bMS version from `GET /v2.0/ManagementServer` during its startup connectivity
+> check and exits with a message naming the detected version if it is older than 26R1.
+> There is no `BCONNECT_RELEASE` setting any more — the release is detected, not configured.
+>
+> **The gate refuses only on a version it actually read and understood.** If the version
+> cannot be determined — the service account is scoped away from the `servermanagement`
+> routes (401/403), the route is absent (404), the `version` field is missing, or the string
+> does not parse — the server logs a warning naming exactly what it received and **starts
+> anyway**. That is deliberate: refusing to start against a healthy 26R1 server because a
+> credential is narrowly scoped would be worse than the inaccuracy the gate exists to
+> prevent. A 25R2 bMS does answer this route, so a genuine downlevel server is refused.
+> `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` skips the probe and the gate with it, for
+> deployments that cannot reach that route.
 
 ## Prerequisites
 
-- **baramundi Management Suite** 25R2 or 26R1 with bConnect API enabled
+- **baramundi Management Suite 26R1 or later** with bConnect API enabled (25R2 and older are not supported — see the box above)
 - **bConnect API URL** — typically `https://your-bms-server:443/bconnect`
 - **API credentials** — a bMS user account with API access
-- **Claude Desktop** or **Claude Code** (CLI)
+- **An MCP-capable client** — anything that speaks the Model Context Protocol. See
+  [Client Configuration](#client-configuration) for the ten this suite ships
+  configuration for, and how to configure one it does not list
 
 ---
 
@@ -41,11 +61,15 @@ See [DOCKER.md](DOCKER.md) for Docker Compose and individual container setup.
 `bconnect-mcp-gateway` serves all 13 bConnect MCP servers on a single HTTP port —
 for teams and n8n.
 
-> **⚠️ Security: the gateway has no built-in authentication.** You MUST front it with a
-> TLS-terminating, authenticating reverse proxy / IdP (nginx, Caddy, Traefik, Entra
-> Application Proxy, oauth2-proxy, …) before exposing it — see [DOCKER.md](DOCKER.md) →
-> "TLS and authentication". Downstream bMS calls use a single `BCONNECT_*` **service
-> credential**; scope that account to least privilege (bMS RBAC governs it).
+> **⚠️ Security: the gateway requires a bearer token.** As of the 2026-08-02 revision,
+> set `MCP_GATEWAY_AUTH_TOKEN` (24+ random characters) — `docker compose up` refuses to
+> start without one. Every HTTP request must then carry
+> `Authorization: Bearer <token>`. A shared token is the floor, not the ceiling: for
+> per-user identity or SSO, still front it with a TLS-terminating, authenticating
+> reverse proxy / IdP (nginx, Caddy, Traefik, Entra Application Proxy, oauth2-proxy, …)
+> that forwards its own token — see [DOCKER.md](DOCKER.md) → "TLS and authentication".
+> Downstream bMS calls use a single `BCONNECT_*` **service credential**; scope that
+> account to least privilege (bMS RBAC governs it).
 
 #### Step 1 — Build the gateway
 
@@ -70,7 +94,9 @@ cd ..
 
 ```bash
 cp .env.gateway.example .env.gateway
-# Edit .env.gateway — set BCONNECT_BASE_URL and the BCONNECT_* service credential
+# Edit .env.gateway — set BCONNECT_BASE_URL, the BCONNECT_* service credential,
+# and MCP_GATEWAY_AUTH_TOKEN (24+ random characters; or re-run the installer with
+# -Gateway / -RotateGatewayToken to generate and print one)
 
 docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 ```
@@ -81,14 +107,27 @@ docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 cd bconnect-mcp-gateway
 BCONNECT_BASE_URL=https://bms.company.com/bconnect \
 BCONNECT_API_KEY=your-service-key \
+MCP_GATEWAY_AUTH_TOKEN=your-24-plus-character-token \
 MCP_GATEWAY_PORT=3001 \
 node --import ./build/preload.js build/gateway.js
 ```
 
-Verify the gateway is running:
+Verify the gateway is running. `/health` is a **liveness probe**, reachable without a
+token so container and orchestrator probes keep working — and it says nothing else to
+an unauthenticated caller:
+
 ```bash
 curl http://localhost:3001/health
-# → {"status":"ok","servers":[...],"count":13}
+# → {"status":"ok"}
+
+# The mounted domain list is served only to a caller carrying a configured token:
+curl -H "Authorization: Bearer $MCP_GATEWAY_AUTH_TOKEN" http://localhost:3001/health
+# → {"status":"ok","servers":["activedirectory",...],"count":13}
+
+curl -X POST http://localhost:3001/endpoints/mcp \
+  -H "Authorization: Bearer $MCP_GATEWAY_AUTH_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
 #### Gateway environment variables
@@ -96,17 +135,20 @@ curl http://localhost:3001/health
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `BCONNECT_BASE_URL` + `BCONNECT_API_KEY` (or `BCONNECT_USERNAME`+`BCONNECT_PASSWORD`) | — | The single bConnect service credential |
+| `MCP_GATEWAY_AUTH_TOKEN` | — | One or more shared bearer tokens (comma-separated for rotation). Required on every request once set; 24+ characters or the gateway refuses to start |
+| `MCP_GATEWAY_AUTH_TOKEN_FILE` | — | Docker-secret form of the token above |
 | `MCP_GATEWAY_PORT` | `3001` | Listen port |
 | `MCP_GATEWAY_BIND` | `127.0.0.1` | Bind address (loopback-only unless behind a proxy) |
-| `MCP_ALLOW_NO_AUTH` | `false` | Allow a non-loopback bind; asserts an authenticating proxy is in front |
+| `MCP_ALLOW_NO_AUTH` | `false` | Allow a non-loopback bind with **no** token; asserts an authenticating proxy is in front instead. Not set by anything shipped in this repo |
 | `MCP_GATEWAY_RATE_LIMIT_ENABLED` | `true` | Per-client-IP inbound rate limiting; set `false` to disable |
 | `MCP_GATEWAY_RATE_LIMIT_MAX` | `300` | Max requests per window, per client IP |
 | `MCP_GATEWAY_RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window in ms |
 | `MCP_GATEWAY_MAX_BODY` | `1mb` | Max accepted request body size |
 
-> **Security:** front the gateway with an authenticating, TLS-terminating reverse proxy
-> before exposing it (see [DOCKER.md](DOCKER.md)). The gateway refuses a non-loopback
-> bind unless `MCP_ALLOW_NO_AUTH=true`.
+> **Security:** set `MCP_GATEWAY_AUTH_TOKEN`, and for per-user identity or SSO also front
+> the gateway with an authenticating, TLS-terminating reverse proxy before exposing it
+> (see [DOCKER.md](DOCKER.md)). The gateway refuses a non-loopback bind unless either a
+> token or `MCP_ALLOW_NO_AUTH=true` is set.
 
 ---
 
@@ -124,12 +166,14 @@ cp .env.example .env
 BCONNECT_BASE_URL=https://your-bms-server:443/bconnect
 BCONNECT_USERNAME=your-username
 BCONNECT_PASSWORD=your-password
-BCONNECT_RELEASE=26R1          # or 25R2
 ```
 
-> **These credentials are stored in plaintext** (in `.env` or the Claude Desktop
-> config). Restrict the file to the running user (`chmod 600 .env`, or an NTFS ACL on
-> Windows), use a least-privilege bMS service account, and never commit it. See
+> **These credentials are stored in plaintext** — in `.env`, or in whatever env file
+> your client's entry points `--env-file` at. Restrict that file to the running user
+> (`chmod 600 .env`, or an NTFS ACL on Windows), use a least-privilege bMS service
+> account, and never commit it. Keep it out of the client config file itself: several
+> clients' configs are world-readable by default and some are committed to version
+> control. See
 > [SECURITY.md → Credentials at rest](../SECURITY.md#credentials-at-rest-env-and-client-config)
 > for the full hardening guide.
 
@@ -137,7 +181,11 @@ BCONNECT_RELEASE=26R1          # or 25R2
 
 ```env
 BCONNECT_AUDIT_LEVEL=none            # Audit logging: none | security | write | all
-ALLOW_WRITE_OPERATIONS=false         # Enable write/destructive tools (default: off)
+ALLOW_WRITE_OPERATIONS=false         # Enable write/destructive tools (default: off).
+                                      # Also controls whether write tools appear in
+                                      # tools/list — with it unset they're hidden
+                                      # (not disabled: calling one by name is refused
+                                      # the same way either way).
 ALLOW_SECRET_READ=false              # Enable secret-returning reads (default: off) — see below
 
 # Outbound rate limiting (server → bMS). Throttles the calls each MCP server
@@ -172,12 +220,17 @@ BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min
 > **inbound** requests to the HTTP gateway — that is configured separately on the
 > gateway (`MCP_GATEWAY_RATE_LIMIT_*`, see the Gateway environment variables table).
 
-### bMS Release Notes
+### bMS Release Requirement
 
-| Value | Servers available |
-|-------|------------------|
-| `26R1` | All 13 servers |
-| `25R2` | 11 servers (compliance and universaldynamicgroups not available) |
+All 14 servers require **bMS 26R1 or later**. There is no configuration for this: the release is
+read from `GET /v2.0/ManagementServer` at startup, and a bMS older than 26R1 is refused with a
+message naming the detected version. If the version string cannot be parsed, the server logs what
+it received and continues — an unreadable version is a warning, not a refusal.
+
+One consequence worth knowing before you upgrade a script: **26R1 removed the IndustrialEndpoints
+bConnect API**, so the five `*_industrial_endpoint` tools and the `industrial` member type in
+`bconnect-groups-mcp` were removed with it. See
+[MIGRATION-tool-surface.md](MIGRATION-tool-surface.md).
 
 ---
 
@@ -331,24 +384,79 @@ A `200` response confirms the CA cert is correct and `BCONNECT_CA_CERT_PATH` wil
 
 ---
 
-## Claude Configuration
+## Client Configuration
 
-Add each server you want to use to your Claude MCP configuration.
+Add each server you want to use to your MCP client's configuration. Load only the
+domains you need — you do not need all 13.
 
-### Claude Code (`~/.claude/mcp_settings.json` or via `claude mcp add`)
+**The command line is the same for every client.** Only three things change: the file
+the entry goes in, the top-level key it sits under, and whether the entry carries a
+`"type"`. Get one of those wrong and most clients ignore the entry without reporting
+anything.
+
+| Client | Transport | Config file | Top-level key | `"type"` on entries |
+|--------|-----------|-------------|---------------|---------------------|
+| Claude Code (CLI) | stdio + HTTP | `.mcp.json` in the project root (or `claude mcp add`) | `mcpServers` | **required** |
+| VS Code (Copilot agent mode) | stdio + HTTP | `.vscode/mcp.json` (workspace) | **`servers`** | **required** |
+| Claude Desktop | stdio | `claude_desktop_config.json` | `mcpServers` | omit |
+| Cursor | stdio + HTTP | `.cursor/mcp.json`, or `~/.cursor/mcp.json` | `mcpServers` | omit |
+| Continue | stdio + HTTP | `~/.continue/mcpServers/<name>.yaml` | `mcpServers`, a YAML **list** | yes |
+| LibreChat | stdio + HTTP | `librechat.yaml` (paste under `mcpServers:`) | `mcpServers` | yes |
+| Open WebUI | **HTTP only** | web UI: Admin Settings → External Tools | — | — |
+| n8n | **HTTP only** | MCP Client Tool node + MCP Server credential | — | — |
+| OpenAI Responses API / Agents SDK | HTTP (hosted) or stdio (Agents SDK) | your own code | — | — |
+| Microsoft Copilot Studio | **HTTP only** | Power Platform custom connector | — | — |
+
+The two that bite hardest, because neither produces an error:
+
+- **VS Code's key is `servers`**, not `mcpServers`. A block copied from a Claude config
+  into `.vscode/mcp.json` is read and discarded.
+- **Claude Code reads a `url` entry with no `"type"` as stdio.** The HTTP examples below
+  carry `"type": "http"` for that reason.
+
+### stdio — the portable entry
+
+```json
+{
+  "bconnect-endpoints": {
+    "type": "stdio",
+    "command": "node",
+    "args": [
+      "--env-file=/path/to/bconnect.env",
+      "/path/to/bconnect-endpoints-mcp/build/index.js"
+    ]
+  },
+  "bconnect-assets": {
+    "type": "stdio",
+    "command": "node",
+    "args": [
+      "--env-file=/path/to/bconnect.env",
+      "/path/to/bconnect-assets-mcp/build/index.js"
+    ]
+  }
+}
+```
+
+Wrap that in `{"mcpServers": …}` or `{"servers": …}` per the table, and drop `"type"`
+for Claude Desktop and Cursor. `--env-file` needs Node 20.6+ (22.15+ is recommended
+anyway); on an older Node, put the variables in the environment instead. **Do not put
+credentials in the client config file** — see
+[SECURITY.md → Credentials at rest](../SECURITY.md#credentials-at-rest-env-and-client-config).
+
+**Claude Code** can register the same thing from the CLI, which avoids hand-editing:
 
 ```bash
 claude mcp add bconnect-endpoints \
-  node /path/to/bconnect-endpoints-mcp/build/index.js \
-  -e BCONNECT_BASE_URL=https://your-bms-server:443/bconnect \
-  -e BCONNECT_USERNAME=your-username \
-  -e BCONNECT_PASSWORD=your-password \
-  -e BCONNECT_RELEASE=26R1
+  --scope user \
+  -- node --env-file=/path/to/bconnect.env /path/to/bconnect-endpoints-mcp/build/index.js
 ```
 
-### Claude Desktop (`claude_desktop_config.json`)
+`--scope local` (the default) binds the server to the directory you ran `claude` from;
+`--scope user` makes it available everywhere; `--scope project` writes the repo's
+`.mcp.json`, which then needs a one-time in-app trust approval.
 
-**Where is `claude_desktop_config.json`?**
+**Claude Desktop** — where the file lives, and it needs a **full quit** (tray icon →
+Quit) before it re-reads it:
 
 - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows (standard installer):** `%APPDATA%\Claude\claude_desktop_config.json`
@@ -357,57 +465,93 @@ claude mcp add bconnect-endpoints \
   `C:\Users\<user>\AppData\Local\Packages\Claude_<id>\LocalCache\Roaming\Claude\claude_desktop_config.json`
   — edit that copy, not one under `%APPDATA%`, or Claude Desktop won't see your changes.
 
+**Continue** is the odd one out: `mcpServers` is a YAML **list** whose items each carry
+their own `name:`, and the file needs a `name`/`version`/`schema` header. MCP works in
+**agent mode** only.
+
+```yaml
+name: bconnect-mcp
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: bconnect-endpoints
+    type: stdio
+    command: node
+    args:
+      - --env-file=/path/to/bconnect.env
+      - /path/to/bconnect-endpoints-mcp/build/index.js
+```
+
+**LibreChat** runs stdio servers on the **LibreChat host** — if LibreChat is in Docker,
+the suite must be inside that container or on a mounted path, and `librechat.yaml` must
+be in the project root and mounted into the API container.
+
+### HTTP — via the gateway
+
+Point each entry at `/<domain>/mcp` and supply the gateway's bearer token (directly, or
+via your authenticating proxy, which forwards its own):
+
 ```json
 {
   "mcpServers": {
     "bconnect-endpoints": {
-      "command": "node",
-      "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
-      "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password",
-        "BCONNECT_RELEASE": "26R1"
+      "type": "http",
+      "url": "https://mcp-gateway.company.com/endpoints/mcp",
+      "headers": {
+        "Authorization": "Bearer <MCP_GATEWAY_AUTH_TOKEN>"
       }
     },
     "bconnect-assets": {
-      "command": "node",
-      "args": ["/path/to/bconnect-assets-mcp/build/index.js"],
-      "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password",
-        "BCONNECT_RELEASE": "26R1"
+      "type": "http",
+      "url": "https://mcp-gateway.company.com/assets/mcp",
+      "headers": {
+        "Authorization": "Bearer <MCP_GATEWAY_AUTH_TOKEN>"
       }
     }
   }
 }
 ```
 
-Add one entry per server. You do not need to load all 13 — load only the domains you need.
-
-### Gateway (Claude Desktop or Claude Code, HTTP)
-
-When using the gateway, point each server at `/<domain>/mcp` **through your
-authenticating proxy** (which supplies whatever credential/session it requires):
-
-```json
-{
-  "mcpServers": {
-    "bconnect-endpoints": {
-      "url": "https://mcp-gateway.company.com/endpoints/mcp"
-    },
-    "bconnect-assets": {
-      "url": "https://mcp-gateway.company.com/assets/mcp"
-    }
-  }
-}
-```
+Same wrapper rules: `servers` for VS Code; no `"type"` for Cursor, which identifies a
+remote entry by the presence of `url`; `type: streamable-http` for Continue and
+LibreChat. Claude Desktop has no documented HTTP entry in `claude_desktop_config.json`
+at all — its remote-server path is Connectors/Extensions — so do not expect one to work
+there.
 
 Available gateway domains: `activedirectory`, `assets`, `compliance`,
 `defensecontrol`, `endpoints`, `groups`, `jobs`, `operatingsystems`,
 `servermanagement`, `software`, `universaldynamicgroups`, `updatemanagement`,
 `variables`.
+
+### HTTP-only clients
+
+n8n, Open WebUI, OpenAI's hosted MCP tool and Copilot Studio have **no stdio path** —
+no `command`, no `args`, no local process — so the gateway is the only route.
+
+- **n8n** — one MCP Server credential per domain URL, token supplied as a Header Auth
+  credential. Full guide: [N8N.md](N8N.md).
+- **Open WebUI** — native MCP since v0.6.31, Streamable HTTP only, configured in
+  Admin Settings → External Tools (type *MCP (Streamable HTTP)*). A containerised Open
+  WebUI reaching a gateway on the host needs `http://host.docker.internal:<port>`.
+- **OpenAI** — the Responses API hosted tool calls the URL **from OpenAI's servers**, so
+  it needs a publicly reachable or tunnelled endpoint; the Agents SDK's
+  `MCPServerStdio` spawns the server locally and needs no gateway at all, which is the
+  better fit for a firewalled host.
+- **Copilot Studio** — Streamable HTTP only, through a Power Platform connector, so the
+  call originates in Microsoft's cloud. The connector Swagger needs
+  `x-ms-agentic-protocol: mcp-streamable-1.0` on a POST operation. Anything Microsoft's
+  cloud can reach must sit behind a TLS-terminating proxy that authenticates a person.
+
+### Any other MCP client
+
+The whole interface is one command line:
+
+```text
+node --env-file=/path/to/bconnect.env /path/to/bconnect-endpoints-mcp/build/index.js
+```
+
+Any client that can spawn a process, or call a URL, can be configured from that. If it
+does not work, the wrapper is wrong, not the server.
 
 ---
 
@@ -435,7 +579,9 @@ curl -k -u "username:password" \
 - See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) if you encounter issues
 - See [DOCKER.md](DOCKER.md) for containerised deployment
 - See [N8N.md](N8N.md) for using the gateway from n8n workflows
+- See [DATA-FLOW.md](DATA-FLOW.md) for what estate data reaches the model your client is
+  backed by — the question a security review will ask before this is approved
 
 ---
 
-*bConnect MCP Suite v26.1.7 — 13 servers, 276 tools, bMS 26R1 / 25R2*
+*bConnect MCP Suite v26.1.8 — 14 servers; 141 tools by default, 221 with `ALLOW_WRITE_OPERATIONS=true`; requires bMS 26R1 or later*

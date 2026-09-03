@@ -605,9 +605,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Required data to assign an application to a bundle
+        /**
+         * @description Required data to assign an application to a bundle
          *
-         *     Initialize in PowerShell with `Initialize-bCSoftwareAddApplicationRequest` */
+         *     Initialize in PowerShell with `Initialize-bCSoftwareAddApplicationRequest`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AddApplicationRequest"];
@@ -774,18 +776,22 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object.
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object.
          *
-         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
-                 *         "value": "60cb3040-07f2-472a-bd99-d0526d036d21",
+                 *         "value": "e08cb41f-5701-4a44-8e31-d4e4cce7b1cf",
                  *         "path": "/ApplicationId",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -902,9 +908,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The folder to be created
+        /**
+         * @description The folder to be created
          *
-         *     Initialize in PowerShell with `Initialize-bCSoftwareBundleFolderForCreation` */
+         *     Initialize in PowerShell with `Initialize-bCSoftwareBundleFolderForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["BundleFolderForCreation"];
@@ -1072,12 +1080,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties.
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties.
          *
-         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "My bundle folder",
                  *         "path": "/name",
@@ -1093,7 +1104,8 @@ export interface operations {
                  *         "path": "/comment",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -1367,9 +1379,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The bundle to be created
+        /**
+         * @description The bundle to be created
          *
-         *     Initialize in PowerShell with `Initialize-bCSoftwareSoftwareBundleForCreation` */
+         *     Initialize in PowerShell with `Initialize-bCSoftwareSoftwareBundleForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SoftwareBundleForCreation"];

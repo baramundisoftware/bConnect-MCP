@@ -11,10 +11,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all folders */
+        /**
+         * Gets all folders
+         * @description Powershell function: `Get-bCJobsFolders`
+         */
         get: operations["GetFolders"];
         put?: never;
-        /** Creates a folder according to the specified properties */
+        /**
+         * Creates a folder according to the specified properties
+         * @description Powershell function: `New-bCJobsFolder`
+         */
         post: operations["CreateFolder"];
         delete?: never;
         options?: never;
@@ -29,15 +35,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a folder by id */
+        /**
+         * Gets a folder by id
+         * @description Powershell function: `Get-bCJobsFolder`
+         */
         get: operations["GetFolder"];
         put?: never;
         post?: never;
-        /** Deletes a folder by id */
+        /**
+         * Deletes a folder by id
+         * @description Powershell function: `Remove-bCJobsFolder`
+         */
         delete: operations["DeleteFolder"];
         options?: never;
         head?: never;
-        /** Updates a folder according to the specified properties */
+        /**
+         * Updates a folder according to the specified properties
+         * @description Powershell function: `Update-bCJobsFolder`
+         */
         patch: operations["UpdateFolder"];
         trace?: never;
     };
@@ -48,7 +63,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all folders contained by a folder */
+        /**
+         * Gets all folders contained by a folder
+         * @description Powershell function: `Get-bCJobsFoldersByFolderId`
+         */
         get: operations["GetFoldersByFolderId"];
         put?: never;
         post?: never;
@@ -65,7 +83,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all job definitions */
+        /**
+         * Gets all job definitions
+         * @description Powershell function: `Get-bCJobsJobDefinitions`
+         */
         get: operations["GetJobDefinitions"];
         put?: never;
         post?: never;
@@ -82,7 +103,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a job definition by id */
+        /**
+         * Gets a job definition by id
+         * @description Powershell function: `Get-bCJobsJobDefinition`
+         */
         get: operations["GetJobDefinition"];
         put?: never;
         post?: never;
@@ -99,7 +123,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all job definitions contained in the specified folder */
+        /**
+         * Gets all job definitions contained in the specified folder
+         * @description Powershell function: `Get-bCJobsJobDefinitionsByFolderId`
+         */
         get: operations["GetJobDefinitionsByFolderId"];
         put?: never;
         post?: never;
@@ -116,10 +143,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all job instances */
+        /**
+         * Gets all job instances
+         * @description Powershell function: `Get-bCJobsJobInstances`
+         */
         get: operations["GetJobInstances"];
         put?: never;
-        /** Assigns a job definition to an endpoint */
+        /**
+         * Assigns a job definition to an endpoint
+         * @description Powershell function: `New-bCJobsJobInstance`
+         */
         post: operations["CreateJobInstance"];
         delete?: never;
         options?: never;
@@ -134,11 +167,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a job instance by id */
+        /**
+         * Gets a job instance by id
+         * @description Powershell function: `Get-bCJobsJobInstance`
+         */
         get: operations["GetJobInstance"];
         put?: never;
         post?: never;
-        /** Deletes a job instance by id */
+        /**
+         * Deletes a job instance by id
+         * @description Powershell function: `Remove-bCJobsJobInstance`
+         */
         delete: operations["DeleteJobInstance"];
         options?: never;
         head?: never;
@@ -154,7 +193,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Starts a job instance */
+        /**
+         * Starts a job instance
+         * @description Powershell function: `Start-bCJobsJobInstance`
+         */
         post: operations["StartJobInstance"];
         delete?: never;
         options?: never;
@@ -171,7 +213,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Stops a job instance */
+        /**
+         * Stops a job instance
+         * @description Powershell function: `Stop-bCJobsJobInstance`
+         */
         post: operations["StopJobInstance"];
         delete?: never;
         options?: never;
@@ -188,7 +233,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Resumes a job instance for windows devices */
+        /**
+         * Resumes a job instance for windows devices
+         * @description Powershell function: `Resume-bCJobsJobInstance`
+         */
         post: operations["ResumeJobInstance"];
         delete?: never;
         options?: never;
@@ -203,7 +251,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all job instances by job definition id */
+        /**
+         * Gets all job instances by job definition id
+         * @description Powershell function: `Get-bCJobsJobInstancesByJobDefinitionId`
+         */
         get: operations["GetJobInstancesByJobDefinitionId"];
         put?: never;
         post?: never;
@@ -220,7 +271,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all job instances assigned to a specific endpoint */
+        /**
+         * Gets all job instances assigned to a specific endpoint
+         * @description Powershell function: `Get-bCJobsJobInstancesByEndpointId`
+         */
         get: operations["GetJobInstancesByEndpointId"];
         put?: never;
         post?: never;
@@ -237,7 +291,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all job instances assigned to endpoints contained by a specific logical group */
+        /**
+         * Gets all job instances assigned to endpoints contained by a specific logical group
+         * @description Powershell function: `Get-bCJobsJobInstancesByLogicalGroupId`
+         */
         get: operations["GetJobInstancesByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -256,7 +313,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Assigns a job definition to endpoints contained by the specified logical group */
+        /**
+         * Assigns a job definition to endpoints contained by the specified logical group
+         * @description Powershell function: `Invoke-bCJobsAssignJobDefinitionToLogicalGroup`
+         */
         post: operations["AssignJobDefinitionToLogicalGroup"];
         delete?: never;
         options?: never;
@@ -271,7 +331,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all job instances assigned to endpoints contained by a specific static group */
+        /**
+         * Gets all job instances assigned to endpoints contained by a specific static group
+         * @description Powershell function: `Get-bCJobsJobInstancesByStaticGroupId`
+         */
         get: operations["GetJobInstancesByStaticGroupId"];
         put?: never;
         post?: never;
@@ -290,7 +353,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Assigns a job definition to endpoints contained by the specified static group */
+        /**
+         * Assigns a job definition to endpoints contained by the specified static group
+         * @description Powershell function: `Invoke-bCJobsAssignJobDefinitionToStaticGroup`
+         */
         post: operations["AssignJobDefinitionToStaticGroup"];
         delete?: never;
         options?: never;
@@ -305,7 +371,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all job instances assigned to endpoints contained by a specific dynamic group */
+        /**
+         * Gets all job instances assigned to endpoints contained by a specific dynamic group
+         * @description Powershell function: `Get-bCJobsJobInstancesByDynamicGroupId`
+         */
         get: operations["GetJobInstancesByDynamicGroupId"];
         put?: never;
         post?: never;
@@ -324,7 +393,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Assigns a job definition to endpoints contained by the specified dynamic group */
+        /**
+         * Assigns a job definition to endpoints contained by the specified dynamic group
+         * @description Powershell function: `Invoke-bCJobsAssignJobDefinitionToWindowsDynamicGroup`
+         */
         post: operations["AssignJobDefinitionToWindowsDynamicGroup"];
         delete?: never;
         options?: never;
@@ -339,7 +411,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all job instances assigned to endpoints contained by a specific universal dynamic group */
+        /**
+         * Gets all job instances assigned to endpoints contained by a specific universal dynamic group
+         * @description Powershell function: `Get-bCJobsJobInstancesByUniversalDynamicGroupId`
+         */
         get: operations["GetJobInstancesByUniversalDynamicGroupId"];
         put?: never;
         post?: never;
@@ -358,7 +433,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Assigns a job definition to endpoints contained by the specified universal dynamic group */
+        /**
+         * Assigns a job definition to endpoints contained by the specified universal dynamic group
+         * @description Powershell function: `Invoke-bCJobsAssignJobDefinitionToUniversalDynamicGroup`
+         */
         post: operations["AssignJobDefinitionToUniversalDynamicGroup"];
         delete?: never;
         options?: never;
@@ -373,10 +451,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all kiosk releases */
+        /**
+         * Gets all kiosk releases
+         * @description Powershell function: `Get-bCJobsKioskReleases`
+         */
         get: operations["GetKioskReleases"];
         put?: never;
-        /** Assigns a job definition to a target object. This can be an AD object, a logical group or an endpoint.The target is therefore able to login at baramundi Kiosk portal as a user or a device and choose the assigned job definition for execution on a specific endpoint.For kiosk release assignment JobAssignTarget rights on the job definition and SystemOrAdObjectAssignJob rights on the assignment target are required. */
+        /**
+         * Assigns a job definition to a target object. This can be an AD object, a logical group or an endpoint.The target is therefore able to login at baramundi Kiosk portal as a user or a device and choose the assigned job definition for execution on a specific endpoint.For kiosk release assignment JobAssignTarget rights on the job definition and SystemOrAdObjectAssignJob rights on the assignment target are required.
+         * @description Powershell function: `New-bCJobsKioskRelease`
+         */
         post: operations["CreateKioskRelease"];
         delete?: never;
         options?: never;
@@ -391,11 +475,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets an assigned kiosk release by id */
+        /**
+         * Gets an assigned kiosk release by id
+         * @description Powershell function: `Get-bCJobsKioskRelease`
+         */
         get: operations["GetKioskRelease"];
         put?: never;
         post?: never;
-        /** Withdraws a kiosk release */
+        /**
+         * Withdraws a kiosk release
+         * @description Powershell function: `Invoke-bCJobsWithdrawKioskRelease`
+         */
         delete: operations["WithdrawKioskRelease"];
         options?: never;
         head?: never;
@@ -409,7 +499,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all kiosk releases assigned to a specific ad user */
+        /**
+         * Gets all kiosk releases assigned to a specific ad user
+         * @description Powershell function: `Get-bCJobsKioskReleasesByAdObjectId`
+         */
         get: operations["GetKioskReleasesByAdObjectId"];
         put?: never;
         post?: never;
@@ -426,7 +519,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all kiosk releases assigned to a specific job definition */
+        /**
+         * Gets all kiosk releases assigned to a specific job definition
+         * @description Powershell function: `Get-bCJobsKioskReleasesByJobDefinitionId`
+         */
         get: operations["GetKioskReleasesByJobDefinitionId"];
         put?: never;
         post?: never;
@@ -443,7 +539,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all kiosk releases assigned to a specific endpoint */
+        /**
+         * Gets all kiosk releases assigned to a specific endpoint
+         * @description Powershell function: `Get-bCJobsKioskReleasesByEndpointId`
+         */
         get: operations["GetKioskReleasesByEndpointId"];
         put?: never;
         post?: never;
@@ -460,7 +559,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all kiosk releases assigned to a specific logical group */
+        /**
+         * Gets all kiosk releases assigned to a specific logical group
+         * @description Powershell function: `Get-bCJobsKioskReleasesByLogicalGroupId`
+         */
         get: operations["GetKioskReleasesByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -485,8 +587,12 @@ export interface components {
         };
         /** @enum {string} */
         AssignmentTargetType: "ADObject" | "AndroidEndpoint" | "IosEndpoint" | "LogicalGroup" | "MacEndpoint" | "WindowsEndpoint";
-        /** @enum {string} */
-        EndpointType: "WindowsEndpoint" | "AndroidEndpoint" | "IOSEndpoint" | "MacEndpoint" | "NetworkEndpoint" | "IndustrialEndpoint" | "LinuxEndpoint";
+        /**
+         * @description **Note:** The following values are deprecated and should no longer be used.
+         *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+         * @enum {string}
+         */
+        EndpointType: "WindowsEndpoint" | "AndroidEndpoint" | "IOSEndpoint" | "MacEndpoint" | "NetworkEndpoint" | "Deprecated_IndustrialEndpoint" | "LinuxEndpoint";
         EverydayValidity: Omit<components["schemas"]["ValidityPeriodDefinition"], "type"> & {
             validityPeriods?: components["schemas"]["ValidityPeriod"][];
         } & {
@@ -620,7 +726,12 @@ export interface components {
             endpointId?: string;
             /** @description The name of the endpoint the job definition is executed on */
             endpointName?: string;
-            /** @description The type of the endpoint the job definition is executed on */
+            /**
+             * @description The type of the endpoint the job definition is executed on
+             *
+             *     **Note:** The following values are deprecated and should no longer be used.
+             *     - Deprecated_IndustrialEndpoint -> Removed in 26.1. Keep to avoid gaps in enum values. See EnumDtos_BeginningAtZeroAndCountingUpwardsWithoutGaps tests for details.
+             */
             endpointType?: components["schemas"]["EndpointType"];
             /** @description The initiator of the job instance */
             initiator?: string | null;
@@ -795,7 +906,7 @@ export interface components {
             [key: string]: unknown;
         };
         /** @enum {string} */
-        State: "Queued" | "Running" | "FinishedSuccessfully" | "FinishedWithError" | "Cancelled" | "Rescheduled" | "RescheduledWithError" | "WaitingForUser" | "RequirementsNotMet" | "Downloading" | "SkippedDueToIncompatibility" | "Delayed" | "Assigned" | "Canceling" | "MaintenanceWindow";
+        State: "Queued" | "Running" | "FinishedSuccessfully" | "FinishedWithError" | "Cancelled" | "Rescheduled" | "RescheduledWithError" | "WaitingForUser" | "RequirementsNotMet" | "Downloading" | "SkippedDueToIncompatibility" | "Delayed" | "Assigned" | "Canceling" | "MaintenanceWindow" | "WaitingForDevice";
         /** @description Specifies a period during which the job can be executed */
         ValidityPeriod: {
             /**
@@ -810,10 +921,8 @@ export interface components {
             end?: string | null;
         };
         ValidityPeriodDefinition: {
-            readonly type: components["schemas"]["ValidityPeriodDefinitionType"];
+            type: string;
         };
-        /** @enum {string} */
-        ValidityPeriodDefinitionType: "WeekdayWeekend" | "IndividualWeekday" | "Everyday";
         WeekdayWeekendValidity: Omit<components["schemas"]["ValidityPeriodDefinition"], "type"> & {
             weekdays?: components["schemas"]["ValidityPeriod"][];
             weekends?: components["schemas"]["ValidityPeriod"][];
@@ -889,7 +998,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The folder to be created */
+        /**
+         * @description The folder to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCJobsFolderForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["FolderForCreation"];
@@ -1057,7 +1170,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
@@ -1398,7 +1515,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description Required data to assign a job definition to a target object */
+        /**
+         * @description Required data to assign a job definition to a target object
+         *
+         *     Initialize in PowerShell with `Initialize-bCJobsJobInstanceForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["JobInstanceForCreation"];
@@ -1910,7 +2031,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Required data to assign a job definition to a target object */
+        /**
+         * @description Required data to assign a job definition to a target object
+         *
+         *     Initialize in PowerShell with `Initialize-bCJobsAssignJobDefinitionRequest`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssignJobDefinitionRequest"];
@@ -2035,7 +2160,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Required data to assign a job definition to a target object */
+        /**
+         * @description Required data to assign a job definition to a target object
+         *
+         *     Initialize in PowerShell with `Initialize-bCJobsAssignJobDefinitionRequest`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssignJobDefinitionRequest"];
@@ -2160,7 +2289,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Required data to assign a job definition to a target object */
+        /**
+         * @description Required data to assign a job definition to a target object
+         *
+         *     Initialize in PowerShell with `Initialize-bCJobsAssignJobDefinitionRequest`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssignJobDefinitionRequest"];
@@ -2285,7 +2418,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Required data to assign a job definition to a target object */
+        /**
+         * @description Required data to assign a job definition to a target object
+         *
+         *     Initialize in PowerShell with `Initialize-bCJobsAssignJobDefinitionRequest`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssignJobDefinitionRequest"];
@@ -2393,7 +2530,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The kiosk release to be created */
+        /**
+         * @description The kiosk release to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCJobsKioskReleaseForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["KioskReleaseForCreation"];

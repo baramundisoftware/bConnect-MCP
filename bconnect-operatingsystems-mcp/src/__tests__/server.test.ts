@@ -7,7 +7,7 @@
  * 3. Unknown tool calls return MethodNotFound
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
@@ -24,7 +24,7 @@ const EXPECTED_TOOLS = [
   'update_os_windows_endpoint',
 ];
 
-async function startServer(): Promise<void> {
+async function startServer() {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
@@ -34,14 +34,30 @@ async function startServer(): Promise<void> {
   return { client };
 }
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe('bconnect-operatingsystems-mcp', () => {
-  it('lists exactly 9 operatingsystems tools', async () => {
+  // TOK-20: the advertised surface now depends on ALLOW_WRITE_OPERATIONS. The
+  // four write tools are still declared and still dispatched — they are simply
+  // not advertised while the gate is shut.
+  it('lists exactly 5 read tools with the write gate shut', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', '');
+    const { client } = await startServer();
+    const { tools } = await client.listTools();
+    expect(tools).toHaveLength(5);
+  });
+
+  it('lists exactly 9 operatingsystems tools with the write gate open', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
     const { client } = await startServer();
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(9);
   });
 
   it('registers all expected tool names', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
     const { client } = await startServer();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);

@@ -4,7 +4,10 @@
  * Tests run against bConnect-Mock (default: http://127.0.0.1:13433).
  * Override via BCONNECT_MOCK_URL.
  *
- * Tests skip gracefully when the mock is unreachable — never break CI.
+ * Tests skip gracefully when the mock is unreachable — never break CI. They
+ * are *reported* as skipped, not as passed: QA-57 recorded that the previous
+ * `if (!available) {return;}` prologue made a run with no mock report a full
+ * pass having asserted nothing. See the test files' use of ctx.skip().
  */
 
 import { BConnectClient } from '../../bconnect-client.js';
@@ -46,11 +49,21 @@ export function createClient(baseUrl = MOCK_BASE_URL): BConnectClient {
   });
 }
 
+/**
+ * Untyped JSON straight off the wire.
+ *
+ * This helper exists to probe RAW routes, so it deliberately does not pretend
+ * to know the response shape. `unknown` made `body?.data?.[0]?.id` a type
+ * error, and because no test in this repo was type-checked, nobody found out.
+ * `any` rows are the honest description of 'whatever the server sent'.
+ */
+export type RawJsonBody = { data?: any[]; [key: string]: any } | null;
+
 export async function rawGet(
   path: string,
   params: Record<string, string | number> = {},
   baseUrl = MOCK_BASE_URL,
-): Promise<{ status: number; body: unknown }> {
+): Promise<{ status: number; body: RawJsonBody }> {
   const url = new URL(path, baseUrl);
   for (const [k, v] of Object.entries(params)) {url.searchParams.set(k, String(v));}
   const res = await fetch(url.toString());

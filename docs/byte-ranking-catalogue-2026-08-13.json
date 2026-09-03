@@ -1,0 +1,1051 @@
+{
+  "grandTotal": 132716,
+  "toolCount": 139,
+  "perServer": [
+    {
+      "server": "jobs",
+      "tools": 23,
+      "total": 22818
+    },
+    {
+      "server": "activedirectory",
+      "tools": 16,
+      "total": 15115
+    },
+    {
+      "server": "assets",
+      "tools": 15,
+      "total": 13467
+    },
+    {
+      "server": "compliance",
+      "tools": 10,
+      "total": 11317
+    },
+    {
+      "server": "software",
+      "tools": 11,
+      "total": 11054
+    },
+    {
+      "server": "variables",
+      "tools": 9,
+      "total": 10780
+    },
+    {
+      "server": "servermanagement",
+      "tools": 16,
+      "total": 9405
+    },
+    {
+      "server": "defensecontrol",
+      "tools": 11,
+      "total": 9229
+    },
+    {
+      "server": "endpoints",
+      "tools": 10,
+      "total": 8972
+    },
+    {
+      "server": "universaldynamicgroups",
+      "tools": 6,
+      "total": 4969
+    },
+    {
+      "server": "groups",
+      "tools": 2,
+      "total": 4709
+    },
+    {
+      "server": "insights",
+      "tools": 3,
+      "total": 4073
+    },
+    {
+      "server": "operatingsystems",
+      "tools": 5,
+      "total": 3724
+    },
+    {
+      "server": "updatemanagement",
+      "tools": 2,
+      "total": 3084
+    }
+  ],
+  "tools": [
+    {
+      "server": "groups",
+      "name": "list_group_members",
+      "total": 3192,
+      "desc": 987,
+      "schema": 2144
+    },
+    {
+      "server": "compliance",
+      "name": "get_unpatched_endpoints",
+      "total": 2389,
+      "desc": 1062,
+      "schema": 1261
+    },
+    {
+      "server": "updatemanagement",
+      "name": "list_update_management_endpoints",
+      "total": 2110,
+      "desc": 1247,
+      "schema": 788
+    },
+    {
+      "server": "jobs",
+      "name": "preview_assignment",
+      "total": 1985,
+      "desc": 835,
+      "schema": 1089
+    },
+    {
+      "server": "endpoints",
+      "name": "list_endpoints_by_logical_group",
+      "total": 1907,
+      "desc": 263,
+      "schema": 1570
+    },
+    {
+      "server": "compliance",
+      "name": "get_vulnerability_exposure",
+      "total": 1837,
+      "desc": 782,
+      "schema": 986
+    },
+    {
+      "server": "endpoints",
+      "name": "list_endpoints",
+      "total": 1789,
+      "desc": 421,
+      "schema": 1311
+    },
+    {
+      "server": "software",
+      "name": "list_installed_software_by_universal_dynamic_group",
+      "total": 1739,
+      "desc": 663,
+      "schema": 983
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_instances_by_logical_group",
+      "total": 1737,
+      "desc": 331,
+      "schema": 1328
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_instances_by_definition",
+      "total": 1650,
+      "desc": 332,
+      "schema": 1243
+    },
+    {
+      "server": "endpoints",
+      "name": "get_stale_endpoints",
+      "total": 1634,
+      "desc": 700,
+      "schema": 872
+    },
+    {
+      "server": "variables",
+      "name": "list_variable_instances",
+      "total": 1630,
+      "desc": 675,
+      "schema": 889
+    },
+    {
+      "server": "assets",
+      "name": "list_asset_types",
+      "total": 1591,
+      "desc": 441,
+      "schema": 1091
+    },
+    {
+      "server": "assets",
+      "name": "list_assets",
+      "total": 1524,
+      "desc": 559,
+      "schema": 911
+    },
+    {
+      "server": "groups",
+      "name": "list_ad_user_endpoints",
+      "total": 1517,
+      "desc": 303,
+      "schema": 1149
+    },
+    {
+      "server": "software",
+      "name": "list_installed_software_by_logical_group",
+      "total": 1480,
+      "desc": 320,
+      "schema": 1077
+    },
+    {
+      "server": "compliance",
+      "name": "list_vulnerabilities",
+      "total": 1439,
+      "desc": 611,
+      "schema": 765
+    },
+    {
+      "server": "variables",
+      "name": "list_variable_instances_by_job_definition",
+      "total": 1437,
+      "desc": 266,
+      "schema": 1087
+    },
+    {
+      "server": "variables",
+      "name": "list_variable_instances_by_application",
+      "total": 1429,
+      "desc": 260,
+      "schema": 1088
+    },
+    {
+      "server": "servermanagement",
+      "name": "list_download_jobs",
+      "total": 1423,
+      "desc": 306,
+      "schema": 1056
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_instances",
+      "total": 1420,
+      "desc": 298,
+      "schema": 1061
+    },
+    {
+      "server": "insights",
+      "name": "get_estate_risk_briefing",
+      "total": 1411,
+      "desc": 768,
+      "schema": 576
+    },
+    {
+      "server": "variables",
+      "name": "list_variable_instances_by_ad_object",
+      "total": 1411,
+      "desc": 262,
+      "schema": 1070
+    },
+    {
+      "server": "variables",
+      "name": "list_variable_instances_by_logical_group",
+      "total": 1405,
+      "desc": 256,
+      "schema": 1066
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_org_units",
+      "total": 1403,
+      "desc": 480,
+      "schema": 866
+    },
+    {
+      "server": "insights",
+      "name": "get_endpoint_briefing",
+      "total": 1359,
+      "desc": 633,
+      "schema": 662
+    },
+    {
+      "server": "variables",
+      "name": "list_variable_instances_by_endpoint",
+      "total": 1359,
+      "desc": 233,
+      "schema": 1048
+    },
+    {
+      "server": "jobs",
+      "name": "diagnose_job",
+      "total": 1350,
+      "desc": 684,
+      "schema": 611
+    },
+    {
+      "server": "software",
+      "name": "list_installed_software_by_endpoint",
+      "total": 1344,
+      "desc": 344,
+      "schema": 922
+    },
+    {
+      "server": "defensecontrol",
+      "name": "list_defender_windows_endpoints",
+      "total": 1343,
+      "desc": 538,
+      "schema": 731
+    },
+    {
+      "server": "insights",
+      "name": "get_patch_readiness",
+      "total": 1303,
+      "desc": 635,
+      "schema": 606
+    },
+    {
+      "server": "defensecontrol",
+      "name": "list_bitlocker_windows_endpoints",
+      "total": 1290,
+      "desc": 458,
+      "schema": 757
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_folders",
+      "total": 1290,
+      "desc": 886,
+      "schema": 345
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_instances_by_dynamic_group",
+      "total": 1263,
+      "desc": 184,
+      "schema": 1001
+    },
+    {
+      "server": "jobs",
+      "name": "explain_job_failure",
+      "total": 1234,
+      "desc": 529,
+      "schema": 643
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_subgroups",
+      "total": 1229,
+      "desc": 350,
+      "schema": 819
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_users_by_group",
+      "total": 1209,
+      "desc": 325,
+      "schema": 819
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_users_by_org_unit",
+      "total": 1199,
+      "desc": 306,
+      "schema": 825
+    },
+    {
+      "server": "variables",
+      "name": "list_variable_definitions",
+      "total": 1198,
+      "desc": 241,
+      "schema": 889
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_groups_by_org_unit",
+      "total": 1197,
+      "desc": 309,
+      "schema": 819
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_org_units_by_org_unit",
+      "total": 1192,
+      "desc": 204,
+      "schema": 919
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_instances_by_universal_dynamic_group",
+      "total": 1177,
+      "desc": 194,
+      "schema": 895
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_definitions_by_folder",
+      "total": 1162,
+      "desc": 267,
+      "schema": 822
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_instances_by_static_group",
+      "total": 1157,
+      "desc": 183,
+      "schema": 897
+    },
+    {
+      "server": "software",
+      "name": "list_installed_windows_software",
+      "total": 1148,
+      "desc": 329,
+      "schema": 745
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_instances_by_endpoint",
+      "total": 1143,
+      "desc": 276,
+      "schema": 794
+    },
+    {
+      "server": "universaldynamicgroups",
+      "name": "list_universal_dynamic_groups_by_folder",
+      "total": 1136,
+      "desc": 189,
+      "schema": 865
+    },
+    {
+      "server": "operatingsystems",
+      "name": "list_os_folders_by_folder",
+      "total": 1126,
+      "desc": 204,
+      "schema": 854
+    },
+    {
+      "server": "universaldynamicgroups",
+      "name": "list_udg_folders_by_folder",
+      "total": 1119,
+      "desc": 181,
+      "schema": 869
+    },
+    {
+      "server": "defensecontrol",
+      "name": "list_defender_threats_by_logical_group",
+      "total": 1117,
+      "desc": 222,
+      "schema": 814
+    },
+    {
+      "server": "software",
+      "name": "list_bundle_folders_by_folder",
+      "total": 1110,
+      "desc": 236,
+      "schema": 802
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_objects_by_org_unit",
+      "total": 1107,
+      "desc": 325,
+      "schema": 712
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_objects_by_group",
+      "total": 1098,
+      "desc": 322,
+      "schema": 709
+    },
+    {
+      "server": "servermanagement",
+      "name": "list_security_groups",
+      "total": 1091,
+      "desc": 486,
+      "schema": 542
+    },
+    {
+      "server": "compliance",
+      "name": "list_detected_rule_violations_by_endpoint",
+      "total": 1070,
+      "desc": 243,
+      "schema": 743
+    },
+    {
+      "server": "compliance",
+      "name": "list_detected_vulnerabilities_by_endpoint",
+      "total": 1066,
+      "desc": 304,
+      "schema": 678
+    },
+    {
+      "server": "assets",
+      "name": "list_assets_by_ad_object",
+      "total": 1057,
+      "desc": 145,
+      "schema": 845
+    },
+    {
+      "server": "assets",
+      "name": "list_assets_by_logical_group",
+      "total": 1047,
+      "desc": 135,
+      "schema": 841
+    },
+    {
+      "server": "assets",
+      "name": "list_asset_stock_subfolders",
+      "total": 1047,
+      "desc": 161,
+      "schema": 816
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_groups",
+      "total": 1045,
+      "desc": 410,
+      "schema": 578
+    },
+    {
+      "server": "assets",
+      "name": "list_asset_type_subfolders",
+      "total": 1043,
+      "desc": 160,
+      "schema": 814
+    },
+    {
+      "server": "universaldynamicgroups",
+      "name": "list_universal_dynamic_groups",
+      "total": 1039,
+      "desc": 297,
+      "schema": 670
+    },
+    {
+      "server": "assets",
+      "name": "list_assets_by_org_unit",
+      "total": 1034,
+      "desc": 130,
+      "schema": 838
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_definitions",
+      "total": 1032,
+      "desc": 402,
+      "schema": 567
+    },
+    {
+      "server": "assets",
+      "name": "list_assets_by_windows_endpoint",
+      "total": 1026,
+      "desc": 121,
+      "schema": 831
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_users",
+      "total": 1014,
+      "desc": 350,
+      "schema": 608
+    },
+    {
+      "server": "updatemanagement",
+      "name": "get_update_management_endpoint",
+      "total": 974,
+      "desc": 702,
+      "schema": 199
+    },
+    {
+      "server": "defensecontrol",
+      "name": "list_defender_threats_by_endpoint",
+      "total": 961,
+      "desc": 226,
+      "schema": 659
+    },
+    {
+      "server": "assets",
+      "name": "list_assets_in_asset_stock",
+      "total": 945,
+      "desc": 198,
+      "schema": 678
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_objects",
+      "total": 937,
+      "desc": 343,
+      "schema": 536
+    },
+    {
+      "server": "software",
+      "name": "list_software_bundles",
+      "total": 909,
+      "desc": 341,
+      "schema": 504
+    },
+    {
+      "server": "endpoints",
+      "name": "get_fleet_summary",
+      "total": 902,
+      "desc": 441,
+      "schema": 401
+    },
+    {
+      "server": "servermanagement",
+      "name": "list_security_profiles",
+      "total": 880,
+      "desc": 273,
+      "schema": 542
+    },
+    {
+      "server": "software",
+      "name": "list_bundle_applications_by_bundle",
+      "total": 871,
+      "desc": 208,
+      "schema": 586
+    },
+    {
+      "server": "activedirectory",
+      "name": "list_ad_object_memberships",
+      "total": 865,
+      "desc": 218,
+      "schema": 578
+    },
+    {
+      "server": "servermanagement",
+      "name": "list_microservices",
+      "total": 861,
+      "desc": 753,
+      "schema": 47
+    },
+    {
+      "server": "compliance",
+      "name": "list_detected_rule_violations",
+      "total": 860,
+      "desc": 238,
+      "schema": 550
+    },
+    {
+      "server": "defensecontrol",
+      "name": "get_security_posture",
+      "total": 855,
+      "desc": 499,
+      "schema": 293
+    },
+    {
+      "server": "universaldynamicgroups",
+      "name": "list_udg_folders",
+      "total": 855,
+      "desc": 190,
+      "schema": 606
+    },
+    {
+      "server": "compliance",
+      "name": "list_detected_vulnerabilities",
+      "total": 854,
+      "desc": 260,
+      "schema": 522
+    },
+    {
+      "server": "compliance",
+      "name": "list_mobile_device_rules",
+      "total": 840,
+      "desc": 247,
+      "schema": 526
+    },
+    {
+      "server": "operatingsystems",
+      "name": "list_os_folders",
+      "total": 840,
+      "desc": 197,
+      "schema": 585
+    },
+    {
+      "server": "defensecontrol",
+      "name": "list_defender_threats",
+      "total": 826,
+      "desc": 233,
+      "schema": 529
+    },
+    {
+      "server": "operatingsystems",
+      "name": "list_os_windows_endpoints",
+      "total": 811,
+      "desc": 245,
+      "schema": 498
+    },
+    {
+      "server": "software",
+      "name": "list_bundle_folders",
+      "total": 790,
+      "desc": 224,
+      "schema": 504
+    },
+    {
+      "server": "assets",
+      "name": "list_asset_stock_folders",
+      "total": 761,
+      "desc": 135,
+      "schema": 559
+    },
+    {
+      "server": "jobs",
+      "name": "list_job_subfolders",
+      "total": 750,
+      "desc": 122,
+      "schema": 566
+    },
+    {
+      "server": "jobs",
+      "name": "list_kiosk_releases",
+      "total": 749,
+      "desc": 224,
+      "schema": 463
+    },
+    {
+      "server": "assets",
+      "name": "list_asset_type_folders",
+      "total": 745,
+      "desc": 120,
+      "schema": 559
+    },
+    {
+      "server": "software",
+      "name": "list_bundle_applications",
+      "total": 727,
+      "desc": 225,
+      "schema": 435
+    },
+    {
+      "server": "endpoints",
+      "name": "list_logical_groups",
+      "total": 726,
+      "desc": 20,
+      "schema": 644
+    },
+    {
+      "server": "defensecontrol",
+      "name": "get_bitlocker_secrets",
+      "total": 659,
+      "desc": 383,
+      "schema": 212
+    },
+    {
+      "server": "servermanagement",
+      "name": "get_access_rights",
+      "total": 659,
+      "desc": 217,
+      "schema": 382
+    },
+    {
+      "server": "defensecontrol",
+      "name": "get_local_admin_accounts",
+      "total": 651,
+      "desc": 358,
+      "schema": 226
+    },
+    {
+      "server": "servermanagement",
+      "name": "get_security_group",
+      "total": 603,
+      "desc": 386,
+      "schema": 156
+    },
+    {
+      "server": "endpoints",
+      "name": "get_endpoint",
+      "total": 583,
+      "desc": 160,
+      "schema": 368
+    },
+    {
+      "server": "jobs",
+      "name": "list_kiosk_releases_by_logical_group",
+      "total": 572,
+      "desc": 152,
+      "schema": 341
+    },
+    {
+      "server": "operatingsystems",
+      "name": "get_os_windows_endpoint",
+      "total": 546,
+      "desc": 256,
+      "schema": 224
+    },
+    {
+      "server": "jobs",
+      "name": "list_kiosk_releases_by_ad_object",
+      "total": 544,
+      "desc": 138,
+      "schema": 331
+    },
+    {
+      "server": "servermanagement",
+      "name": "get_security_profile",
+      "total": 541,
+      "desc": 318,
+      "schema": 160
+    },
+    {
+      "server": "jobs",
+      "name": "list_kiosk_releases_by_job_definition",
+      "total": 537,
+      "desc": 134,
+      "schema": 323
+    },
+    {
+      "server": "software",
+      "name": "get_software_bundle",
+      "total": 529,
+      "desc": 297,
+      "schema": 170
+    },
+    {
+      "server": "jobs",
+      "name": "list_kiosk_releases_by_endpoint",
+      "total": 525,
+      "desc": 128,
+      "schema": 323
+    },
+    {
+      "server": "defensecontrol",
+      "name": "get_defender_windows_endpoint",
+      "total": 522,
+      "desc": 230,
+      "schema": 220
+    },
+    {
+      "server": "defensecontrol",
+      "name": "get_bitlocker_windows_endpoint",
+      "total": 515,
+      "desc": 231,
+      "schema": 211
+    },
+    {
+      "server": "servermanagement",
+      "name": "get_download_job",
+      "total": 509,
+      "desc": 286,
+      "schema": 164
+    },
+    {
+      "server": "compliance",
+      "name": "get_mobile_device_rule",
+      "total": 491,
+      "desc": 251,
+      "schema": 175
+    },
+    {
+      "server": "defensecontrol",
+      "name": "get_defender_threat",
+      "total": 490,
+      "desc": 236,
+      "schema": 192
+    },
+    {
+      "server": "compliance",
+      "name": "get_vulnerability",
+      "total": 471,
+      "desc": 225,
+      "schema": 186
+    },
+    {
+      "server": "variables",
+      "name": "get_variable_instance",
+      "total": 462,
+      "desc": 236,
+      "schema": 162
+    },
+    {
+      "server": "variables",
+      "name": "get_variable_definition",
+      "total": 449,
+      "desc": 217,
+      "schema": 166
+    },
+    {
+      "server": "endpoints",
+      "name": "get_entra_id_data",
+      "total": 442,
+      "desc": 178,
+      "schema": 204
+    },
+    {
+      "server": "jobs",
+      "name": "get_job_definition",
+      "total": 434,
+      "desc": 231,
+      "schema": 142
+    },
+    {
+      "server": "servermanagement",
+      "name": "get_management_server",
+      "total": 433,
+      "desc": 322,
+      "schema": 47
+    },
+    {
+      "server": "servermanagement",
+      "name": "list_api_keys",
+      "total": 433,
+      "desc": 330,
+      "schema": 47
+    },
+    {
+      "server": "jobs",
+      "name": "get_job_instance",
+      "total": 427,
+      "desc": 230,
+      "schema": 138
+    },
+    {
+      "server": "assets",
+      "name": "get_asset_stock_folder",
+      "total": 418,
+      "desc": 189,
+      "schema": 164
+    },
+    {
+      "server": "universaldynamicgroups",
+      "name": "get_universal_dynamic_group",
+      "total": 416,
+      "desc": 172,
+      "schema": 174
+    },
+    {
+      "server": "assets",
+      "name": "get_asset_type_folder",
+      "total": 413,
+      "desc": 187,
+      "schema": 162
+    },
+    {
+      "server": "activedirectory",
+      "name": "get_ad_object",
+      "total": 411,
+      "desc": 209,
+      "schema": 146
+    },
+    {
+      "server": "assets",
+      "name": "get_asset_type",
+      "total": 411,
+      "desc": 206,
+      "schema": 148
+    },
+    {
+      "server": "servermanagement",
+      "name": "get_microservice",
+      "total": 410,
+      "desc": 187,
+      "schema": 164
+    },
+    {
+      "server": "activedirectory",
+      "name": "get_ad_user",
+      "total": 407,
+      "desc": 211,
+      "schema": 142
+    },
+    {
+      "server": "software",
+      "name": "get_bundle_folder",
+      "total": 407,
+      "desc": 193,
+      "schema": 154
+    },
+    {
+      "server": "assets",
+      "name": "get_asset",
+      "total": 405,
+      "desc": 215,
+      "schema": 138
+    },
+    {
+      "server": "universaldynamicgroups",
+      "name": "get_udg_folder",
+      "total": 404,
+      "desc": 199,
+      "schema": 148
+    },
+    {
+      "server": "activedirectory",
+      "name": "get_ad_group",
+      "total": 403,
+      "desc": 204,
+      "schema": 144
+    },
+    {
+      "server": "operatingsystems",
+      "name": "get_os_folder",
+      "total": 401,
+      "desc": 199,
+      "schema": 146
+    },
+    {
+      "server": "activedirectory",
+      "name": "get_org_unit",
+      "total": 399,
+      "desc": 189,
+      "schema": 155
+    },
+    {
+      "server": "endpoints",
+      "name": "get_maintenance_window_for_logical_group",
+      "total": 389,
+      "desc": 41,
+      "schema": 265
+    },
+    {
+      "server": "jobs",
+      "name": "get_kiosk_release",
+      "total": 379,
+      "desc": 179,
+      "schema": 140
+    },
+    {
+      "server": "endpoints",
+      "name": "get_maintenance_window_for_endpoint",
+      "total": 370,
+      "desc": 37,
+      "schema": 255
+    },
+    {
+      "server": "servermanagement",
+      "name": "get_gateway",
+      "total": 332,
+      "desc": 231,
+      "schema": 47
+    },
+    {
+      "server": "servermanagement",
+      "name": "get_dip_status",
+      "total": 322,
+      "desc": 218,
+      "schema": 47
+    },
+    {
+      "server": "servermanagement",
+      "name": "get_vpn_appliance",
+      "total": 315,
+      "desc": 208,
+      "schema": 47
+    },
+    {
+      "server": "servermanagement",
+      "name": "list_cloud_connectors",
+      "total": 309,
+      "desc": 198,
+      "schema": 47
+    },
+    {
+      "server": "jobs",
+      "name": "get_job_folder",
+      "total": 301,
+      "desc": 114,
+      "schema": 130
+    },
+    {
+      "server": "servermanagement",
+      "name": "list_pxe_relays",
+      "total": 284,
+      "desc": 179,
+      "schema": 47
+    },
+    {
+      "server": "endpoints",
+      "name": "get_logical_group",
+      "total": 230,
+      "desc": 28,
+      "schema": 142
+    }
+  ]
+}

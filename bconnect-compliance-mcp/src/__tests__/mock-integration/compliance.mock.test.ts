@@ -2,9 +2,9 @@
  * Compliance — mock integration tests.
  * See docs/MOCK_INTEGRATION_TESTING.md.
  *
- * This is the domain that exposed P29.2: a wrong URL for
- * `list_detected_vulnerabilities_for_endpoint`. That bug class is
- * exactly what this tier is here to catch.
+ * This is the domain that exposed P29.2: a wrong URL for the tool now called
+ * `list_detected_vulnerabilities_by_endpoint` (renamed from `..._for_endpoint`
+ * by INT-47). That bug class is exactly what this tier is here to catch.
  */
 
 import { describe, it, beforeAll, expect } from 'vitest';
@@ -30,8 +30,8 @@ beforeAll(async () => {
 });
 
 describe('Compliance — list MobileDeviceRules', () => {
-  it('returns paged data with totalItems', async () => {
-    if (!available) {return;}
+  it('returns paged data with totalItems', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.compliance.getAllMobileDeviceRules({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -40,8 +40,8 @@ describe('Compliance — list MobileDeviceRules', () => {
 });
 
 describe('Compliance — get MobileDeviceRule by id', () => {
-  it('returns the same rule surfaced by the list', async () => {
-    if (!available) {return;}
+  it('returns the same rule surfaced by the list', async (ctx) => {
+    if (!available) {ctx.skip();}
     const list = await client.compliance.getAllMobileDeviceRules({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
     if (!id) {throw new Error('mock returned empty MobileDeviceRules list');}
@@ -51,8 +51,8 @@ describe('Compliance — get MobileDeviceRule by id', () => {
 });
 
 describe('Compliance — list DetectedVulnerabilities for an endpoint (P29.2 regression)', () => {
-  it('uses the correct WindowsEndpoints/{id}/DetectedVulnerabilities path', async () => {
-    if (!available) {return;}
+  it('uses the correct WindowsEndpoints/{id}/DetectedVulnerabilities path', async (ctx) => {
+    if (!available) {ctx.skip();}
     const { body: epList } = await rawGet('/endpoints/v2.0/WindowsEndpoints', { PageSize: 1 });
     const endpointId = epList?.data?.[0]?.id;
     if (!endpointId) {throw new Error('mock returned no Windows endpoints');}
@@ -62,8 +62,8 @@ describe('Compliance — list DetectedVulnerabilities for an endpoint (P29.2 reg
 });
 
 describe('Compliance — unknown rule id', () => {
-  it('rejects on get with nonexistent GUID', async () => {
-    if (!available) {return;}
+  it('rejects on get with nonexistent GUID', async (ctx) => {
+    if (!available) {ctx.skip();}
     await expect(client.compliance.getMobileDeviceRule(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

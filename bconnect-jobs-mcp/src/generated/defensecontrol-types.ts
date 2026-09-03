@@ -11,7 +11,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get information concerning BitLocker for all windows endpoints */
+        /**
+         * Get information concerning BitLocker for all windows endpoints
+         * @description Powershell function: `Get-bCDefensecontrolBitLockerStates`
+         */
         get: operations["GetBitLockerStates"];
         put?: never;
         post?: never;
@@ -28,7 +31,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get information concerning BitLocker for a specific windows endpoint */
+        /**
+         * Get information concerning BitLocker for a specific windows endpoint
+         * @description Powershell function: `Get-bCDefensecontrolBitLockerStatesByWindowsEndpointId`
+         */
         get: operations["GetBitLockerStatesByWindowsEndpointId"];
         put?: never;
         post?: never;
@@ -38,6 +44,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2.0/BitLocker/WindowsEndpoints/{id}/Secrets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get BitLocker secrets for a specific windows endpoint
+         * @description Powershell function: `Get-bCDefensecontrolBitLockerSecretsByWindowsEndpointId`
+         */
+        get: operations["GetBitLockerSecretsByWindowsEndpointId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update BitLocker PIN for a specific Windows endpoint
+         * @description Powershell function: `Update-bCDefensecontrolBitLockerPinByWindowsEndpointId`
+         */
+        patch: operations["UpdateBitLockerPinByWindowsEndpointId"];
+        trace?: never;
+    };
     "/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/{id}": {
         parameters: {
             query?: never;
@@ -45,14 +75,20 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get local admin account information for a specific windows endpoint */
+        /**
+         * Get local admin account information for a specific windows endpoint
+         * @description Powershell function: `Get-bCDefensecontrolLocalAdminUserCredentialsByWindowsEndpointId`
+         */
         get: operations["GetLocalAdminUserCredentialsByWindowsEndpointId"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** Change the expiration date of local admin account for a specific windows endpoint. You can only patch the 'requested expiration date'. Setting the property to a date in the past will trigger the generation of new credentials on the endpoint. The requested expiration date is set until the client acknowledges the request. After acknowledging the request, the 'requested expiration date' will be set to 'null' and the 'expiration date' will contain the new expiration date. You can trigger an immediate update of the expiration date on an endpoint by using the 'TriggerUpdateOnClient' [POST] action. */
+        /**
+         * Change the expiration date of local admin account for a specific windows endpoint. You can only patch the 'requested expiration date'. Setting the property to a date in the past will trigger the generation of new credentials on the endpoint. The requested expiration date is set until the client acknowledges the request. After acknowledging the request, the 'requested expiration date' will be set to 'null' and the 'expiration date' will contain the new expiration date. You can trigger an immediate update of the expiration date on an endpoint by using the 'TriggerUpdateOnClient' [POST] action.
+         * @description Powershell function: `Update-bCDefensecontrolLocalAdminUserCredentialsForWindowsEndpointId`
+         */
         patch: operations["PatchLocalAdminUserCredentialsForWindowsEndpointId"];
         trace?: never;
     };
@@ -65,7 +101,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Request a client to immediately update the expiration date of its' local administrative account. This only works if the client is online. You can specify a timeout with the 'timeout' query parameter. The default timeout is 30 seconds */
+        /**
+         * Request a client to immediately update the expiration date of its' local administrative account. This only works if the client is online. You can specify a timeout with the 'timeout' query parameter. The default timeout is 30 seconds
+         * @description Powershell function: `Invoke-bCDefensecontrolTriggerUpdateOnClient`
+         */
         post: operations["TriggerUpdateOnClient"];
         delete?: never;
         options?: never;
@@ -80,7 +119,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all threats found by Microsoft Defender */
+        /**
+         * Get all threats found by Microsoft Defender
+         * @description Powershell function: `Get-bCDefensecontrolMicrosoftDefenderThreats`
+         */
         get: operations["GetMicrosoftDefenderThreats"];
         put?: never;
         post?: never;
@@ -97,7 +139,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a threat by id */
+        /**
+         * Get a threat by id
+         * @description Powershell function: `Get-bCDefensecontrolMicrosoftDefenderThreat`
+         */
         get: operations["GetMicrosoftDefenderThreat"];
         put?: never;
         post?: never;
@@ -114,7 +159,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all threats found by Microsoft Defender for a specific windows endpoint */
+        /**
+         * Get all threats found by Microsoft Defender for a specific windows endpoint
+         * @description Powershell function: `Get-bCDefensecontrolMicrosoftDefenderThreatsByWindowsEndpointId`
+         */
         get: operations["GetMicrosoftDefenderThreatsByWindowsEndpointId"];
         put?: never;
         post?: never;
@@ -131,7 +179,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all threats found by Microsoft Defender for a specific logical group */
+        /**
+         * Get all threats found by Microsoft Defender for a specific logical group
+         * @description Powershell function: `Get-bCDefensecontrolMicrosoftDefenderThreatsByLogicalGroupId`
+         */
         get: operations["GetMicrosoftDefenderThreatsByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -148,7 +199,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Retrieves information concerning Microsoft Defender state on windows endpoints */
+        /**
+         * Retrieves information concerning Microsoft Defender state on windows endpoints
+         * @description Powershell function: `Get-bCDefensecontrolMicrosoftDefenderStates`
+         */
         get: operations["GetMicrosoftDefenderStates"];
         put?: never;
         post?: never;
@@ -165,7 +219,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Retrieves information concerning Microsoft Defender state for a single windows endpoint */
+        /**
+         * Retrieves information concerning Microsoft Defender state for a single windows endpoint
+         * @description Powershell function: `Get-bCDefensecontrolMicrosoftDefenderStatesByWindowsEndpointId`
+         */
         get: operations["GetMicrosoftDefenderStatesByWindowsEndpointId"];
         put?: never;
         post?: never;
@@ -214,6 +271,39 @@ export interface components {
             definitionCreation?: string;
             /** @description The antivirus definition version */
             definitionVersion?: string;
+        };
+        /** @description The BitLocker Recovery Key */
+        BitLockerRecoveryKey: {
+            /**
+             * Format: guid
+             * @description The BitLocker volume identifier
+             */
+            volumeId?: string | null;
+            /** @description VolumeName/Partition */
+            volumeNameOrPartition?: string;
+            /** @description Indicates whether this is the system volume */
+            isSystemVolume?: boolean;
+            /** @description The initial recovery key */
+            initialRecoveryKey?: string | null;
+            /** @description The inventoried recovery key */
+            inventoriedRecoveryKey?: string | null;
+            /**
+             * Format: date-time
+             * @description The last update timestamp
+             */
+            lastUpdate?: string | null;
+        };
+        /** @description BitLocker secrets for an device */
+        BitLockerSecrets: {
+            /**
+             * Format: guid
+             * @description Unique endpoint identifier
+             */
+            endpointId?: string;
+            /** @description Initial startup PIN for BitLocker */
+            initialStartupPin?: string;
+            /** @description Collection of BitLocker recovery keys */
+            bitLockerRecoveryKeys?: components["schemas"]["BitLockerRecoveryKey"][];
         };
         /** @enum {string} */
         BitLockerVersion: "Unknown" | "Vista" | "Win7";
@@ -667,6 +757,136 @@ export interface operations {
             };
         };
     };
+    GetBitLockerSecretsByWindowsEndpointId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns BitLocker secrets */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BitLockerSecrets"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Insufficient permissions to read the BitLocker secrets */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Windows endpoint with the specified ID does not exist or is not accessible due to missing rights */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    UpdateBitLockerPinByWindowsEndpointId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
+        requestBody?: {
+            content: {
+                /**
+                 * @example [
+                 *       {
+                 *         "value": "23546375",
+                 *         "path": "/InitialStartupPin",
+                 *         "op": "replace"
+                 *       }
+                 *     ]
+                 */
+                "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
+            };
+        };
+        responses: {
+            /** @description BitLocker PIN updated successfully and secrets returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BitLockerSecrets"];
+                };
+            };
+            /** @description Input data is missing or invalid */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Insufficient permissions to modify the BitLocker secrets */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Windows endpoint with the specified ID does not exist or is not accessible due to missing rights */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetLocalAdminUserCredentialsByWindowsEndpointId: {
         parameters: {
             query?: never;
@@ -734,16 +954,22 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
-                 *         "value": "2025-10-16T13:48:40.8635987Z",
+                 *         "value": "2026-05-22T11:22:19.9566172Z",
                  *         "path": "/LocalAdminAccount/RequestedExpirationDate",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };

@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import type { components, operations } from '../generated/universaldynamicgroups-types.js';
+import { readSubResource, notOverloaded404 } from "@bconnect/mcp-core";
 
 // Type aliases
 type UniversalDynamicGroupPagedList = components['schemas']['UniversalDynamicGroupPagedList'];
@@ -38,11 +39,19 @@ export class UniversalDynamicGroupsModule {
     folderId: string,
     params: GetUDGsParams = {}
   ): Promise<UniversalDynamicGroupPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/Folders/${folderId}/UniversalDynamicGroups`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/Folders/${folderId}/UniversalDynamicGroups`,
+          { params }
+        );
+        return response.data;
+      },
+      folderId,
+      notOverloaded404(
+        "Measured 2026-08-14: 10 of 10 parents answer 200 (1 with totalItems 0, 9 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 
   async getFolders(
@@ -66,10 +75,18 @@ export class UniversalDynamicGroupsModule {
     folderId: string,
     params: GetFoldersByFolderIdParams = {}
   ): Promise<FolderPagedList> {
-    const response = await this.httpClient.get(
-      `${this.basePath}/UniversalDynamicGroupsFolder/${folderId}/Folders`,
-      { params }
+    return readSubResource(
+      async () => {
+        const response = await this.httpClient.get(
+          `${this.basePath}/UniversalDynamicGroupsFolder/${folderId}/Folders`,
+          { params }
+        );
+        return response.data;
+      },
+      folderId,
+      notOverloaded404(
+        "Measured 2026-08-14: 10 of 10 parents answer 200 (7 with totalItems 0, 3 with rows); a well-formed nonexistent id answers 404."
+      )
     );
-    return response.data;
   }
 }

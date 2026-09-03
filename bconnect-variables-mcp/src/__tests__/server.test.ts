@@ -2,7 +2,7 @@
  * bconnect-variables-mcp — server isolation test
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
@@ -32,14 +32,29 @@ async function startServer(): Promise<{ client: InstanceType<typeof Client> }> {
   return { client };
 }
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe('bconnect-variables-mcp', () => {
-  it('lists exactly 13 variable tools', async () => {
+  // TOK-20: the four write tools are still declared and still dispatched; they
+  // are simply not advertised while ALLOW_WRITE_OPERATIONS is not "true".
+  it('lists exactly 9 read tools with the write gate shut', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', '');
+    const { client } = await startServer();
+    const { tools } = await client.listTools();
+    expect(tools).toHaveLength(9);
+  });
+
+  it('lists exactly 13 variable tools with the write gate open', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
     const { client } = await startServer();
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(13);
   });
 
   it('registers all expected tool names', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
     const { client } = await startServer();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
@@ -89,11 +104,23 @@ describe('bconnect-variables-mcp', () => {
       ).rejects.toThrow(/id is required/i);
     });
 
-    it('create_variable_definition: missing dataType', async () => {
+    // LOCAL PATCH (F23/B3): this test previously asserted "dataType is required".
+    // `dataType` is not a bConnect field — the API's VariableDefinitionForCreation
+    // requires category + name + scopes — so the test was encoding the bug and
+    // protecting it from being noticed. Every create call passed validation and
+    // then failed at the API with HTTP 400.
+    it('create_variable_definition: missing category', async () => {
       const { client } = await startServer();
       await expect(
-        client.callTool({ name: 'create_variable_definition', arguments: { name: 'foo' } })
-      ).rejects.toThrow(/dataType is required/i);
+        client.callTool({ name: 'create_variable_definition', arguments: { name: 'foo', scopes: ['Endpoint'] } })
+      ).rejects.toThrow(/category is required/i);
+    });
+
+    it('create_variable_definition: missing scopes', async () => {
+      const { client } = await startServer();
+      await expect(
+        client.callTool({ name: 'create_variable_definition', arguments: { name: 'foo', category: 'bar' } })
+      ).rejects.toThrow(/scopes is required/i);
     });
 
     it('list_variable_instances_by_endpoint: endpointId not a GUID', async () => {

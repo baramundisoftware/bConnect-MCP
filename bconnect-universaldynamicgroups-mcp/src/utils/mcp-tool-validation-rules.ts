@@ -10,6 +10,18 @@
 import { ValidationRule, CommonRules } from "@bconnect/mcp-core";
 
 /**
+ * TOK-25 — `countOnly` is a boolean on every list tool in the suite. Declared
+ * here so a caller who passes `countOnly: "true"` is rejected with a typed
+ * -32602 rather than silently getting a full page back.
+ */
+const countOnlyRule = (): ValidationRule => ({
+  name: 'countOnly',
+  required: false,
+  type: 'boolean',
+  message: 'countOnly must be a boolean'
+});
+
+/**
  * Pagination + Name filter rules used by list tools across this domain.
  */
 const listRules = (): ValidationRule[] => [
@@ -17,6 +29,7 @@ const listRules = (): ValidationRule[] => [
   CommonRules.pageSize(),
   CommonRules.searchQuery(),
   CommonRules.orderBy(),
+  countOnlyRule(),
   {
     name: 'Name',
     required: false,

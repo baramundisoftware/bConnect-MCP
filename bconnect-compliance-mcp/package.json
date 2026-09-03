@@ -1,19 +1,22 @@
 {
   "name": "bconnect-compliance-mcp",
-  "version": "26.1.7",
+  "version": "26.1.8",
+  "private": true,
   "description": "MCP server for baramundi bConnect Compliance management (rule violations, vulnerabilities, mobile device rules) — 26R1 only",
   "type": "module",
   "main": "build/index.js",
   "bin": "build/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run generate:operations:check && tsc",
     "dev": "tsc --watch",
     "start": "node build/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:mock": "vitest run -c vitest.mock.config.ts",
     "test:coverage": "vitest run --coverage",
-    "inspector": "npx @modelcontextprotocol/inspector node build/index.js"
+    "inspector": "npx @modelcontextprotocol/inspector node build/index.js",
+    "generate:operations": "node scripts/generate-operation-index.mjs",
+    "generate:operations:check": "node scripts/generate-operation-index.mjs --check"
   },
   "keywords": [
     "mcp",
@@ -33,12 +36,10 @@
   "dependencies": {
     "@bconnect/mcp-core": "*",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "axios": "^1.7.0",
+    "axios": "^1.18.1",
     "axios-retry": "^4.5.0",
     "dotenv": "^16.4.0",
-    "express": "^4.21.0",
-    "node-cache": "^5.1.2",
-    "winston": "^3.18.3"
+    "express": "^4.21.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

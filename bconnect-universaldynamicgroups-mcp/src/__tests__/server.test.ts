@@ -32,13 +32,30 @@ async function startServer(release: string = '25R2'): Promise<{ client: Instance
   return { client };
 }
 
-describe('bconnect-universaldynamicgroups-mcp (25R2 mode)', () => {
+// MIGRATED (Decision 2). This server was gated WHOLESALE: with BCONNECT_RELEASE
+// anything but '26R1' it answered tools/list with [] and every tools/call with
+// MethodNotFound. Universal Dynamic Groups genuinely did not exist in 25R2, but
+// 25R2 is no longer supported, so the empty-surface branch is gone. The test is
+// inverted rather than deleted: an accidental reintroduction of the wholesale
+// gate would make a server that starts, connects and advertises nothing — the
+// hardest failure of the lot to diagnose from the client side.
+describe('bconnect-universaldynamicgroups-mcp (BCONNECT_RELEASE is inert)', () => {
   afterEach(() => { delete process.env.BCONNECT_RELEASE; });
 
-  it('returns 0 tools in 25R2 (26R1-only server)', async () => {
+  it('advertises its six tools even with BCONNECT_RELEASE=25R2', async () => {
     const { client } = await startServer('25R2');
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(0);
+    expect(tools).toHaveLength(6);
+  });
+
+  it('answers a tools/call with BCONNECT_RELEASE=25R2 instead of MethodNotFound', async () => {
+    // The old gate threw MethodNotFound from the CallTool handler before any
+    // validation ran. A validation error here proves the gate is gone: the call
+    // reached the argument check.
+    const { client } = await startServer('25R2');
+    await expect(
+      client.callTool({ name: 'get_universal_dynamic_group', arguments: { id: 'not-a-guid' } })
+    ).rejects.toThrow(/guid/i);
   });
 });
 

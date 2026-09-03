@@ -1,29 +1,13 @@
-import { defineConfig } from 'vitest/config';
+import { createServerVitestConfig } from '../vitest.shared';
 
-export default defineConfig({
-  test: {
-    // Exclude mock-integration tier — those tests run against a live mock and
-    // are invoked via the dedicated `test:mock` script (vitest.mock.config.ts).
-    exclude: ['**/node_modules/**', '**/build/**', '**/mock-integration/**'],
-    env: {
-      NODE_ENV: 'test',
-      VITEST: 'true'
-    },
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: [
-        'node_modules/',
-        'src/generated/**',
-        'src/__tests__/**',
-        '**/*.d.ts',
-        'build/**',
-        'src/index.ts',
-      ],
-      thresholds: {
-        statements: 60,
-        lines: 60,
-      }
-    }
-  }
-});
+// Coverage ratchet (QA-2 in EVAL-2026-08-02.md): thresholds are pinned to
+// this server's CURRENT measured floor, not the aspirational 60% every
+// server used to declare unenforced. Measured fresh via
+// `npx vitest run --coverage` on 2026-08-02. Only raise these
+// numbers after adding tests that justify it — this gate is meant to be
+// honest, not aspirational.
+// The sentence that used to end this comment — that the real target returns
+// "once the mock-integration tier (where the module logic lives) is wired into
+// CI" — was REMOVED on 2026-08-19 because it is false. See the note on
+// coverage.exclude in ../vitest.shared.ts for the measurement.
+export default createServerVitestConfig({ statements: 95, lines: 95 });

@@ -3,6 +3,16 @@
  *
  * Provides batch execution of API operations with configurable concurrency,
  * error handling, and progress tracking.
+ *
+ * ── No tool surface today (ARCH-9) ──────────────────────────────────────────
+ * `executeBatch` is referenced only inside this package: the client base and
+ * client-provider wire it up, and no server calls it. It is a library
+ * capability, not a feature a deployer can switch on — but the root
+ * `.env.example` ships five BCONNECT_BATCH_* keys, so an operator can configure
+ * something that nothing currently drives. Kept rather than deleted because the
+ * configuration path through `resolveClientConfig` is live and correct; the
+ * .env.example entries need the same sentence beside them, which is a root-file
+ * edit rather than a change here.
  */
 
 export interface BatchOperationConfig {

@@ -1,0 +1,53 @@
+{
+  "$comment": [
+    "Paths the PUBLICATION CUT removes from this suite, declared ONCE so the cut",
+    "and the guards read the same list instead of two that drift.",
+    "",
+    "Why a declaration and not a hand-edit at cut time: the last cut dropped four",
+    "script directories by hand, and the guards that exempt files inside them had",
+    "no way to tell 'deliberately not in this cut' from 'exemption has gone stale'.",
+    "An exempt file that is absent AND listed here is the former; absent and NOT",
+    "listed here stays a failure, so the ratchet keeps its teeth in both trees.",
+    "",
+    "What earns a place here: scripts that execute WRITES against a live estate,",
+    "and internal measurement rigs that answer questions about our lab rather than",
+    "about this software. Everything else ships.",
+    "",
+    "An entry ending in '/' is a directory prefix; anything else is an exact path.",
+    "Paths are POSIX and relative to the suite root (the directory holding",
+    "package.json), which is also the publication tree's ROOT."
+  ],
+  "$includeComment": [
+    "Paths OUTSIDE the suite subtree that the cut must nonetheless ship, because",
+    "the flat layout puts them at the tree root.",
+    "",
+    ".github/ holds ci.yml, which was moved to the repository ROOT last session —",
+    "GitHub Actions reads workflows only from there. The suite's own",
+    ".github/workflows/ is consequently EMPTY, so a cut that exported only the",
+    "subtree shipped with no CI at all and nobody would have noticed until the",
+    "team pushed it.",
+    "",
+    "V11-AUDIT.md is required by v11-audit-covers-every-call-site, whose message",
+    "puts it best: a tree that ships the calls must ship the audit."
+  ],
+  "includeFromRoot": [
+    ".github",
+    "V11-AUDIT.md"
+  ],
+  "omit": [
+    "scripts/scrub-estate.mjs",
+    "scripts/demo/",
+    "scripts/phase2/",
+    "scripts/phase3/",
+    "scripts/v11/",
+    "scripts/analyse-subresource-404.mjs",
+    "scripts/probe-subresource-404.mjs",
+    "scripts/compare-composites-by-scope.mjs",
+    "scripts/compare-credential-scope.mjs",
+    "scripts/compare-estate-aggregates-by-scope.mjs",
+    "scripts/measure-call-frequency.mjs",
+    "scripts/measure-response-bytes.mjs",
+    "scripts/md-to-docx.mjs",
+    "scripts/verify-phase1.mjs"
+  ]
+}

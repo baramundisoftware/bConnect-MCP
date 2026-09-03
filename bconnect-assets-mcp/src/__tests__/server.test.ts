@@ -7,7 +7,7 @@
  * 3. Unknown tool calls return MethodNotFound
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
@@ -41,7 +41,7 @@ const EXPECTED_TOOLS = [
   'list_assets_by_ad_object',
 ];
 
-async function startServer(release = '26R1'): Promise<void> {
+async function startServer(release = '26R1') {
   process.env.BCONNECT_RELEASE = release;
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -52,14 +52,27 @@ async function startServer(release = '26R1'): Promise<void> {
   return { client };
 }
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+// TOK-20: write tools are advertised only when ALLOW_WRITE_OPERATIONS=true. The
+// counting and name assertions below are about the FULL declared surface, so
+// they open the gate; the gate-shut surface is asserted in surface.test.ts.
+function openWriteGate(): void {
+  vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
+}
+
 describe('bconnect-assets-mcp', () => {
   it('lists exactly 26 asset tools (26R1)', async () => {
+    openWriteGate();
     const { client } = await startServer();
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(26);
   });
 
   it('registers all expected tool names', async () => {
+    openWriteGate();
     const { client } = await startServer();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
@@ -68,10 +81,18 @@ describe('bconnect-assets-mcp', () => {
     }
   });
 
-  it('lists exactly 24 asset tools (25R2, without 26R1-only tools)', async () => {
-    const { client } = await startServer('25R2');
-    const { tools } = await client.listTools();
-    expect(tools).toHaveLength(24);
+  // MIGRATED (Decision 2). This asserted that BCONNECT_RELEASE=25R2 hid the two
+  // OrgUnit/ADObject tools, leaving 24. 25R2 is no longer supported and the
+  // switch is gone, so the assertion is inverted: setting it must change
+  // nothing. Kept rather than deleted so a reintroduced conditional fails here.
+  it('ignores BCONNECT_RELEASE entirely: the surface is the same whatever it says', async () => {
+    openWriteGate();
+    const asked = (await (await startServer('25R2')).client.listTools()).tools.map((t) => t.name);
+    const unset = (await (await startServer()).client.listTools()).tools.map((t) => t.name);
+    expect(asked).toEqual(unset);
+    expect(asked).toHaveLength(26);
+    expect(asked).toContain('list_assets_by_org_unit');
+    expect(asked).toContain('list_assets_by_ad_object');
   });
 
   it('does not register tools from other domains', async () => {

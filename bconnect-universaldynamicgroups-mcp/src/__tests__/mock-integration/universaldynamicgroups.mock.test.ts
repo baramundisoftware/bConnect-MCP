@@ -25,8 +25,8 @@ beforeAll(async () => {
 });
 
 describe('UniversalDynamicGroups — list UDGs', () => {
-  it('returns paged data with totalItems', async () => {
-    if (!available) {return;}
+  it('returns paged data with totalItems', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.udg.getUniversalDynamicGroups({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -35,8 +35,8 @@ describe('UniversalDynamicGroups — list UDGs', () => {
 });
 
 describe('UniversalDynamicGroups — get UDG by id', () => {
-  it('returns the same UDG surfaced by the list', async () => {
-    if (!available) {return;}
+  it('returns the same UDG surfaced by the list', async (ctx) => {
+    if (!available) {ctx.skip();}
     const list = await client.udg.getUniversalDynamicGroups({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
     if (!id) {throw new Error('mock returned empty UDGs list');}
@@ -46,8 +46,8 @@ describe('UniversalDynamicGroups — get UDG by id', () => {
 });
 
 describe('UniversalDynamicGroups — list folders', () => {
-  it('returns paged data', async () => {
-    if (!available) {return;}
+  it('returns paged data', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.udg.getFolders({ PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -55,8 +55,8 @@ describe('UniversalDynamicGroups — list folders', () => {
 });
 
 describe('UniversalDynamicGroups — unknown id', () => {
-  it('rejects on get with nonexistent GUID', async () => {
-    if (!available) {return;}
+  it('rejects on get with nonexistent GUID', async (ctx) => {
+    if (!available) {ctx.skip();}
     await expect(client.udg.getUniversalDynamicGroup(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

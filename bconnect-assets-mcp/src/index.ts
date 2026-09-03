@@ -6,24 +6,48 @@
  * A Model Context Protocol server that provides access to the baramundi
  * bConnect REST API for Assets management — assets, asset types, and folders.
  *
- * Supports both 25R2 and 26R1. Operations exclusive to 26R1 are only
- * registered when BCONNECT_RELEASE === '26R1'.
+ * Requires bConnect 26R1 or later. 25R2 is no longer supported: the
+ * BCONNECT_RELEASE switch is gone and `list_assets_by_org_unit` /
+ * `list_assets_by_ad_object` are registered unconditionally.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
+// OPT-32 — the unified bootstrap. Read packages/mcp-core/src/run-server.ts
+// before changing anything below: it records which behaviour each of the
+// thirteen hand-written main()s had and which one survived.
+import { runServer, shouldAutoStart, describeConnectionFailure } from "@bconnect/mcp-core";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  ErrorCode,
-  McpError
+  ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
-import * as fs from "fs";
-import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow } from "@bconnect/mcp-core";
+import { createClientProvider } from "@bconnect/mcp-core";
+import { validateOrThrow, serializeToolResult } from "@bconnect/mcp-core";
+// Finding A2 / INT-53 — throw BareMcpError, never McpError, out of a request
+// handler: McpError bakes "MCP error <code>: " into .message and the SDK adds
+// it again client-side. `instanceof McpError` still holds, so the catch-all
+// guards below are unaffected. See packages/mcp-core/src/protocol-error.ts.
+import { BareMcpError } from "@bconnect/mcp-core";
+// TOK-20 / TOK-25 / TOK-10 / INT-53 — the shared composition layer. See
+// packages/mcp-core/src/{tool-catalogue,count-only,schema-fragments,tool-error}.ts.
+import {
+  defineToolCatalogue,
+  handleToolError,
+  toolTextResult,
+  apiParams,
+  isCountOnlyRequest,
+  fetchCount,
+  countOnlyProperty,
+  pageProperties,
+  exactMatchFilter,
+  createListShaper,
+  detailProperty,
+  fieldsProperty,
+  type ListEnvelope,
+  type Row,
+} from "@bconnect/mcp-core";
 import { AssetsRules } from "./utils/mcp-tool-validation-rules.js";
 
 // ─── Factory exported for testing ───────────────────────────────────────────
@@ -35,15 +59,16 @@ export interface BConnectCredentials {
   apiKey?: string;
 }
 
-export function createServer(credentials?: BConnectCredentials): { server: Server } {
-  dotenv.config();
-  const release = process.env.BCONNECT_RELEASE ?? "26R1";
-  const is26R1 = release === "26R1";
-
+export function createServer(credentials?: BConnectCredentials): { server: Server; getClient: () => BConnectClient } {
+  // OPT-32 — the `dotenv.config()` that used to stand here is gone. It was the
+  // third call in this process: runServer() makes one at startup and
+  // createClientProvider makes one per client build, both of which happen
+  // before any tool reads the environment. This server was the only one of the
+  // thirteen that also called it from createServer().
   const server = new Server(
     {
       name: "bconnect-assets-mcp",
-      version: "26.1.7"
+      version: "26.1.8"
     },
     {
       capabilities: {
@@ -52,19 +77,21 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
   );
 
-  // ── ListToolsRequestSchema handler ────────────────────────────────────────
-
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
-
+  // ── Tool catalogue ────────────────────────────────────────────────────────
+  //
+  // TOK-10 — the pagination and exact-match wording now comes from mcp-core, so
+  // every server in the suite says the same thing (and says it once). The
+  // domain-specific OrderBy/SearchQuery hints stay: they name the properties
+  // this route actually sorts and searches, which the generic wording cannot.
+  //
+  // `object[]` rather than an inferred union: without it TypeScript computes a
+  // best-common-type across every tool's inputSchema and rejects any property no
+  // other tool happens to declare.
+  const TOOLS: { name: string; [key: string]: unknown }[] = [];
+  {
     const paginationProps = {
-      Page: {
-        type: "integer",
-        description: "Zero-based page index for pagination. Default is 0."
-      },
-      PageSize: {
-        type: "integer",
-        description: "Number of items per page. Default is 20, maximum is 1000."
-      }
+      ...pageProperties,
+      ...countOnlyProperty,
     };
 
     const assetFilterProps = {
@@ -76,11 +103,20 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         type: "string",
         description: "Filter results by matching against Name, InventoryNumber, Contact, or CostCenter."
       },
-      DisplayName: {
-        type: "string",
-        description: "Filter results by matching the exact value against DisplayName."
-      },
+      ...exactMatchFilter("DisplayName"),
       ...paginationProps
+    };
+
+    // OPT-3 — list_assets only. additionalProperties[{name,type,value}] and
+    // page-constant columns (url, energyOff, energyOn, assetReferenceList on a
+    // default-configuration estate) are the two things wasting bytes here; see
+    // the shaper declared below. Not spread into `assetFilterProps` itself —
+    // the other five tools sharing that object were measured-but-not-triaged,
+    // not decided against, and widening their schema is a separate change.
+    const listAssetsProps = {
+      ...assetFilterProps,
+      ...detailProperty,
+      ...fieldsProperty,
     };
 
     const folderFilterProps = {
@@ -92,10 +128,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         type: "string",
         description: "Filter results by matching searchable properties."
       },
-      Name: {
-        type: "string",
-        description: "Filter results by exact folder name."
-      },
+      ...exactMatchFilter("Name"),
       ...paginationProps
     };
 
@@ -115,15 +148,15 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       }
     };
 
-    const tools: object[] = [
+    TOOLS.push(
 
       // ── Assets ─────────────────────────────────────────────────────────
       {
         name: "list_assets",
-        description: "List all assets in baramundi Management Suite. Returns a paged list of assets with their IDs, names, asset type, owner, inventory number, and other metadata. Use this to browse all assets or filter by search query.",
+        description: "List all assets in baramundi Management Suite. Returns a paged list of assets with their IDs, names, asset type, owner, inventory number, and other metadata. Use this to browse all assets or filter by search query. Compact by default — additionalProperties is folded from a [{name,type,value}] triplet array to {name:value}, and columns constant across the page (commonly url, energyOff, energyOn, assetReferenceList) are reported once under meta.constant. Use detail:true for the raw record, fields:[..] to pick columns, countOnly:true for the count alone.",
         inputSchema: {
           type: "object",
-          properties: assetFilterProps,
+          properties: listAssetsProps,
           required: []
         }
       },
@@ -403,7 +436,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Asset Types ────────────────────────────────────────────────────
       {
         name: "list_asset_types",
-        description: "List all asset types defined in baramundi Management Suite. Returns a paged list of asset types with their GUIDs, names, and optional summary data. Asset types define the structure and properties of assets.",
+        description: "List all asset types defined in baramundi Management Suite. Returns a paged list of asset types with their GUIDs, names, and optional summary data. Asset types define the structure and properties of assets. Compact by default — columns holding one value across the whole page are reported once under meta.constant instead of on every row. Use detail:true for the raw record, fields:[..] to pick columns, countOnly:true for the count alone.",
         inputSchema: {
           type: "object",
           properties: {
@@ -427,7 +460,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               type: "boolean",
               description: "If true, include additional property definitions in results."
             },
-            ...paginationProps
+            ...paginationProps,
+            ...detailProperty,
+            ...fieldsProperty
           },
           required: []
         }
@@ -494,39 +529,116 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
       },
 
-    ];
+    );
 
-    // 26R1-only tools
-    if (is26R1) {
-      (tools as object[]).push(
-        {
-          name: "list_assets_by_org_unit",
-          description: "[26R1] List all assets assigned to endpoints within a specific organizational unit. Returns a paged list of assets for the given OU GUID. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              orgUnitId: { type: "string", description: "GUID of the organizational unit whose assets to list." },
-              ...assetFilterProps
-            },
-            required: ["orgUnitId"]
-          }
-        },
-        {
-          name: "list_assets_by_ad_object",
-          description: "[26R1] List all assets assigned to a specific Active Directory object (user or group). Returns a paged list of assets owned by the given AD object GUID. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              adObjectId: { type: "string", description: "GUID of the Active Directory object whose assets to list." },
-              ...assetFilterProps
-            },
-            required: ["adObjectId"]
-          }
+    // Decision 2 — these two used to be inside `if (is26R1)`. The product is
+    // 26R1-only, so they are unconditional; the "[26R1]" prefix and the
+    // "Available in bConnect 26R1 and later." sentence went with the switch,
+    // because both are now true of every tool this suite advertises.
+    TOOLS.push(
+      {
+        name: "list_assets_by_org_unit",
+        description: "List all assets assigned to endpoints within a specific organizational unit. Returns a paged list of assets for the given OU GUID.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            orgUnitId: { type: "string", description: "GUID of the organizational unit whose assets to list." },
+            ...assetFilterProps
+          },
+          required: ["orgUnitId"]
         }
-      );
-    }
+      },
+      {
+        name: "list_assets_by_ad_object",
+        description: "List all assets assigned to a specific Active Directory object (user or group). Returns a paged list of assets owned by the given AD object GUID.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            adObjectId: { type: "string", description: "GUID of the Active Directory object whose assets to list." },
+            ...assetFilterProps
+          },
+          required: ["adObjectId"]
+        }
+      }
+    );
+  }
 
-    return { tools };
+  // ── Response shaping for list_assets (OPT-3) ───────────────────────────────
+  //
+  // Measured live, 20-row page: `additionalProperties` is a {name,type,value}
+  // triplet array with the identical shape on every row — the same structural
+  // tax the WMI Properties[] fold already removes elsewhere (inventory-scans-
+  // v11.ts), and `type` was 'String' on all 60 entries observed. Folding to
+  // {name:value} plus reporting the page-constant columns (url, energyOff,
+  // energyOn, assetReferenceList on a default-configuration estate) in
+  // meta.constant measured 16,464 B -> 13,104 B, -20.4%.
+  //
+  // `type` is dropped only where it is 'String' on every entry actually seen;
+  // a custom asset property typed Number or Boolean is a real possibility this
+  // schema allows for, so its type survives on the row instead of being
+  // silently discarded, and a page carrying one is flagged in meta.warning
+  // rather than assumed lossless.
+  interface AssetAdditionalProperty { name?: string; type?: string; value?: unknown }
+
+  function foldAdditionalProperties(row: Row): { row: Row; nonStringType: boolean } {
+    const raw = row.additionalProperties;
+    if (!Array.isArray(raw)) {
+      return { row, nonStringType: false };
+    }
+    let nonStringType = false;
+    const folded: Record<string, unknown> = {};
+    for (const prop of raw as AssetAdditionalProperty[]) {
+      if (typeof prop?.name !== "string") {
+        continue;
+      }
+      if (prop.type !== undefined && prop.type !== "String") {
+        nonStringType = true;
+      }
+      folded[prop.name] = prop.value ?? null;
+    }
+    return { row: { ...row, additionalProperties: folded }, nonStringType };
+  }
+
+  const shapeAssets = createListShaper({
+    dropConstantColumns: true,
+    fullModeHint: "Pass detail:true for the full record, or fields:[...] to choose columns.",
+  });
+
+  /** Fold every row's additionalProperties[] unless the caller asked for the untouched record. */
+  function forAssetShaping(payload: ListEnvelope, full: boolean): { payload: ListEnvelope; nonStringType: boolean } {
+    if (full || !Array.isArray(payload.data)) {
+      return { payload, nonStringType: false };
+    }
+    let nonStringType = false;
+    const data = (payload.data as Row[]).map((row) => {
+      const folded = foldAdditionalProperties(row);
+      nonStringType = nonStringType || folded.nonStringType;
+      return folded.row;
+    });
+    return { payload: { ...payload, data }, nonStringType };
+  }
+
+  const catalogue = defineToolCatalogue({
+    tools: TOOLS,
+    write: [
+      "create_asset",
+      "update_asset",
+      "delete_asset",
+      "create_asset_stock_folder",
+      "update_asset_stock_folder",
+      "delete_asset_stock_folder",
+      "create_asset_type_folder",
+      "update_asset_type_folder",
+      "delete_asset_type_folder",
+      "create_asset_type",
+      "delete_asset_type",
+    ],
+  });
+
+  // ── ListToolsRequestSchema handler ────────────────────────────────────────
+
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return { tools: catalogue.listTools() };
   });
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -594,334 +706,308 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
   }
 
+  // ── Client lifetime (upstream finding R3) ─────────────────────────────────
+  // Built lazily on first tool call, but held HERE, in createServer() scope,
+  // not inside the tool-call handler where this used to live. A client
+  // constructed per call rebuilt everything stateful it owned on every call,
+  // which is why rate limiting never limited (B8) and why the response cache
+  // could not have worked even once wired up (B7). The provider is per
+  // session and re-keys itself if the resolved credentials change, so a
+  // longer-lived client cannot leak across differently-credentialed callers.
+  // See packages/mcp-core/src/client-provider.ts.
+  const getBconnect = createClientProvider<BConnectClient>({
+    // Enables the optional per-server credential convention
+    // (BCONNECT_API_KEY__ASSETS); with no such variable set this
+    // changes nothing. See mcp-core/server-scoped-credentials.ts.
+    serverName: "bconnect-assets-mcp",
+    factory: (config) => new BConnectClient(config),
+    credentials,
+    defaultBaseUrl: "https://bms-server/bconnect",
+    onMissingCredentials: () => {
+      throw new BareMcpError(
+        ErrorCode.InternalError,
+        "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required"
+      );
+    },
+  });
+
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
 
     // 1. Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(name, args);
 
-    // 2. Write-operation gate (REQ-SRV-012).
-    const WRITE_TOOLS = new Set<string>([
-    "create_asset",
-    "update_asset",
-    "delete_asset",
-    "create_asset_stock_folder",
-    "update_asset_stock_folder",
-    "delete_asset_stock_folder",
-    "create_asset_type_folder",
-    "update_asset_type_folder",
-    "delete_asset_type_folder",
-    "create_asset_type",
-    "delete_asset_type",
-    ]);
-    if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
-      return {
-        content: [{
-          type: "text" as const,
-          text: `Write operation '${name}' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.`
-        }],
-        isError: true
-      };
+    // D6 — refuse an argument key this tool's schema does not declare.
+    // validateParameters() iterates over RULES, so a key with no rule was never
+    // examined by anything; bConnect then answers 200 and silently ignores an
+    // unrecognised query key. Measured live, one transposed character in a filter
+    // name returned 37,571 rows instead of 1, labelled as a filtered result.
+    catalogue.assertKnownParameters(name, args);
+    // SEC-0 — every id-shaped argument must be a single, traversal-free path
+    // segment. This lived in 3 of 13 servers; it is on the catalogue now so a
+    // server cannot be built without it.
+    catalogue.assertSafePathParameters(name, args);
+
+    // 2. Write-operation gate (REQ-SRV-012). Hiding a write tool from
+    //    tools/list is a token optimisation; this is the security control.
+    const denied = catalogue.gateWriteTool(name);
+    if (denied) {
+      return denied;
     }
 
-
-    // Lazily create BConnect client — allows server instantiation in tests without real credentials.
-    const getBconnect = (): BConnectClient => {
-      dotenv.config();
-      const baseUrl = credentials?.baseUrl ?? process.env.BCONNECT_BASE_URL ?? "https://bms-server/bconnect";
-      const username = credentials?.username ?? process.env.BCONNECT_USERNAME;
-      const password = credentials?.password ?? process.env.BCONNECT_PASSWORD;
-      const apiKey = credentials?.apiKey ?? process.env.BCONNECT_API_KEY;
-
-      if (!apiKey && (!username || !password)) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required"
-        );
-      }
-
-      const caCertPath = process.env.BCONNECT_CA_CERT_PATH;
-      const caCert = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
-
-      const rateLimitEnabled = process.env.BCONNECT_RATE_LIMIT_ENABLED === "true";
-      const rateLimitMaxRequests = parseInt(process.env.BCONNECT_RATE_LIMIT_MAX_REQUESTS ?? "", 10);
-      const rateLimitWindowMs = parseInt(process.env.BCONNECT_RATE_LIMIT_WINDOW_MS ?? "", 10);
-
-      const auditLevelRaw = process.env.BCONNECT_AUDIT_LEVEL ?? "none";
-      const auditLevel = (["none", "security", "write", "all"] as const).includes(auditLevelRaw as never)
-        ? (auditLevelRaw as "none" | "security" | "write" | "all")
-        : "none";
-
-      return new BConnectClient({
-        baseUrl,
-        username,
-        password,
-        apiKey,
-        rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
-        ...(caCert && { ca: caCert }),
-        ...(rateLimitEnabled && {
-          rateLimit: {
-            enabled: true,
-            maxRequests: isNaN(rateLimitMaxRequests) ? 100 : rateLimitMaxRequests,
-            windowMs: isNaN(rateLimitWindowMs) ? 60000 : rateLimitWindowMs,
-          }
-        }),
-        auditLog: {
-          level: auditLevel,
-        },
-      });
-    };
 
     try {
       const bconnect = getBconnect();
       const assets = bconnect.assets;
-
-      // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
-      const requires26R1 = (): void => {
-        if (!is26R1) {
-          throw new McpError(ErrorCode.MethodNotFound, `${name} is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.`);
-        }
-      };
 
       // Dispatch — arguments already validated by validateToolArguments above.
       switch (name) {
 
         // ── Assets ─────────────────────────────────────────────────────────
         case "list_assets": {
-          const result = await assets.getAssets((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => assets.getAssets(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const raw = await assets.getAssets(apiParams(args) as never);
+          const full = args?.detail === true;
+          const { payload, nonStringType } = forAssetShaping(raw as unknown as ListEnvelope, full);
+          const shaped = shapeAssets(payload, {
+            full,
+            fields: args?.fields as string[] | undefined,
+            args,
+          }) as ListEnvelope & { meta?: Record<string, unknown> };
+          if (nonStringType && shaped.meta) {
+            shaped.meta.warning =
+              "Some additionalProperties entries on this page had a non-'String' type, which the " +
+              "compact projection does not preserve per-entry. Pass detail:true for the exact record.";
+          }
+          return toolTextResult(serializeToolResult(shaped));
         }
 
         case "create_asset": {
           const result = await assets.createAsset(args as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "get_asset": {
           const result = await assets.getAsset(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "update_asset": {
           const result = await assets.updateAsset(args!.id as string, args!.operations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "delete_asset": {
           await assets.deleteAsset(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, id: args!.id }, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult({ success: true, id: args!.id }) }] };
         }
 
         case "list_assets_in_asset_stock": {
-          const result = await assets.getAssetsAssetStock((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => assets.getAssetsAssetStock(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetsAssetStock(apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "list_assets_by_logical_group": {
-          const result = await assets.getAssetsByLogicalGroup(args!.logicalGroupId as string, (args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const { logicalGroupId: scopeId, ...params } = args as Record<string, unknown>;
+            const count = await fetchCount((p) => assets.getAssetsByLogicalGroup(scopeId as string, p as never), params);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetsByLogicalGroup(args!.logicalGroupId as string, apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "list_assets_by_windows_endpoint": {
-          const result = await assets.getAssetsByWindowsEndpoint(args!.endpointId as string, (args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const { endpointId: scopeId, ...params } = args as Record<string, unknown>;
+            const count = await fetchCount((p) => assets.getAssetsByWindowsEndpoint(scopeId as string, p as never), params);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetsByWindowsEndpoint(args!.endpointId as string, apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "list_assets_by_org_unit": {
-          requires26R1();
-          const result = await assets.getAssetsByOrgUnit(args!.orgUnitId as string, (args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const { orgUnitId: scopeId, ...params } = args as Record<string, unknown>;
+            const count = await fetchCount((p) => assets.getAssetsByOrgUnit(scopeId as string, p as never), params);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetsByOrgUnit(args!.orgUnitId as string, apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "list_assets_by_ad_object": {
-          requires26R1();
-          const result = await assets.getAssetsByADObject(args!.adObjectId as string, (args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const { adObjectId: scopeId, ...params } = args as Record<string, unknown>;
+            const count = await fetchCount((p) => assets.getAssetsByADObject(scopeId as string, p as never), params);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetsByADObject(args!.adObjectId as string, apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         // ── Asset Stock Folders ────────────────────────────────────────────
         case "list_asset_stock_folders": {
-          const result = await assets.getAssetStockFolders((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => assets.getAssetStockFolders(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetStockFolders(apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "create_asset_stock_folder": {
           const result = await assets.createAssetStockFolder(args as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "get_asset_stock_folder": {
           const result = await assets.getAssetStockFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "update_asset_stock_folder": {
           const result = await assets.updateAssetStockFolder(args!.id as string, args!.operations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "delete_asset_stock_folder": {
           await assets.deleteAssetStockFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, id: args!.id }, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult({ success: true, id: args!.id }) }] };
         }
 
         case "list_asset_stock_subfolders": {
-          const result = await assets.getAssetStockFoldersByParent(args!.folderId as string, (args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const { folderId: scopeId, ...params } = args as Record<string, unknown>;
+            const count = await fetchCount((p) => assets.getAssetStockFoldersByParent(scopeId as string, p as never), params);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetStockFoldersByParent(args!.folderId as string, apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         // ── Asset Type Folders ─────────────────────────────────────────────
         case "list_asset_type_folders": {
-          const result = await assets.getAssetTypeFolders((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => assets.getAssetTypeFolders(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetTypeFolders(apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "create_asset_type_folder": {
           const result = await assets.createAssetTypeFolder(args as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "get_asset_type_folder": {
           const result = await assets.getAssetTypeFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "update_asset_type_folder": {
           const result = await assets.updateAssetTypeFolder(args!.id as string, args!.operations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "delete_asset_type_folder": {
           await assets.deleteAssetTypeFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, id: args!.id }, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult({ success: true, id: args!.id }) }] };
         }
 
         case "list_asset_type_subfolders": {
-          const result = await assets.getAssetTypeFoldersByParent(args!.folderId as string, (args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const { folderId: scopeId, ...params } = args as Record<string, unknown>;
+            const count = await fetchCount((p) => assets.getAssetTypeFoldersByParent(scopeId as string, p as never), params);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetTypeFoldersByParent(args!.folderId as string, apiParams(args) as never);
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         // ── Asset Types ────────────────────────────────────────────────────
         case "list_asset_types": {
-          const result = await assets.getAssetTypes((args ?? {}) as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          if (isCountOnlyRequest(args)) {
+            const count = await fetchCount((p) => assets.getAssetTypes(p as never), args);
+            return toolTextResult(serializeToolResult(count));
+          }
+          const result = await assets.getAssetTypes(apiParams(args) as never);
+          // Strictly lossless: `dropConstantColumns` moves a page-constant value
+          // into meta.constant once instead of repeating it on every row, so no
+          // value leaves the response. Measured live on a 15-row page,
+          // 6,564 -> 4,812 B (-26.7%): seven columns are constant, six of them
+          // null (comments, contact, inventoryNumber, additionalProperties,
+          // summary, encodedIcon) plus url="http://".
+          return toolTextResult(serializeToolResult(
+            shapeAssets(result as unknown as ListEnvelope, {
+              full: args?.detail === true,
+              fields: args?.fields as string[] | undefined,
+              args,
+            })
+          ));
         }
 
         case "create_asset_type": {
           const result = await assets.createAssetType(args as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "get_asset_type": {
           const result = await assets.getAssetType(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult(result) }] };
         }
 
         case "delete_asset_type": {
           await assets.deleteAssetType(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, id: args!.id }, null, 2) }] };
+          return { content: [{ type: "text", text: serializeToolResult({ success: true, id: args!.id }) }] };
         }
 
         default:
-          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+          throw new BareMcpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error: unknown) {
-      if (error instanceof McpError) {throw error;}
-      const message = error instanceof Error ? error.message : String(error);
-      throw new McpError(ErrorCode.InternalError, `Tool execution failed: ${message}`);
+      // INT-53 — one error channel. See packages/mcp-core/src/tool-error.ts.
+      return handleToolError(error);
     }
   });
 
-  return { server };
+  // Difference 3 — hand the memoised provider back so runServer's startup
+  // connectivity check probes the very client tool dispatch will use.
+  return { server, getClient: getBconnect };
 }
 
-// ─── Entry point ────────────────────────────────────────────────────────────
-
-async function main(): Promise<void> {
-  
-
-  
-  // Startup connectivity check (REQ-SRV-013)
-  dotenv.config();
-  {
-    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:443/bconnect";
-    const _startupUser = process.env.BCONNECT_USERNAME;
-    const _startupPass = process.env.BCONNECT_PASSWORD;
-    const _startupApiKey = process.env.BCONNECT_API_KEY;
-    if (!_startupApiKey && (!_startupUser || !_startupPass)) {
-      console.error("bconnect-assets-mcp: Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
-      process.exit(1);
-    }
-    const _caCertPath = process.env.BCONNECT_CA_CERT_PATH;
-    const _caCert = _caCertPath ? fs.readFileSync(_caCertPath, "utf8") : undefined;
-    const _startupClient = new BConnectClient({
-      baseUrl: _startupUrl,
-      username: _startupUser,
-      password: _startupPass,
-      apiKey: _startupApiKey,
-      rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
-      ...(_caCert && { ca: _caCert }),
-    });
-    console.error(`bconnect-assets-mcp: verifying bConnect API connectivity...`);
-    const _connected = await _startupClient.testConnection();
-    if (!_connected) {
-      console.error(`bconnect-assets-mcp: cannot reach bConnect API at ${_startupUrl}. Check BCONNECT_BASE_URL, credentials, and network.`);
-      process.exit(1);
-    }
-    console.error(`bconnect-assets-mcp: API connectivity verified.`);
-  }
-
-  const transportMode = process.env.MCP_TRANSPORT ?? "stdio";
-  const port = parseInt(process.env.MCP_PORT ?? "3000", 10);
-  const serverName = "bconnect-assets-mcp";
-
-  if (transportMode === "http") {
-    const app = express();
-    app.use(express.json());
-
-    app.post("/mcp", async (req, res) => {
-      const { server } = createServer();
-      const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-      res.on("close", () => { transport.close(); server.close(); });
-      await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
-    });
-
-    app.get("/mcp", async (req, res) => {
-      res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Use POST for MCP requests." }));
-    });
-
-    app.delete("/mcp", async (req, res) => {
-      res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Session management not supported in stateless mode." }));
-    });
-
-    const bind = process.env.MCP_BIND ?? "127.0.0.1";
-    // Standalone HTTP mode has no client authentication. Binding to a non-loopback
-    // address would expose an unauthenticated bConnect proxy, so fail closed unless
-    // the operator explicitly opts in (front it with the authenticated gateway instead).
-    const isLoopbackBind = bind === "127.0.0.1" || bind === "::1" || bind === "localhost";
-    if (!isLoopbackBind && process.env.MCP_ALLOW_NO_AUTH !== "true") {
-      console.error(
-        `${serverName}: refusing to bind ${bind} — standalone HTTP mode is unauthenticated. ` +
-          `Bind to loopback (the default) and front it with the authenticated gateway, ` +
-          `or set MCP_ALLOW_NO_AUTH=true to override.`,
-      );
-      process.exit(1);
-    }
-    app.listen(port, bind, () => {
-      console.error(`${serverName} listening on http://${bind}:${port}/mcp`);
-    });
-  } else {
-    const { server } = createServer();
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error(`${serverName} started on stdio`);
-  }
-}
-
-if (!process.env.VITEST) {
-  main().catch((error) => {
-    console.error("Fatal error:", error);
+// ─── Entry point (OPT-32) ────────────────────────────────────────────────────
+//
+// This server used to hand-write ~85 lines of bootstrap. Every line of it is
+// now in `runServer()`, which resolves the six ways the thirteen copies had
+// drifted. Two consequences are visible from here and are deliberate:
+//
+//   - BCONNECT_BASE_URL has NO default any more. The old
+//     `|| "https://bms.example.com:443/bconnect"` fallback sent real
+//     credentials to a host the vendor does not control whenever the variable
+//     was unset. Absent base URL is now exit 1, before any client is built.
+//   - The startup connectivity check probes `getClient()` above — the client
+//     tool dispatch uses — not a throwaway built from a second reading of the
+//     environment. That is why `createServer` returns it.
+//
+// `express` is injected because mcp-core does not depend on it: this package
+// pins ^4.21.0 while the workspace root hoists 5.x.
+if (shouldAutoStart()) {
+  void runServer({
+    name: "bconnect-assets-mcp",
+    createServer,
+    http: { express },
+  }).catch((error) => {
+    console.error(`Fatal error: ${describeConnectionFailure(error)}`);
     process.exit(1);
   });
 }

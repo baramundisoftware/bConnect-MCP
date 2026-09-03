@@ -11,10 +11,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all assets */
+        /**
+         * Gets all assets
+         * @description Powershell function: `Get-bCAssetsAssets`
+         */
         get: operations["GetAssets"];
         put?: never;
-        /** Creates an asset */
+        /**
+         * Creates an asset
+         * @description Powershell function: `New-bCAssetsAsset`
+         */
         post: operations["CreateAsset"];
         delete?: never;
         options?: never;
@@ -29,15 +35,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets an asset by id */
+        /**
+         * Gets an asset by id
+         * @description Powershell function: `Get-bCAssetsAsset`
+         */
         get: operations["GetAsset"];
         put?: never;
         post?: never;
-        /** Deletes an asset by id */
+        /**
+         * Deletes an asset by id
+         * @description Powershell function: `Remove-bCAssetsAsset`
+         */
         delete: operations["DeleteAsset"];
         options?: never;
         head?: never;
-        /** Updates an asset */
+        /**
+         * Updates an asset
+         * @description Powershell function: `Update-bCAssetsAsset`
+         */
         patch: operations["UpdateAsset"];
         trace?: never;
     };
@@ -48,7 +63,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets assets contained by the asset stock */
+        /**
+         * Gets assets contained by the asset stock
+         * @description Powershell function: `Get-bCAssetsAssetsAssetStock`
+         */
         get: operations["GetAssetsAssetStock"];
         put?: never;
         post?: never;
@@ -65,8 +83,31 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all assets contained by logical group */
+        /**
+         * Gets all assets contained by logical group
+         * @description Powershell function: `Get-bCAssetsAssetsByLogicalGroup`
+         */
         get: operations["GetAssetsByLogicalGroup"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/OrgUnits/{orgUnitId}/Assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets all assets contained by a AD organizational unit
+         * @description Powershell function: `Get-bCAssetsAssetsByOrgUnit`
+         */
+        get: operations["GetAssetsByOrgUnit"];
         put?: never;
         post?: never;
         delete?: never;
@@ -82,8 +123,31 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all assets contained by windows endpoint */
+        /**
+         * Gets all assets contained by windows endpoint
+         * @description Powershell function: `Get-bCAssetsAssetsByWindowsEndpoint`
+         */
         get: operations["GetAssetsByWindowsEndpoint"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2.0/ADObjects/{adObjectId}/Assets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Gets all assets contained by an AD user or group
+         * @description Powershell function: `Get-bCAssetsAssetsByADObject`
+         */
+        get: operations["GetAssetsByADObject"];
         put?: never;
         post?: never;
         delete?: never;
@@ -99,10 +163,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all folders */
+        /**
+         * Gets all folders
+         * @description Powershell function: `Get-bCAssetsAssetStockFolders`
+         */
         get: operations["GetAssetStockFolders"];
         put?: never;
-        /** Creates a folder according to the specified properties */
+        /**
+         * Creates a folder according to the specified properties
+         * @description Powershell function: `New-bCAssetsAssetStockFolder`
+         */
         post: operations["CreateAssetStockFolder"];
         delete?: never;
         options?: never;
@@ -117,15 +187,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a folder by id */
+        /**
+         * Gets a folder by id
+         * @description Powershell function: `Get-bCAssetsAssetStockFolder`
+         */
         get: operations["GetAssetStockFolder"];
         put?: never;
         post?: never;
-        /** Deletes a folder by id */
+        /**
+         * Deletes a folder by id
+         * @description Powershell function: `Remove-bCAssetsAssetStockFolder`
+         */
         delete: operations["DeleteAssetStockFolder"];
         options?: never;
         head?: never;
-        /** Updates a folder according to the specified properties */
+        /**
+         * Updates a folder according to the specified properties
+         * @description Powershell function: `Update-bCAssetsAssetStockFolder`
+         */
         patch: operations["UpdateAssetStockFolder"];
         trace?: never;
     };
@@ -136,7 +215,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all folders contained by a folder */
+        /**
+         * Gets all folders contained by a folder
+         * @description Powershell function: `Get-bCAssetsAssetStockFoldersByParentId`
+         */
         get: operations["GetAssetStockFoldersByParentId"];
         put?: never;
         post?: never;
@@ -153,10 +235,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all folders */
+        /**
+         * Gets all folders
+         * @description Powershell function: `Get-bCAssetsAssetTypeFolders`
+         */
         get: operations["GetAssetTypeFolders"];
         put?: never;
-        /** Creates a folder according to the specified properties */
+        /**
+         * Creates a folder according to the specified properties
+         * @description Powershell function: `New-bCAssetsAssetTypeFolder`
+         */
         post: operations["CreateAssetTypeFolder"];
         delete?: never;
         options?: never;
@@ -171,15 +259,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a folder by id */
+        /**
+         * Gets a folder by id
+         * @description Powershell function: `Get-bCAssetsAssetTypeFolder`
+         */
         get: operations["GetAssetTypeFolder"];
         put?: never;
         post?: never;
-        /** Deletes a folder by id */
+        /**
+         * Deletes a folder by id
+         * @description Powershell function: `Remove-bCAssetsAssetTypeFolder`
+         */
         delete: operations["DeleteAssetTypeFolder"];
         options?: never;
         head?: never;
-        /** Updates a folder according to the specified properties */
+        /**
+         * Updates a folder according to the specified properties
+         * @description Powershell function: `Update-bCAssetsAssetTypeFolder`
+         */
         patch: operations["UpdateAssetTypeFolder"];
         trace?: never;
     };
@@ -190,7 +287,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all folders contained by a folder */
+        /**
+         * Gets all folders contained by a folder
+         * @description Powershell function: `Get-bCAssetsAssetTypeFoldersByParentId`
+         */
         get: operations["GetAssetTypeFoldersByParentId"];
         put?: never;
         post?: never;
@@ -207,10 +307,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all assets types */
+        /**
+         * Gets all assets types
+         * @description Powershell function: `Get-bCAssetsAssetTypes`
+         */
         get: operations["GetAssetTypes"];
         put?: never;
-        /** Creates an asset type */
+        /**
+         * Creates an asset type
+         * @description Powershell function: `New-bCAssetsAssetType`
+         */
         post: operations["CreateAssetType"];
         delete?: never;
         options?: never;
@@ -225,11 +331,17 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets an asset type by id */
+        /**
+         * Gets an asset type by id
+         * @description Powershell function: `Get-bCAssetsAssetType`
+         */
         get: operations["GetAssetType"];
         put?: never;
         post?: never;
-        /** Deletes an asset type by id */
+        /**
+         * Deletes an asset type by id
+         * @description Powershell function: `Remove-bCAssetsAssetType`
+         */
         delete: operations["DeleteAssetType"];
         options?: never;
         head?: never;
@@ -497,6 +609,8 @@ export interface components {
              * @description Guid parent
              */
             guidParent?: string;
+            /** @description Parent name of the asset type */
+            parentName?: string | null;
             /** @description Variables */
             additionalProperties?: components["schemas"]["AssetPropertyDefinition"][] | null;
             /** @description Additional properties */
@@ -652,10 +766,10 @@ export interface components {
         /** @enum {string} */
         OperationType: "Add" | "Remove" | "Replace" | "Move" | "Copy" | "Test" | "Invalid";
         /**
-         * @description LogicalGroup: Owner is a logical group<br />Machine: Owner is a windows machine<br />AssetStock: Asset stock (invalid for references)
+         * @description LogicalGroup: Owner is a logical group<br />Machine: Owner is a windows machine<br />AssetStock: Asset stock (invalid for references)ADObject: Owner is a AD user or a AD group<br />OrgUnit: Owner is a AD organizational unit<br />
          * @enum {string}
          */
-        OwnerTypeEnum: "Undefined" | "LogicalGroup" | "Machine" | "AssetStock";
+        OwnerTypeEnum: "Undefined" | "LogicalGroup" | "Machine" | "AssetStock" | "ADObject" | "OrgUnit";
         ProblemDetails: {
             type?: string | null;
             title?: string | null;
@@ -731,7 +845,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The asset to be created */
+        /**
+         * @description The asset to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCAssetsAssetForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssetForCreation"];
@@ -899,10 +1017,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable asset properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable asset properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "Printer Z206",
                  *         "path": "/Name",
@@ -991,7 +1114,8 @@ export interface operations {
                  *         "path": "/AssetReferenceList/0B7D304A-1B15-49EF-89FE-FDA03FF6437E",
                  *         "op": "remove"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -1152,6 +1276,66 @@ export interface operations {
             };
         };
     };
+    GetAssetsByOrgUnit: {
+        parameters: {
+            query?: {
+                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc). */
+                OrderBy?: string;
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are Name, InventoryNumber, Contact and CostCenter. */
+                SearchQuery?: string;
+                /** @description Filters result by matching the exact value against DisplayName. */
+                DisplayName?: string;
+                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
+                Page?: number;
+                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
+                PageSize?: number;
+            };
+            header?: never;
+            path: {
+                orgUnitId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns all assets contained by a AD organizational unit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetPagedList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The specified organizational unit can not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
     GetAssetsByWindowsEndpoint: {
         parameters: {
             query?: {
@@ -1193,6 +1377,66 @@ export interface operations {
                 };
             };
             /** @description The specified windows endpoint can not be found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+        };
+    };
+    GetAssetsByADObject: {
+        parameters: {
+            query?: {
+                /** @description Sorts results by property name and with sort direction. Multiple properties are separated by comma.<br />Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc). */
+                OrderBy?: string;
+                /** @description Filters results by matching the given value against searchable properties.<br />Searchable values are Name, InventoryNumber, Contact and CostCenter. */
+                SearchQuery?: string;
+                /** @description Filters result by matching the exact value against DisplayName. */
+                DisplayName?: string;
+                /** @description The zero-indexed number of the first page that begins the set of pages that are returned in the response. */
+                Page?: number;
+                /** @description The number of items to list on a single page. For example, if page_size is 10, each page shows ten items. <br />A valid value is a non-negative, non-zero integer. The default value is 20. Maximum value is 1000. */
+                PageSize?: number;
+            };
+            header?: never;
+            path: {
+                adObjectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Returns all assets contained by an AD object */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssetPagedList"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProblemDetails"];
+                };
+            };
+            /** @description The specified AD object can not be found */
             404: {
                 headers: {
                     [name: string]: unknown;
@@ -1268,7 +1512,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The folder to be created */
+        /**
+         * @description The folder to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCAssetsAssetStockFolderForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssetStockFolderForCreation"];
@@ -1436,10 +1684,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "My asset stock folder",
                  *         "path": "/name",
@@ -1455,7 +1708,8 @@ export interface operations {
                  *         "path": "/comment",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -1633,7 +1887,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The folder to be created */
+        /**
+         * @description The folder to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCAssetsAssetTypeFolderForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssetTypeFolderForCreation"];
@@ -1801,10 +2059,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable folder properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "My asset type folder",
                  *         "path": "/name",
@@ -1820,7 +2083,8 @@ export interface operations {
                  *         "path": "/comment",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -2002,7 +2266,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The asset type to be created */
+        /**
+         * @description The asset type to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCAssetsAssetTypeForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssetTypeForCreation"];

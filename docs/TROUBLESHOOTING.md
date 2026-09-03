@@ -1,6 +1,6 @@
 # Troubleshooting — bConnect MCP Suite
 
-Complete guide for diagnosing and resolving common issues with the bConnect MCP Suite (13 servers).
+Complete guide for diagnosing and resolving common issues with the bConnect MCP Suite (14 servers).
 
 ## Table of Contents
 
@@ -38,7 +38,6 @@ Each server reads its own `.env` (or inherits from environment). Required variab
 BCONNECT_BASE_URL=https://your-bms-server:443/bconnect
 BCONNECT_USERNAME=your-username
 BCONNECT_PASSWORD=your-password
-BCONNECT_RELEASE=26R1          # or 25R2
 ```
 
 ### Test API Connection Directly
@@ -215,38 +214,59 @@ Get-Content "C:\ProgramData\baramundi\Logs\bConnect.log" -Tail 100
 
 ## Configuration Issues
 
-### Server Not Visible in Claude
+### Server Not Visible in Your MCP Client
 
-MCP configuration must list each server individually. Example `claude_desktop_config.json`:
+MCP configuration must list each server individually. The entry itself is the same for
+every client — this one, with **no credentials in it** (`--env-file` points at the file
+that holds them):
 
 ```json
 {
-  "mcpServers": {
-    "bconnect-endpoints": {
-      "command": "node",
-      "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
-      "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password",
-        "BCONNECT_RELEASE": "26R1"
-      }
-    },
-    "bconnect-assets": {
-      "command": "node",
-      "args": ["/path/to/bconnect-assets-mcp/build/index.js"],
-      "env": {
-        "BCONNECT_BASE_URL": "https://your-bms-server:443/bconnect",
-        "BCONNECT_USERNAME": "your-username",
-        "BCONNECT_PASSWORD": "your-password",
-        "BCONNECT_RELEASE": "26R1"
-      }
-    }
+  "bconnect-endpoints": {
+    "type": "stdio",
+    "command": "node",
+    "args": [
+      "--env-file=/path/to/bconnect.env",
+      "/path/to/bconnect-endpoints-mcp/build/index.js"
+    ]
+  },
+  "bconnect-assets": {
+    "type": "stdio",
+    "command": "node",
+    "args": [
+      "--env-file=/path/to/bconnect.env",
+      "/path/to/bconnect-assets-mcp/build/index.js"
+    ]
   }
 }
 ```
 
-Add an entry for each server you want to use. Restart Claude after changes.
+What differs per client is the file, the key you wrap that in, and whether `"type"`
+stays. **Almost every failure in this section is silent** — the client parses the file,
+finds nothing it recognises, and shows you an empty tool list with no error:
+
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| VS Code shows no servers, no error | The block is under `mcpServers` | VS Code's top-level key in `.vscode/mcp.json` is **`servers`** |
+| Claude Code fails to connect to a gateway/HTTP entry, or tries to run it as a command | The `url` entry has no `"type"` | Add `"type": "http"`. Claude Code reads a type-less entry as stdio |
+| Continue loads nothing from the YAML file | The block was written as a map | Continue's `mcpServers` is a **list**, each item carrying its own `name:` |
+| Cursor rejects the entry | `"type"` was copied in from a VS Code / Claude Code example | Cursor's own examples omit `type`; remote entries are identified by the presence of `url` |
+| LibreChat starts but the server exits immediately | The stdio server runs on the **LibreChat host** | If LibreChat is in Docker, the suite must be inside that container or on a mounted path, and `librechat.yaml` must be in the project root and mounted into the API container |
+| VS Code / Cursor / Claude Code show nothing, and the config file exists | The file is not in the workspace you have open | These are **per-project** files. `.mcp.json`, `.vscode/mcp.json` and `.cursor/mcp.json` are read relative to the opened folder |
+| Claude Desktop still shows the old set after an edit | Window closed, not quit | Fully quit from the tray/menu-bar icon and relaunch |
+| Claude Code lists the server as "Pending approval" | Project-scope servers need a one-time trust decision | Run `claude` in that directory and approve. This is a security control, not a fault |
+| n8n / Open WebUI / Copilot Studio see no server | They have no stdio support at all | These reach the suite only through the HTTP gateway — see [INSTALLATION.md → Option C](INSTALLATION.md#option-c--gateway-http-multi-user) |
+| Gateway returns `401 Missing bearer token` / `401 Invalid bearer token` | `Authorization: Bearer <token>` absent or not matching | Set the client's header to exactly `Bearer <MCP_GATEWAY_AUTH_TOKEN>` from `.env.gateway` |
+| Gateway returns `405 Method Not Allowed` on GET | Something tried to open an SSE stream | The gateway serves **POST** Streamable HTTP only. An SSE-only client cannot connect |
+| n8n connects, then times out or gets nothing | The node fell back to SSE against a streamable-only gateway | Check the MCP Client Tool node's transport setting; some n8n builds are reported to ignore the dropdown |
+
+Full per-client file paths and shapes:
+[INSTALLATION.md → Client Configuration](INSTALLATION.md#client-configuration).
+
+Then reload the client — a window reload for VS Code and Cursor, a **full quit** (tray
+or menu-bar icon → Quit) for Claude Desktop, a re-run in the project directory for
+Claude Code. Clients configured through a web UI take effect when the server entry is
+saved; there is no local file to reload.
 
 ### Error: ".env file not found"
 
@@ -255,9 +275,28 @@ cp .env.example .env
 # Edit .env with your credentials
 ```
 
-### Wrong bMS Release
+### Server exits: "requires baramundi Management Suite 26R1"
 
-`bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` are **26R1 only**. They will refuse to start with `BCONNECT_RELEASE=25R2`.
+The whole suite is **26R1-only**. Every server reads the bMS version from
+`GET /v2.0/ManagementServer` during its startup connectivity check and exits if it is older than
+26R1, naming the version it detected. There is no compatibility setting — `BCONNECT_RELEASE` no
+longer exists. Upgrade the bMS.
+
+`BCONNECT_SKIP_CONNECTIVITY_CHECK=true` skips the probe and the version gate with it, for
+deployments that legitimately cannot reach that route. It does not make the 26R1-only routes
+exist, so tools that need them will still 404.
+
+If the server instead **warns** that it could not parse the version and carries on, that is
+intended: an unreadable version string is logged with what was received rather than treated as a
+refusal.
+
+### Error: a `*_industrial_endpoint` tool is not found
+
+26R1 removed the IndustrialEndpoints bConnect API. The five industrial tools
+(`list_`/`get_`/`create_`/`update_`/`delete_industrial_endpoint`) and the `industrial` member
+type in `bconnect-groups-mcp` were removed with it, so calling one returns a message naming that
+reason. There is no replacement — see
+[MIGRATION-tool-surface.md](MIGRATION-tool-surface.md).
 
 ---
 
@@ -265,7 +304,10 @@ cp .env.example .env
 
 ### Error: "Tool not found"
 
-The correct server is not loaded in Claude. Verify the MCP configuration includes the server that exposes the tool you need:
+The server that exposes the tool is not loaded in your client. Verify the MCP
+configuration includes it — and if the client shows *no* bConnect tools at all, start
+from [Server Not Visible in Your MCP Client](#server-not-visible-in-your-mcp-client)
+above, because a mis-shaped config fails silently in most clients:
 
 | Tool domain | Server |
 |---|---|
@@ -280,8 +322,8 @@ The correct server is not loaded in Claude. Verify the MCP configuration include
 | Variables | `bconnect-variables-mcp` |
 | Update Management | `bconnect-updatemanagement-mcp` |
 | Operating Systems | `bconnect-operatingsystems-mcp` |
-| Compliance (26R1) | `bconnect-compliance-mcp` |
-| Universal Dynamic Groups (26R1) | `bconnect-universaldynamicgroups-mcp` |
+| Compliance | `bconnect-compliance-mcp` |
+| Universal Dynamic Groups | `bconnect-universaldynamicgroups-mcp` |
 
 ### Error: "Invalid parameters for tool"
 
@@ -339,7 +381,7 @@ LOG_LEVEL=debug
 ### Run Tests
 
 ```bash
-# Unit tests across all 13 servers (root aggregate)
+# Unit tests across all 14 servers (root aggregate)
 npm test
 
 # Per-server tests
@@ -375,26 +417,34 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 - [ ] `.env` file exists and all required variables are set
 - [ ] Credentials verified with curl
 - [ ] `BCONNECT_BASE_URL` includes port (e.g. `:443`)
-- [ ] `BCONNECT_RELEASE` matches your bMS version (`26R1` or `25R2`)
+- [ ] bMS is **26R1 or later** (the suite refuses to start on anything older)
 - [ ] TLS configured correctly (`BCONNECT_CA_CERT_PATH` or `NODE_TLS_REJECT_UNAUTHORIZED=0` for dev)
-- [ ] Claude MCP config lists the correct server(s) for the domain you need
-- [ ] Claude was restarted after config changes
+- [ ] The client's MCP config lists the correct server(s) for the domain you need
+- [ ] The config is in the file **that client** reads, in the workspace it has open
+- [ ] The top-level key matches the client (`servers` for VS Code, `mcpServers` for the rest)
+- [ ] HTTP entries carry `"type": "http"` (Claude Code reads a type-less `url` as stdio)
+- [ ] No credential is inside the client config — it belongs in the `--env-file` file
+- [ ] The client was reloaded/restarted after config changes (Claude Desktop: full quit)
+- [ ] Gateway users: `Authorization: Bearer <MCP_GATEWAY_AUTH_TOKEN>` on every request
+- [ ] Gateway users: requests are **POST** — a GET on `/<domain>/mcp` is a `405`
 - [ ] BMS server is reachable (ping / curl test)
 - [ ] Port 443 is open (firewall)
 - [ ] bConnect service is running on the BMS server
 - [ ] GUIDs are in correct UUID format
-- [ ] 26R1-only servers not used with `BCONNECT_RELEASE=25R2`
 
 ---
 
 ## Getting Help
 
 - **README.md** — project overview and quick start
-- **docs/DOCKER.md** — Docker deployment
-- **docs/INSTALLATION.md** — full installation and TLS setup
-- **bConnect-MCP support**: bernd.wiedemann@baramundi.de (bConnect-MCP is **not** supported through baramundi Support — see [../SUPPORT.md](../SUPPORT.md))
+- **docs/INSTALLATION.md** — full installation, per-client configuration, TLS setup
+- **docs/DOCKER.md** — Docker deployment of the gateway
+- **docs/N8N.md** — the gateway from n8n workflows, and per-domain context cost
+- **docs/DATA-FLOW.md** — what estate data reaches the model, and what never leaves
+- **Support contact**: see [../SUPPORT.md](../SUPPORT.md). bConnect-MCP is **not**
+  supported through baramundi Support
 - **GitHub Issues**: open an issue in this repository
 
 ---
 
-*bConnect MCP Suite v26.1.7 — 13 servers, 276 tools, bMS 26R1 / 25R2*
+*bConnect MCP Suite v26.1.8 — 14 servers, 141 tools by default (221 with `ALLOW_WRITE_OPERATIONS=true`), requires bMS 26R1 or later*

@@ -11,10 +11,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all variable definitions */
+        /**
+         * Gets all variable definitions
+         * @description Powershell function: `Get-bCVariablesVariableDefinitions`
+         */
         get: operations["GetVariableDefinitions"];
         put?: never;
-        /** Creates a new variable definition which leads to implicit creation of variable instances for all objects within the specified scopes */
+        /**
+         * Creates a new variable definition which leads to implicit creation of variable instances for all objects within the specified scopes
+         * @description Powershell function: `New-bCVariablesVariableDefinition`
+         */
         post: operations["CreateVariableDefinition"];
         delete?: never;
         options?: never;
@@ -29,15 +35,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets a variable definition with the specified id */
+        /**
+         * Gets a variable definition with the specified id
+         * @description Powershell function: `Get-bCVariablesVariableDefinitionById`
+         */
         get: operations["GetVariableDefinitionById"];
         put?: never;
         post?: never;
-        /** Deletes the variable definition with the specified id */
+        /**
+         * Deletes the variable definition with the specified id
+         * @description Powershell function: `Remove-bCVariablesVariableDefinition`
+         */
         delete: operations["DeleteVariableDefinition"];
         options?: never;
         head?: never;
-        /** Updates the modifiable values of the specified variable definition */
+        /**
+         * Updates the modifiable values of the specified variable definition
+         * @description Powershell function: `Update-bCVariablesVariableDefinition`
+         */
         patch: operations["UpdateVariableDefinition"];
         trace?: never;
     };
@@ -48,7 +63,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all variable instances */
+        /**
+         * Gets all variable instances
+         * @description Powershell function: `Get-bCVariablesVariableInstances`
+         */
         get: operations["GetVariableInstances"];
         put?: never;
         post?: never;
@@ -65,14 +83,20 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets the variable instance with the specified id */
+        /**
+         * Gets the variable instance with the specified id
+         * @description Powershell function: `Get-bCVariablesVariableInstanceById`
+         */
         get: operations["GetVariableInstanceById"];
         put?: never;
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        /** Overrides the default value of the specified variable instance. Value can be reset to initial value by setting IsDefault property to true for all endpoint variable instances except windows endpoints. */
+        /**
+         * Overrides the default value of the specified variable instance. Value can be reset to initial value by setting IsDefault property to true for all endpoint variable instances except windows endpoints.
+         * @description Powershell function: `Update-bCVariablesVariableInstance`
+         */
         patch: operations["UpdateVariableInstance"];
         trace?: never;
     };
@@ -83,7 +107,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all variable instances assigned to a specific endpoint */
+        /**
+         * Gets all variable instances assigned to a specific endpoint
+         * @description Powershell function: `Get-bCVariablesVariableInstancesByEndpointId`
+         */
         get: operations["GetVariableInstancesByEndpointId"];
         put?: never;
         post?: never;
@@ -100,7 +127,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all variable instances assigned to a specific logical group */
+        /**
+         * Gets all variable instances assigned to a specific logical group
+         * @description Powershell function: `Get-bCVariablesVariableInstancesByLogicalGroupId`
+         */
         get: operations["GetVariableInstancesByLogicalGroupId"];
         put?: never;
         post?: never;
@@ -117,7 +147,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all variable instances assigned to a specific AD object */
+        /**
+         * Gets all variable instances assigned to a specific AD object
+         * @description Powershell function: `Get-bCVariablesVariableInstancesByADObjectId`
+         */
         get: operations["GetVariableInstancesByADObjectId"];
         put?: never;
         post?: never;
@@ -134,7 +167,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all variable instances assigned to a specific windows job definition */
+        /**
+         * Gets all variable instances assigned to a specific windows job definition
+         * @description Powershell function: `Get-bCVariablesVariableInstancesByWindowsJobDefinitonId`
+         */
         get: operations["GetVariableInstancesByWindowsJobDefinitonId"];
         put?: never;
         post?: never;
@@ -151,7 +187,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all variable instances assigned to a specific windows application */
+        /**
+         * Gets all variable instances assigned to a specific windows application
+         * @description Powershell function: `Get-bCVariablesVariableInstancesByWindowsApplicationId`
+         */
         get: operations["GetVariableInstancesByWindowsApplicationId"];
         put?: never;
         post?: never;
@@ -185,10 +224,10 @@ export interface components {
             [key: string]: unknown;
         };
         /**
-         * @description [Legacy] ADObject: Creates variable instances for Active Directory users and groups<br />[Modern] AndroidEndpoint: Creates variable instances for Android endpoints<br />[Legacy] Endpoint: Creates variable instances for endpoints of type Windows and Mac<br />[Modern] IndustrialEndpoint: Creates variable instances for industrial endpoints<br />[Modern] IosEndpoint: Creates variable instances for iOS endpoints<br />[Legacy] LogicalGroup: Creates variable instances for logical groups containing endpoints<br />[Modern] NetworkEndpoint: Creates variable instances for network endpoints<br />[Legacy] WindowsJobDefinition: Creates variable instances for windows job definitions<br />[Legacy] WindowsApplication: Creates variable instances for windows applications<br />[Modern] LinuxEndpoint: Creates variable instances for linux endpoints<br />
+         * @description [Legacy] ADObject: Creates variable instances for Active Directory users and groups<br />[Modern] AndroidEndpoint: Creates variable instances for Android endpoints<br />[Legacy] Endpoint: Creates variable instances for endpoints of type Windows and Mac<br />[Modern] IosEndpoint: Creates variable instances for iOS endpoints<br />[Legacy] LogicalGroup: Creates variable instances for logical groups containing endpoints<br />[Modern] NetworkEndpoint: Creates variable instances for network endpoints<br />[Legacy] WindowsJobDefinition: Creates variable instances for windows job definitions<br />[Legacy] WindowsApplication: Creates variable instances for windows applications<br />[Modern] LinuxEndpoint: Creates variable instances for linux endpoints<br />
          * @enum {string}
          */
-        Scope: "ADObject" | "AndroidEndpoint" | "Endpoint" | "IndustrialEndpoint" | "IosEndpoint" | "LogicalGroup" | "NetworkEndpoint" | "WindowsApplication" | "WindowsJobDefinition" | "LinuxEndpoint";
+        Scope: "ADObject" | "AndroidEndpoint" | "Endpoint" | "Deprecated_IndustrialEndpoint" | "IosEndpoint" | "LogicalGroup" | "NetworkEndpoint" | "WindowsApplication" | "WindowsJobDefinition" | "LinuxEndpoint";
         /** @enum {string} */
         Type: "String" | "Integer" | "Password" | "Date" | "DropDownList" | "DropDownEditableList" | "Checkbox" | "FileLink" | "Folder";
         /** @description A variable definition with describing fields */
@@ -353,7 +392,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /** @description The variable definition to be created */
+        /**
+         * @description The variable definition to be created
+         *
+         *     Initialize in PowerShell with `Initialize-bCVariablesVariableDefinitionForCreation`
+         */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["VariableDefinitionForCreation"];
@@ -530,10 +573,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable definition properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable definition properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "New name",
                  *         "path": "/Name",
@@ -549,7 +597,6 @@ export interface operations {
                  *           "AndroidEndpoint",
                  *           "IosEndpoint",
                  *           "NetworkEndpoint",
-                 *           "IndustrialEndpoint",
                  *           "LinuxEndpoint"
                  *         ],
                  *         "path": "/Scopes",
@@ -565,7 +612,8 @@ export interface operations {
                  *         "path": "/Comment",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -737,10 +785,15 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable instance properties. */
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable instance properties.
+         *
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "New value",
                  *         "path": "/Value",
@@ -751,7 +804,8 @@ export interface operations {
                  *         "path": "/IsDefault",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };

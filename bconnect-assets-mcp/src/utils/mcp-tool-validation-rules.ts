@@ -14,16 +14,50 @@
 
 import { ValidationRule, CommonRules } from "@bconnect/mcp-core";
 
+/**
+ * TOK-25 — `countOnly` is a boolean on every list tool in the suite. Declared
+ * here so a caller who passes `countOnly: "true"` is rejected with a typed
+ * -32602 rather than silently getting a full page back.
+ */
+const countOnlyRule = (): ValidationRule => ({
+  name: 'countOnly',
+  required: false,
+  type: 'boolean',
+  message: 'countOnly must be a boolean'
+});
+
 const paginationRules = (): ValidationRule[] => [
   CommonRules.page(),
   CommonRules.pageSize(),
   CommonRules.searchQuery(),
-  CommonRules.orderBy()
+  CommonRules.orderBy(),
+  countOnlyRule()
 ];
 
 const assetFilterRules = (): ValidationRule[] => [
   ...paginationRules(),
   CommonRules.displayName(false)
+];
+
+/**
+ * OPT-3 — `detail`/`fields`, for `list_assets` only (the one tool this server
+ * shapes). Typed here for the same reason `countOnly` is: a `detail: "true"`
+ * string that fell through would silently return the compact projection
+ * while the caller believed it had asked for the full record.
+ */
+const shapingRules = (): ValidationRule[] => [
+  {
+    name: 'detail',
+    required: false,
+    type: 'boolean',
+    message: 'detail must be a boolean'
+  },
+  {
+    name: 'fields',
+    required: false,
+    type: 'array',
+    message: 'fields must be an array of field names'
+  }
 ];
 
 const folderFilterRules = (): ValidationRule[] => [
@@ -72,7 +106,7 @@ const subfolderListRules = (): ValidationRule[] => [
 
 export const AssetsRules = {
   // ── Assets ─────────────────────────────────────────────────────────
-  listAssets: (): ValidationRule[] => assetFilterRules(),
+  listAssets: (): ValidationRule[] => [...assetFilterRules(), ...shapingRules()],
 
   createAsset: (): ValidationRule[] => [
     CommonRules.guid('assetTypeId'),
@@ -164,7 +198,11 @@ export const AssetsRules = {
       required: false,
       type: 'boolean',
       message: 'AdditionalProperties must be a boolean'
-    }
+    },
+    // The tool declares detail/fields/countOnly, so the rules must accept them:
+    // the unknown-parameter validator refuses anything a tool does not declare
+    // BEFORE dispatch, which would make the escape hatch unreachable.
+    ...shapingRules()
   ],
 
   createAssetType: (): ValidationRule[] => [

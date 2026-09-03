@@ -1,0 +1,233 @@
+# Continuous integration.
+#
+# ── Why this exists, when scripts/ci-local.sh already did ───────────────────
+# It did not exist, and its own header said so: "GitHub Actions is not used;
+# this replaces it." That was defensible while this was an internal rebuild
+# with one machine and one operator. It is not defensible for a public
+# repository, where the first thing a contributor's pull request needs is a
+# gate that runs without asking them to trust — or reproduce — someone's
+# local shell.
+#
+# ── Two jobs, and the split is deliberate ──────────────────────────────────
+# `gate` runs on BOTH Linux and Windows. That is not box-ticking. This repo
+# shipped a defect where a clone on Windows with core.autocrlf=true failed its
+# own test suite, aborted a package's build, and cascaded into failures in two
+# unrelated servers — while `git status` and `git diff` showed a clean tree, so
+# a contributor had no way to self-diagnose. A Linux-only runner would have
+# been green throughout. The Windows leg is there to catch that class.
+#
+# Lint moved INTO `gate` on 2026-08-03 and is blocking. `strict` now carries
+# only the dependency audit, which reports and does not block — `npm audit
+# --audit-level=high` at the root is clean (0 vulnerabilities, measured
+# 2026-08-04), so this is a standing policy rather than an untriaged backlog.
+# See the rationale on the `strict` job for why a clean audit is not by itself
+# a reason to promote it into `gate`.
+#
+# ── Relationship to scripts/ci-local.sh ────────────────────────────────────
+# That script remains the richer local gate (jscpd, semgrep, the opt-in
+# mock-integration tier that needs a live bConnect-Mock). This workflow is
+# deliberately NOT a second copy of it: it runs the root `vitest run`, which
+# covers every per-server suite and every suite-wide guard in one pass, so
+# there is no per-server list here to drift out of step with the one there.
+
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch makes the previous run irrelevant.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# ── Why every `run` step needs a working directory ─────────────────────────
+# This workflow lives at the ROOT of the working repository, because that is
+# the only place GitHub Actions looks for it. The npm workspace root is one
+# level down, in `bConnect-MCP-main/`, and that subtree is what gets published
+# as its own repository — where this file sits at ITS root and needs no such
+# indirection. Both layouts are real; this setting is what makes the file
+# correct in the one it is currently checked out in.
+#
+# `defaults.run` applies to `run` steps ONLY. It does NOT reach `uses:` steps,
+# which is why each `setup-node` below carries an explicit
+# `cache-dependency-path` — without it, `cache: npm` globs from the workspace
+# root, finds no lockfile there, and fails the job before anything is built.
+#
+# The installer step looks in BOTH `install/lib` and `../install/lib`. With the
+# working directory set below, `..` is the checkout root, where `install/` lives
+# here; in a publication cut the suite IS the root and `install/` is inside it.
+#
+# This paragraph used to say the step "correctly finds nothing and skips" in the
+# published subtree. That was wrong twice over: the cut ships `install/`, and
+# the skip meant `test-catalog-drift` had never executed in CI under any layout
+# while reporting success. Both fixed; the explanation is corrected here because
+# it read perfectly reasonably and was the reason nobody looked.
+defaults:
+  run:
+    working-directory: .
+
+jobs:
+  gate:
+    name: build + test (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        # 22.15+ is the floor that matters: below it Node does not consult the
+        # OS trust store, which is how an internal CA signing the bMS
+        # certificate becomes invisible (issue #59). 24.x is the forward check.
+        node: ["22.15", "24"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # `npm ci`, never `npm install` — SECURITY.md requires it, and the
+      # property is the point: this fails if the lockfile and the manifests
+      # would diverge, so CI cannot silently resolve a dependency graph nobody
+      # reviewed.
+      - name: Install from the lockfile
+        run: npm ci
+
+      - name: Build all workspaces
+        run: npm run build
+
+      # BLOCKING as of 2026-08-03. Errors are 0; warnings are ratcheted at
+      # their current count by `--max-warnings` in the lint script, so the
+      # backlog cannot grow while nobody is looking — which is exactly what it
+      # did while this was merely reported (112 -> 139 during Phase 4).
+      - name: Lint
+        run: npm run lint
+
+      # The root run covers every per-server suite AND the suite-wide guards.
+      - name: Test
+        run: npx vitest run
+
+      # The installer's own guards are plain Node. `test-catalog-drift` is the
+      # one that matters here: it derives the truth from the BUILT servers and
+      # caught catalog.json naming a read probe the round-3 collapse had
+      # removed — drift no TypeScript test could see.
+      #
+      # `install/` sits BESIDE this subtree in the working repository and INSIDE
+      # the tree in a publication cut, whose root is this suite. Looking in only
+      # one of those is how `test-catalog-drift` has never once executed in CI:
+      # the publication tree's own workflow tests `../install/lib` while its
+      # `install/` is at the root, so the step printed "installer guards skipped"
+      # and went green, in the one tree where the guard matters most.
+      #
+      # Still skipped rather than failed when genuinely absent — a step that
+      # reddens a public contributor's partial checkout is noise, and noise is how
+      # a gate stops being read — but the skip now says which paths it looked in,
+      # so a path bug cannot go on looking like a legitimate absence.
+      - name: Installer guards (skipped when the installer is not in the checkout)
+        shell: bash
+        run: |
+          if [ -d install/lib ]; then
+            LIB=install/lib
+          elif [ -d ../install/lib ]; then
+            LIB=../install/lib
+          else
+            echo "install/ is not part of this checkout — installer guards skipped."
+            echo "  looked in: ./install/lib and ../install/lib (from $(pwd))"
+            exit 0
+          fi
+          echo "installer guards running from $LIB"
+          node "$LIB/test-host-emitters.mjs"
+          node "$LIB/test-catalog-drift.mjs"
+
+  coverage:
+    name: coverage floors
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.15"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run build
+
+      # Per-workspace floors are the ones that bite: each is pinned a few points
+      # under what that workspace actually achieves, so this fails on a real
+      # regression rather than against an aspiration nothing could hit.
+      #
+      # The list is spelled out because a glob cannot express it. `bconnect-*-mcp`
+      # matches the 13 servers and NOTHING else: `bconnect-mcp-gateway` ends in
+      # `-gateway`, and `packages/mcp-core` is not at the root. Both were
+      # silently uncovered here for the life of this file — the gateway is the
+      # only component that listens on a socket and mcp-core is the kernel all
+      # 13 servers link against, so between them the glob excluded the two
+      # workspaces where a regression costs the most. Same shape as the
+      # workspace glob that hid the gateway from `npm audit`; `__tests__/
+      # suite-coverage-floors.test.ts` now fails if this list and the set of
+      # workspaces carrying a floor ever drift apart again.
+      - name: Per-workspace coverage floors
+        # NOT `set -e`. It was, and that made this step report the FIRST failing
+        # workspace and never measure the rest — assets is second of sixteen, so
+        # the first CI run named it and stopped, while groups (50.16% against a
+        # 74 floor), universaldynamicgroups and software were never reached.
+        # A gate that reports one of four failures is the defect this repository
+        # keeps finding. Every workspace now runs; the step fails at the END with
+        # all of them named.
+        run: |
+          failed=""
+          for d in bconnect-*-mcp bconnect-mcp-gateway packages/mcp-core; do
+            [ -f "$d/vitest.config.ts" ] || continue
+            echo "── $d"
+            if ! ( cd "$d" && npx vitest run --coverage --coverage.reporter=text-summary ); then
+              failed="$failed $d"
+            fi
+          done
+          if [ -n "$failed" ]; then
+            echo "::error::workspaces below their coverage floor:$failed"
+            exit 1
+          fi
+
+  strict:
+    name: dependency audit (reported, not blocking)
+    runs-on: ubuntu-latest
+    # Never fails the build, and this is now a decision rather than a holding
+    # pattern.
+    #
+    # The earlier comment here said each reported check "becomes a `gate` step
+    # when its backlog is actually clear". The audit backlog IS clear —
+    # `npm audit --audit-level=high` at the root reports 0 vulnerabilities
+    # (measured 2026-08-04) — and it still does not move, because the trigger
+    # assumed something untrue of this particular check: `npm audit` is the one
+    # step whose result can change with no commit at all. It queries the live
+    # advisory database, so a new advisory published overnight against a
+    # transitive dependency turns every open pull request red for a reason no
+    # contributor introduced and most cannot fix. Blocking on it does not make
+    # the advisory get fixed sooner; it makes CI something people learn to
+    # override, and an overridden gate protects nothing.
+    #
+    # What blocks instead is the property this repo can actually hold: `gate`
+    # runs `npm ci`, which fails if the lockfile and the manifests would
+    # diverge — so the dependency graph cannot change without review, which is
+    # the half a contributor's PR is genuinely responsible for. Read this job's
+    # output when it is red; do not gate a merge on it.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.15"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high

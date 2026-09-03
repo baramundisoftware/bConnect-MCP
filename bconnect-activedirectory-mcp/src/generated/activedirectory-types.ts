@@ -11,7 +11,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all AD groups */
+        /**
+         * Get all AD groups
+         * @description Powershell function: `Get-bCActivedirectoryADGroups`
+         */
         get: operations["GetADGroups"];
         put?: never;
         post?: never;
@@ -28,7 +31,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get information for a specific AD group */
+        /**
+         * Get information for a specific AD group
+         * @description Powershell function: `Get-bCActivedirectoryADGroupById`
+         */
         get: operations["GetADGroupById"];
         put?: never;
         post?: never;
@@ -45,7 +51,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get AD Groups (sub groups) for a specific AD group */
+        /**
+         * Get AD Groups (sub groups) for a specific AD group
+         * @description Powershell function: `Get-bCActivedirectoryADGroupsByADGroupId`
+         */
         get: operations["GetADGroupsByADGroupId"];
         put?: never;
         post?: never;
@@ -62,7 +71,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets AD groups by organization unit */
+        /**
+         * Gets AD groups by organization unit
+         * @description Powershell function: `Get-bCActivedirectoryADGroupsByOrgUnitId`
+         */
         get: operations["GetADGroupsByOrgUnitId"];
         put?: never;
         post?: never;
@@ -79,7 +91,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all AD users and groups */
+        /**
+         * Get all AD users and groups
+         * @description Powershell function: `Get-bCActivedirectoryADObjects`
+         */
         get: operations["GetADObjects"];
         put?: never;
         post?: never;
@@ -96,7 +111,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get information for a specific AD object */
+        /**
+         * Get information for a specific AD object
+         * @description Powershell function: `Get-bCActivedirectoryADObjectById`
+         */
         get: operations["GetADObjectById"];
         put?: never;
         post?: never;
@@ -113,7 +131,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get the AD groups where the specified AD object is a member */
+        /**
+         * Get the AD groups where the specified AD object is a member
+         * @description Powershell function: `Get-bCActivedirectoryADObjectMemberships`
+         */
         get: operations["GetADObjectMemberships"];
         put?: never;
         post?: never;
@@ -130,7 +151,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get AD objects for a specific AD group */
+        /**
+         * Get AD objects for a specific AD group
+         * @description Powershell function: `Get-bCActivedirectoryADObjectsByADGroupId`
+         */
         get: operations["GetADObjectsByADGroupId"];
         put?: never;
         post?: never;
@@ -147,7 +171,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all AD objects contained by a logical group */
+        /**
+         * Gets all AD objects contained by a logical group
+         * @description Powershell function: `Get-bCActivedirectoryADObjectsByOrgUnitId`
+         */
         get: operations["GetADObjectsByOrgUnitId"];
         put?: never;
         post?: never;
@@ -164,7 +191,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get all AD users */
+        /**
+         * Get all AD users
+         * @description Powershell function: `Get-bCActivedirectoryADUsers`
+         */
         get: operations["GetADUsers"];
         put?: never;
         post?: never;
@@ -181,7 +211,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get information for a specific AD user */
+        /**
+         * Get information for a specific AD user
+         * @description Powershell function: `Get-bCActivedirectoryADUserById`
+         */
         get: operations["GetADUserById"];
         put?: never;
         post?: never;
@@ -198,7 +231,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get AD Users for a specific AD group */
+        /**
+         * Get AD Users for a specific AD group
+         * @description Powershell function: `Get-bCActivedirectoryADUsersByADGroupId`
+         */
         get: operations["GetADUsersByADGroupId"];
         put?: never;
         post?: never;
@@ -215,7 +251,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets AD users by organization unit */
+        /**
+         * Gets AD users by organization unit
+         * @description Powershell function: `Get-bCActivedirectoryADUsersByOrgUnitId`
+         */
         get: operations["GetADUsersByOrgUnitId"];
         put?: never;
         post?: never;
@@ -232,7 +271,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all org units */
+        /**
+         * Gets all org units
+         * @description Powershell function: `Get-bCActivedirectoryOrgUnits`
+         */
         get: operations["GetOrgUnits"];
         put?: never;
         post?: never;
@@ -249,7 +291,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets an org unit by id */
+        /**
+         * Gets an org unit by id
+         * @description Powershell function: `Get-bCActivedirectoryOrgUnit`
+         */
         get: operations["GetOrgUnit"];
         put?: never;
         post?: never;
@@ -266,7 +311,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Gets all org units contained by an org unit */
+        /**
+         * Gets all org units contained by an org unit
+         * @description Powershell function: `Get-bCActivedirectoryOrgUnitsByOrgUnitId`
+         */
         get: operations["GetOrgUnitsByOrgUnitId"];
         put?: never;
         post?: never;

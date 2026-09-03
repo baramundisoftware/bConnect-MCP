@@ -827,13 +827,15 @@ export interface operations {
         /** @description Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
         requestBody?: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
                  *         "value": "23546375",
                  *         "path": "/InitialStartupPin",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -952,18 +954,22 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable properties.
+        /**
+         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable properties.
          *
-         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
+         */
         requestBody: {
             content: {
-                /** @example [
+                /**
+                 * @example [
                  *       {
-                 *         "value": "2026-03-23T15:21:58.4710618Z",
+                 *         "value": "2026-05-22T11:22:19.9566172Z",
                  *         "path": "/LocalAdminAccount/RequestedExpirationDate",
                  *         "op": "replace"
                  *       }
-                 *     ] */
+                 *     ]
+                 */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };

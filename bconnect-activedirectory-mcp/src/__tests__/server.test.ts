@@ -31,7 +31,7 @@ const EXPECTED_TOOLS = [
   'list_org_units_by_org_unit',
 ];
 
-async function startServer(): Promise<void> {
+async function startServer() {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);

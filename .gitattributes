@@ -1,0 +1,53 @@
+# Line endings are normalised to LF in the repository, on every platform.
+#
+# WHY THIS FILE EXISTS
+# --------------------
+# Without it, a clone on Windows with `core.autocrlf=true` — which is the Git
+# for Windows installer's own suggested setting, not a fringe configuration —
+# checks every text file out with CRLF. That is invisible to `git status` and
+# `git diff`, so a contributor who hits the consequences has no way to
+# self-diagnose from the tools that would normally tell them.
+#
+# The consequences measured on a real clone:
+#   - `generated-types-are-fresh` fails. The generator emits LF; the working
+#     copy holds CRLF; the test compares bytes, so it reports the generated
+#     types as stale when their content is byte-identical after normalisation.
+#   - `bconnect-compliance-mcp`'s build prebuild check aborts before `tsc`
+#     runs, which cascades into failing test files in two unrelated servers
+#     because the gateway can no longer resolve the compliance package.
+#
+# A first clone that fails its own test suite for a reason the contributor
+# cannot see is the worst possible first five minutes of an open-source
+# project, and one line of configuration prevents it.
+
+# Default: Git decides what is text, and text is LF in the repo and in the
+# working tree. `eol=lf` rather than `eol=native` is deliberate — the generated
+# types are compared byte-for-byte against a generator that emits LF, so a
+# native checkout would reintroduce exactly the failure above.
+* text=auto eol=lf
+
+# Shell scripts must be LF even on Windows checkouts: CRLF breaks the shebang.
+*.sh text eol=lf
+*.bash text eol=lf
+
+# PowerShell is the one place CRLF is the platform norm. These are Windows
+# scripts run by Windows operators; keep them CRLF in the working tree.
+*.ps1 text eol=crlf
+*.psm1 text eol=crlf
+*.psd1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Never touched: any transformation corrupts these.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.woff binary
+*.woff2 binary

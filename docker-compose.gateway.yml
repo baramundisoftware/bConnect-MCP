@@ -3,24 +3,65 @@
 # Use case: shared MCP access over HTTP for multiple users or workflows.
 # A single container bundles all 13 MCP servers behind one HTTP endpoint.
 #
-# ⚠️ The gateway has NO built-in authentication. This compose publishes the port
-# on LOOPBACK ONLY. Before exposing it beyond the host you MUST front it with a
-# TLS-terminating, authenticating reverse proxy (see README / docs/DOCKER.md).
+# REQUIRES baramundi Management Suite 26R1 or later. The gateway reads the bMS
+# version from GET /servermanagement/v2.0/ManagementServer during its startup
+# connectivity check and refuses to start against an older bMS. 25R2 is not
+# supported and there is no BCONNECT_RELEASE setting any more. If your
+# deployment cannot reach that route, BCONNECT_SKIP_CONNECTIVITY_CHECK=true
+# skips the version gate with it.
+#
+# The same startup check refuses an http:// BCONNECT_BASE_URL, which would send
+# the API key in clear text; BCONNECT_ALLOW_INSECURE_HTTP=true is the opt-out
+# for an isolated lab segment.
+#
+# AUTHENTICATION IS REQUIRED AND THIS FILE WILL NOT START WITHOUT IT.
+# MCP_GATEWAY_AUTH_TOKEN is mandatory below (`:?` — compose refuses to start if it
+# is unset). Every call to /<domain>/mcp must carry `Authorization: Bearer <it>`.
+# The port is still published on LOOPBACK ONLY, and TLS is still the fronting
+# proxy's job — the token authenticates the caller, it does not encrypt the hop.
 # Downstream bMS calls use a single BCONNECT_* service credential.
+#
+# SEC-7: this file used to set MCP_ALLOW_NO_AUTH=true, which permanently
+# satisfied the gateway's own fail-closed guard, so the shipped artifact disarmed
+# its own auth. That line is gone. MCP_ALLOW_NO_AUTH remains a documented escape
+# hatch for a real reverse-proxy deployment — see the commented block at the
+# bottom of the environment section — but nothing we ship asserts it for you.
 #
 # For single-developer stdio use (Claude Desktop / Claude Code) use
 # docker-compose.yml instead.
 #
-# See docs/INSTALLATION.md and docs/N8N.md for full setup.
+# See docs/INSTALLATION.md, docs/N8N.md and install/INSTALL.md ("Running the
+# gateway without the installer") for full setup.
 #
 # Usage:
 #   cp .env.gateway.example .env.gateway
-#   # Edit .env.gateway — set BCONNECT_BASE_URL and the BCONNECT_* service credential
+#   # Edit .env.gateway — set BCONNECT_BASE_URL, the BCONNECT_* service credential,
+#   # and a strong MCP_GATEWAY_AUTH_TOKEN. Generate one with:
+#   #   openssl rand -base64 32 | tr '+/' '-_' | tr -d '='
+#   #   node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+#   #   PowerShell: [Convert]::ToBase64String((1..32|%{Get-Random -Max 256})) -replace '\+','-' -replace '/','_' -replace '='
 #   docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 #
-# Health check:
+# Health check (deliberately exempt from auth so container probes work). It is
+# liveness only — SEC-10: it used to publish the list of all 13 mounted domains
+# to any unauthenticated caller, which is free reconnaissance. Send the token to
+# get the list as well:
 #   curl http://localhost:3001/health
-#   # → {"status":"ok","count":13}
+#   # → {"status":"ok"}
+#   curl -H "Authorization: Bearer $MCP_GATEWAY_AUTH_TOKEN" http://localhost:3001/health
+#   # → {"status":"ok","servers":[...],"count":13}
+#
+# First real call:
+#   curl -H "Authorization: Bearer $MCP_GATEWAY_AUTH_TOKEN" \
+#        -H 'Content-Type: application/json' \
+#        -H 'Accept: application/json, text/event-stream' \
+#        -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' \
+#        http://localhost:3001/endpoints/mcp
+#   # Without the header: 401.
+#
+# Rotating the token: set MCP_GATEWAY_AUTH_TOKEN to "<new>,<old>", recreate the
+# container, move every client to <new>, then drop <old> and recreate again.
+# Both are accepted while both are listed, so no client is ever locked out.
 
 services:
 
@@ -28,7 +69,7 @@ services:
     build:
       context: .
       dockerfile: bconnect-mcp-gateway/Dockerfile
-    image: bconnect-mcp-gateway:26.1.7
+    image: bconnect-mcp-gateway:26.1.8
     container_name: mcp-gateway
     ports:
       # Loopback-only by default — reachable from the host / a co-located proxy,
@@ -36,19 +77,72 @@ services:
       - "${MCP_GATEWAY_HOST_BIND:-127.0.0.1}:${MCP_GATEWAY_HOST_PORT:-3001}:3001"
     environment:
       MCP_GATEWAY_PORT: "3001"
-      # The container binds 0.0.0.0 so a co-located proxy can reach it; the port
-      # above is published on loopback. MCP_ALLOW_NO_AUTH asserts a proxy handles
-      # auth — the gateway has no built-in auth (ADR-0003).
+      MCP_GATEWAY_IN_CONTAINER: "true"
+      # The container binds 0.0.0.0 because Docker's published port cannot reach
+      # a loopback listener inside the container. That is a non-loopback bind, so
+      # the gateway's fail-closed guard requires authentication — which the token
+      # below supplies. The image itself defaults to 127.0.0.1; this line is the
+      # one place that widens it, and it is deliberately next to the token.
       MCP_GATEWAY_BIND: "0.0.0.0"
-      MCP_ALLOW_NO_AUTH: "true"
+      # SEC-7 — the shared bearer token every caller must present. MANDATORY:
+      # `:?` makes compose refuse to start with a message instead of quietly
+      # bringing up an open gateway. Comma-separate two values to rotate.
+      MCP_GATEWAY_AUTH_TOKEN: ${MCP_GATEWAY_AUTH_TOKEN:?set MCP_GATEWAY_AUTH_TOKEN in .env.gateway - at least 24 chars - generate one with - openssl rand -base64 32 | tr '+/' '-_' | tr -d '='}
+      # SEC-9 — DNS-rebinding protection. The gateway authenticates downstream
+      # with an ambient service credential, so a browser page that resolves its
+      # own hostname to 127.0.0.1 and POSTs to the published port would act with
+      # that credential's full authority. The Host header is the one thing such
+      # a page cannot forge, so the gateway rejects any Host it is not served
+      # under. These are the names the DEFAULT loopback publish above answers to;
+      # once you put a proxy in front and publish beyond loopback, set
+      # MCP_GATEWAY_ALLOWED_HOSTS to the public hostname(s) instead — a stale
+      # value here is a 403, not a silent hole. Ports are ignored when matching.
+      MCP_GATEWAY_ALLOWED_HOSTS: ${MCP_GATEWAY_ALLOWED_HOSTS:-localhost,127.0.0.1,[::1]}
+      # Browser origins permitted to call the gateway. Empty = none, which is
+      # correct for every server-side MCP client (they send no Origin header).
+      MCP_GATEWAY_ALLOWED_ORIGINS: ${MCP_GATEWAY_ALLOWED_ORIGINS:-}
+      # SEC-8 — trust the proxy's X-Forwarded-For so rate limiting and the access
+      # log see the real client, not the proxy. Default "loopback" trusts only a
+      # same-host proxy; set the proxy's container IP/CIDR or a hop count when it
+      # runs in another container. Set "false" if nothing fronts the gateway.
+      MCP_GATEWAY_TRUST_PROXY: ${MCP_GATEWAY_TRUST_PROXY:-loopback}
+      # Header carrying the principal the fronting proxy authenticated; logged
+      # alongside the client IP so audit records name a person, not a hop.
+      MCP_GATEWAY_IDENTITY_HEADER: ${MCP_GATEWAY_IDENTITY_HEADER:-x-forwarded-user}
+      # ── The escape hatch, deliberately left commented out ──────────────────
+      # MCP_ALLOW_NO_AUTH=true asserts that an authenticating reverse proxy is in
+      # front, permitting a non-loopback bind with NO gateway token. It is the
+      # ADR-0003 deployment and it is still supported — but it is YOUR assertion
+      # and nothing checks it, so it is not made on your behalf any more. Even
+      # then, keeping MCP_GATEWAY_AUTH_TOKEN set costs nothing and is what
+      # refuses a caller that reaches the container around the proxy.
+      #   MCP_ALLOW_NO_AUTH: "true"
       # Single bConnect service credential (bMS RBAC governs it).
       BCONNECT_BASE_URL: ${BCONNECT_BASE_URL:-https://bms-server/bconnect}
       BCONNECT_USERNAME: ${BCONNECT_USERNAME:-}
       BCONNECT_PASSWORD: ${BCONNECT_PASSWORD:-}
       BCONNECT_API_KEY: ${BCONNECT_API_KEY:-}
-      BCONNECT_AUDIT_LEVEL: ${BCONNECT_AUDIT_LEVEL:-none}
+      # Defaults to `write`: the gateway is the only component reachable over the
+      # network, so its callers are not the local operator and an injected or
+      # abused write has to be attributable. Records go to STDERR (container
+      # logs); set BCONNECT_AUDIT_FILE for a persistent JSON Lines trail.
+      BCONNECT_AUDIT_LEVEL: ${BCONNECT_AUDIT_LEVEL:-write}
+      # Skips the startup connectivity probe AND, with it, the 26R1 version gate.
       BCONNECT_SKIP_CONNECTIVITY_CHECK: ${BCONNECT_SKIP_CONNECTIVITY_CHECK:-false}
+      # SEC-8 — DANGER. Setting this to 0 disables TLS certificate validation
+      # for EVERY connection this process makes, including the one carrying
+      # BCONNECT_API_KEY and, with v1.1 enabled, a domain account's Basic
+      # header: anything that can intercept the hop can then read and rewrite
+      # them, and nothing in the logs will look wrong. It is honoured twice over
+      # — Node stops verifying process-wide, and the bConnect client's own agent
+      # follows suit. The default (1) is the correct value. If the bMS presents
+      # a self-signed or private-CA certificate, the answer is the line below,
+      # not this one: BCONNECT_CA_CERT_PATH makes the certificate trusted
+      # WITHOUT turning verification off for everything else.
       NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-1}
+      # Path (inside the container — see the volume below) to the CA certificate
+      # that signed the bMS certificate. This is the supported way to trust a
+      # private CA.
       BCONNECT_CA_CERT_PATH: ${BCONNECT_CA_CERT_PATH:-}
     volumes:
       # CA certificate for self-signed bMS certificates (optional).
