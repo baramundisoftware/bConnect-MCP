@@ -53,8 +53,8 @@ function softwarePage(rows = 20) {
 function windowsEndpointRow(i: number) {
   return {
     id: `9dd53b61-888b-42c4-bd1a-9b8dae00${String(i).padStart(4, '0')}`,
-    displayName: `WIN11CLIENT${i}`,
-    hostName: `win11client${i}`,
+    displayName: `LABMACHINE1${i}`,
+    hostName: `LABMACHINE1${i}`,
     operatingSystem: 'Windows 11 Enterprise',
     osVersionString: '10.0.26100',
     lastSeen: '2026-08-01T22:14:03Z',

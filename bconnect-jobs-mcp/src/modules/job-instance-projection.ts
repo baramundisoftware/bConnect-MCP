@@ -52,7 +52,7 @@
  * derivable. It restates `state` + `lastAction` only on the successes; on the
  * rows that matter it is the only place the failure text lives ("Retry pending
  * on 02.08.2026 at 12:27: Could not connect to client. (Unable to reach client
- * [172.16.1.2] via ping)"). Dropping it would push every failure investigation
+ * [192.0.2.10] via ping)"). Dropping it would push every failure investigation
  * to `detail: true` and give the saving straight back.
  *
  * Nothing here is lossy in information: a dropped constant is in `meta`, an

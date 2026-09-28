@@ -107,6 +107,21 @@ param(
 $ErrorActionPreference = 'Stop'
 $ProgressPreference    = 'SilentlyContinue'
 
+# Canonicalise the caller's paths ONCE, before anything consumes them. A relative
+# -Destination resolved correctly for every PowerShell cmdlet (they follow
+# Set-Location) and then failed at the very last step: .NET's
+# ZipFile.CreateFromDirectory resolves against the PROCESS working directory,
+# which Set-Location does not move. Measured 2026-09-11 — '-Destination
+# .\out\bconnect-mcp-offline-prod' from install\ built and verified the whole
+# bundle, then tried to zip 'C:\mcpworkspace\out\...', the install segment gone.
+# robocopy, as an external process, would treat a relative -SuiteRoot the same
+# way. GetUnresolvedProviderPathFromPSPath resolves against PowerShell's own
+# location and works for paths that do not exist yet, which -Destination may not.
+$Destination = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Destination)
+if ($SuiteRoot) {
+    $SuiteRoot = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($SuiteRoot)
+}
+
 $LibDir       = $PSScriptRoot
 $InstallerDir = Split-Path -Parent $LibDir
 $ProjectRoot  = Split-Path -Parent $InstallerDir
@@ -189,6 +204,24 @@ if ($SkipBuild) {
     } else {
         Ok 'node_modules already present -- skipping npm ci'
     }
+
+    # CLEAN before building. tsc is incremental and never deletes: a file whose
+    # source is gone -- or was never tracked -- sits in build\ forever, and the
+    # copy below ships whatever is on disk. Found 2026-09-11: a
+    # diagnose-job-mutated.js left behind by a mutation-testing session had
+    # been riding in the jobs server's build output, source-less, and would
+    # have shipped to a customer. The publication cut is immune (git archive,
+    # tracked files only); this bundle is not, so it builds from empty.
+    $cleaned = 0
+    foreach ($b in @(Get-ChildItem -Path $SuiteRoot -Directory |
+                     Where-Object { $_.Name -like 'bconnect-*' -or $_.Name -eq 'packages' })) {
+        foreach ($bd in @(Get-ChildItem -Path $b.FullName -Recurse -Directory -Filter 'build' -Depth 2 -ErrorAction SilentlyContinue |
+                          Where-Object { $_.FullName -notmatch '\\node_modules\\' })) {
+            Remove-Item -LiteralPath $bd.FullName -Recurse -Force -ErrorAction SilentlyContinue
+            $cleaned++
+        }
+    }
+    Ok "build directories removed before compiling -- $cleaned (stale emissions cannot ride along)"
 
     Say 'building @bconnect/mcp-core'
     $r = Invoke-Npm @('run', 'build', '-w', '@bconnect/mcp-core') $SuiteRoot
@@ -292,6 +325,31 @@ foreach ($d in @(Get-ChildItem -LiteralPath $dstSuite -Recurse -Directory -Force
     }
 }
 Ok "development directories removed from the copy -- $pruned (coverage, __tests__, scripts; node_modules untouched)"
+
+# --- 5b2: the estate scrub, on the COPY --------------------------------------
+#
+# The bundle is a DERIVED customer artifact, and it gets the same treatment as
+# the publication cut: the working tree stays truthful about what was measured
+# where, and the derivative is scrubbed. This stopped being theoretical on
+# 2026-09-11 -- Test-BundleAcceptance found estate tokens in 49 shipped files,
+# comment headers written since the 2026-08-10 bundle ("verified live against
+# <the lab host>", endpoint names in measured examples), riding in src AND in
+# the compiled .js beside it, because tsc preserves comments.
+#
+# The one scrubber is reused rather than a second identifier list grown here:
+# scripts\scrub-estate.mjs from the SOURCE tree (scripts\ is already pruned
+# from the copy), with --include-build because unlike the cut this tree ships
+# its build output. Length-preserving synthetics, so source maps stay valid
+# and nothing shifts. Runs BEFORE the production install-and-start proof, so
+# what gets started and verified is the scrubbed code that actually ships.
+$scrubber = Join-Path $SuiteRoot 'scripts\scrub-estate.mjs'
+if (-not (Test-Path -LiteralPath $scrubber)) { Die "scrub-estate.mjs not found at $scrubber -- the bundle must not ship unscrubbed." }
+# No 2>&1: under ErrorActionPreference=Stop, PS 5.1 wraps a native exe's
+# stderr lines into ErrorRecords that can terminate a run that exited 0.
+# stderr goes to the console; the exit code is the verdict.
+$scrubOut = & node $scrubber $dstSuite --include-build
+if ($LASTEXITCODE -ne 0) { Write-Host ($scrubOut -join "`n"); Die 'the estate scrub failed; the bundle must not ship unscrubbed.' }
+Ok 'estate identifiers scrubbed from the copy (src and build; the same scrubber the publication cut uses)'
 
 # --- 5c: production-only dependencies ----------------------------------------
 #

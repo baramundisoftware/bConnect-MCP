@@ -62,7 +62,7 @@ function umRow(i: number, profile: [string, string]): Record<string, unknown> {
   const sources = ['MicrosoftOnline', 'Wsus'];
   return {
     endpointId: `15e0be8${i}-97c3-4d09-a87e-c9749dcb66b9`,
-    endpointName: `WIN10CLIENT${i}`,
+    endpointName: `LABMACHINE0${i}`,
     updateProfileId: profile[0],
     updateProfileName: profile[1],
     missingCriticalUpdates: i % 3,

@@ -19,7 +19,7 @@
  *     while one endpoint carried 983 detections above CVSS 7. They are reported
  *     SEPARATELY and never summed. A reader who wants one number is asking a
  *     question bMS does not answer.
- *  2. ZERO USUALLY MEANS UNMEASURED. WIN10CLIENT4 reports
+ *  2. ZERO USUALLY MEANS UNMEASURED. LABMACHINE04 reports
  *     `missingSecurityUpdates: 0` with `updateState: "InventoryOutdated"` and a
  *     `lastInventory` a YEAR stale. Every count here is gated on updateState
  *     and inventory age, and an ungated zero is never presented as clean.

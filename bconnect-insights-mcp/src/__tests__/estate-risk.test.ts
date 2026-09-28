@@ -54,30 +54,30 @@ const page = (rows: unknown[], totalItems = rows.length) => ({
 });
 
 const bitlockerRows = [
-  { endpointName: "WIN11CLIENT1", tpmData: { tpmStatus: "Enabled" },
+  { endpointName: "LABMACHINE11", tpmData: { tpmStatus: "Enabled" },
     storageMedia: [{ storageVolumes: [{ isSystemVolume: true, bitLockerVolumeData: { protectionStatus: "Protected" } }] }] },
-  { endpointName: "WIN10CLIENT3", tpmData: { tpmStatus: "NotEnabled" },
+  { endpointName: "LABMACHINE03", tpmData: { tpmStatus: "NotEnabled" },
     storageMedia: [{ storageVolumes: [{ isSystemVolume: true, bitLockerVolumeData: { protectionStatus: "Unprotected" } }] }] },
-  { endpointName: "WIN10CLIENT4", tpmData: { tpmStatus: "Enabled" }, storageMedia: [{ storageVolumes: [] }] },
+  { endpointName: "LABMACHINE04", tpmData: { tpmStatus: "Enabled" }, storageMedia: [{ storageVolumes: [] }] },
 ];
 
 const defenderRows = [
-  { endpointName: "WIN11CLIENT1", isMicrosoftDefenderActive: true,
+  { endpointName: "LABMACHINE11", isMicrosoftDefenderActive: true,
     microsoftDefenderState: { antivirus: { isActive: true, definitionCreation: daysAgo(1), definitionVersion: "1.1" } } },
-  { endpointName: "WIN10CLIENT3", isMicrosoftDefenderActive: false,
+  { endpointName: "LABMACHINE03", isMicrosoftDefenderActive: false,
     microsoftDefenderState: { antivirus: { isActive: false, definitionCreation: daysAgo(400), definitionVersion: "1.0" } } },
 ];
 
 const vulnRows = [
-  { endpointName: "WIN10CLIENT3", cveId: "CVE-2026-1", ignored: false },
-  { endpointName: "WIN10CLIENT3", cveId: "CVE-2026-2", ignored: false },
-  { endpointName: "WIN11CLIENT1", cveId: "CVE-2026-1", ignored: false },
-  { endpointName: "WIN11CLIENT1", cveId: "CVE-2026-9", ignored: true },
+  { endpointName: "LABMACHINE03", cveId: "CVE-2026-1", ignored: false },
+  { endpointName: "LABMACHINE03", cveId: "CVE-2026-2", ignored: false },
+  { endpointName: "LABMACHINE11", cveId: "CVE-2026-1", ignored: false },
+  { endpointName: "LABMACHINE11", cveId: "CVE-2026-9", ignored: true },
 ];
 
 const endpointRows = [
-  { displayName: "WIN11CLIENT1", lastSeen: daysAgo(1) },
-  { displayName: "WIN10CLIENT3", lastSeen: daysAgo(120) },
+  { displayName: "LABMACHINE11", lastSeen: daysAgo(1) },
+  { displayName: "LABMACHINE03", lastSeen: daysAgo(120) },
   { displayName: "NEVERSEEN1", lastSeen: null },
 ];
 

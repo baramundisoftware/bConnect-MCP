@@ -85,7 +85,7 @@ const DEFAULT_REACHABLE_WITHIN_DAYS = 7;
  *
  * Measured live 2026-08-03 against 26R1: the default order of
  * `/endpoints/v2.0/Endpoints` is not sorted by anything
- * (`WIN10CLIENT4 | WIN10CLIENT1 | WIN10CLIENT3 | ...`), `DisplayName asc` is
+ * (`LABMACHINE04 | LABMACHINE01 | LABMACHINE03 | ...`), `DisplayName asc` is
  * honoured, and an unknown property answers HTTP 400 — so this value is checked
  * by the server rather than merely declared by the spec. `DisplayName` also
  * happens to be the key the vulnerability rows join on, so a bounded walk covers

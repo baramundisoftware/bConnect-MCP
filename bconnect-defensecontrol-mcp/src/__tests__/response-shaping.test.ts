@@ -57,7 +57,7 @@ vi.mock('../bconnect-client.js', () => ({
 const { createServer } = await import('../index.js');
 
 // ── Fixtures, shaped after a real row measured live on labcorp.local ─────────
-// (WIN10CLIENT4, 2026-08-03, via scripts/demo/phase4-call-and-measure.mjs)
+// (LABMACHINE04, 2026-08-03, via scripts/demo/phase4-call-and-measure.mjs)
 
 function bitlockerRow(id: string, name: string): Record<string, unknown> {
   return {
@@ -113,7 +113,7 @@ function bitlockerRow(id: string, name: string): Record<string, unknown> {
             capacity: 1309667328,
             freeSpace: 764264448,
             isSystemVolume: false,
-            volumeId: 'e57a7e00-0000-4000-8000-000000000044',
+            volumeId: 'e57a7e00-0000-4000-8000-000000000045',
             partitionType: 'Recovery',
           },
         ],
@@ -213,8 +213,8 @@ describe('list_bitlocker_windows_endpoints — compact projection', () => {
   it('flattens tpmStatus and the system volume, and drops per-disk/per-volume detail', async () => {
     const client = await connect();
     nextResult = envelope([
-      bitlockerRow('e57a7e00-0000-4000-8000-000000000006', 'WIN10CLIENT4'),
-      bitlockerRow('e57a7e00-0000-4000-8000-000000000010', 'WIN10CLIENT1'),
+      bitlockerRow('e57a7e00-0000-4000-8000-000000000006', 'LABMACHINE04'),
+      bitlockerRow('e57a7e00-0000-4000-8000-000000000010', 'LABMACHINE01'),
     ]);
     const json = await callJson(client, 'list_bitlocker_windows_endpoints', {});
 
@@ -222,7 +222,7 @@ describe('list_bitlocker_windows_endpoints — compact projection', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]).toEqual({
       endpointId: 'e57a7e00-0000-4000-8000-000000000006',
-      endpointName: 'WIN10CLIENT4',
+      endpointName: 'LABMACHINE04',
       isSecureBootEnabled: false,
       tpmStatus: 'NotAvailable',
       systemVolume: {
@@ -251,7 +251,7 @@ describe('list_bitlocker_windows_endpoints — compact projection', () => {
 
   it('detail:true returns the raw record, byte-identical to the unshaped response', async () => {
     const client = await connect();
-    const raw = envelope([bitlockerRow('e57a7e00-0000-4000-8000-000000000006', 'WIN10CLIENT4')]);
+    const raw = envelope([bitlockerRow('e57a7e00-0000-4000-8000-000000000006', 'LABMACHINE04')]);
     nextResult = raw;
     const result = (await client.callTool({
       name: 'list_bitlocker_windows_endpoints',
@@ -264,7 +264,7 @@ describe('list_bitlocker_windows_endpoints — compact projection', () => {
   it('saves more than half the page (measured, not asserted by hand)', async () => {
     const client = await connect();
     const rows = Array.from({ length: 20 }, (_, i) =>
-      bitlockerRow(`endpoint-${i}`, `WIN10CLIENT${i}`)
+      bitlockerRow(`endpoint-${i}`, `LABMACHINE0${i}`)
     );
     nextResult = envelope(rows);
     const compactText = JSON.stringify(await callJson(client, 'list_bitlocker_windows_endpoints', {}));
@@ -280,8 +280,8 @@ describe('list_defender_windows_endpoints — compact projection', () => {
   it('flattens the Defender summary and drops the four engine sub-blocks', async () => {
     const client = await connect();
     nextResult = envelope([
-      defenderRow('e57a7e00-0000-4000-8000-000000000006', 'WIN10CLIENT4'),
-      defenderRow('e57a7e00-0000-4000-8000-000000000010', 'WIN10CLIENT1'),
+      defenderRow('e57a7e00-0000-4000-8000-000000000006', 'LABMACHINE04'),
+      defenderRow('e57a7e00-0000-4000-8000-000000000010', 'LABMACHINE01'),
     ]);
     const json = await callJson(client, 'list_defender_windows_endpoints', {});
 
@@ -289,7 +289,7 @@ describe('list_defender_windows_endpoints — compact projection', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]).toEqual({
       endpointId: 'e57a7e00-0000-4000-8000-000000000006',
-      endpointName: 'WIN10CLIENT4',
+      endpointName: 'LABMACHINE04',
       isMicrosoftDefenderActive: true,
       isRealTimeProtectionActive: true,
       isTamperProtectionActive: true,
@@ -309,7 +309,7 @@ describe('list_defender_windows_endpoints — compact projection', () => {
 
   it('detail:true returns the raw record, byte-identical to the unshaped response', async () => {
     const client = await connect();
-    const raw = envelope([defenderRow('e57a7e00-0000-4000-8000-000000000006', 'WIN10CLIENT4')]);
+    const raw = envelope([defenderRow('e57a7e00-0000-4000-8000-000000000006', 'LABMACHINE04')]);
     nextResult = raw;
     const result = (await client.callTool({
       name: 'list_defender_windows_endpoints',
@@ -322,7 +322,7 @@ describe('list_defender_windows_endpoints — compact projection', () => {
   it('saves more than half the page (measured, not asserted by hand)', async () => {
     const client = await connect();
     const rows = Array.from({ length: 20 }, (_, i) =>
-      defenderRow(`endpoint-${i}`, `WIN10CLIENT${i}`)
+      defenderRow(`endpoint-${i}`, `LABMACHINE0${i}`)
     );
     nextResult = envelope(rows);
     const compactText = JSON.stringify(await callJson(client, 'list_defender_windows_endpoints', {}));

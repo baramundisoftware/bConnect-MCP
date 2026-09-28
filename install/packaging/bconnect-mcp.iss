@@ -96,9 +96,15 @@
 #define MinWindowsVersion "10.0.17763"
 
 ; --- where the inputs come from ----------------------------------------------
-; BundleDir is the output of install\lib\New-OfflineBundle.ps1: the suite root
-; WITH node_modules and build output, with install\ inside it and
-; offline-bundle.json at its top. Pass it on the ISCC command line:
+; BundleDir is the output of install\lib\New-OfflineBundle.ps1, and its layout
+; is SIDE-BY-SIDE: bConnect-MCP-main\ (the suite, WITH node_modules and build
+; output) next to install\, with offline-bundle.json and START-HERE.cmd at the
+; top. That is the layout START-HERE.cmd itself insists on ("three items must
+; stay together") and the layout that lands at {app}, so the installed tree is
+; shaped exactly like the extracted bundle a non-.exe user works in. An earlier
+; revision of this comment described the suite AT the bundle root; the
+; validator run against a real bundle on 2026-09-11 failed 15 path checks on
+; that stale assumption. Pass BundleDir on the ISCC command line:
 ;     ISCC.exe /DBundleDir="D:\bconnect-mcp-offline" bconnect-mcp.iss
 ; The default below is a sibling of the checkout, so a build that forgets the
 ; switch fails on a missing directory instead of silently packaging a source
@@ -159,7 +165,7 @@ MinVersion={#MinWindowsVersion}
 ; Start-BConnectConfig.cmd repairs PATH for the processes Setup launches.
 ChangesEnvironment=yes
 
-LicenseFile={#BundleDir}\LICENSE
+LicenseFile={#BundleDir}\bConnect-MCP-main\LICENSE
 OutputDir={#OutputDir}
 OutputBaseFilename=bConnect-MCP-Setup-{#SuiteVersion}
 SetupIconFile={#BundleDir}\install\assets\app.ico
@@ -244,7 +250,7 @@ Name: "{app}\install\state"; Flags: uninsneveruninstall
 ; the target. That is also why install\packaging ships -- the manifest hashes
 ; every .ps1 under install\, Test-InnoScript.ps1 included, and a file the
 ; manifest names but the .exe did not install reads as a corrupt transfer.
-Source: "{#BundleDir}\*"; DestDir: "{app}"; Excludes: "\.git\*,\secrets\*,\install\state\*,\install\out\*,\install\packaging\redist\*,\install\packaging\out\*,*.bak-*"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#BundleDir}\*"; DestDir: "{app}"; Excludes: "\.git\*,\secrets\*,\bConnect-MCP-main\secrets\*,\install\state\*,\install\out\*,\install\packaging\redist\*,\install\packaging\out\*,*.bak-*"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; --- launcher shim -----------------------------------------------------------
 ; Also present under {app}\install\packaging, because it is part of the bundle;
@@ -356,6 +362,23 @@ end;
   architecture and privilege tests so that the message an administrator reads is
   the product's rather than the toolkit's.
   --------------------------------------------------------------------------- }
+{ Inno Setup 6.7 removed IsWindowsVersionOrNewer, which earlier 6.x provided;
+  compile-probed 2026-09-11: GetWindowsVersionEx and TWindowsVersion exist in
+  both eras, so the floor check builds on those. The literals 10, 0, 17763
+  stay at the ONE call site below -- Test-InnoScript.ps1 reads them out as
+  "the coded Windows floor" and compares them to MinVersion, so a floor moved
+  in [Setup] but not here (or vice versa) fails the validator. }
+function WindowsIsAtLeast(Major, Minor, Build: Integer): Boolean;
+var
+  V: TWindowsVersion;
+begin
+  GetWindowsVersionEx(V);
+  Result :=
+    (V.Major > Major) or
+    ((V.Major = Major) and (V.Minor > Minor)) or
+    ((V.Major = Major) and (V.Minor = Minor) and (V.Build >= Build));
+end;
+
 function InitializeSetup(): Boolean;
 var
   PSVersion: String;
@@ -372,7 +395,7 @@ begin
     Exit;
   end;
 
-  if not IsWindowsVersionOrNewer(10, 0, 17763) then
+  if not WindowsIsAtLeast(10, 0, 17763) then
   begin
     MsgBox('Windows ' + GetWindowsVersionString + ' is older than the minimum ' +
            'supported version.' + #13#10#13#10 +
@@ -417,7 +440,11 @@ begin
 
   { Disk space. Inno checks that the compressed payload fits; this adds the
     headroom the configuration step needs afterwards, and states the figure.
-    {autopf} is used rather than {app}, which is not resolved yet. }
+    The autopf constant is probed rather than app, which is not resolved yet.
+    (Spelled without braces on purpose: a brace-constant inside a brace
+    comment CLOSES the comment -- Pascal braces do not nest, and the first
+    ISCC compile of this section failed exactly here, proving no compiler had
+    ever read it before 2026-09-11.) }
   RequiredBytes := {#RequiredFreeMB};
   RequiredBytes := RequiredBytes * 1048576;
   if GetSpaceOnDisk64(ExpandConstant('{autopf}'), FreeBytes, TotalBytes) then
@@ -487,8 +514,10 @@ end;
     * the credentials file (secrets\bconnect.env, or bconnect.env.dpapi),
     * the installation record (install\state\installation.json),
     * the bconnect-* entries this product wrote into MCP client configuration
-      files that live outside {app} entirely -- %APPDATA%\Claude, a workspace's
-      .mcp.json, ~\.continue, and so on.
+      files that live entirely outside the installation directory --
+      %APPDATA%\Claude, a workspace's .mcp.json, ~\.continue, and so on.
+      (No brace-constants in this comment on purpose: braces do not nest,
+      and one inside a comment ends it.)
 
   All three belong to the customer and may be in use by tooling this installer
   knows nothing about.

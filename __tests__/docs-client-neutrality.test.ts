@@ -52,7 +52,12 @@ const SERVER_DIRS = readdirSync(ROOT)
 /** Every markdown file this stream owns and ships. */
 const SHIPPING_DOCS = [
   'README.md',
+  // Both extracted from README by the vendor's 2026-09-02 restructure
+  // (0743c25). Their edit added CLIENTS.md here and not CONFIGURATION.md —
+  // a hand-written list one entry short, the same shape as every other
+  // hand-written list this repository has had to correct.
   'docs/CLIENTS.md',
+  'docs/CONFIGURATION.md',
   'docs/INSTALLATION.md',
   'docs/TROUBLESHOOTING.md',
   'docs/DOCKER.md',

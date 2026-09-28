@@ -60,10 +60,10 @@ function assetRow(
 ): Record<string, unknown> {
   return {
     assetId: id,
-    name: 'WIN10CLIENT4',
+    name: 'LABMACHINE04',
     assetTypeId: 'e57a7e00-0000-4000-8000-000000000028',
     assetTypeName: 'Laptop',
-    ownerName: 'WIN10CLIENT4',
+    ownerName: 'LABMACHINE04',
     ownerType: 'WindowsEndpoint',
     lastChanged: '2026-08-01T00:00:00Z',
     additionalProperties: [

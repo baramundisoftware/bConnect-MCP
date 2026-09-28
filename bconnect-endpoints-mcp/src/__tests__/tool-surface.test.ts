@@ -445,8 +445,8 @@ describe('TOK-23 — get_fleet_summary and get_stale_endpoints keep working', ()
             {
               id: 'e57a7e00-0000-4000-8000-000000000027',
               type: 'WindowsEndpoint',
-              displayName: 'WIN10CLIENT9',
-              hostName: 'WIN10CLIENT9',
+              displayName: 'LABMACHINE09',
+              hostName: 'LABMACHINE09',
               lastSeen: '2025-07-12T09:00:00Z',
               clientAgentVersion: '25.1.100.0',
               activity: 'Job could not be executed: agent unreachable',
@@ -512,7 +512,7 @@ describe('TOK-23 — get_fleet_summary and get_stale_endpoints keep working', ()
     expect(ghosts.length).toBeGreaterThan(0);
 
     const worst = ghosts[0];
-    expect(worst.endpoint).toBe('WIN10CLIENT9');
+    expect(worst.endpoint).toBe('LABMACHINE09');
     expect(worst.failedAttempts).toBe(54);
     expect(worst.everSucceededAJob).toBe(false);
     expect(worst).not.toHaveProperty('consoleLink');

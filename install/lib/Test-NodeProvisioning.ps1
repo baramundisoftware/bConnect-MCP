@@ -490,7 +490,7 @@ if (Want 'refusal') {
           'no first-person plural'
     Check (@($allText | Where-Object { $_ -match "(?i)\b(don't|doesn't|can't|won't|it's|you'll|you're|there's|isn't)\b" }).Count -eq 0) `
           'no contraction'
-    Check (@($allText | Where-Object { $_ -match '(?i)C:\\mcpworkspace|\blabcorp\b|WIN11CLIENT' }).Count -eq 0) `
+    Check (@($allText | Where-Object { $_ -match '(?i)C:\\mcpworkspace|\blabcorp\b|LABMACHINE1' }).Count -eq 0) `
           'no development path and no estate value'
 
     # A runtime that is present but too old, with nothing to replace it with, is the

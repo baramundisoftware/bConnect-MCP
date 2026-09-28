@@ -72,7 +72,7 @@ describe('preview_assignment — choosing the target', () => {
 describe('preview_assignment — non-nesting kinds', () => {
   it('reads a static group\'s reach from its own membership route', async () => {
     const out = await previewAssignment(
-      client([endpoint('WORKSTATION1', 1), endpoint('WIN10CLIENT9', 400)]),
+      client([endpoint('WORKSTATION1', 1), endpoint('LABMACHINE09', 400)]),
       { jobDefinitionId: JOB, staticGroupId: GROUP }
     );
 

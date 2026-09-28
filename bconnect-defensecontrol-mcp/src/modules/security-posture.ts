@@ -46,7 +46,7 @@
  * runs. Every walk here sends an explicit `OrderBy`.
  *
  * Measured live against 26R1, 2026-08-03 — the default order on all three routes
- * is not sorted by anything (`WIN10CLIENT4 | WIN10CLIENT1 | WIN10CLIENT3 | ...`),
+ * is not sorted by anything (`LABMACHINE04 | LABMACHINE01 | LABMACHINE03 | ...`),
  * `OrderBy` is honoured, and an unknown property answers **HTTP 400**, so these
  * values are wire-verified rather than inferred from the spec. Note that
  * `EndpointId` — which the 26R1 spec text names as legal on

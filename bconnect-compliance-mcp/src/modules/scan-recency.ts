@@ -30,13 +30,13 @@
  * Why both, rather than trusting the documented workaround alone — two live
  * cases, either of which would have produced a confidently wrong answer:
  *
- *   - WIN11CLIENT10: job history reports a scan step 101 days old; the step
+ *   - LABMACHINE110: job history reports a scan step 101 days old; the step
  *     state is `Running`, and the newest detection on that endpoint is 122 days
  *     old. Job history alone over-reports currency by three weeks, because a
  *     later attempt started and never completed. A recurring job instance keeps
  *     one row and overwrites its own step timestamps, so the *attempt* is
  *     visible and the last *successful* refresh is not.
- *   - A-DC-01 and WIN10CLIENT2 hold detections 837 and 533 days old with **no
+ *   - A-DC-01 and LABMACHINE02 hold detections 837 and 533 days old with **no
  *     `WindowsComplianceScan` anywhere in retained job history**. The documented
  *     workaround returns "never scanned" for two endpoints that plainly were.
  *
@@ -614,7 +614,7 @@ export interface EndpointScanRecency {
   /**
    * Days by which job history is *more optimistic* than the detection data.
    * Non-null only when the two signals disagree by more than a day — that is
-   * the WIN11CLIENT10 case, and it is the number that makes a stale endpoint
+   * the LABMACHINE110 case, and it is the number that makes a stale endpoint
    * look current.
    */
   jobHistoryOptimisticByDays: number | null;

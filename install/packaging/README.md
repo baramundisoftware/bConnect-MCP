@@ -6,8 +6,14 @@ installer, the verb CLI and the configuration GUI — and then offers to launch 
 installer. **It needs no internet access on the target machine.** That is the whole
 point: a bMS server frequently has none.
 
+**The short version: double-click `Build-BConnectMcpSetup.cmd`.** It refuses with
+the remedy named when a prerequisite is missing, runs the validator against the
+real bundle, compiles, and reports the `.exe` with its SHA-256 and signing state.
+Everything below is what it does, for when a step needs doing by hand.
+
 | File | |
 |---|---|
+| `Build-BConnectMcpSetup.cmd` | The one-click build: validator, then ISCC, then the artifact report. Logic in `Build-BConnectMcpSetup.ps1` |
 | `bconnect-mcp.iss` | The Inno Setup 6 script. Every non-obvious directive is commented in place |
 | `Start-BConnectConfig.cmd` | Launcher shim for the Start-menu entries and the "configure now" checkbox. It repairs `PATH` and nothing else — see *Why a shim exists* |
 | `Test-InnoScript.ps1` | Checks the `.iss` against the tree it packages, without compiling it. **Run it before every build** |
@@ -55,10 +61,13 @@ package.
 anyway, because the evidence is more useful than an empty directory, but a package
 missing a build output cannot be repaired on an air-gapped machine.
 
-The bundle is the suite root: `install\` is inside it and `offline-bundle.json` sits
-at its top. That is the layout the `.iss` expects, and it is the layout that lands at
-`{app}` on the target — the manifest's paths are relative to itself, so
-`Install-BConnectMcp.ps1` can verify the transfer there.
+The bundle layout is side-by-side: `bConnect-MCP-main\` (the suite) next to
+`install\`, with `offline-bundle.json` and `START-HERE.cmd` at the top — the three
+items `START-HERE.cmd` itself insists stay together. That is the layout the `.iss`
+expects and the layout that lands at `{app}` on the target — the manifest's paths are
+relative to itself, so `Install-BConnectMcp.ps1` can verify the transfer there. (An
+earlier revision of this paragraph described the suite at the bundle root; the
+validator run against a real bundle found the drift as 15 failed path checks.)
 
 Expect several gigabytes. `node_modules` is a very large number of very small files.
 

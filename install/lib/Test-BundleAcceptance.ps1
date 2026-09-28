@@ -69,9 +69,12 @@ $hits = @(Get-ChildItem -LiteralPath $Bundle -Recurse -File -Include *.ps1,*.psm
           Where-Object { $_.FullName -notmatch '\\node_modules\\' } |
           Select-String -Pattern $estate -List -ErrorAction SilentlyContinue)
 # The guards that CHECK FOR those strings must contain them; nothing else may.
-# Both of these assert that no estate name reached a shipped file, so the pattern
+# Each of these asserts that no estate name reached a shipped file, so the pattern
 # is their subject matter. Verified by reading them, not assumed from the name.
-$allowed = @('Test-WizardPrep.ps1', 'Test-NodeProvisioning.ps1')
+# This file is its own third entry: a copy of it ships in the bundle's install\lib,
+# and the hunt pattern above is in it — the 2026-09-11 run flagged its own line,
+# which is how the hand-written list announced it was one guard short.
+$allowed = @('Test-WizardPrep.ps1', 'Test-NodeProvisioning.ps1', 'Test-BundleAcceptance.ps1')
 $bad = @($hits | Where-Object { $allowed -notcontains (Split-Path -Leaf $_.Path) })
 Check 'no estate name appears outside the guards that look for one' ($bad.Count -eq 0) `
     (($bad | ForEach-Object { $_.Path.Replace($Bundle,'') + ':' + $_.LineNumber }) -join '; ')

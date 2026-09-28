@@ -30,7 +30,7 @@ const BASE_URL = 'http://bms.test.local/bconnect';
 const ENDPOINT_ID = 'e57a7e00-0000-4000-8000-000000000027';
 const ENTRA_DEVICE = 'e57a7e00-0000-4000-8000-000000000035';
 const ENTRA_TENANT = 'e57a7e00-0000-4000-8000-000000000041';
-const ENTRA_USER = 'e57a7e00-0000-4000-8000-000000000043';
+const ENTRA_USER = 'e57a7e00-0000-4000-8000-000000000044';
 
 let capturedBody: unknown;
 let capturedPathId: string | undefined;

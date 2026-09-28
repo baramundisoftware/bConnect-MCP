@@ -7,13 +7,13 @@
  * sub-resource read for a parent that has no data with **HTTP 404** — the same
  * status it uses for "that route does not exist" and "that id is wrong". So
  * `list_detected_vulnerabilities_by_endpoint` returns *"Resource not found"*
- * for WIN10CLIENT3, a present, managed, live Windows endpoint. Re-verified
- * 2026-08-03: still 404, while WIN10CLIENT4 answers 200 with totalItems 1.
+ * for LABMACHINE03, a present, managed, live Windows endpoint. Re-verified
+ * 2026-08-03: still 404, while LABMACHINE04 answers 200 with totalItems 1.
  *
  * Of the four readings a caller can take from that error — bad id, broken
  * tool, route gone, or "nothing found, therefore zero" — three are wrong and
  * the fourth is dangerous. On this estate the endpoint it lands on is
- * WIN10CLIENT10, the machine `scan-recency.ts` singles out as the one where
+ * LABMACHINE010, the machine `scan-recency.ts` singles out as the one where
  * job history already looks optimistic.
  *
  * ── Why the envelope is null and not empty ──────────────────────────────────
@@ -47,8 +47,8 @@
  * ── Why the cause is enumerated and not chosen (A11) ────────────────────────
  * The audit also killed the discriminator that was proposed for this:
  * `/endpoints/v2.0/Endpoints/{id}` returns 200 for all five 404 cases, so its
- * `type` field looked like it could separate them. Verified — WIN10CLIENT3 and
- * WIN10CLIENT10 are **both** `WindowsEndpoint`, so across exactly the two
+ * `type` field looked like it could separate them. Verified — LABMACHINE03 and
+ * LABMACHINE010 are **both** `WindowsEndpoint`, so across exactly the two
  * cases that matter the field is constant. The five 404 bodies are 139 B and
  * identical but for `traceId`, so the body carries no signal either.
  *

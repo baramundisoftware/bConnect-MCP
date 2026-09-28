@@ -80,14 +80,14 @@ const PROBLEM_DETAILS = {
   title: 'Not all job definition assignments could be processed successfully.',
   status: 207,
   problems: [
-    { title: "Missing rights for assigning job definition to endpoint 'WIN10CLIENT7'.", status: 403 },
-    { title: "Missing rights for assigning job definition to endpoint 'WIN10CLIENT3'.", status: 403 },
+    { title: "Missing rights for assigning job definition to endpoint 'LABMACHINE07'.", status: 403 },
+    { title: "Missing rights for assigning job definition to endpoint 'LABMACHINE03'.", status: 403 },
   ],
 };
 
 /** What the module's TYPE claims comes back, and what a server may also send. */
 const CREATED_ROWS = [
-  { id: 'ji-1', endpointName: 'WIN11CLIENT1', state: 'Waiting' },
+  { id: 'ji-1', endpointName: 'LABMACHINE11', state: 'Waiting' },
   { id: 'ji-2', endpointName: 'WORKSTATION1', state: 'Waiting' },
 ];
 
@@ -123,7 +123,7 @@ describe('a 207 assignment is never reported as an unqualified success', () => {
     // and printing a count is how a partial failure reads as a receipt.
     mockApi.use(http.post(ASSIGN, () => HttpResponse.json(PROBLEM_DETAILS, { status: 207 })));
     const text = await assign();
-    expect(text).toMatch(/WIN10CLIENT7/);
+    expect(text).toMatch(/LABMACHINE07/);
     expect(text).toMatch(/Missing rights/i);
   });
 

@@ -62,7 +62,7 @@ const detRow = (i: number): Row => ({
   vulnerabilityId: `00000000-0000-0000-0000-${String(i).padStart(12, "0")}`,
   cveId: `CVE-2026-${1000 + i}`,
   endpointId: "e0000000-0000-0000-0000-000000000001",
-  endpointName: "WIN11CLIENT1",
+  endpointName: "LABMACHINE11",
   detected: "2026-08-01T00:00:00Z",
   ignored: false,
 });

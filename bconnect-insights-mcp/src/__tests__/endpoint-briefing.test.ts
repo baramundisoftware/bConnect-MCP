@@ -52,7 +52,7 @@ const healthy = [
   })),
   http.get(LIST, () => HttpResponse.json(page([
     { id: ID, displayName: "WORKSTATION1", hostName: "WORKSTATION1" },
-    { id: OTHER, displayName: "WIN10CLIENT1", hostName: "WIN10CLIENT1" },
+    { id: OTHER, displayName: "LABMACHINE01", hostName: "LABMACHINE01" },
   ]))),
   http.get(BL, () => HttpResponse.json({
     tpmData: { tpmStatus: "Enabled" },

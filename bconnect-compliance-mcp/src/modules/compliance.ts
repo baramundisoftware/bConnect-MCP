@@ -130,7 +130,7 @@ export class ComplianceModule {
 
   // M5 — this route's 404 is overloaded. Measured live 2026-08-03: it answers
   // 200 for 21 of this estate's 23 Windows endpoints and 404 for 2
-  // (WIN10CLIENT3, WIN10CLIENT10), both present and managed. The bare error
+  // (LABMACHINE03, LABMACHINE010), both present and managed. The bare error
   // read as "Resource not found", whose most dangerous interpretation is
   // "nothing found, therefore zero vulnerabilities".
   //

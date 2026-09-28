@@ -104,7 +104,31 @@ if ($UsingRealBundle) { $BundleDir = (Resolve-Path -LiteralPath $BundleDir).Path
 function Resolve-BundlePath {
     param([string] $Relative)
     $rel = $Relative.TrimStart('\')
-    if ($UsingRealBundle) { return (Join-Path $BundleDir $rel) }
+    # A caller's path may already be bundle-rooted -- the .iss LicenseFile
+    # names bConnect-MCP-main\LICENSE so ISCC finds it in the real bundle.
+    # Strip the suite segment here and re-add it per mode, or bundle mode
+    # doubles it and tree mode roots it under the suite twice.
+    if ($rel -imatch '^bConnect-MCP-main(\\|$)') {
+        $rel = ($rel -replace '^bConnect-MCP-main\\?', '')
+        if (-not $rel) { $rel = '.' }
+        if ($UsingRealBundle) { return (Join-Path $BundleDir (Join-Path 'bConnect-MCP-main' $rel)) }
+        return (Join-Path $SuiteRoot $rel)
+    }
+    if ($UsingRealBundle) {
+        # A real bundle is SIDE-BY-SIDE: bConnect-MCP-main\ and install\ next
+        # to each other, offline-bundle.json at the top -- the layout
+        # START-HERE.cmd names ("three items must stay together") and
+        # Test-BundleAcceptance verifies. The first version of this branch
+        # joined every path straight onto $BundleDir, modelling a
+        # suite-at-root layout the builder no longer produces; run against a
+        # real bundle on 2026-09-11 it failed 15 checks, every one of them
+        # this single assumption wearing a different name.
+        if ($rel -ieq 'offline-bundle.json' -or $rel -ieq 'START-HERE.cmd' -or
+            $rel -ieq 'install' -or $rel -imatch '^install\\') {
+            return (Join-Path $BundleDir $rel)
+        }
+        return (Join-Path $BundleDir (Join-Path 'bConnect-MCP-main' $rel))
+    }
     if ($rel -ieq 'install' -or $rel -imatch '^install\\') {
         return (Join-Path $InstallerDir ($rel -replace '^install\\?', ''))
     }
@@ -358,10 +382,14 @@ foreach ($k in @('LicenseFile', 'SetupIconFile')) {
 # different floor from the one Setup enforces.
 $minWin = ''
 if ($Setup.Contains('MinVersion')) { $minWin = Expand-IssMacros ([string]$Setup['MinVersion']) }
-$mWin = [regex]::Match($IssText, 'IsWindowsVersionOrNewer\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)')
+# The call-site spelling changed once already: Inno 6.7 removed
+# IsWindowsVersionOrNewer and the check became the local WindowsIsAtLeast
+# helper. Match the CALL with its three literals, whichever of the two
+# spellings the script carries, so this check survives the next rename too.
+$mWin = [regex]::Match($IssText, '(?:IsWindowsVersionOrNewer|WindowsIsAtLeast)\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)')
 Check ($mWin.Success -and ($minWin -eq ($mWin.Groups[1].Value + '.' + $mWin.Groups[2].Value + '.' + $mWin.Groups[3].Value))) `
       'the coded Windows floor equals MinVersion' `
-      ("MinVersion = '$minWin'; IsWindowsVersionOrNewer = " +
+      ("MinVersion = '$minWin'; coded floor = " +
        $(if ($mWin.Success) { $mWin.Groups[1].Value + '.' + $mWin.Groups[2].Value + '.' + $mWin.Groups[3].Value } else { '(not found)' }))
 
 # Code signing: present, and commented, so a build without the certificate still

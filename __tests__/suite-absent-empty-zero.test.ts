@@ -9,10 +9,10 @@
  *   the collection is genuinely empty -> 200 with data: [], totalItems: 0
  *
  * so an answer meaning "we do not know" is indistinguishable from one meaning
- * "we looked, there are none". Measured live 2026-08-03: WIN10CLIENT3 (present,
+ * "we looked, there are none". Measured live 2026-08-03: LABMACHINE03 (present,
  * managed, a real WindowsEndpoint) answers 404 on
  * /compliance/v2.0/WindowsEndpoints/{id}/DetectedVulnerabilities, while
- * WIN10CLIENT4 answers 200 with totalItems 1.
+ * LABMACHINE04 answers 200 with totalItems 1.
  *
  * The tests below pin the two properties that make the fix worth having:
  * the unavailable answer must never be READABLE as zero, and it must never
@@ -42,7 +42,7 @@ const POLICY = {
 
 describe('M5 — an unavailable result cannot be read as zero', () => {
   it('reports null rather than an empty array and a zero count', () => {
-    const out = dataUnavailableForParent('WIN10CLIENT3', POLICY);
+    const out = dataUnavailableForParent('LABMACHINE03', POLICY);
 
     // This is the whole point. §M5 originally proposed { data: [],
     // totalItems: 0, dataAvailable: false }, which any caller that skips the
@@ -61,18 +61,18 @@ describe('M5 — an unavailable result cannot be read as zero', () => {
   });
 
   it('tells the caller not to report it as a clean result', () => {
-    const { note } = dataUnavailableForParent('WIN10CLIENT3', POLICY);
+    const { note } = dataUnavailableForParent('LABMACHINE03', POLICY);
     expect(note).toMatch(/does NOT mean zero/i);
     expect(note).toMatch(/not report this as a clean result/i);
   });
 });
 
 describe('M5 — the cause is enumerated, never chosen (A11)', () => {
-  const out = dataUnavailableForParent('WIN10CLIENT3', POLICY);
+  const out = dataUnavailableForParent('LABMACHINE03', POLICY);
 
   it('lists every cause consistent with a 404, including the platform one', () => {
-    // A11 killed the `type`-discriminates proposal: WIN10CLIENT3 and
-    // WIN10CLIENT10 are both WindowsEndpoint, so for the two cases that
+    // A11 killed the `type`-discriminates proposal: LABMACHINE03 and
+    // LABMACHINE010 are both WindowsEndpoint, so for the two cases that
     // actually matter the field is constant. Nothing may claim to know which.
     expect(out.possibleCauses.length).toBeGreaterThanOrEqual(4);
     expect(out.possibleCauses.join(' ')).toMatch(/never produced/i);
@@ -153,7 +153,7 @@ describe('M5 — only 404 is translated', () => {
   it('translates a 404 into the envelope', async () => {
     const out = await readSubResource(
       () => Promise.reject(new BConnectApiError(404, 'Resource not found.', { method: 'GET', path: '/x' })),
-      'WIN10CLIENT3',
+      'LABMACHINE03',
       POLICY
     );
     expect(isDataUnavailable(out)).toBe(true);
@@ -165,7 +165,7 @@ describe('M5 — only 404 is translated', () => {
     await expect(
       readSubResource(
         () => Promise.reject(new BConnectApiError(500, 'Server error', { method: 'GET', path: '/x' })),
-        'WIN10CLIENT3',
+        'LABMACHINE03',
         POLICY
       )
     ).rejects.toThrow(/Server error/);
@@ -176,7 +176,7 @@ describe('M5 — only 404 is translated', () => {
     await expect(
       readSubResource(
         () => Promise.reject(new BConnectApiError(403, 'Forbidden', { method: 'GET', path: '/x' })),
-        'WIN10CLIENT3',
+        'LABMACHINE03',
         POLICY
       )
     ).rejects.toThrow(/Forbidden/);
@@ -184,7 +184,7 @@ describe('M5 — only 404 is translated', () => {
 
   it('passes a successful read through untouched', async () => {
     const payload = { data: [{ cveId: 'CVE-1' }], totalItems: 1 };
-    const out = await readSubResource(() => Promise.resolve(payload), 'WIN10CLIENT4', POLICY);
+    const out = await readSubResource(() => Promise.resolve(payload), 'LABMACHINE04', POLICY);
     expect(out).toBe(payload);
     expect(isDataUnavailable(out)).toBe(false);
   });
@@ -193,7 +193,7 @@ describe('M5 — only 404 is translated', () => {
     // The distinction the whole policy exists to preserve: an empty array is a
     // fact. It must NOT be converted into "we do not know".
     const empty = { data: [], totalItems: 0 };
-    const out = await readSubResource(() => Promise.resolve(empty), 'WIN10CLIENT4', POLICY);
+    const out = await readSubResource(() => Promise.resolve(empty), 'LABMACHINE04', POLICY);
     expect(isDataUnavailable(out)).toBe(false);
     expect(out).toBe(empty);
   });
@@ -201,7 +201,7 @@ describe('M5 — only 404 is translated', () => {
 
 describe('M5 — countOnly cannot answer zero either', () => {
   it('carries the real reason instead of the generic no-count note', () => {
-    const count = countResultFromEnvelope(dataUnavailableForParent('WIN10CLIENT3', POLICY));
+    const count = countResultFromEnvelope(dataUnavailableForParent('LABMACHINE03', POLICY));
 
     // countOnly is how a caller asks "how many vulnerabilities does this
     // machine have". A zero here is the most dangerous output in the suite.

@@ -33,7 +33,7 @@ const page = (rows: unknown[], totalItems = rows.length) => ({
 });
 
 const endpoint = {
-  id: EP, displayName: "WIN10CLIENT4", hostName: "WIN10CLIENT4",
+  id: EP, displayName: "LABMACHINE04", hostName: "LABMACHINE04",
   lastSeen: new Date(Date.now() - 2 * 86_400_000).toISOString(),
   logicalGroupId: "lg-1", logicalGroup: "Win10",
 };

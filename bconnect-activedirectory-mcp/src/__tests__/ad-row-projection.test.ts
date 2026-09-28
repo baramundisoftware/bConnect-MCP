@@ -50,7 +50,7 @@ const USERS = `${BASE}/activedirectory/v2.0/ADUsers`;
  * `comment` 2-3 (the ADSync date differs), while `domain` and `type` really are
  * single-valued on every page.
  */
-const OU = ["e57a7e00-0000-4000-8000-000000000039", "e57a7e00-0000-4000-8000-000000000042", "e57a7e00-0000-4000-8000-000000000030"];
+const OU = ["e57a7e00-0000-4000-8000-000000000039", "e57a7e00-0000-4000-8000-000000000043", "e57a7e00-0000-4000-8000-000000000030"];
 const OU_NAME = ["Builtin", "Users", "Servers"];
 const LDAP = (name: string, ou = "Builtin") => `labcorp.local/CN=${name},CN=${ou},DC=labcorp,DC=local`;
 

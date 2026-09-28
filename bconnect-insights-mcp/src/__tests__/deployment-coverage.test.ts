@@ -45,7 +45,7 @@ const page = (rows: unknown[], totalItems = rows.length) => ({
 
 const bundleApp = { applicationId: APP, applicationName: "KIOSKTEST", applicationVendor: "baramundi", applicationVersion: "" };
 const member = (n: number, lastSeenDaysAgo = 1) => ({
-  id: `ep-${n}`, displayName: `WIN10CLIENT${n}`, lastSeen: iso(lastSeenDaysAgo),
+  id: `ep-${n}`, displayName: `LABMACHINE0${n}`, lastSeen: iso(lastSeenDaysAgo),
 });
 /** A software row. `lastFound` is the inventory-freshness signal. */
 const sw = (epId: string, epName: string, appId: string, lastFoundDaysAgo = 1) => ({
@@ -59,9 +59,9 @@ const handlers = [
   http.get(APPS, () => HttpResponse.json(page([bundleApp]))),
   http.get(MEMBERS, () => HttpResponse.json(page([member(1), member(2), member(3)]))),
   http.get(INSTALLED, () => HttpResponse.json(page([
-    sw("ep-1", "WIN10CLIENT1", APP),
+    sw("ep-1", "LABMACHINE01", APP),
     // ep-2 is inventoried (it reports OTHER software) but not this app.
-    sw("ep-2", "WIN10CLIENT2", "some-other-app-id"),
+    sw("ep-2", "LABMACHINE02", "some-other-app-id"),
     // ep-3 reports nothing at all — the live 9-vs-8 case.
   ]))),
 ];
@@ -101,8 +101,8 @@ describe("an absent row is a dated fact; only a never-scanned endpoint is unknow
     expect(app.installedOn).toBe(1);
     expect(app.notInstalledOn).toBe(1);
     expect(app.neverInventoriedOn).toBe(1);
-    expect(app.notInstalledEndpoints).toEqual(["WIN10CLIENT2"]);
-    expect(app.neverInventoriedEndpoints).toEqual(["WIN10CLIENT3"]);
+    expect(app.notInstalledEndpoints).toEqual(["LABMACHINE02"]);
+    expect(app.neverInventoriedEndpoints).toEqual(["LABMACHINE03"]);
   });
 
   it("a 404 carries the MEASUREMENT declared at that call, not just the generic causes", async () => {
@@ -138,8 +138,8 @@ describe("an absent row is a dated fact; only a never-scanned endpoint is unknow
     // snapshot says the app was not on that machine when it was last looked at,
     // which is a fact, so it is reported as notInstalled and dated.
     mockApi.use(http.get(INSTALLED, () => HttpResponse.json(page([
-      sw("ep-1", "WIN10CLIENT1", APP),
-      sw("ep-2", "WIN10CLIENT2", "some-other-app-id", 400),
+      sw("ep-1", "LABMACHINE01", APP),
+      sw("ep-2", "LABMACHINE02", "some-other-app-id", 400),
     ]))));
     const { json } = await call();
 
@@ -147,7 +147,7 @@ describe("an absent row is a dated fact; only a never-scanned endpoint is unknow
     // Only ep-3, which has no inventory at all, is unknown.
     expect(json.coverage.neverInventoried).toBe(1);
 
-    const ep2 = (json.endpoints as Array<Record<string, unknown>>).find((e) => e.endpoint === "WIN10CLIENT2")!;
+    const ep2 = (json.endpoints as Array<Record<string, unknown>>).find((e) => e.endpoint === "LABMACHINE02")!;
     expect(ep2.verdicts).toEqual({ KIOSKTEST: "notInstalled" });
     // …and the age travels WITH the verdict, so nobody reads it as "today".
     expect(ep2.inventoryAgeDays).toBeGreaterThan(390);
@@ -160,8 +160,8 @@ describe("an absent row is a dated fact; only a never-scanned endpoint is unknow
 
   it("the age threshold changes the LABEL, never the verdict", async () => {
     mockApi.use(http.get(INSTALLED, () => HttpResponse.json(page([
-      sw("ep-1", "WIN10CLIENT1", APP),
-      sw("ep-2", "WIN10CLIENT2", "some-other-app-id", 400),
+      sw("ep-1", "LABMACHINE01", APP),
+      sw("ep-2", "LABMACHINE02", "some-other-app-id", 400),
     ]))));
     // Same data, a threshold that makes the 400-day snapshot "current".
     const { json } = await call({ inventoryStaleAfterDays: 3650 });
@@ -173,7 +173,7 @@ describe("an absent row is a dated fact; only a never-scanned endpoint is unknow
 
   it("names WHY a never-inventoried endpoint is unknown rather than leaving a null", async () => {
     const { json } = await call();
-    const ep3 = (json.endpoints as Array<Record<string, unknown>>).find((e) => e.endpoint === "WIN10CLIENT3");
+    const ep3 = (json.endpoints as Array<Record<string, unknown>>).find((e) => e.endpoint === "LABMACHINE03");
     expect(String(ep3?.inventoryEvidence)).toMatch(/never reported software/i);
   });
 });
@@ -182,7 +182,7 @@ describe("the join is on applicationId, not on name", () => {
   it("does not match a same-named application carrying a different id", async () => {
     mockApi.use(http.get(INSTALLED, () => HttpResponse.json(page([
       // Same display name, different application — a name match would call this installed.
-      { ...sw("ep-1", "WIN10CLIENT1", "a-different-application-id"), name: "KIOSKTEST" },
+      { ...sw("ep-1", "LABMACHINE01", "a-different-application-id"), name: "KIOSKTEST" },
     ]))));
     const { json } = await call();
 
@@ -205,7 +205,7 @@ describe("a short-served read must not read as better coverage", () => {
   });
 
   it("breaks trust when the installed-software read is short", async () => {
-    mockApi.use(http.get(INSTALLED, () => HttpResponse.json(page([sw("ep-1", "WIN10CLIENT1", APP)], 242))));
+    mockApi.use(http.get(INSTALLED, () => HttpResponse.json(page([sw("ep-1", "LABMACHINE01", APP)], 242))));
     const { json } = await call();
     expect(json.meta.resultTrustworthy).toBe(false);
   });
@@ -223,9 +223,9 @@ describe("a short-served read must not read as better coverage", () => {
 describe("controls — a healthy deployment reads as healthy", () => {
   it("all members inventoried and holding the app: trustworthy, nothing undetermined", async () => {
     mockApi.use(http.get(INSTALLED, () => HttpResponse.json(page([
-      sw("ep-1", "WIN10CLIENT1", APP),
-      sw("ep-2", "WIN10CLIENT2", APP),
-      sw("ep-3", "WIN10CLIENT3", APP),
+      sw("ep-1", "LABMACHINE01", APP),
+      sw("ep-2", "LABMACHINE02", APP),
+      sw("ep-3", "LABMACHINE03", APP),
     ]))));
     const { json } = await call();
 

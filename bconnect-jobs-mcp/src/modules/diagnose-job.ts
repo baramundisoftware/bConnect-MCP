@@ -113,7 +113,7 @@ const MAX_ENDPOINT_PAGES = 25;
  * Explicit order for the endpoint walk (M1).
  *
  * Measured live 2026-08-03 against 26R1: `/endpoints/v2.0/Endpoints` returns an
- * unsorted default order (`WIN10CLIENT4 | WIN10CLIENT1 | WIN10CLIENT3`),
+ * unsorted default order (`LABMACHINE04 | LABMACHINE01 | LABMACHINE03`),
  * honours `DisplayName asc` (`A-DC-01 | BMS-SRV1 | A-SRV-02`), and answers
  * HTTP 400 on an unknown property — so the server checks this value rather than
  * merely declaring it. A bounded walk of an unordered collection reads an
@@ -440,7 +440,7 @@ export async function diagnoseJob(
         }
         if (!ep.lastSeen) {
           // Present in the listing and has genuinely never checked in. This is
-          // a real observation, not an absence — WIN10CLIENT10 on the reference
+          // a real observation, not an absence — LABMACHINE010 on the reference
           // estate is exactly this case — so it stays stale either way.
           staleEndpoints.push(name);
           continue;

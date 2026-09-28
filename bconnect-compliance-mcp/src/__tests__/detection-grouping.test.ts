@@ -56,9 +56,9 @@ const SCAN_C = "2025-02-14T21:03:08Z";
  */
 const ROWS = Array.from({ length: 20 }, (_, i) => {
   const which = i % 3;
-  if (which === 0) {return row("WIN11CLIENT4", "ep-a", `CVE-2025-${1000 + i}`, SCAN_A, i === 9);}
+  if (which === 0) {return row("LABMACHINE14", "ep-a", `CVE-2025-${1000 + i}`, SCAN_A, i === 9);}
   if (which === 1) {return row("BMS-SRV1", "ep-b", `CVE-2026-${2000 + i}`, SCAN_B);}
-  return row("WIN10CLIENT9", "ep-c", `CVE-2024-${3000 + i}`, SCAN_C);
+  return row("LABMACHINE09", "ep-c", `CVE-2024-${3000 + i}`, SCAN_C);
 });
 
 async function call(args: Record<string, unknown> = {}) {
@@ -123,7 +123,7 @@ describe("grouping is lossless", () => {
     const { json, text } = await call();
 
     expect(json.data).toHaveLength(3);
-    const a = (json.data as Array<Record<string, any>>).find((g) => (g.endpoint as Record<string, unknown>).name === "WIN11CLIENT4")!;
+    const a = (json.data as Array<Record<string, any>>).find((g) => (g.endpoint as Record<string, unknown>).name === "LABMACHINE14")!;
     expect((a.endpoint as Record<string, unknown>).scannedAt).toBe(SCAN_A);
     expect(a.detections).toBe(7);
     // The hoisted keys must not survive on the CVE entries.
@@ -132,7 +132,7 @@ describe("grouping is lossless", () => {
       expect(cve).not.toHaveProperty("endpointName");
     }
     // Seven detections for that endpoint, but its name appears exactly once.
-    expect(text.split("WIN11CLIENT4").length - 1).toBe(1);
+    expect(text.split("LABMACHINE14").length - 1).toBe(1);
   });
 
   it("is materially smaller than the flat record", async () => {
@@ -148,8 +148,8 @@ describe("the honest edges", () => {
   it("a row whose scan date disagrees with its endpoint keeps its own", async () => {
     // Measured 0 of 17 endpoints today, but the code must not depend on that.
     nextResult = envelope([
-      row("WIN11CLIENT4", "ep-a", "CVE-1", SCAN_A),
-      row("WIN11CLIENT4", "ep-a", "CVE-2", "2020-01-01T00:00:00Z"),
+      row("LABMACHINE14", "ep-a", "CVE-1", SCAN_A),
+      row("LABMACHINE14", "ep-a", "CVE-2", "2020-01-01T00:00:00Z"),
     ]);
     const grouped = await call();
     const flat = await call({ detail: true });
@@ -163,7 +163,7 @@ describe("the honest edges", () => {
 
   it("carries `ignored` only when true, and says so", async () => {
     const { json } = await call();
-    const a = (json.data as Array<Record<string, any>>).find((g) => (g.endpoint as Record<string, unknown>).name === "WIN11CLIENT4")!;
+    const a = (json.data as Array<Record<string, any>>).find((g) => (g.endpoint as Record<string, unknown>).name === "LABMACHINE14")!;
     const ignored = (a.cves as Array<Record<string, unknown>>).filter((c) => c.ignored === true);
     expect(ignored).toHaveLength(1);
     expect(String(json.meta?.ignoredNote)).toMatch(/absence means false/i);

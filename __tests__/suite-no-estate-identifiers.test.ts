@@ -56,6 +56,40 @@ const FORBIDDEN: ReadonlyArray<{ hash: string; length: number }> = [
   { hash: 'cd99eccf4e531b77088dd84149406d7b4313b7b0bd5b13fa094093e68c18b1c4', length: 7 },
   { hash: '1427d2e7bc8faca9acc196a9cac5a56896498303b7544c024fde8060ff909b06', length: 8 },
   { hash: '2ad90efb7a3877c5e3a027e25862943123c9be9130ed41761e11fb6df1e5f74c', length: 12 },
+  // The rest of the endpoint family, added 2026-09-11. The list above carried
+  // one machine name; a month of measured-live comment headers then named its
+  // siblings, and the offline bundle's acceptance check found them in shipped
+  // files. The whole family is hashed now — observed in a file or not — so a
+  // future comment naming a sibling cannot reopen the gap. Hashes come from
+  // the scrub's own output (scripts/scrub-estate.mjs prints them); the two
+  // 13-character rows are first, matching its order.
+  { hash: '94a90501563c5ba26f7e1c4cc79b1740c64191c1bade8771814367ab27355075', length: 13 },
+  { hash: 'c6c6ee1ff8466a2792883b04a18fa2dcf88150d127a11736d5461254f095342d', length: 13 },
+  { hash: 'a9e5b5f340666ffb3e78b9017e7ed90cc673b887ed55cc04509c25cf204759b7', length: 12 },
+  { hash: '1a577f21d4229e266334497ea7f87fe3448dac203a93594d92eeaa56af927f82', length: 12 },
+  { hash: '80761e044ccbee09dba03b06d89288e700a5a98db378bb16585fae9eb1f2041e', length: 12 },
+  { hash: 'ddd14d07499f88d35b281de7f4f575dd1afe5d578de3363087e694ce94fca857', length: 12 },
+  { hash: '1170ac0cd0b65971f67cae2715fb45aeca708a963b614eaf45342bee7db9fa44', length: 12 },
+  { hash: 'eea15c036fae2efa8ed99958ae45e3bbb43b5dd9f751eace48967709dfd8ce52', length: 12 },
+  { hash: '6b1de2d0aed063b1d8c056cd6400efb6dbfd508267cf2d9bbf729545ca296bdb', length: 12 },
+  { hash: '24c258e7df17742e68d53df85baa693401f3cc4ad415b1c30e4b2dd45e99e29e', length: 12 },
+  { hash: '565580a31c5cb55e8e88427fbd254f055888287d673f640a5be75c1566fa67ec', length: 12 },
+  { hash: '7538c01826cea1413dfd09dfb59f1c0d3bc74b74ac0ccda1e078ba303f55d7cf', length: 12 },
+  { hash: '7ac15d1744c988c846bd98a709fb18372ff6be427f46302dd2280b8649fc9939', length: 12 },
+  { hash: 'bbe02432fbd1e180e805ee3ea97980d73ce424a3642594653a1d3ccf63d208fd', length: 12 },
+  { hash: '05f96535e5446181c049ec114dd045555e255ba63029ed022694bef1de4155a1', length: 12 },
+  { hash: '6b32cf5db1c5990eba6f14ad89ac677ad571307faf6716345474892ddfd456cf', length: 12 },
+  { hash: 'b6aa98c7f35147c521b00eae866e688decbd137fa8957d8dc884a3a8532b4838', length: 12 },
+  { hash: '81fd668c2b4b578881428f0e7bd42bdf0c06bdafb8315064a041d7657a9cce09', length: 12 },
+  { hash: '9707a26ba8c7d58dc8e331dba6d602d373d6b12c22e42f9bf534c4549f239fd7', length: 12 },
+  // The two BARE name prefixes (no digit), as fixture templates carry them.
+  { hash: 'ad503aa75aad185a43c3d3e04946ffa21e3bd37c2808c980ccbbbdc45825b6d4', length: 11 },
+  { hash: '7bae775f50621d3ecce932c65c8c8ea50c7ad459e9dde7c1fbf52fd6ef131498', length: 11 },
+  // The lab server's IPv4 address, observed in one shipped comment. The word
+  // tokeniser below can never produce a dotted quad, so this row is matched by
+  // the separate IPV4 scan — without it the row would be a check that cannot
+  // fire, which is the vacuity this suite forbids.
+  { hash: '71b66a2ac941db123f17b3880c1fc5298c70b735163c99431b6de63d724b88aa', length: 10 },
   // The operator's account name. Added after a scrubbed UPN still shipped its
   // local part: replacing the domain half of an address leaves behind most of
   // what identified it.
@@ -76,6 +110,13 @@ const SKIP_DIRS = new Set(['.git', 'node_modules', 'build', 'coverage', 'out']);
 
 /** Words, hostname labels and hyphenated names — the shapes an identifier takes. */
 const TOKEN = /[A-Za-z0-9-]+/g;
+
+/**
+ * Dotted IPv4 literals, scanned separately: adding `.` to TOKEN would fuse
+ * `labcorp.local`-shaped names into one token whose hash matches nothing, so
+ * the existing detections would silently die. Two scans, one hash set.
+ */
+const IPV4 = /\b\d{1,3}(?:\.\d{1,3}){3}\b/g;
 
 /**
  * JavaScript escapes and template interpolations, DECODED before tokenising.
@@ -183,6 +224,16 @@ describe('no live-estate identifier survives into a publication cut', () => {
           if (!FORBIDDEN_LENGTHS.has(token.length)) {continue;}
           tokensHashed++;
           if (FORBIDDEN_HASHES.has(hash(token))) {
+            const where = relative(ROOT, file).split(sep).join('/');
+            if (!offenders.includes(where)) {offenders.push(where);}
+          }
+        }
+        IPV4.lastIndex = 0;
+        for (const m of text.matchAll(IPV4)) {
+          const ip = m[0];
+          if (!FORBIDDEN_LENGTHS.has(ip.length)) {continue;}
+          tokensHashed++;
+          if (FORBIDDEN_HASHES.has(hash(ip))) {
             const where = relative(ROOT, file).split(sep).join('/');
             if (!offenders.includes(where)) {offenders.push(where);}
           }

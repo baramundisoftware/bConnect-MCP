@@ -13,7 +13,7 @@
  * So this drives the real `BConnectClient` against a real socket. No stubbed
  * axios, no hand-built error: the 404 travels the same interceptor path a live
  * one does. The response body is the one the production estate actually
- * returned for WIN10CLIENT3 on 2026-08-03, copied verbatim including the
+ * returned for LABMACHINE03 on 2026-08-03, copied verbatim including the
  * `traceId` shape:
  *
  *   {"type":"https://httpstatuses.io/404","title":"Not Found","status":404,
@@ -33,9 +33,9 @@ const LIVE_404_BODY = JSON.stringify({
   traceId: '00-dad2fd4db696789e08e289057908f2ac-221ba87d7e0dcae4-00',
 });
 
-/** WIN10CLIENT3 — a present, managed Windows endpoint that answers 404. */
+/** LABMACHINE03 — a present, managed Windows endpoint that answers 404. */
 const NO_DATA_ID = 'e57a7e00-0000-4000-8000-000000000012';
-/** WIN10CLIENT4 — answers 200 with totalItems 1. */
+/** LABMACHINE04 — answers 200 with totalItems 1. */
 const HAS_DATA_ID = 'e57a7e00-0000-4000-8000-000000000006';
 
 let server: Server;
@@ -97,7 +97,7 @@ describe('list_detected_vulnerabilities_by_endpoint — the 404 policy on the re
     const result = await client.compliance.getDetectedVulnerabilitiesByEndpoint(NO_DATA_ID);
     if (!isDataUnavailable(result)) { throw new Error('expected the unavailable envelope'); }
 
-    // A11: WIN10CLIENT3 and WIN10CLIENT10 are both WindowsEndpoint, so no
+    // A11: LABMACHINE03 and LABMACHINE010 are both WindowsEndpoint, so no
     // field distinguishes "never scanned" from the other causes.
     expect(result.possibleCauses.some((c) => /Windows endpoints only/i.test(c))).toBe(true);
     expect(result.possibleCauses.length).toBeGreaterThanOrEqual(4);

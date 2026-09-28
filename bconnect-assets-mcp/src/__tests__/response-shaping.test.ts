@@ -49,7 +49,7 @@ function assetRow(id: string, name: string): Record<string, unknown> {
     assetTypeId: 'e57a7e00-0000-4000-8000-000000000028',
     assetTypeName: 'Laptop',
     ownerId: 'e57a7e00-0000-4000-8000-000000000029',
-    ownerName: 'WIN10CLIENT4',
+    ownerName: 'LABMACHINE04',
     ownerType: 'WindowsEndpoint',
     comments: null,
     contact: null,
@@ -113,8 +113,8 @@ describe('list_assets — compact projection', () => {
   it('folds additionalProperties[{name,type,value}] to {name:value} and reports page-constant columns', async () => {
     const client = await connect();
     nextResult = envelope([
-      assetRow('e57a7e00-0000-4000-8000-000000000006', 'WIN10CLIENT4'),
-      assetRow('e57a7e00-0000-4000-8000-000000000010', 'WIN10CLIENT1'),
+      assetRow('e57a7e00-0000-4000-8000-000000000006', 'LABMACHINE04'),
+      assetRow('e57a7e00-0000-4000-8000-000000000010', 'LABMACHINE01'),
     ]);
     const json = await callJson(client, 'list_assets', {});
 
@@ -144,7 +144,7 @@ describe('list_assets — compact projection', () => {
 
   it('detail:true returns the raw record, byte-identical to the unshaped response', async () => {
     const client = await connect();
-    const raw = envelope([assetRow('e57a7e00-0000-4000-8000-000000000006', 'WIN10CLIENT4')]);
+    const raw = envelope([assetRow('e57a7e00-0000-4000-8000-000000000006', 'LABMACHINE04')]);
     nextResult = raw;
     const result = (await client.callTool({
       name: 'list_assets',
@@ -156,9 +156,9 @@ describe('list_assets — compact projection', () => {
 
   it('flags a non-String additionalProperties type instead of silently dropping it', async () => {
     const client = await connect();
-    const row = assetRow('e57a7e00-0000-4000-8000-000000000006', 'WIN10CLIENT4');
+    const row = assetRow('e57a7e00-0000-4000-8000-000000000006', 'LABMACHINE04');
     (row.additionalProperties as Record<string, unknown>[]).push({ name: 'WarrantyMonths', type: 'Number', value: '36' });
-    nextResult = envelope([row, assetRow('e57a7e00-0000-4000-8000-000000000010', 'WIN10CLIENT1')]);
+    nextResult = envelope([row, assetRow('e57a7e00-0000-4000-8000-000000000010', 'LABMACHINE01')]);
     const json = await callJson(client, 'list_assets', {});
 
     const meta = json.meta as Record<string, unknown>;
@@ -171,7 +171,7 @@ describe('list_assets — compact projection', () => {
   it('saves more than 15% of the page (measured, not asserted by hand)', async () => {
     const client = await connect();
     const rows = Array.from({ length: 20 }, (_, i) =>
-      assetRow(`asset-${i}`, `WIN10CLIENT${i}`)
+      assetRow(`asset-${i}`, `LABMACHINE0${i}`)
     );
     nextResult = envelope(rows);
     const compactText = JSON.stringify(await callJson(client, 'list_assets', {}));

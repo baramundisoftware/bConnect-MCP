@@ -27,8 +27,8 @@ export function windowsEndpointRow(index: number): Record<string, unknown> {
   return {
     id: guid("9dd5"),
     type: "WindowsEndpoint",
-    displayName: `WIN11CLIENT${index}`,
-    hostName: `WIN11CLIENT${index}`,
+    displayName: `LABMACHINE1${index}`,
+    hostName: `LABMACHINE1${index}`,
     primaryMAC: "00:0C:29:4C:7D:2F",
     macList: "00:0C:29:4C:7D:2F;00:0C:29:4C:7D:39;00:15:5D:01:2A:0B",
     primaryIP: `10.42.7.${index}`,

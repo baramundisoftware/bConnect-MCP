@@ -40,7 +40,7 @@ const ROUTE = `${BASE}/operatingsystems/v2.0/WindowsEndpoints`;
 /** A row shaped exactly like the live one measured on 2026-08-13. */
 const osRow = (n: number, overrides: Record<string, unknown> = {}) => ({
   endpointId: `00000000-0000-0000-0000-${String(n).padStart(12, "0")}`,
-  endpointName: `WIN10CLIENT${n}`,
+  endpointName: `LABMACHINE0${n}`,
   bootEnvironmentId: null,
   hardwareProfileId: `11111111-1111-1111-1111-${String(n).padStart(12, "0")}`,
   isOSInstallAllowed: true,

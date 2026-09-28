@@ -36,7 +36,7 @@ function libRow(i: number): Row {
   return { id: `id-${i}`, cveId: `CVE-2026-${1000 + i}`, cvssScore: 9.8, severity: "critical" };
 }
 
-function detRow(i: number, endpointName = "WIN11CLIENT1"): Row {
+function detRow(i: number, endpointName = "LABMACHINE11"): Row {
   return {
     vulnerabilityId: `id-${i}`,
     cveId: `CVE-2026-${1000 + i}`,
