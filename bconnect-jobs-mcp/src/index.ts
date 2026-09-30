@@ -22,6 +22,8 @@ import {
 import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
+import { validateOrThrow } from "@bconnect/mcp-core";
+import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 import type { paths as JobsPaths } from "./generated/jobs-types.js";
 
 // Type aliases for call-site casts (args are validated before use)
@@ -491,49 +493,10 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
   // ── Argument-validation pre-pass (runs before getBconnect) ─────────────────
-  function validateToolArguments(name: string, _args: Record<string, unknown> | undefined): void {
-    switch (name) {
-      // Job Definitions
-      case "list_job_definitions":
-      case "get_job_definition":
-      case "list_job_definitions_by_folder":
-      // Job Instances
-      case "list_job_instances":
-      case "get_job_instance":
-      case "list_endpoint_job_instances":
-      case "list_job_instances_by_definition":
-      case "list_job_instances_by_logical_group":
-      case "create_job_instance":
-      case "start_job_instance":
-      case "stop_job_instance":
-      case "resume_job_instance":
-      case "delete_job_instance":
-      // Job Folders
-      case "create_job_folder":
-      case "update_job_folder":
-      case "delete_job_folder":
-      case "list_job_folders":
-      case "get_job_folder":
-      case "list_job_subfolders":
-      // Job Assignments
-      case "assign_job_to_logical_group":
-      case "assign_job_to_static_group":
-      case "assign_job_to_dynamic_group":
-      case "assign_job_to_universal_dynamic_group":
-      // Kiosk Releases
-      case "create_kiosk_release":
-      case "withdraw_kiosk_release":
-      case "get_kiosk_release":
-      case "list_kiosk_releases":
-      case "list_kiosk_releases_by_job_definition":
-      case "list_kiosk_releases_by_endpoint":
-      case "list_kiosk_releases_by_ad_object":
-      case "list_kiosk_releases_by_logical_group":
-      // Job Instances by group (parameterised)
-      case "list_job_instances_by_static_group":
-      case "list_job_instances_by_dynamic_group":
-      case "list_job_instances_by_universal_dynamic_group":
-      // Unknown tool names are not validated here; dispatch handles MethodNotFound.
+  function validateToolArguments(name: string, args: Record<string, unknown> | undefined): void {
+    // Own keys only: an inherited name such as "constructor" must not match.
+    if (Object.hasOwn(TOOL_RULES, name)) {
+      validateOrThrow(args, TOOL_RULES[name]());
     }
   }
 
