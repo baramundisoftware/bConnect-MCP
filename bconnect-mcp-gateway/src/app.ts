@@ -61,8 +61,9 @@ export function getServerFactory(domain: string): Function | undefined {
 
 export function createApp(): express.Application {
   const app = express();
+  const logger = createLogger();
   // Access log first so it records every request's final status (incl. 401/429).
-  app.use(createAccessLogMiddleware(createLogger()));
+  app.use(createAccessLogMiddleware(logger));
   // Cap request body size (default 1mb) to bound per-request memory (audit H2).
   app.use(express.json({ limit: process.env.MCP_GATEWAY_MAX_BODY ?? "1mb" }));
   // Per-client-IP inbound rate limiting. The gateway has no built-in auth
@@ -80,20 +81,40 @@ export function createApp(): express.Application {
       return;
     }
 
-    // No per-request credential: each server falls back to the BCONNECT_*
-    // service credential (single-credential mode). bMS RBAC governs it.
-    const { server } = factory(undefined) as {
-      server: { connect: (t: unknown) => Promise<void>; close: () => Promise<void> };
+    // Express 4 doesn't catch a rejected promise from an async handler; Node
+    // would then terminate the whole gateway. Fail this request only (REQ-GW-002).
+    let server: { connect: (t: unknown) => Promise<void>; close: () => Promise<void> } | undefined;
+    let transport: StreamableHTTPServerTransport | undefined;
+    // close() returns a promise; a rejection during cleanup must not become an
+    // unhandled rejection either.
+    const release = () => {
+      void transport?.close().catch(() => undefined);
+      void server?.close().catch(() => undefined);
     };
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    try {
+      // No per-request credential: each server falls back to the BCONNECT_*
+      // service credential (single-credential mode). bMS RBAC governs it.
+      ({ server } = factory(undefined) as { server: NonNullable<typeof server> });
+      transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
-    res.on("close", () => {
-      transport.close();
-      server.close();
-    });
+      res.on("close", release);
 
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+    } catch (error) {
+      logger.error("MCP request failed", {
+        domain: req.params.domain,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      if (!res.headersSent) {
+        res.status(500).json({
+          jsonrpc: "2.0",
+          error: { code: -32603, message: "Internal error" },
+          id: null,
+        });
+      }
+      release();
+    }
   });
 
   // Method-not-allowed guards (MCP spec compliance)
