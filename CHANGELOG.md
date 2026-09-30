@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+- **Credential-returning write tools now require `ALLOW_SECRET_READ`.**
+  `update_bitlocker_pin` and `patch_local_admin_user_credentials` return the same BitLocker
+  recovery keys / startup PIN and LAPS password as `get_bitlocker_secrets` and
+  `get_local_admin_accounts`, but were gated only by `ALLOW_WRITE_OPERATIONS`. They now need
+  both gates. The refusal says an operator must set the variable and restart the server.
+- **Second lock in the shared client.** `@bconnect/mcp-core` refuses the BitLocker-secrets and
+  LAPS operations before sending unless `ALLOW_SECRET_READ=true`, whichever tool issues the
+  request, matching on the canonical request path.
+- **Guard test.** Derives the credential-returning operations from the 25R2/26R1 OpenAPI
+  response schemas, exercises every tool of every server, and fails if one reaches such an
+  operation without the gate, or calls a path the spec doesn't declare.
+
 ### Changed
 - **`BCONNECT_RELEASE` now defaults to `26R1`** (was `25R2`), matching the documented
   default and the advertised tool counts (e.g. 66 endpoints tools, 276 total). Following
@@ -25,6 +38,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **`update_bitlocker_pin` called a route the API doesn't have** (`PATCH …/{id}/Pin`); it now
+  uses the spec operation `PATCH …/BitLocker/WindowsEndpoints/{id}/Secrets`.
 - **Startup connectivity check.** `BConnectClientBase.testConnection()` probed a
   non-existent `/info` route (always 404) — latent because every deployment either set
   `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` or ran the gateway (which never probes). A
