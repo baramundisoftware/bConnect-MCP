@@ -38,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Gateway robustness.** An error while handling one MCP request could terminate the whole
+  gateway process for every client. The request now fails on its own (HTTP 500 with a JSON-RPC
+  error, details only in the server log), and the domain in `POST /<domain>/mcp` is matched
+  against the registered domains only; anything else is `404 Unknown MCP domain`.
 - **`update_bitlocker_pin` called a route the API doesn't have** (`PATCH …/{id}/Pin`); it now
   uses the spec operation `PATCH …/BitLocker/WindowsEndpoints/{id}/Secrets`.
 - **Startup connectivity check.** `BConnectClientBase.testConnection()` probed a

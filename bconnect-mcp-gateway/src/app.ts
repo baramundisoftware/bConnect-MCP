@@ -48,12 +48,22 @@ export const serverFactories: Record<string, Function> = {
 
 export const domains = Object.keys(serverFactories);
 
+/**
+ * The factory for a domain named in the request path, or undefined.
+ * Own keys only: `serverFactories` is a plain object, so a bare index would
+ * also find inherited members such as `constructor` or `toString` (REQ-GW-002).
+ */
+export function getServerFactory(domain: string): Function | undefined {
+  return Object.hasOwn(serverFactories, domain) ? serverFactories[domain] : undefined;
+}
+
 // ─── App factory ──────────────────────────────────────────────────────────────
 
 export function createApp(): express.Application {
   const app = express();
+  const logger = createLogger();
   // Access log first so it records every request's final status (incl. 401/429).
-  app.use(createAccessLogMiddleware(createLogger()));
+  app.use(createAccessLogMiddleware(logger));
   // Cap request body size (default 1mb) to bound per-request memory (audit H2).
   app.use(express.json({ limit: process.env.MCP_GATEWAY_MAX_BODY ?? "1mb" }));
   // Per-client-IP inbound rate limiting. The gateway has no built-in auth
@@ -62,7 +72,7 @@ export function createApp(): express.Application {
 
   // MCP Streamable HTTP handler — stateless, one server+transport per request
   app.post("/:domain/mcp", async (req: Request, res: Response) => {
-    const factory = serverFactories[req.params.domain];
+    const factory = getServerFactory(req.params.domain);
     if (!factory) {
       res.status(404).json({
         error: `Unknown MCP domain '${req.params.domain}'`,
@@ -71,20 +81,40 @@ export function createApp(): express.Application {
       return;
     }
 
-    // No per-request credential: each server falls back to the BCONNECT_*
-    // service credential (single-credential mode). bMS RBAC governs it.
-    const { server } = factory(undefined) as {
-      server: { connect: (t: unknown) => Promise<void>; close: () => Promise<void> };
+    // Express 4 doesn't catch a rejected promise from an async handler; Node
+    // would then terminate the whole gateway. Fail this request only (REQ-GW-002).
+    let server: { connect: (t: unknown) => Promise<void>; close: () => Promise<void> } | undefined;
+    let transport: StreamableHTTPServerTransport | undefined;
+    // close() returns a promise; a rejection during cleanup must not become an
+    // unhandled rejection either.
+    const release = () => {
+      void transport?.close().catch(() => undefined);
+      void server?.close().catch(() => undefined);
     };
-    const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
+    try {
+      // No per-request credential: each server falls back to the BCONNECT_*
+      // service credential (single-credential mode). bMS RBAC governs it.
+      ({ server } = factory(undefined) as { server: NonNullable<typeof server> });
+      transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
-    res.on("close", () => {
-      transport.close();
-      server.close();
-    });
+      res.on("close", release);
 
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
+      await server.connect(transport);
+      await transport.handleRequest(req, res, req.body);
+    } catch (error) {
+      logger.error("MCP request failed", {
+        domain: req.params.domain,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      if (!res.headersSent) {
+        res.status(500).json({
+          jsonrpc: "2.0",
+          error: { code: -32603, message: "Internal error" },
+          id: null,
+        });
+      }
+      release();
+    }
   });
 
   // Method-not-allowed guards (MCP spec compliance)
