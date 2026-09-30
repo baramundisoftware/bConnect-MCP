@@ -143,7 +143,9 @@ export class DefenseControlModule {
   }
 
   async updateBitLockerPin(id: string, patchData: BitLockerPinUpdate): Promise<BitLockerSecrets> {
-    const response = await this.httpClient.patch(`${this.basePath}/BitLocker/WindowsEndpoints/${id}/Pin`, patchData, {
+    // Spec operation UpdateBitLockerPinByWindowsEndpointId is a PATCH on …/Secrets
+    // (there is no …/Pin route); it returns the full BitLockerSecrets.
+    const response = await this.httpClient.patch(`${this.basePath}/BitLocker/WindowsEndpoints/${id}/Secrets`, patchData, {
       headers: { 'Content-Type': 'application/json-patch+json' },
     });
     return response.data;
