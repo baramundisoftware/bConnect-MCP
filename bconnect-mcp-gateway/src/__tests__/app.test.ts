@@ -18,9 +18,9 @@
  * which is guarded by `if (!process.env.VITEST)`.
  */
 
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from "vitest";
 import http from "node:http";
-import { createApp, domains } from "../app.js";
+import { createApp, domains, serverFactories } from "../app.js";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -236,3 +236,58 @@ describe("Domain routing resolves to the correct MCP server", () => {
     expect(body.result?.serverInfo?.name).toBe("bconnect-compliance-mcp");
   });
 });
+
+// ─── REQ-GW-002: untrusted input never crashes the gateway ───────────────────
+
+describe("REQ-GW-002 — hostile domain names and handler errors", () => {
+  let baseUrl: string;
+  let close: () => void;
+
+  beforeAll(async () => {
+    ({ baseUrl, close } = await startApp());
+  });
+
+  afterAll(() => close());
+  afterEach(() => vi.restoreAllMocks());
+
+  const post = (domain: string) =>
+    fetch(`${baseUrl}/${encodeURIComponent(domain)}/mcp`, {
+      method: "POST",
+      headers: MCP_HEADERS,
+      body: JSON.stringify(MCP_INITIALIZE),
+      // A crashed gateway never answers; fail fast instead of hanging.
+      signal: AbortSignal.timeout(3000),
+    });
+
+  // Derived at run time: every inherited member a plain object lookup would find.
+  const inherited = Object.getOwnPropertyNames(Object.prototype);
+
+  it.each(inherited)("POST /%s/mcp is an unknown domain (404)", async (name) => {
+    const res = await post(name);
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error).toMatch(/Unknown MCP domain/);
+  });
+
+  it("still serves /health and a real domain afterwards", async () => {
+    const health = await fetch(`${baseUrl}/health`, { signal: AbortSignal.timeout(3000) });
+    expect(health.status).toBe(200);
+    const res = await post("endpoints");
+    expect(res.status).toBe(200);
+  });
+
+  it("fails only the request when a handler throws (500, JSON-RPC error, no internals)", async () => {
+    vi.spyOn(serverFactories, "variables").mockImplementation(() => {
+      throw new Error("boom at /internal/path/secret.ts:42");
+    });
+    const res = await post("variables");
+    expect(res.status).toBe(500);
+    const body = await res.json();
+    expect(body).toMatchObject({ jsonrpc: "2.0", error: { code: -32603 }, id: null });
+    expect(JSON.stringify(body)).not.toMatch(/boom|internal\/path|\.ts/);
+
+    const health = await fetch(`${baseUrl}/health`, { signal: AbortSignal.timeout(3000) });
+    expect(health.status).toBe(200);
+  });
+});
+
