@@ -23,6 +23,8 @@ import {
 import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
+import { validateOrThrow } from "@bconnect/mcp-core";
+import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
@@ -770,73 +772,10 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
   // ── Argument-validation pre-pass (runs before getBconnect) ─────────────────
-  function validateToolArguments(name: string, _args: Record<string, unknown> | undefined): void {
-    switch (name) {
-      case "list_endpoints":
-      case "get_endpoint":
-      case "search_endpoints":
-      case "list_windows_endpoints":
-      case "get_windows_endpoint":
-      case "list_logical_groups":
-      case "get_logical_group":
-      case "list_group_endpoints":
-      case "list_linux_endpoints":
-      case "list_mac_endpoints":
-      case "get_linux_endpoint":
-      case "get_mac_endpoint":
-      case "list_endpoints_by_logical_group":
-      case "list_windows_endpoints_by_logical_group":
-      case "list_android_endpoints":
-      case "get_android_endpoint":
-      case "list_ios_endpoints":
-      case "get_ios_endpoint":
-      case "start_android_enrollment":
-      case "start_ios_enrollment":
-      case "create_android_endpoint":
-      case "update_android_endpoint":
-      case "delete_android_endpoint":
-      case "create_ios_endpoint":
-      case "update_ios_endpoint":
-      case "delete_ios_endpoint":
-      case "create_windows_endpoint":
-      case "update_windows_endpoint":
-      case "delete_windows_endpoint":
-      case "start_windows_enrollment":
-      case "trigger_intune_installation":
-      case "create_linux_endpoint":
-      case "update_linux_endpoint":
-      case "delete_linux_endpoint":
-      case "create_mac_endpoint":
-      case "update_mac_endpoint":
-      case "delete_mac_endpoint":
-      case "start_mac_enrollment":
-      case "create_logical_group":
-      case "update_logical_group":
-      case "delete_logical_group":
-      case "create_maintenance_window_for_endpoint":
-      case "update_maintenance_window_for_endpoint":
-      case "delete_maintenance_window_for_endpoint":
-      case "create_maintenance_window_for_logical_group":
-      case "update_maintenance_window_for_logical_group":
-      case "delete_maintenance_window_for_logical_group":
-      case "create_industrial_endpoint":
-      case "update_industrial_endpoint":
-      case "delete_industrial_endpoint":
-      case "create_network_endpoint":
-      case "update_network_endpoint":
-      case "delete_network_endpoint":
-      case "delete_endpoint":
-      case "list_network_endpoints":
-      case "get_network_endpoint":
-      case "get_maintenance_window_for_endpoint":
-      case "get_maintenance_window_for_logical_group":
-      case "list_unmanaged_endpoints":
-      case "get_unmanaged_endpoint":
-      case "delete_unmanaged_endpoint":
-      case "get_entra_id_data":
-      case "link_entra_id_data":
-      case "unlink_entra_id_data":
-      // Unknown tool names are not validated here; dispatch handles MethodNotFound.
+  function validateToolArguments(name: string, args: Record<string, unknown> | undefined): void {
+    // Own keys only: an inherited name such as "constructor" must not match.
+    if (Object.hasOwn(TOOL_RULES, name)) {
+      validateOrThrow(args, TOOL_RULES[name]());
     }
   }
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
