@@ -1,7 +1,6 @@
 version: 2
-# No github-actions ecosystem: CI/publish/release run locally (npm run ci,
-# make publish, npm run release), not via GitHub Actions — there are no
-# workflow files for Dependabot to keep pinned.
+# npm only for now. CI runs on GitHub Actions (.github/workflows/ci.yml); a
+# github-actions ecosystem entry comes with the planned actions/* update.
 updates:
   - package-ecosystem: "npm"
     # Cover the root, the gateway, the template, and all 13 domain servers.
@@ -28,6 +27,11 @@ updates:
         update-types: ["minor", "patch"]
     ignore:
       # Breaking majors handled as deliberate migration tasks, not auto-PRs.
+      # dotenv 17+ logs to stdout on load by default. A stdio MCP server's stdout
+      # must carry only JSON-RPC, so that output breaks every client. Stay on 16
+      # until the upgrade is planned together with `quiet: true` at every call site.
+      - dependency-name: "dotenv"
+        update-types: ["version-update:semver-major"]
       - dependency-name: "express"
         update-types: ["version-update:semver-major"]
       # @types/express must track the express runtime major (currently v4).
