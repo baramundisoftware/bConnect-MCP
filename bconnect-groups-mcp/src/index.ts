@@ -23,6 +23,8 @@ import {
 import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
+import { validateOrThrow } from "@bconnect/mcp-core";
+import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 
 // ── Factory exported for testing ─────────────────────────────────────────────
 
@@ -243,42 +245,10 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   });
 
   // ── Argument-validation pre-pass (runs before getBconnect) ─────────────────
-  function validateToolArguments(name: string, _args: Record<string, unknown> | undefined): void {
-    switch (name) {
-      case "list_endpoints_by_logical_group":
-      case "list_android_endpoints_by_logical_group":
-      case "list_ios_endpoints_by_logical_group":
-      case "list_linux_endpoints_by_logical_group":
-      case "list_mac_endpoints_by_logical_group":
-      case "list_network_endpoints_by_logical_group":
-      case "list_windows_endpoints_by_logical_group":
-      case "list_industrial_endpoints_by_logical_group":
-      case "list_logical_groups_by_logical_group":
-      case "list_endpoints_by_static_group":
-      case "list_android_endpoints_by_static_group":
-      case "list_ios_endpoints_by_static_group":
-      case "list_linux_endpoints_by_static_group":
-      case "list_mac_endpoints_by_static_group":
-      case "list_network_endpoints_by_static_group":
-      case "list_windows_endpoints_by_static_group":
-      case "list_industrial_endpoints_by_static_group":
-      case "list_endpoints_by_dynamic_group":
-      case "list_windows_endpoints_by_dynamic_group":
-      case "list_endpoints_by_universal_dynamic_group":
-      case "list_android_endpoints_by_universal_dynamic_group":
-      case "list_ios_endpoints_by_universal_dynamic_group":
-      case "list_linux_endpoints_by_universal_dynamic_group":
-      case "list_mac_endpoints_by_universal_dynamic_group":
-      case "list_network_endpoints_by_universal_dynamic_group":
-      case "list_windows_endpoints_by_universal_dynamic_group":
-      case "list_industrial_endpoints_by_universal_dynamic_group":
-      case "list_endpoints_by_ad_user":
-      case "list_android_endpoints_by_ad_user":
-      case "list_ios_endpoints_by_ad_user":
-      case "list_linux_endpoints_by_ad_user":
-      case "list_mac_endpoints_by_ad_user":
-      case "list_windows_endpoints_by_ad_user":
-      // Unknown tool names are not validated here; dispatch handles MethodNotFound.
+  function validateToolArguments(name: string, args: Record<string, unknown> | undefined): void {
+    // Own keys only: an inherited name such as "constructor" must not match.
+    if (Object.hasOwn(TOOL_RULES, name)) {
+      validateOrThrow(args, TOOL_RULES[name]());
     }
   }
 
