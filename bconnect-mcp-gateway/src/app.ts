@@ -48,6 +48,15 @@ export const serverFactories: Record<string, Function> = {
 
 export const domains = Object.keys(serverFactories);
 
+/**
+ * The factory for a domain named in the request path, or undefined.
+ * Own keys only: `serverFactories` is a plain object, so a bare index would
+ * also find inherited members such as `constructor` or `toString` (REQ-GW-002).
+ */
+export function getServerFactory(domain: string): Function | undefined {
+  return Object.hasOwn(serverFactories, domain) ? serverFactories[domain] : undefined;
+}
+
 // ─── App factory ──────────────────────────────────────────────────────────────
 
 export function createApp(): express.Application {
@@ -62,7 +71,7 @@ export function createApp(): express.Application {
 
   // MCP Streamable HTTP handler — stateless, one server+transport per request
   app.post("/:domain/mcp", async (req: Request, res: Response) => {
-    const factory = serverFactories[req.params.domain];
+    const factory = getServerFactory(req.params.domain);
     if (!factory) {
       res.status(404).json({
         error: `Unknown MCP domain '${req.params.domain}'`,
