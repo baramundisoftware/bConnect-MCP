@@ -28,7 +28,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import {
   RELEASES, type Release, findOperation, loadOperations, secretBearingOperations,
-} from './lib/spec-secrets';
+} from './lib/spec-secrets.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BASE_URL = 'http://bms.guard.test/bconnect';

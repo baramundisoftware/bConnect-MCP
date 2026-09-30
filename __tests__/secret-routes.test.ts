@@ -6,9 +6,9 @@ import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import {
   SECRET_ROUTES, SecretRouteBlockedError, assertSecretRouteAllowed, isSecretRoute,
-} from '../packages/mcp-core/src/secret-routes';
-import { BConnectClientBase } from '../packages/mcp-core/src/bconnect-client-base';
-import { RELEASES, secretBearingOperations } from './lib/spec-secrets';
+} from '../packages/mcp-core/src/secret-routes.js';
+import { BConnectClientBase } from '../packages/mcp-core/src/bconnect-client-base.js';
+import { RELEASES, secretBearingOperations } from './lib/spec-secrets.js';
 
 const ID = '00000000-0000-4000-8000-000000000001';
 const BITLOCKER = `/defensecontrol/v2.0/BitLocker/WindowsEndpoints/${ID}/Secrets`;
@@ -39,6 +39,21 @@ describe('route classification', () => {
     ['GET', `/endpoints/v2.0/Endpoints/${ID}`],
   ])('allows %s %s', (method, url) => {
     expect(isSecretRoute(method, url)).toBe(false);
+  });
+
+  // The gate must match the path the server will serve, not the raw string.
+  const LAPS_REL = `defensecontrol/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/${ID}`;
+  it.each([
+    ['dot segments', `/endpoints/v2.0/Endpoints/../../../${LAPS_REL}`],
+    ['encoded dots', `/endpoints/v2.0/Endpoints/%2e%2e/%2e%2e/%2e%2e/${LAPS_REL}`],
+    ['encoded slashes', `/endpoints/v2.0/Endpoints/../../../${LAPS_REL.replace(/\//g, '%2F')}`],
+    ['encoded slashes before the dots', `/endpoints/v2.0/Endpoints/..%2F..%2F..%2F${LAPS_REL}`],
+    ['double encoding', `/endpoints/v2.0/Endpoints/..%252F..%252F..%252F${LAPS_REL.replace(/\//g, '%252F')}`],
+    ['backslashes', `/endpoints/v2.0/Endpoints/..\\..\\..\\${LAPS_REL.replace(/\//g, '\\')}`],
+    ['a detour inside the domain', `/defensecontrol/v2.0/x/../LocalAdministrativeAccounts/WindowsEndpoints/${ID}`],
+    ['encoded query marker', `/${LAPS_REL}%3Fx=1`],
+  ])('denies a secret route reached through %s', (_how, url) => {
+    expect(isSecretRoute('GET', url)).toBe(true);
   });
 
   it('refuses unless ALLOW_SECRET_READ=true', () => {
@@ -91,6 +106,14 @@ describe('shared client refuses before sending', () => {
     process.env.ALLOW_SECRET_READ = 'true';
     await client().client.get(BITLOCKER);
     expect(sent).toEqual([`GET /bconnect${BITLOCKER}`]);
+  });
+
+  it('blocks a secret route reached by path traversal from another domain', async () => {
+    process.env.ALLOW_SECRET_READ = '';
+    await expect(
+      client().client.get(`/endpoints/v2.0/Endpoints/../../../defensecontrol/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/${ID}`),
+    ).rejects.toBeInstanceOf(SecretRouteBlockedError);
+    expect(sent).toEqual([]);
   });
 
   it('never blocks an ordinary route', async () => {

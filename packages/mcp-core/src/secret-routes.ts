@@ -54,9 +54,35 @@ function pathOf(url: string): string {
   return path.split(/[?#]/)[0];
 }
 
+/**
+ * The path a server will actually serve for this request: percent-decoded
+ * (repeatedly, so double encoding doesn't hide a slash), backslashes read as
+ * slashes, dot segments resolved. Matching the raw string would let an encoded
+ * or relative form of a secret route through.
+ */
+function canonicalPathOf(url: string): string {
+  let path = pathOf(url);
+  for (let round = 0; round < 3; round++) {
+    let decoded: string;
+    try {
+      decoded = decodeURIComponent(path);
+    } catch {
+      break; // malformed escape: match on what we have
+    }
+    if (decoded === path) break;
+    path = decoded;
+  }
+  const segments: string[] = [];
+  for (const segment of path.replace(/\\/g, "/").split("/")) {
+    if (segment === "..") segments.pop();
+    else if (segment !== ".") segments.push(segment);
+  }
+  return "/" + segments.filter((s, i) => s !== "" || i === segments.length - 1).join("/");
+}
+
 export function isSecretRoute(method: string, url: string): boolean {
   const upper = String(method ?? "GET").toUpperCase();
-  const path = pathOf(url);
+  const path = canonicalPathOf(url);
   return MATCHERS.some((m) => m.method === upper && m.pattern.test(path));
 }
 
