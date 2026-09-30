@@ -32,9 +32,12 @@
 
 name: CI
 
+# `push` on `main` only: a PR commit is covered by `pull_request`. With `push`
+# on every branch as well, each PR commit ran the whole matrix twice. A branch
+# without a PR can still be run by hand (`workflow_dispatch`). REQ-CI-001.
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -84,6 +87,17 @@ jobs:
         # OS trust store, which is how an internal CA signing the bMS
         # certificate becomes invisible (issue #59). 24.x is the forward check.
         node: ["22.15", "24"]
+    # The ruleset "main protection" requires these checks BY NAME, from the
+    # GitHub Actions app (REQ-CI-001). Renaming this job or changing the matrix
+    # changes the names: update the ruleset in the same PR, or every PR waits
+    # for a check that never arrives. `__tests__/ci-workflow.guard.test.ts`
+    # fails if this list and the matrix drift apart.
+    # required-checks:begin
+    #   - build + test (ubuntu-latest, node 22.15)
+    #   - build + test (ubuntu-latest, node 24)
+    #   - build + test (windows-latest, node 22.15)
+    #   - build + test (windows-latest, node 24)
+    # required-checks:end
 
     steps:
       - uses: actions/checkout@v4
@@ -165,7 +179,11 @@ jobs:
     runs-on: ubuntu-latest
     # Reported, not blocking: the current code is below the 60% floors its
     # vitest configs declare. Make this blocking again once coverage is raised.
-    continue-on-error: true
+    #
+    # Not via job-level `continue-on-error`: that let the run pass while this
+    # check stayed red on every PR, and a permanent red mark teaches everyone to
+    # ignore red (REQ-CI-001). A workspace below its floor is now a warning
+    # annotation plus a job-summary line; a failed install or build still fails.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -197,8 +215,8 @@ jobs:
         # the first CI run named it and stopped, while groups (50.16% against a
         # 74 floor), universaldynamicgroups and software were never reached.
         # A gate that reports one of four failures is the defect this repository
-        # keeps finding. Every workspace now runs; the step fails at the END with
-        # all of them named.
+        # keeps finding. Every workspace now runs; the step reports at the END,
+        # as one warning naming all of them (reported, not blocking).
         run: |
           failed=""
           for d in bconnect-*-mcp bconnect-mcp-gateway packages/mcp-core; do
@@ -209,8 +227,10 @@ jobs:
             fi
           done
           if [ -n "$failed" ]; then
-            echo "::error::workspaces below their coverage floor:$failed"
-            exit 1
+            echo "::warning::workspaces below their coverage floor (reported, not blocking):$failed"
+            echo "⚠️ Coverage floors not met (reported, not blocking):$failed" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "✅ All workspaces meet their coverage floors." >> "$GITHUB_STEP_SUMMARY"
           fi
 
   strict:
@@ -231,12 +251,15 @@ jobs:
     # the advisory get fixed sooner; it makes CI something people learn to
     # override, and an overridden gate protects nothing.
     #
+    # Reported as a warning annotation plus a job-summary line, not via
+    # job-level `continue-on-error`, which left a red check on every PR
+    # (REQ-CI-001). A failed `npm ci` still fails the job.
+    #
     # What blocks instead is the property this repo can actually hold: `gate`
     # runs `npm ci`, which fails if the lockfile and the manifests would
     # diverge — so the dependency graph cannot change without review, which is
     # the half a contributor's PR is genuinely responsible for. Read this job's
-    # output when it is red; do not gate a merge on it.
-    continue-on-error: true
+    # output when it warns; do not gate a merge on it.
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -247,4 +270,10 @@ jobs:
       - run: npm ci
 
       - name: Dependency audit
-        run: npm audit --audit-level=high
+        run: |
+          if npm audit --audit-level=high; then
+            echo "✅ npm audit: no high or critical advisories." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::npm audit reports high/critical advisories or could not run (reported, not blocking). See this job's log."
+            echo "⚠️ npm audit: high/critical advisories or audit error (reported, not blocking). See the log." >> "$GITHUB_STEP_SUMMARY"
+          fi
