@@ -84,6 +84,10 @@ Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`non
 
 Write/mutating tools are **disabled by default**. A server exposes them only when `ALLOW_WRITE_OPERATIONS=true` is set; otherwise every write tool returns a clear "disabled" error. Leave it unset for monitoring / reporting deployments where mutation must be prevented. Secret-returning tools (BitLocker recovery keys, LAPS local-admin passwords) are additionally gated behind `ALLOW_SECRET_READ`.
 
+### Secret-Read Gating
+
+A tool whose response contains live credentials is **disabled by default**, whatever its HTTP method: `get_bitlocker_secrets`, `update_bitlocker_pin`, `get_local_admin_accounts` and `patch_local_admin_user_credentials`. It runs only when `ALLOW_SECRET_READ=true` is set in the server's environment; the write tools among them need `ALLOW_WRITE_OPERATIONS=true` as well. The gate is enforced twice: by tool name in the server, and by route in the shared HTTP client, which refuses these bConnect operations before any request is sent.
+
 ### Rate Limiting
 
 Each server can enforce a token-bucket rate limiter to protect the bConnect API. Enable and tune it via `BCONNECT_RATE_LIMIT_ENABLED`, `BCONNECT_RATE_LIMIT_MAX_REQUESTS`, and `BCONNECT_RATE_LIMIT_WINDOW_MS`.
