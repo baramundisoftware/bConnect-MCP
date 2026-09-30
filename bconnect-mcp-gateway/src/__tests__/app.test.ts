@@ -277,7 +277,7 @@ describe("REQ-GW-002 — hostile domain names and handler errors", () => {
   });
 
   it("fails only the request when a handler throws (500, JSON-RPC error, no internals)", async () => {
-    vi.spyOn(serverFactories, "variables").mockImplementation(() => {
+    vi.spyOn(serverFactories as { variables: () => unknown }, "variables").mockImplementation(() => {
       throw new Error("boom at /internal/path/secret.ts:42");
     });
     const res = await post("variables");
