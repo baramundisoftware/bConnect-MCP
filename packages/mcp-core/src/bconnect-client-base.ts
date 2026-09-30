@@ -91,6 +91,7 @@ import { RateLimiter, RateLimitError } from "./rate-limiter.js";
 import { AuditLogger, AuditLevel, AuditLogEntry } from "./audit-logger.js";
 import { ResponseCache } from "./response-cache.js";
 import { BatchOperations, BatchOperation, BatchExecutionResult } from "./batch-operations.js";
+import { assertSecretRouteAllowed, SecretRouteBlockedError } from "./secret-routes.js";
 
 export interface BConnectConfig {
   baseUrl: string;
@@ -397,6 +398,17 @@ export class BConnectClientBase {
         return this.handleError(error);
       }
     );
+    // Secret-route gate (REQ-SRV-017). Registered last because axios runs request
+    // interceptors in reverse order: this one runs first, before the cache or
+    // rate limiter can act on a request whose response carries credentials.
+    this.client.interceptors.request.use(
+      (requestConfig: InternalAxiosRequestConfig) => {
+        assertSecretRouteAllowed(requestConfig.method ?? "GET", requestConfig.url ?? "");
+        return requestConfig;
+      },
+      (error) => Promise.reject(error)
+    );
+
     // TODO: Initialize V2.0 module
     // Example: this.domain = new DomainModule(this.client);
   }
@@ -419,6 +431,11 @@ export class BConnectClientBase {
    * Handle API errors with meaningful messages
    */
   private handleError(error: AxiosError | RateLimitError | Error): Promise<never> {
+    // The secret-route refusal is already written for the operator; pass it on as is.
+    if (error instanceof SecretRouteBlockedError) {
+      throw error;
+    }
+
     // Log error if audit logging is enabled
     if (this.auditLogger && 'config' in error && error.config) {
       const config = error.config as BConnectRequestConfig;

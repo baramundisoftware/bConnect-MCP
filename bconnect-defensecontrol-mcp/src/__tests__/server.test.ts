@@ -172,6 +172,7 @@ describe('bconnect-defensecontrol-mcp', () => {
   describe('secret-read gate (C3)', () => {
     afterEach(() => {
       delete process.env.ALLOW_SECRET_READ;
+      delete process.env.ALLOW_WRITE_OPERATIONS;
       delete process.env.BCONNECT_BASE_URL;
     });
 
@@ -202,7 +203,53 @@ describe('bconnect-defensecontrol-mcp', () => {
         .then((res) => ({ res }))
         .catch((err) => ({ err }));
       // Whether it rejected (network) or returned an error result, it must NOT be the gate message.
-      expect(JSON.stringify(outcome)).not.toMatch(/Set ALLOW_SECRET_READ=true to enable it/);
+      expect(JSON.stringify(outcome)).not.toMatch(/Secret-returning operation .* is disabled/);
+    });
+
+    // REQ-SRV-017: the write tools return the same secrets as the read tools, so
+    // opening writes alone must not expose them.
+    const ENDPOINT = 'd0000001-0001-0001-0001-000000000001';
+    const SECRET_WRITES = [
+      ['update_bitlocker_pin', '26R1', { endpointId: ENDPOINT, patchOperations: [{ op: 'replace', path: '/startupPin', value: '123456' }] }],
+      ['patch_local_admin_user_credentials', '26R1', { endpointId: ENDPOINT, patchOperations: [{ op: 'replace', path: '/expirationDate', value: '2027-01-01T00:00:00Z' }] }],
+      ['patch_local_admin_user_credentials', '25R2', { endpointId: ENDPOINT, patchOperations: [{ op: 'replace', path: '/expirationDate', value: '2027-01-01T00:00:00Z' }] }],
+    ] as const;
+
+    it.each(SECRET_WRITES)('blocks %s (%s) with ALLOW_WRITE_OPERATIONS=true but no ALLOW_SECRET_READ', async (name, release, args) => {
+      process.env.BCONNECT_RELEASE = release;
+      process.env.ALLOW_WRITE_OPERATIONS = 'true';
+      const { client } = await startServer();
+      const res = await client.callTool({ name, arguments: args as Record<string, unknown> });
+      expect(res.isError).toBe(true);
+      const text = JSON.stringify(res.content);
+      expect(text).toMatch(/Secret-returning operation .* is disabled/);
+      expect(text).toMatch(/restart/);
+      expect(text).toMatch(/independent of ALLOW_WRITE_OPERATIONS/);
+    });
+
+    it.each(SECRET_WRITES)('still needs the write gate for %s (%s) when only ALLOW_SECRET_READ is set', async (name, release, args) => {
+      process.env.BCONNECT_RELEASE = release;
+      process.env.ALLOW_SECRET_READ = 'true';
+      const { client } = await startServer();
+      const res = await client.callTool({ name, arguments: args as Record<string, unknown> });
+      expect(res.isError).toBe(true);
+      expect(JSON.stringify(res.content)).toMatch(/Write operation .* is disabled/);
+    });
+
+    it.each(SECRET_WRITES)('passes both gates for %s (%s) when both are open (fails downstream)', async (name, release, args) => {
+      process.env.BCONNECT_RELEASE = release;
+      process.env.ALLOW_WRITE_OPERATIONS = 'true';
+      process.env.ALLOW_SECRET_READ = 'true';
+      process.env.BCONNECT_BASE_URL = 'http://127.0.0.1:9'; // refused fast → proves both gates were passed
+      const { client } = await startServer();
+      const outcome = await client
+        .callTool({ name, arguments: args as Record<string, unknown> })
+        .then((res) => ({ res }))
+        .catch((err) => ({ err }));
+      const text = JSON.stringify(outcome);
+      expect(text).not.toMatch(/Secret-returning operation .* is disabled/);
+      expect(text).not.toMatch(/Write operation .* is disabled/);
+      expect(text).not.toMatch(/Refusing (GET|PATCH)/);
     });
   });
 });

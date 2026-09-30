@@ -147,12 +147,15 @@ BCONNECT_RATE_LIMIT_MAX_REQUESTS=100 # Max requests per window (default: 100)
 BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min)
 ```
 
-> **`ALLOW_SECRET_READ`** gates the DefenseControl tools that return **live
-> credentials** — `get_bitlocker_secrets` (recovery keys + PIN) and
-> `get_local_admin_accounts` (cleartext LAPS passwords). It is **off by default**
-> so those secrets cannot land in an LLM context/transcript unintentionally. Set
-> it to `true` only on a server/deployment where retrieving those secrets is an
-> intended, authorized use.
+> **`ALLOW_SECRET_READ`** gates the DefenseControl tools whose response contains
+> **live credentials**: `get_bitlocker_secrets` and `update_bitlocker_pin` (BitLocker
+> recovery keys + startup PIN), `get_local_admin_accounts` and
+> `patch_local_admin_user_credentials` (cleartext LAPS password). It is **off by
+> default**, so those secrets can't land in an LLM context or transcript
+> unintentionally. It is **independent of `ALLOW_WRITE_OPERATIONS`**: the two write
+> tools need both gates. Set it to `true` only on a server where retrieving these
+> secrets is an intended, authorized use, then restart the server; a running
+> server doesn't pick up the change, and the assistant can't set it.
 
 > **What write tools can (and can't) do.** With `ALLOW_WRITE_OPERATIONS=true`, the
 > assistant can **create, modify, start, assign and delete many bMS objects** — e.g.
