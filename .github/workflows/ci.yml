@@ -94,6 +94,14 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
+      # npm runs package scripts with cmd.exe on Windows; the root build script
+      # is a bash loop. Use Git Bash (preinstalled on the runner), as the README
+      # requires for Windows builds.
+      - name: Use Git Bash for npm scripts (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: npm config set script-shell "C:\\Program Files\\Git\\bin\\bash.exe"
+
       # `npm ci`, never `npm install` — SECURITY.md requires it, and the
       # property is the point: this fails if the lockfile and the manifests
       # would diverge, so CI cannot silently resolve a dependency graph nobody
