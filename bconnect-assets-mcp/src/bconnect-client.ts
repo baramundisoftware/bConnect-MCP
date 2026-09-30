@@ -11,5 +11,6 @@ import { AssetsModule } from "./modules/assets.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/assets/v2.0/Assets";
   public assets = new AssetsModule(this.client);
 }

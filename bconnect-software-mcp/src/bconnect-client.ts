@@ -11,5 +11,6 @@ import { SoftwareModule } from "./modules/software.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/software/v2.0/InstalledWindowsSoftware";
   public software = new SoftwareModule(this.client);
 }

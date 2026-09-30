@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Servers no longer exit at startup with "Resource not found" (#111).** The connectivity
+  check requested `/v2.0/WindowsEndpoints` without a domain prefix, a route bConnect doesn't
+  have, so every server stopped unless `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` was set. Each
+  server now probes a list route of its own domain (e.g. `/endpoints/v2.0/Endpoints`) with
+  `PageSize=1`. `BCONNECT_SKIP_CONNECTIVITY_CHECK` is no longer needed for this, and
+  `healthCheckPath` in the client config still overrides the route.
 - **Gateway robustness.** An error while handling one MCP request could terminate the whole
   gateway process for every client. The request now fails on its own (HTTP 500 with a JSON-RPC
   error, details only in the server log), and the domain in `POST /<domain>/mcp` is matched

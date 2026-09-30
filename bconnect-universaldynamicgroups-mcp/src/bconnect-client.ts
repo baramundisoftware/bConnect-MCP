@@ -11,5 +11,6 @@ import { UniversalDynamicGroupsModule } from "./modules/universaldynamicgroups.j
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/universaldynamicgroups/v2.0/UniversalDynamicGroups";
   public udg = new UniversalDynamicGroupsModule(this.client);
 }

@@ -11,5 +11,6 @@ import { OperatingSystemsModule } from "./modules/operatingsystems.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/operatingsystems/v2.0/Folders";
   public operatingSystems = new OperatingSystemsModule(this.client);
 }

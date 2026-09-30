@@ -11,5 +11,6 @@ import { JobsModule } from "./modules/jobs.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/jobs/v2.0/JobDefinitions";
   public jobs = new JobsModule(this.client);
 }

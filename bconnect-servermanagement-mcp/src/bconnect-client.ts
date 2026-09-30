@@ -11,5 +11,6 @@ import { ServerManagementModule } from "./modules/servermanagement.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/servermanagement/v2.0/SecurityGroups";
   public serverManagement = new ServerManagementModule(this.client);
 }

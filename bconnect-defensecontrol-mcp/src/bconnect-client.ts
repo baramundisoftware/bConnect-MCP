@@ -11,5 +11,6 @@ import { DefenseControlModule } from "./modules/defensecontrol.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/defensecontrol/v2.0/MicrosoftDefender/WindowsEndpoints";
   public defenseControl = new DefenseControlModule(this.client);
 }

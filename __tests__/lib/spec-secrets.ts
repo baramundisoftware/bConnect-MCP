@@ -27,6 +27,7 @@ export interface ApiOperation {
   path: string;            // spec path template, e.g. /v2.0/BitLocker/WindowsEndpoints/{id}/Secrets
   operationId: string;
   secretFields: string[];  // e.g. ["BitLockerSecrets.initialStartupPin"]; empty = not secret-bearing
+  queryParams: string[];   // names of the query parameters the operation accepts, e.g. ["Page", "PageSize"]
   matches(method: string, path: string): boolean;
 }
 
@@ -92,6 +93,7 @@ export function loadOperations(release: Release): ApiOperation[] {
         ops.push({
           release, domain, method: upper, path, operationId: op.operationId ?? '',
           secretFields: [...fields],
+          queryParams: (op.parameters ?? []).filter((q: Schema) => q.in === 'query').map((q: Schema) => q.name),
           matches: (m, p) => m.toUpperCase() === upper && pattern.test(p),
         });
       }

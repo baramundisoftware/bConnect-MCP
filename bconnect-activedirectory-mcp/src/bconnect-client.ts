@@ -11,5 +11,6 @@ import { ActiveDirectoryModule } from "./modules/activedirectory.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/activedirectory/v2.0/ADGroups";
   public activeDirectory = new ActiveDirectoryModule(this.client);
 }

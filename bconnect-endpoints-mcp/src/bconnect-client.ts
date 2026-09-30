@@ -11,5 +11,6 @@ import { EndpointsModule } from "./modules/endpoints.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/endpoints/v2.0/Endpoints";
   public endpoints = new EndpointsModule(this.client);
 }
