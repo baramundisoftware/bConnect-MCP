@@ -17,47 +17,6 @@ const paginationRules = (): ValidationRule[] => [
   CommonRules.orderBy()
 ];
 
-/**
- * The response-shaping flags (TOK-24 `detail`/`fields`, TOK-25 `countOnly`).
- *
- * They are this server's parameters, not bConnect's — the handler strips them
- * before the request goes upstream — so they are type-checked here for the same
- * reason every other parameter is: bConnect answers HTTP 200 and silently
- * ignores what it does not understand, and a `detail: "true"` string that fell
- * through would quietly return the compact projection while the caller believed
- * it had asked for the full record.
- */
-const projectionRules = (): ValidationRule[] => [
-  {
-    name: 'detail',
-    required: false,
-    type: 'boolean',
-    message: 'detail must be a boolean'
-  },
-  {
-    name: 'fields',
-    required: false,
-    type: 'array',
-    message: 'fields must be an array of field names'
-  },
-  {
-    name: 'countOnly',
-    required: false,
-    type: 'boolean',
-    message: 'countOnly must be a boolean'
-  }
-];
-
-/** `countOnly` alone, for the list tools that take no compact projection. */
-const countOnlyRule = (): ValidationRule[] => [
-  {
-    name: 'countOnly',
-    required: false,
-    type: 'boolean',
-    message: 'countOnly must be a boolean'
-  }
-];
-
 const folderListRules = (): ValidationRule[] => [
   ...paginationRules(),
   {
@@ -80,40 +39,25 @@ const patchOperationsRule: ValidationRule = {
 
 export const SoftwareRules = {
   // ── Installed Software (25R2 + 26R1) ──────────────────────────────
-  listInstalledWindowsSoftware: (): ValidationRule[] => [
-    ...paginationRules(),
-    ...projectionRules()
-  ],
+  listInstalledWindowsSoftware: (): ValidationRule[] => paginationRules(),
 
   listInstalledSoftwareByEndpoint: (): ValidationRule[] => [
     CommonRules.guid('endpointId'),
-    ...paginationRules(),
-    ...projectionRules()
+    ...paginationRules()
   ],
 
   listInstalledSoftwareByLogicalGroup: (): ValidationRule[] => [
     CommonRules.guid('logicalGroupId'),
-    {
-      name: 'includeSubfolders',
-      required: false,
-      type: 'boolean',
-      message: 'includeSubfolders must be a boolean'
-    },
-    ...paginationRules(),
-    ...projectionRules()
+    ...paginationRules()
   ],
 
   listInstalledSoftwareByDynamicGroup: (): ValidationRule[] => [
     CommonRules.guid('universalDynamicGroupId'),
-    ...paginationRules(),
-    ...projectionRules()
+    ...paginationRules()
   ],
 
   // ── Software Bundles (26R1) ───────────────────────────────────────
-  listSoftwareBundles: (): ValidationRule[] => [
-    ...paginationRules(),
-    ...countOnlyRule()
-  ],
+  listSoftwareBundles: (): ValidationRule[] => paginationRules(),
 
   getSoftwareBundle: (): ValidationRule[] => [
     CommonRules.guid('bundleId')
@@ -128,10 +72,7 @@ export const SoftwareRules = {
       maxLength: 255,
       message: 'name is required (string, 1-255 chars)'
     },
-    // SoftwareBundleForCreation names the placement field `parentId`; the
-    // rule (and the tool) said `folderId` until 2026-08-11, a key the body
-    // rejects (TOOL-REVIEW-MATRIX.md, software F1).
-    CommonRules.guidOptional('parentId')
+    CommonRules.guidOptional('folderId')
   ],
 
   deleteSoftwareBundle: (): ValidationRule[] => [
@@ -139,23 +80,23 @@ export const SoftwareRules = {
   ],
 
   // ── Bundle Applications (26R1) ────────────────────────────────────
-  listBundleApplications: (): ValidationRule[] => [
-    ...paginationRules(),
-    ...countOnlyRule()
-  ],
+  listBundleApplications: (): ValidationRule[] => paginationRules(),
 
   listBundleApplicationsByBundle: (): ValidationRule[] => [
     CommonRules.guid('bundleId'),
-    ...paginationRules(),
-    ...countOnlyRule()
+    ...paginationRules()
   ],
 
-  // AddApplicationRequest accepts exactly applicationId — an `order` rule sat
-  // here until 2026-08-11 for a parameter the body rejects; bMS assigns the
-  // order index itself (TOOL-REVIEW-MATRIX.md, software F2).
   addApplicationToBundle: (): ValidationRule[] => [
     CommonRules.guid('bundleId'),
-    CommonRules.guid('applicationId')
+    CommonRules.guid('applicationId'),
+    {
+      name: 'order',
+      required: false,
+      type: 'number',
+      min: 0,
+      message: 'order must be a non-negative integer'
+    }
   ],
 
   deleteBundleApplication: (): ValidationRule[] => [
@@ -169,10 +110,7 @@ export const SoftwareRules = {
   ],
 
   // ── Bundle Folders (26R1) ─────────────────────────────────────────
-  listBundleFolders: (): ValidationRule[] => [
-    ...folderListRules(),
-    ...countOnlyRule()
-  ],
+  listBundleFolders: (): ValidationRule[] => folderListRules(),
 
   getBundleFolder: (): ValidationRule[] => [
     CommonRules.guid('id')
@@ -186,8 +124,7 @@ export const SoftwareRules = {
       type: 'boolean',
       message: 'includeSubfolders must be a boolean'
     },
-    ...folderListRules(),
-    ...countOnlyRule()
+    ...folderListRules()
   ],
 
   createBundleFolder: (): ValidationRule[] => [

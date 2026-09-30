@@ -9,24 +9,11 @@
 
 import { ValidationRule, CommonRules } from "@bconnect/mcp-core";
 
-/**
- * TOK-25 — `countOnly` is a boolean on every list tool in the suite. Declared
- * here so a caller who passes `countOnly: "true"` is rejected with a typed
- * -32602 rather than silently getting a full page back.
- */
-const countOnlyRule = (): ValidationRule => ({
-  name: 'countOnly',
-  required: false,
-  type: 'boolean',
-  message: 'countOnly must be a boolean'
-});
-
 const paginationRules = (): ValidationRule[] => [
   CommonRules.page(),
   CommonRules.pageSize(),
   CommonRules.searchQuery(),
-  CommonRules.orderBy(),
-  countOnlyRule()
+  CommonRules.orderBy()
 ];
 
 const patchOperationsRule: ValidationRule = {
@@ -54,30 +41,13 @@ export const VariablesRules = {
       maxLength: 255,
       message: 'name is required (string, 1-255 chars)'
     },
-    // LOCAL PATCH (F23): aligned with the API's VariableDefinitionForCreation,
-    // which requires category + name + scopes. The previous rules demanded
-    // `dataType` (not an API field) and never required category or scopes, so
-    // every validated call still failed at the API with HTTP 400.
     {
-      name: 'category',
+      name: 'dataType',
       required: true,
       type: 'string',
       minLength: 1,
-      maxLength: 255,
-      message: 'category is required (string, 1-255 chars)'
-    },
-    {
-      name: 'scopes',
-      required: true,
-      type: 'array',
-      message: 'scopes is required (array, e.g. ["Endpoint"])'
-    },
-    {
-      name: 'type',
-      required: false,
-      type: 'string',
       maxLength: 50,
-      message: 'type must be one of: String, Integer, Password, Date, DropDownList, DropDownEditableList, Checkbox, FileLink, Folder'
+      message: 'dataType is required (string, e.g. "String", "Integer", "Boolean")'
     },
     {
       name: 'defaultValue',
@@ -85,7 +55,7 @@ export const VariablesRules = {
       type: 'string'
     },
     {
-      name: 'comment',
+      name: 'description',
       required: false,
       type: 'string',
       maxLength: 4000

@@ -392,11 +392,9 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        /**
-         * @description The variable definition to be created
+        /** @description The variable definition to be created
          *
-         *     Initialize in PowerShell with `Initialize-bCVariablesVariableDefinitionForCreation`
-         */
+         *     Initialize in PowerShell with `Initialize-bCVariablesVariableDefinitionForCreation` */
         requestBody: {
             content: {
                 "application/json": components["schemas"]["VariableDefinitionForCreation"];
@@ -573,15 +571,12 @@ export interface operations {
             };
             cookie?: never;
         };
-        /**
-         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable definition properties.
+        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable definition properties.
          *
-         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
-         */
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
         requestBody: {
             content: {
-                /**
-                 * @example [
+                /** @example [
                  *       {
                  *         "value": "New name",
                  *         "path": "/Name",
@@ -612,8 +607,7 @@ export interface operations {
                  *         "path": "/Comment",
                  *         "op": "replace"
                  *       }
-                 *     ]
-                 */
+                 *     ] */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };
@@ -785,15 +779,12 @@ export interface operations {
             };
             cookie?: never;
         };
-        /**
-         * @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable instance properties.
+        /** @description A JSON Patch document consists of a set of operations that allow specific partial changes to an object. The example document contains all modifiable variable instance properties.
          *
-         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation`
-         */
+         *     Initialize patch operations in PowerShell with `Initialize-bCPatchOperation` */
         requestBody: {
             content: {
-                /**
-                 * @example [
+                /** @example [
                  *       {
                  *         "value": "New value",
                  *         "path": "/Value",
@@ -804,8 +795,7 @@ export interface operations {
                  *         "path": "/IsDefault",
                  *         "op": "replace"
                  *       }
-                 *     ]
-                 */
+                 *     ] */
                 "application/json-patch+json": components["schemas"]["JsonPatchDocument"];
             };
         };

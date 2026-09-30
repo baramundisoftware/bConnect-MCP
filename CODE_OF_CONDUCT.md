@@ -23,10 +23,7 @@ We are committed to making participation in this project a harassment-free exper
 
 ## Enforcement
 
-Instances of unacceptable behaviour may be reported confidentially to
-**support@baramundi.com**. All complaints will be reviewed and investigated
-confidentially. Reports are handled by the project maintainers, not by any single named individual,
-so that a report does not depend on one person being available.
+Instances of unacceptable behaviour may be reported to **bernd.wiedemann@baramundi.de**. All complaints will be reviewed and investigated confidentially.
 
 ## Attribution
 

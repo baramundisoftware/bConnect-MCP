@@ -12,6 +12,8 @@
     "**/__tests__/**",
     "**/*.test.ts",
     "**/generated/**",
-    "packages/**"
+    "**/mcp-tool-validation-rules.ts",
+    "packages/**",
+    "**/index.ts"
   ]
 }

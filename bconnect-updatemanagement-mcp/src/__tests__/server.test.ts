@@ -2,26 +2,18 @@
  * bconnect-updatemanagement-mcp — server isolation test
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
 
-/**
- * TOK-20: the advertised surface now depends on ALLOW_WRITE_OPERATIONS, so the
- * expectations are split. `update_update_management_endpoint` is still declared
- * and still dispatched — it is simply not advertised while the gate is shut.
- */
-const EXPECTED_READ_TOOLS = [
+const EXPECTED_TOOLS = [
   'list_update_management_endpoints',
   'get_update_management_endpoint',
-];
-
-const EXPECTED_WRITE_TOOLS = [
   'update_update_management_endpoint',
 ];
 
-async function startServer() {
+async function startServer(): Promise<void> {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
@@ -31,31 +23,19 @@ async function startServer() {
 }
 
 describe('bconnect-updatemanagement-mcp', () => {
-  it('lists exactly 2 read tools with the write gate shut', async () => {
-    vi.stubEnv('ALLOW_WRITE_OPERATIONS', '');
-    const { client } = await startServer();
-    const { tools } = await client.listTools();
-    expect(tools).toHaveLength(2);
-    vi.unstubAllEnvs();
-  });
-
-  it('lists exactly 3 update management tools with the write gate open', async () => {
-    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
+  it('lists exactly 3 update management tools', async () => {
     const { client } = await startServer();
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(3);
-    vi.unstubAllEnvs();
   });
 
   it('registers all expected tool names', async () => {
-    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
     const { client } = await startServer();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
-    for (const expected of [...EXPECTED_READ_TOOLS, ...EXPECTED_WRITE_TOOLS]) {
+    for (const expected of EXPECTED_TOOLS) {
       expect(names).toContain(expected);
     }
-    vi.unstubAllEnvs();
   });
 
   it('does not register tools from other domains', async () => {
