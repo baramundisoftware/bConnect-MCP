@@ -11,5 +11,6 @@ import { GroupsModule } from "./modules/groups.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/endpoints/v2.0/Endpoints";
   public groups = new GroupsModule(this.client);
 }

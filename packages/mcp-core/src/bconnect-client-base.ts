@@ -100,8 +100,9 @@ export interface BConnectConfig {
   apiKey?: string;
   timeout?: number;
 
-  // Path probed by testConnection(). bConnect exposes no global health route, so
-  // this must be a lightweight list endpoint the configured credentials can read.
+  // Path probed by testConnection(), overriding the server's own probeRoute.
+  // bConnect exposes no global health route, so this must be a list endpoint
+  // the configured credentials can read.
   healthCheckPath?: string;
 
   // SSL/TLS Configuration
@@ -154,9 +155,10 @@ export interface BConnectConfig {
 
 export class BConnectClientBase {
   protected client: AxiosInstance;
-  // Probed by testConnection(). WindowsEndpoints exists on every bMS; a domain
-  // whose credentials cannot read it should override via config.healthCheckPath.
-  protected healthCheckPath: string;
+  // List route of the server's own domain probed by testConnection(), e.g.
+  // "/endpoints/v2.0/Endpoints". Each server's client sets it; there is no
+  // default, because every bConnect route carries its domain prefix (#111).
+  protected readonly probeRoute?: string;
   private config: BConnectConfig;
   private rateLimiter: RateLimiter | null = null;
   private auditLogger: AuditLogger | null = null;
@@ -166,7 +168,6 @@ export class BConnectClientBase {
 
   constructor(config: BConnectConfig) {
     this.config = config;
-    this.healthCheckPath = config.healthCheckPath ?? "/v2.0/WindowsEndpoints";
 
     // Resolve the CA trust list. An explicit CA (e.g. BCONNECT_CA_CERT_PATH) always
     // wins. Otherwise, when verification is on, fall back to the OS trust store
@@ -498,8 +499,13 @@ export class BConnectClientBase {
    */
   async testConnection(): Promise<boolean> {
     if (process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK === 'true') {return true;}
+    const path = this.config.healthCheckPath ?? this.probeRoute;
+    if (!path) {
+      console.error("Connection test failed: this server's client sets no probeRoute.");
+      return false;
+    }
     try {
-      await this.client.get(this.healthCheckPath, { params: { $top: 1 } });
+      await this.client.get(path, { params: { PageSize: 1 } });
       return true;
     } catch (error) {
       console.error("Connection test failed:", error);

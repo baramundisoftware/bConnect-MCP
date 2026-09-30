@@ -11,5 +11,6 @@ import { UpdateManagementModule } from "./modules/updatemanagement.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/updatemanagement/v2.0/WindowsEndpoints";
   public updateManagement = new UpdateManagementModule(this.client);
 }

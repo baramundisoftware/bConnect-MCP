@@ -11,5 +11,6 @@ import { VariablesModule } from "./modules/variables.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/variables/v2.0/VariableDefinitions";
   public variables = new VariablesModule(this.client);
 }

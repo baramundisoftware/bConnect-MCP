@@ -11,5 +11,6 @@ import { ComplianceModule } from "./modules/compliance.js";
 export type { BConnectConfig };
 
 export class BConnectClient extends BConnectClientBase {
+  protected override readonly probeRoute = "/compliance/v2.0/Rules";
   public compliance = new ComplianceModule(this.client);
 }

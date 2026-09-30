@@ -96,3 +96,11 @@ describe.each(SERVERS)('%s startup probe', (server) => {
     expect(requests.map((u) => u.pathname)).toEqual([`${BASE_PATH}/custom/v2.0/Probe`]);
   });
 });
+
+it('fails without sending a request when a client sets no probe route', async () => {
+  const { BConnectClientBase } = await import('@bconnect/mcp-core');
+  const client = new BConnectClientBase({ baseUrl: BASE_URL, username: 'probe', password: 'probe', disableHttpsAgent: true });
+  recorded = [];
+  expect(await client.testConnection()).toBe(false);
+  expect(recorded).toEqual([]);
+});
