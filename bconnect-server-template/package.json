@@ -1,7 +1,6 @@
 {
   "name": "bconnect-DOMAIN-mcp",
-  "version": "26.1.8",
-  "private": true,
+  "version": "26.1.7",
   "description": "MCP server for baramundi bConnect DOMAIN management",
   "type": "module",
   "main": "build/index.js",
@@ -33,7 +32,9 @@
     "axios": "^1.18.1",
     "axios-retry": "^4.5.0",
     "dotenv": "^16.4.0",
-    "express": "^4.21.0"
+    "express": "^4.21.0",
+    "node-cache": "^5.1.2",
+    "winston": "^3.18.3"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

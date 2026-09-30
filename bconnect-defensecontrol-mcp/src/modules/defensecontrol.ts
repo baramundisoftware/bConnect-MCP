@@ -1,6 +1,5 @@
 import type { AxiosInstance } from 'axios';
 import type { components, operations } from '../generated/defensecontrol-types.js';
-import { readSubResource, notOverloaded404 } from "@bconnect/mcp-core";
 
 // Type aliases
 type BitLockerWindowsEndpointPagedList = components['schemas']['BitLockerWindowsEndpointPagedList'];
@@ -23,19 +22,6 @@ type BitLockerPinUpdate = NonNullable<operations['UpdateBitLockerPinByWindowsEnd
 // 26R1 type aliases
 type BitLockerSecrets = components['schemas']['BitLockerSecrets'];
 
-/**
- * The ONLY content type any bConnect PATCH route accepts.
- *
- * Measured 2026-08-19 across all 26R1 specs: 25 PATCH operations, every one
- * declaring `application/json-patch+json` and nothing else. axios sends
- * `application/json` when no config is passed (measured against a capturing
- * adapter), which those routes answer with 415.
- *
- * Enforced by `__tests__/suite-patch-content-type.test.ts`, which reads call-site
- * ARGUMENTS rather than grepping for this string — the string also appears in
- * generated type aliases, and counting it wrongly cleared two modules.
- */
-const JSON_PATCH_REQUEST = { headers: { 'Content-Type': 'application/json-patch+json' } } as const;
 export class DefenseControlModule {
   private basePath = '/defensecontrol/v2.0';
 
@@ -64,6 +50,13 @@ export class DefenseControlModule {
     return response.data;
   }
 
+  async triggerLocalAdminAccountsUpdate(id: string): Promise<boolean> {
+    const response = await this.httpClient.post(
+      `${this.basePath}/LocalAdministrativeAccounts/WindowsEndpoints/${id}/TriggerUpdateOnClient`
+    );
+    return response.data;
+  }
+
   // ============================================================================
   // LOCAL ADMIN ACCOUNTS WRITE OPERATIONS - Phase 3
   // ============================================================================
@@ -86,8 +79,7 @@ export class DefenseControlModule {
   async patchLocalAdminUserCredentials(id: string, updateData: LocalAdminCredentialsUpdate): Promise<LocalAdminAccountWindowsEndpoint> {
     const response = await this.httpClient.patch<LocalAdminAccountWindowsEndpoint>(
       `${this.basePath}/LocalAdministrativeAccounts/WindowsEndpoints/${id}`,
-      updateData,
-      JSON_PATCH_REQUEST
+      updateData
     );
     return response.data;
   }
@@ -111,38 +103,22 @@ export class DefenseControlModule {
     endpointId: string,
     params: GetMicrosoftDefenderThreatsParams = {}
   ): Promise<ThreatPagedList> {
-    return readSubResource(
-      async () => {
-        const response = await this.httpClient.get(
-          `${this.basePath}/MicrosoftDefender/WindowsEndpoints/${endpointId}/Threats`,
-          { params }
-        );
-        return response.data;
-      },
-      endpointId,
-      notOverloaded404(
-        "Measured 2026-08-14: 23 of 23 parents answer 200 (23 with totalItems 0); a well-formed nonexistent id answers 404."
-      )
+    const response = await this.httpClient.get(
+      `${this.basePath}/MicrosoftDefender/WindowsEndpoints/${endpointId}/Threats`,
+      { params }
     );
+    return response.data;
   }
 
   async getMicrosoftDefenderThreatsByLogicalGroup(
     logicalGroupId: string,
     params: GetMicrosoftDefenderThreatsParams = {}
   ): Promise<ThreatPagedList> {
-    return readSubResource(
-      async () => {
-        const response = await this.httpClient.get(
-          `${this.basePath}/MicrosoftDefender/LogicalGroups/${logicalGroupId}/Threats`,
-          { params }
-        );
-        return response.data;
-      },
-      logicalGroupId,
-      notOverloaded404(
-        "Measured 2026-08-14: 19 of 19 parents answer 200 (19 with totalItems 0); a well-formed nonexistent id answers 404."
-      )
+    const response = await this.httpClient.get(
+      `${this.basePath}/MicrosoftDefender/LogicalGroups/${logicalGroupId}/Threats`,
+      { params }
     );
+    return response.data;
   }
 
   // Microsoft Defender Endpoints
@@ -166,18 +142,8 @@ export class DefenseControlModule {
     return response.data;
   }
 
-  // Route corrected 2026-08-03 — this is finding B12, carried unfixed since the
-  // original evaluation. The method called `/Pin`, which the API does not serve
-  // (confirmed three ways at the time, including against baramundi's own
-  // PowerShell client). 26R1 declares UpdateBitLockerPinByWindowsEndpointId at
-  // PATCH /v2.0/BitLocker/WindowsEndpoints/{id}/Secrets.
-  //
-  // Not verified on the wire here: exercising it means writing a BitLocker PIN to
-  // a real endpoint. The spec and the prior three-way confirmation agree, which is
-  // the strongest evidence available without a write. If this is ever exercised
-  // for real, confirm the response before trusting it.
   async updateBitLockerPin(id: string, patchData: BitLockerPinUpdate): Promise<BitLockerSecrets> {
-    const response = await this.httpClient.patch(`${this.basePath}/BitLocker/WindowsEndpoints/${id}/Secrets`, patchData, {
+    const response = await this.httpClient.patch(`${this.basePath}/BitLocker/WindowsEndpoints/${id}/Pin`, patchData, {
       headers: { 'Content-Type': 'application/json-patch+json' },
     });
     return response.data;
