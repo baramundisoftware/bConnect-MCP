@@ -50,7 +50,7 @@
     "@types/node-cache": "^4.2.5",
     "axios": "^1.18.1",
     "axios-retry": "^4.5.0",
-    "dotenv": "^16.4.0",
+    "dotenv": "^18.0.4",
     "limiter": "^3.0.0",
     "node-cache": "^5.1.2",
     "openapi-fetch": "^0.17.0",
