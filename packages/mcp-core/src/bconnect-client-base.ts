@@ -92,6 +92,7 @@ import { AuditLogger, AuditLevel, AuditLogEntry } from "./audit-logger.js";
 import { ResponseCache } from "./response-cache.js";
 import { BatchOperations, BatchOperation, BatchExecutionResult } from "./batch-operations.js";
 import { assertSecretRouteAllowed, SecretRouteBlockedError } from "./secret-routes.js";
+import { assertCanonicalRequestPath, RequestPathRefusedError } from "./request-path.js";
 
 export interface BConnectConfig {
   baseUrl: string;
@@ -399,6 +400,16 @@ export class BConnectClientBase {
         return this.handleError(error);
       }
     );
+    // Canonical-path check (REQ-SRV-018). Runs right after the secret-route gate
+    // below (axios runs request interceptors in reverse order), so a secret route
+    // is still refused by that gate, and before cache, rate limiter or audit.
+    this.client.interceptors.request.use(
+      (requestConfig: InternalAxiosRequestConfig) => {
+        assertCanonicalRequestPath(requestConfig.url ?? "");
+        return requestConfig;
+      },
+      (error) => Promise.reject(error)
+    );
     // Secret-route gate (REQ-SRV-017). Registered last because axios runs request
     // interceptors in reverse order: this one runs first, before the cache or
     // rate limiter can act on a request whose response carries credentials.
@@ -432,8 +443,9 @@ export class BConnectClientBase {
    * Handle API errors with meaningful messages
    */
   private handleError(error: AxiosError | RateLimitError | Error): Promise<never> {
-    // The secret-route refusal is already written for the operator; pass it on as is.
-    if (error instanceof SecretRouteBlockedError) {
+    // The secret-route and request-path refusals are already written for the
+    // operator; pass them on as is.
+    if (error instanceof SecretRouteBlockedError || error instanceof RequestPathRefusedError) {
       throw error;
     }
 
