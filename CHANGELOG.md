@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Tool arguments are validated in every server.** The endpoints, groups and jobs servers
+  now check each tool's arguments before sending a request, as the other servers already
+  did: ID arguments must be GUIDs. Invalid input is refused with an `Invalid parameters`
+  error and nothing is sent.
+- **The shared client only sends canonical request paths.** `@bconnect/mcp-core` refuses a
+  request whose path contains dot segments, backslashes, percent-encoded separators or a
+  query string, whichever tool built it. Query parameters are always passed separately.
 - **Credential-returning write tools now require `ALLOW_SECRET_READ`.**
   `update_bitlocker_pin` and `patch_local_admin_user_credentials` return the same BitLocker
   recovery keys / startup PIN and LAPS password as `get_bitlocker_secrets` and
