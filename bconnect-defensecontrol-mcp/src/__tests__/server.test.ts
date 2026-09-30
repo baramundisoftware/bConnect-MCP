@@ -202,7 +202,7 @@ describe('bconnect-defensecontrol-mcp', () => {
         .then((res) => ({ res }))
         .catch((err) => ({ err }));
       // Whether it rejected (network) or returned an error result, it must NOT be the gate message.
-      expect(JSON.stringify(outcome)).not.toMatch(/Set ALLOW_SECRET_READ=true to enable it/);
+      expect(JSON.stringify(outcome)).not.toMatch(/Secret-returning operation .* is disabled/);
     });
   });
 });

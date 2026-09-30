@@ -314,19 +314,27 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       };
     }
 
-    // 3. Secret-read gate (security audit C3). These GETs return live secrets
-    // (BitLocker recovery keys/PIN, cleartext LAPS admin passwords) that would
-    // otherwise land in the model context/transcript unredacted. Off by default;
-    // an operator must opt in explicitly.
+    // 3. Secret-read gate (REQ-SRV-017). These tools return live secrets
+    // (BitLocker recovery keys and startup PIN, cleartext LAPS admin passwords)
+    // that would otherwise land in the model context/transcript unredacted.
+    // Classified by what the response contains, not by HTTP method: the two write
+    // tools return the same secrets, so they need this gate as well as the write
+    // gate. Off by default; an operator must opt in explicitly.
     const SECRET_READ_TOOLS = new Set<string>([
       "get_bitlocker_secrets",
       "get_local_admin_accounts",
+      "update_bitlocker_pin",
+      "patch_local_admin_user_credentials",
     ]);
     if (SECRET_READ_TOOLS.has(name) && process.env.ALLOW_SECRET_READ !== "true") {
       return {
         content: [{
           type: "text" as const,
-          text: `Secret-returning operation '${name}' is disabled because it exposes live credentials (BitLocker keys / LAPS passwords). Set ALLOW_SECRET_READ=true to enable it.`
+          text: `Secret-returning operation '${name}' is disabled because it exposes live credentials (BitLocker keys / LAPS passwords). ` +
+            `This MCP server was started without ALLOW_SECRET_READ. An operator must set ALLOW_SECRET_READ=true in the server's ` +
+            `environment (the MCP host's 'env' block for this server, or the container/service environment) and restart the server; ` +
+            `a running process doesn't pick up the change, and the model cannot set it. ` +
+            `This gate is independent of ALLOW_WRITE_OPERATIONS: opening writes alone doesn't enable it.`
         }],
         isError: true
       };
