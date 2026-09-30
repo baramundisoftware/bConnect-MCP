@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Updated dependencies with known advisories.** All updates stay within their major
+  version: axios 1.20.0, hono 4.13.12, @hono/node-server 1.19.17, js-yaml 4.3.2,
+  fast-uri 3.1.8, ip-address 10.7.2, qs 6.16.0, body-parser, and express 4.22.3 in the
+  gateway. `npm audit --omit=dev` now reports no vulnerabilities for the servers or the
+  gateway. `openapi-typescript`, a code generator, is now a development dependency, so a
+  production install (`npm ci --omit=dev`) no longer pulls it in. dotenv stays on 16:
+  from 17 on it writes to stdout, which breaks stdio MCP clients.
 - **Tool arguments are validated in every server.** The endpoints, groups and jobs servers
   now check each tool's arguments before sending a request, as the other servers already
   did: ID arguments must be GUIDs. Invalid input is refused with an `Invalid parameters`
