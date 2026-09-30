@@ -1,0 +1,57 @@
+name: Bug report
+description: Something in bConnect-MCP does not work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Do not paste estate data** (endpoint, group or job names, URLs, credentials, API keys). Redact them.
+        Security problems go through the private report link, not here.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release tag or commit (e.g. v26.1.7).
+    validations:
+      required: true
+  - type: dropdown
+    id: transport
+    attributes:
+      label: How do you run it?
+      options:
+        - stdio (MCP client starts the server)
+        - HTTP gateway (docker compose)
+        - HTTP gateway (node)
+        - other
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node version, MCP client, bMS release (e.g. Windows 11, Node 22.15, Claude Desktop, 26R1).
+    validations:
+      required: true
+  - type: input
+    id: tool
+    attributes:
+      label: Server and tool
+      description: e.g. bconnect-endpoints-mcp / list_endpoints
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps. Against bConnect-Mock if possible.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (redacted)
+      render: text

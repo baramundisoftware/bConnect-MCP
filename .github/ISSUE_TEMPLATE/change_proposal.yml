@@ -1,0 +1,43 @@
+name: Change proposal
+description: Propose a feature or a change. Anything larger than a small fix starts here, before any code.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A maintainer decides every proposal (accept / accept-modified / reject / defer) before work starts.
+        Accepted proposals are implemented as **small, single-topic pull requests** (roughly 400 changed lines or fewer each).
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard or impossible today, and for whom?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What should change? Name the servers, tools or files affected.
+    validations:
+      required: true
+  - type: textarea
+    id: split
+    attributes:
+      label: How would you split it into small PRs?
+      description: List the reviewable steps, one topic each.
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Does it change behaviour users rely on?
+      options:
+        - "No"
+        - Yes — tool names, parameters or output shape
+        - Yes — configuration or environment variables
+        - Yes — security posture (auth, write gate, secret gate)
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
