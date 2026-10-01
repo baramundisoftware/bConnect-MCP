@@ -41,6 +41,7 @@ import { createResponseValidator, type SchemaFinding } from '../lib/response-sch
 import { checkReachable, childEnv, loadLiveConfig, redact as redactSecrets } from './lib/env.js';
 import { assertExercised } from './lib/report.js';
 import { createGuard } from './lib/guard.mjs';
+import { expectedAnswer } from './lib/expected.js';
 import { CHILD_GUARD, readGuardLog, startupProblems, type LoggedRequest } from './lib/child.js';
 
 const ENV_FILE = process.env.BCONNECT_LIVE_ENV ?? join(ROOT, '.env.local');
@@ -49,12 +50,6 @@ const config = loadLiveConfig({ root: ROOT, file: ENV_FILE, shell: process.env }
 const BASE_URL = config.baseUrl.href;
 const RELEASE: Release = config.release;
 const PAGE_SIZE = 5;
-/**
- * Statuses that mean "this bMS cannot answer that here", not a defect: module not
- * licensed (403), not implemented (501), backing service down (503), or no such
- * data for this object (409, e.g. "Requested resource has no maintenance window").
- */
-const UNAVAILABLE = new Set([403, 409, 501, 503]);
 
 /** Credentials never reach test output, whatever a server prints. */
 const redact = (s: string): string => redactSecrets(config, s);
@@ -124,7 +119,7 @@ describe(`live bMS ${BASE_URL} (${RELEASE}): startup`, () => {
 // ─── Read tools in-process, behind the network guard ─────────────────────────
 
 interface Exchange { method: string; path: string; status: number; body: unknown; op?: ApiOperation }
-type Outcome = 'ok' | 'unavailable' | 'failed' | 'skipped';
+type Outcome = 'ok' | 'expected' | 'failed' | 'skipped';
 interface ToolRun {
   server: string; tool: string; outcome: Outcome; detail: string;
   args?: Record<string, unknown>; ms?: number; statuses?: number[]; requests?: string[]; schema?: SchemaFinding[];
@@ -226,9 +221,10 @@ async function exercise(server: string, conn: ConnectedServer, tool: ConnectedSe
   const requests = exchanges.map((e) => `${e.method} ${e.path} ${e.status}`);
   const base = { server, tool: tool.name, args, ms, statuses, requests, schema };
   if (!result.isError) return { ...base, outcome: 'ok', detail: `${ops[0].method} ${ops[0].path}` };
-  const detail = redact(result.text).slice(0, 300);
-  if (statuses.length && statuses.every((s) => UNAVAILABLE.has(s))) return { ...base, outcome: 'unavailable', detail };
-  return { ...base, outcome: 'failed', detail };
+  // Only a listed tool with its listed answer is expected (lib/expected.ts); its reason is reported.
+  const reason = expectedAnswer(tool.name, exchanges.filter((e) => e.status < 200 || e.status > 299));
+  if (reason) return { ...base, outcome: 'expected', detail: reason };
+  return { ...base, outcome: 'failed', detail: redact(result.text).slice(0, 300) };
 }
 
 describe(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
@@ -285,15 +281,15 @@ function writeReport(): void {
   const file = join(ROOT, 'reports', 'live-bms.json');
   writeFileSync(file, JSON.stringify({
     bms: BASE_URL, release: RELEASE, tlsVerified: config.tlsVerified, caFile: config.caFile, at: new Date().toISOString(), node: process.version, platform: process.platform,
-    totals: { ok: count('ok'), unavailable: count('unavailable'), failed: count('failed'), skipped: count('skipped'), schemaDrift: withSchema.length },
+    totals: { ok: count('ok'), expected: count('expected'), failed: count('failed'), skipped: count('skipped'), schemaDrift: withSchema.length },
     runs,
   }, null, 2));
   const lines = [
     config.tlsVerified
       ? `TLS: certificates verified (${config.caFile ? 'CA from BCONNECT_CA_CERT_PATH' : 'system and Node trust store'})`
       : 'WARNING: TLS certificate verification was OFF (NODE_TLS_REJECT_UNAUTHORIZED=0 in the env file)',
-    `live bMS ${BASE_URL} (${RELEASE}): ${count('ok')} ok, ${count('unavailable')} unavailable, ${count('failed')} failed, ${count('skipped')} skipped`,
-    ...runs.filter((r) => r.outcome === 'unavailable').map((r) => `  unavailable  ${r.server} ${r.tool} [${r.statuses?.join(',')}]`),
+    `live bMS ${BASE_URL} (${RELEASE}): ${count('ok')} ok, ${count('expected')} expected, ${count('failed')} failed, ${count('skipped')} skipped`,
+    ...runs.filter((r) => r.outcome === 'expected').map((r) => `  expected  ${r.tool} [${r.statuses?.join(',')}]: ${r.detail}`),
     `schema drift in ${withSchema.length} tool responses:`,
     ...withSchema.flatMap((r) => [`  ${r.server} ${r.tool}`, ...r.schema!.slice(0, 5).map((f) => `      ${f.path} ${f.message}`),
       ...(r.schema!.length > 5 ? [`      … ${r.schema!.length - 5} more`] : [])]),
