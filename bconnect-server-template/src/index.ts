@@ -139,7 +139,7 @@ export function createServer(): { server: Server } {
       const caCert = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
 
       const auditLevelRaw = process.env.BCONNECT_AUDIT_LEVEL ?? "none";
-      const auditLevel = (["none", "security", "write", "all"] as const).includes(auditLevelRaw as never)
+      const auditLevel = ["none", "security", "write", "all"].includes(auditLevelRaw)
         ? (auditLevelRaw as "none" | "security" | "write" | "all")
         : "none";
 
@@ -162,7 +162,8 @@ export function createServer(): { server: Server } {
       switch (name) {
         // TODO: Add one case per tool. Example:
         // case "list_DOMAIN": {
-        //   const result = await domain.listDomain((args ?? {}) as never);
+        //   // Build the request from the generated types, without type-defeating casts (REQ-QA-002).
+        //   const result = await domain.listDomain({ Page: args?.Page as number | undefined });
         //   return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         // }
         // case "get_DOMAIN": {

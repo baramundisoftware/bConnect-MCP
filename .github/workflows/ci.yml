@@ -101,6 +101,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Two commits: the PR merge commit and its base, for the cast diff check.
+          fetch-depth: 2
 
       - uses: actions/setup-node@v4
         with:
@@ -132,15 +135,21 @@ jobs:
         run: npm run build
 
       # Blocking: 0 errors, 0 warnings (`--max-warnings 0` in the root `lint`
-      # script), servers and the shared core. Type-defeating casts (`as never`,
-      # `as unknown as`) are errors; the ones that existed when the rule came in
-      # are listed in eslint-suppressions.json, and a file's count can only go
-      # down: a new cast fails, and a removed cast fails until the list is
-      # pruned (`npm run lint:prune-casts`). REQ-QA-002.
+      # script), servers, template and the shared core. Type-defeating casts
+      # (`as never`, `as unknown as`, angle-bracket casts) are errors; the `as`
+      # casts that existed when the rule came in are listed per file in
+      # eslint-suppressions.json: a file's total can't grow, and a removed cast
+      # fails until the list is pruned (`npm run lint:prune-casts`). REQ-QA-002.
       # No `--if-present`: this step used to run against a root without a
       # `lint` script and passed without linting anything.
       - name: Lint
         run: npm run lint
+
+      # The suppressions above count casts per file; this fails on any added
+      # line with a cast, so one can't move between handlers (REQ-QA-002 AC 3).
+      - name: No new type-defeating casts
+        shell: bash
+        run: scripts/check-new-casts.sh HEAD^1
 
       # The root run covers every per-server suite AND the suite-wide guards.
       - name: Test

@@ -67,6 +67,10 @@ the server table in the root `README.md` lists every server and its tool count.
 - Types are generated from the OpenAPI spec via `openapi-typescript`
 - Never write types manually that can be generated
 - `any` is not permitted except in `checkServerIdentity` (TLS override, documented)
+- No `as never` or `as unknown as T` casts in server or core source: they switch off the
+  generated types, so a wrong request body compiles. `npm run lint` fails on a new one.
+  Older casts are listed in `eslint-suppressions.json`; when you remove one, run
+  `npm run lint:prune-casts` and commit the updated file
 
 ## Testing
 
@@ -74,4 +78,5 @@ Each server requires:
 - A tool-registration test (`src/__tests__/server.test.ts`) verifying `listTools()` returns
   exactly that server's tools and excludes other domains — no live API required
 - `npm run build` succeeds with zero TypeScript errors
+- `npm run lint` passes with zero errors and zero warnings
 - `npm test` passes with zero failures

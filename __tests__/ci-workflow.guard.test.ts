@@ -19,7 +19,7 @@
  *    (REQ-QA-002 AC 4).
  */
 import { describe, expect, it } from 'vitest';
-import { existsSync, globSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
@@ -70,30 +70,61 @@ function derivedGateChecks(): string[] {
   );
 }
 
-/** Scripts of the root manifest, or of the workspace named by `-w`/`--workspace`. */
-function scriptsOf(workspace: string | undefined): Record<string, string> {
-  const rootManifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
-  if (!workspace) return rootManifest.scripts ?? {};
-  for (const pattern of rootManifest.workspaces ?? []) {
-    for (const dir of globSync(pattern, { cwd: ROOT })) {
-      const manifestPath = join(ROOT, dir, 'package.json');
-      if (!existsSync(manifestPath)) continue;
-      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-      if (manifest.name === workspace || dir === workspace) return manifest.scripts ?? {};
-    }
-  }
-  return {};
+interface Manifest { name?: string; scripts?: Record<string, string>; workspaces?: string[] }
+const readManifest = (dir: string): Manifest => JSON.parse(readFileSync(join(ROOT, dir, 'package.json'), 'utf8'));
+
+/** Workspace directories, from the root `workspaces` patterns (`*` within one path segment). */
+function workspaceDirs(): string[] {
+  const expand = (base: string, parts: string[]): string[] => {
+    if (!parts.length) return existsSync(join(ROOT, base, 'package.json')) ? [base] : [];
+    const [head, ...rest] = parts;
+    const re = new RegExp('^' + head.split('*').map((p) => p.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*') + '$');
+    const dir = join(ROOT, base);
+    if (!existsSync(dir)) return [];
+    return readdirSync(dir, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && re.test(e.name))
+      .flatMap((e) => expand(base ? `${base}/${e.name}` : e.name, rest));
+  };
+  return (readManifest('').workspaces ?? []).flatMap((pattern) => expand('', pattern.split('/')));
 }
 
-/** Every `npm run …` command in a `run:` step of any job. */
-function npmRunCommands(): Array<{ job: string; command: string }> {
+interface NpmRun { job: string; command: string; script: string; workspace?: string; allWorkspaces: boolean }
+
+/**
+ * Every npm script invocation in a `run:` step of any job, wherever it sits in
+ * the line (`if npm run x; then`, `npm -w pkg run x`, `--workspace=pkg`, `-ws`).
+ */
+function npmRuns(): NpmRun[] {
   return Object.entries(workflow.jobs).flatMap(([job, def]) =>
     (def.steps ?? []).flatMap((step) =>
-      (step.run ?? '').split(/\r?\n|&&|;/).map((c) => c.trim())
-        .filter((c) => /^npm run\s/.test(c))
-        .map((command) => ({ job, command })),
+      (step.run ?? '').split(/\r?\n|&&|\|\||;|\|/).flatMap((segment): NpmRun[] => {
+        const words = segment.trim().split(/\s+/);
+        const npm = words.indexOf('npm');
+        if (npm < 0) return [];
+        const args = words.slice(npm + 1);
+        const run = args.findIndex((w) => w === 'run' || w === 'run-script');
+        if (run < 0) return [];
+        let workspace: string | undefined;
+        args.forEach((w, i) => {
+          if (w === '-w' || w === '--workspace') workspace = args[i + 1];
+          else if (w.startsWith('--workspace=')) workspace = w.slice('--workspace='.length);
+        });
+        const script = args.slice(run + 1).find((w) => !w.startsWith('-')) ?? '';
+        const allWorkspaces = args.some((w) => w === '-ws' || w === '--workspaces');
+        return [{ job, command: segment.trim(), script, workspace, allWorkspaces }];
+      }),
     ),
   );
+}
+
+/** Where the script is missing: the root, the named workspace, or any workspace for `-ws`. */
+function missingScript(r: NpmRun): boolean {
+  const has = (m: Manifest): boolean => r.script in (m.scripts ?? {});
+  const dirs = workspaceDirs();
+  if (r.allWorkspaces) return dirs.some((d) => !has(readManifest(d)));
+  if (!r.workspace) return !has(readManifest(''));
+  const dir = dirs.find((d) => d === r.workspace || readManifest(d).name === r.workspace);
+  return !dir || !has(readManifest(dir));
 }
 
 describe('ci.yml — REQ-CI-001', () => {
@@ -119,28 +150,23 @@ describe('ci.yml — REQ-CI-001', () => {
 });
 
 describe('ci.yml — every npm script a step runs exists (REQ-QA-002)', () => {
-  const commands = npmRunCommands();
+  const runs = npmRuns();
+  const allRunText = Object.values(workflow.jobs).flatMap((j) => (j.steps ?? []).map((st) => st.run ?? '')).join('\n');
 
-  it('finds the npm run steps (self-check)', () => {
-    expect(commands.length).toBeGreaterThan(0);
+  it('finds the npm script steps, including the workspace build (self-check)', () => {
+    expect(runs.some((r) => r.script === 'build' && r.workspace === '@bconnect/mcp-core')).toBe(true);
+    expect(workspaceDirs()).toContain('packages/mcp-core');
   });
 
-  it('never uses --if-present (a missing script would pass silently)', () => {
-    expect(commands.filter((c) => /--if-present/.test(c.command))).toEqual([]);
+  it('never uses --if-present anywhere (a missing script would pass silently)', () => {
+    expect(allRunText).not.toMatch(/--if-present/);
   });
 
-  it('names only scripts that exist in the root or the named workspace', () => {
-    const missing = commands.filter(({ command }) => {
-      const words = command.split(/\s+/);
-      const script = words[2];
-      const wsFlag = words.findIndex((w) => w === '-w' || w === '--workspace');
-      const workspace = wsFlag >= 0 ? words[wsFlag + 1] : undefined;
-      return !(script in scriptsOf(workspace));
-    });
-    expect(missing).toEqual([]);
+  it('names only scripts that exist in the root or the named workspace(s)', () => {
+    expect(runs.filter(missingScript).map((r) => `${r.job}: ${r.command}`)).toEqual([]);
   });
 
   it('runs lint in the gate job', () => {
-    expect(commands.some((c) => c.job === 'gate' && /^npm run lint\b/.test(c.command))).toBe(true);
+    expect(runs.some((r) => r.job === 'gate' && r.script === 'lint' && !r.workspace)).toBe(true);
   });
 });
