@@ -12,16 +12,25 @@
  * examples) that the server doesn't read.
  */
 import { describe, expect, it } from 'vitest';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, relative } from 'node:path';
 import { ROOT, SERVERS } from './lib/exerciser.js';
 import { envReads } from './lib/env-reads.js';
 
 const CORE_SRC = join(ROOT, 'packages', 'mcp-core', 'src');
 
-/** Read by the code, but not configuration an operator sets. */
-const NOT_CONFIGURATION: Record<string, string> = {
-  VITEST: 'set by the test runner; servers skip main() under test',
+/**
+ * Read by the code, but not configuration an operator sets, and only in the one place
+ * given: the test runner (and the gateway's preload) set VITEST so a server's main()
+ * doesn't run on import. Anywhere else the read is reported, because the gateway sets
+ * VITEST in production and a VITEST switch would be live there.
+ */
+const NOT_CONFIGURATION: Record<string, { reason: string; allowedAt: RegExp }> = {
+  VITEST: {
+    reason: 'set by the test runner and the gateway preload so main() does not run on import',
+    allowedAt: /^if \((?:!process\.env\.VITEST|process\.env\.VITEST === undefined)\) \{$/,
+  },
 };
 
 const START = '<!-- env:start -->';
@@ -32,7 +41,7 @@ const VARIABLE = /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+\b/g;
 
 const sourceFiles = (dirPath: string): string[] =>
   readdirSync(dirPath, { withFileTypes: true, recursive: true })
-    .filter((e) => e.isFile() && e.name.endsWith('.ts') && !e.name.endsWith('.d.ts'))
+    .filter((e) => e.isFile() && /\.[mc]?ts$/.test(e.name) && !/\.d\.[mc]?ts$/.test(e.name))
     .map((e) => join(e.parentPath, e.name))
     .filter((f) => !/[\\/](__tests__|__mocks__|generated)[\\/]/.test(f));
 
@@ -41,25 +50,36 @@ function variablesRead(dirs: string[]): { names: Set<string>; hidden: string[] }
   const names = new Set<string>();
   const hidden: string[] = [];
   for (const file of dirs.flatMap(sourceFiles)) {
-    for (const read of envReads(readFileSync(file, 'utf8'), file)) {
-      if (read.name === null) hidden.push(`${file.slice(ROOT.length + 1)}:${read.line} ${read.text}`);
-      else if (!(read.name in NOT_CONFIGURATION)) names.add(read.name);
+    const source = readFileSync(file, 'utf8');
+    const lines = source.split('\n');
+    for (const read of envReads(source, file)) {
+      const where = `${relative(ROOT, file)}:${read.line} ${read.text}`;
+      const exempt = read.name !== null ? NOT_CONFIGURATION[read.name] : undefined;
+      if (read.name === null) hidden.push(where);
+      else if (!exempt) names.add(read.name);
+      else if (!(file.endsWith('index.ts') && exempt.allowedAt.test(lines[read.line - 1] ?? ''))) {
+        hidden.push(`${where} (${read.name} is allowed only as the main() entry guard)`);
+      }
     }
   }
   return { names, hidden };
 }
 
 /** The variables listed in the README's marked block, or `null` when the block is missing. */
-function listedVariables(readme: string): Set<string> | null {
+function listedVariables(readme: string): string[] | null {
   const start = readme.indexOf(START);
   const end = readme.indexOf(END);
   if (start < 0 || end < start) return null;
-  const block = readme.slice(start + START.length, end);
+  // What a reader of the rendered README sees: no HTML comments, no fenced code.
+  const block = readme
+    .slice(start + START.length, end)
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/^(```|~~~)[\s\S]*?^\1/gm, '');
   const rows = block.split('\n').filter((line) => line.trimStart().startsWith('|'));
   const names = rows
     .map((row) => /^\s*\|\s*`([A-Z][A-Z0-9_]*)`/.exec(row)?.[1])
     .filter((name): name is string => name !== undefined);
-  return new Set(names);
+  return names;
 }
 
 /** Every variable name the README mentions, anywhere. */
@@ -67,6 +87,8 @@ const mentionedVariables = (readme: string): Set<string> => new Set(readme.match
 
 interface Mismatch {
   missingBlock: boolean;
+  /** Listed more than once (e.g. with different defaults). */
+  duplicated: string[];
   /** Read by the code but not in the list. */
   undocumented: string[];
   /** In the list but read by nobody. */
@@ -76,17 +98,25 @@ interface Mismatch {
 }
 
 function compare(readme: string, read: Set<string>): Mismatch {
-  const listed = listedVariables(readme);
+  const rows = listedVariables(readme);
+  const listed = rows === null ? null : new Set(rows);
   const sorted = (xs: Iterable<string>) => [...xs].sort();
   return {
     missingBlock: listed === null,
+    duplicated: sorted(new Set((rows ?? []).filter((v, i, all) => all.indexOf(v) !== i))),
     undocumented: sorted([...read].filter((v) => !listed?.has(v))),
     unread: sorted([...(listed ?? [])].filter((v) => !read.has(v))),
     mentionedUnread: sorted([...mentionedVariables(readme)].filter((v) => !read.has(v))),
   };
 }
 
-const CLEAN: Mismatch = { missingBlock: false, undocumented: [], unread: [], mentionedUnread: [] };
+const CLEAN: Mismatch = { missingBlock: false, duplicated: [], undocumented: [], unread: [], mentionedUnread: [] };
+
+/** Everything wrong with one package: README mismatches plus reads the guard can't name. */
+function checkPackage(sourceDirs: string[], readme: string): Mismatch & { hidden: string[] } {
+  const { names, hidden } = variablesRead(sourceDirs);
+  return { ...compare(readme, names), hidden };
+}
 
 const PACKAGES = [...SERVERS, 'bconnect-server-template'].filter((d) => existsSync(join(ROOT, d, 'src')));
 
@@ -131,6 +161,18 @@ describe('guard self-tests', () => {
     expect(result.undocumented).toEqual(['ALLOW_WRITE_OPERATIONS', 'BCONNECT_BASE_URL']);
   });
 
+  it.each([
+    ['an HTML comment', ['<!--', WRITES, '-->']],
+    ['a fenced code block', ['```', WRITES, '```']],
+  ])('ignores a row hidden in %s inside the block', (_label, hiddenRows) => {
+    expect(compare(readme([BASE, ...hiddenRows]), read).undocumented).toEqual(['ALLOW_WRITE_OPERATIONS']);
+  });
+
+  it('reports a variable listed twice', () => {
+    const result = compare(readme([BASE, WRITES, '| `ALLOW_WRITE_OPERATIONS` | No | on | writes |']), read);
+    expect(result.duplicated).toEqual(['ALLOW_WRITE_OPERATIONS']);
+  });
+
   it('ignores table rows outside the block', () => {
     const result = compare(readme([BASE], `| \`ALLOW_WRITE_OPERATIONS\` | No | off | writes |`), read);
     expect(result.undocumented).toEqual(['ALLOW_WRITE_OPERATIONS']);
@@ -146,9 +188,57 @@ describe('guard self-tests', () => {
   });
 
   it('leaves out test-only variables, each with a reason', () => {
-    const { names } = variablesRead([join(ROOT, 'bconnect-groups-mcp', 'src')]);
+    const { names, hidden } = variablesRead([join(ROOT, 'bconnect-groups-mcp', 'src')]);
     expect(names).not.toContain('VITEST');
-    for (const reason of Object.values(NOT_CONFIGURATION)) expect(reason.length).toBeGreaterThan(10);
+    expect(hidden).toEqual([]);
+    for (const { reason } of Object.values(NOT_CONFIGURATION)) expect(reason.length).toBeGreaterThan(10);
+  });
+
+  describe('source fixtures', () => {
+    const scan = (files: Record<string, string>) => {
+      const dir = mkdtempSync(join(tmpdir(), 'readme-env-'));
+      try {
+        for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text);
+        return variablesRead([dir]);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    };
+
+    it('reports a hidden read', () => {
+      expect(scan({ 'a.ts': 'const e = process.env; e.BCONNECT_CA_CERT_PATH;' }).hidden).toHaveLength(1);
+    });
+
+    it('fails a package whose README matches but whose code hides a read', () => {
+      const dir = mkdtempSync(join(tmpdir(), 'readme-env-'));
+      try {
+        writeFileSync(join(dir, 'a.ts'), 'process.env.MCP_PORT; const e = process.env; e.BCONNECT_CA_CERT_PATH;');
+        const readme = `${START}\n| \`MCP_PORT\` | No | 3000 | port |\n${END}`;
+        const result = checkPackage([dir], readme);
+        expect({ ...result, hidden: [] }).toEqual({ ...CLEAN, hidden: [] });
+        expect(result.hidden).toHaveLength(1);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it('accepts VITEST as the main() entry guard of index.ts', () => {
+      const result = scan({ 'index.ts': 'if (process.env.VITEST === undefined) {\n  main();\n}\n' });
+      expect(result).toEqual({ names: new Set(), hidden: [] });
+    });
+
+    it.each([
+      ['as a switch in other code', 'index.ts', 'const gate = process.env.VITEST ? "off" : "on";'],
+      ['outside index.ts', 'helper.ts', 'if (process.env.VITEST === undefined) {\n  main();\n}\n'],
+    ])('reports VITEST used %s', (_label, name, text) => {
+      expect(scan({ [name]: text }).hidden).toEqual([expect.stringContaining('main() entry guard')]);
+    });
+
+    it('scans .mts and .cts files', () => {
+      expect(scan({ 'a.mts': 'process.env.MCP_PORT;', 'b.cts': 'process.env.MCP_BIND;' }).names).toEqual(
+        new Set(['MCP_PORT', 'MCP_BIND']),
+      );
+    });
   });
 
   it('finds every server and the template', () => {
@@ -159,10 +249,8 @@ describe('guard self-tests', () => {
 
 describe.each(PACKAGES)('%s README', (pkg) => {
   it('documents exactly the environment variables the server reads', () => {
-    const { names, hidden } = variablesRead([join(ROOT, pkg, 'src'), CORE_SRC]);
-    expect(hidden, 'environment reads the guard cannot name').toEqual([]);
     const path = join(ROOT, pkg, 'README.md');
     const readme = existsSync(path) ? readFileSync(path, 'utf8') : '';
-    expect(compare(readme, names)).toEqual(CLEAN);
+    expect(checkPackage([join(ROOT, pkg, 'src'), CORE_SRC], readme)).toEqual({ ...CLEAN, hidden: [] });
   });
 });
