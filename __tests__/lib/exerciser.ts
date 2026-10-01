@@ -147,10 +147,13 @@ export interface ConnectedServer {
   close(): Promise<void>;
 }
 
-/** Create one server with the current environment and connect an in-memory MCP client. */
-export async function connect(server: string): Promise<ConnectedServer> {
+/**
+ * Create one server with the current environment and connect an in-memory MCP client.
+ * `credentials` are passed to `createServer()` the way the gateway passes per-request ones.
+ */
+export async function connect(server: string, credentials?: Record<string, string>): Promise<ConnectedServer> {
   const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'index.ts')).href);
-  const { server: mcp } = mod.createServer();
+  const { server: mcp } = mod.createServer(credentials);
   const [serverSide, clientSide] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'guard', version: '0' });
   await Promise.all([mcp.connect(serverSide), client.connect(clientSide)]);
