@@ -2,7 +2,8 @@
  * Live tier: every server against a real baramundi Management Server, read-only.
  *
  * Opt-in. Runs only when the live env file (default `.env.local`, override with
- * BCONNECT_LIVE_ENV) sets BCONNECT_BASE_URL; otherwise every test is skipped.
+ * BCONNECT_LIVE_ENV). A missing file, a file without BCONNECT_BASE_URL, an
+ * unreachable bMS or a run that exercised nothing fails the run.
  * Not part of `npm test`. Every variable the servers read comes from that file or
  * is empty (lib/env.ts): nothing leaks in from the repo `.env` or the shell.
  *
@@ -26,24 +27,23 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { brotliDecompressSync, gunzipSync, inflateSync } from 'node:zlib';
-import { parse } from 'dotenv';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse, passthrough } from 'msw';
 import { ROOT, SERVERS, connect, domainOf, type ConnectedServer, type JsonSchema } from '../lib/exerciser.js';
 import { RELEASES, findOperation, loadOperations, type ApiOperation, type Release } from '../lib/spec.js';
 import { createResponseValidator, type SchemaFinding } from '../lib/response-schema.js';
-import { childEnv, loadLiveConfig, redact as redactSecrets } from './lib/env.js';
+import { checkReachable, childEnv, loadLiveConfig, redact as redactSecrets } from './lib/env.js';
+import { assertExercised } from './lib/report.js';
 
 const ENV_FILE = process.env.BCONNECT_LIVE_ENV ?? join(ROOT, '.env.local');
-const config = existsSync(ENV_FILE) && parse(readFileSync(ENV_FILE)).BCONNECT_BASE_URL
-  ? loadLiveConfig({ root: ROOT, file: ENV_FILE, shell: process.env }) : undefined;
-const LIVE = config !== undefined;
-const BASE_URL = config?.baseUrl.href ?? '';
-const RELEASE: Release = config?.release ?? '26R1';
+// A missing or incomplete env file fails the run here, before any test (lib/env.ts).
+const config = loadLiveConfig({ root: ROOT, file: ENV_FILE, shell: process.env });
+const BASE_URL = config.baseUrl.href;
+const RELEASE: Release = config.release;
 const PAGE_SIZE = 5;
 /**
  * Statuses that mean "this bMS cannot answer that here", not a defect: module not
@@ -53,14 +53,18 @@ const PAGE_SIZE = 5;
 const UNAVAILABLE = new Set([403, 409, 501, 503]);
 
 /** Credentials never reach test output, whatever a server prints. */
-const redact = (s: string): string => (config ? redactSecrets(config, s) : s);
+const redact = (s: string): string => redactSecrets(config, s);
+
+let started = 0;
+beforeAll(() => checkReachable(config), 30_000);
+afterAll(() => assertExercised({ startups: started, calls: runs.filter((r) => r.outcome !== 'skipped').length }));
 
 // ─── Startup over stdio ──────────────────────────────────────────────────────
 
 interface Startup { exitCode: number | null; initialized: boolean; tools: number; nonJson: number; stderr: string }
 
 async function startOverStdio(server: string): Promise<Startup> {
-  const env = childEnv(config!, process.env);
+  const env = childEnv(config, process.env);
   const child = spawn(process.execPath, [join(ROOT, server, 'build', 'index.js')], { env, cwd: ROOT });
   let out = '';
   let err = '';
@@ -94,10 +98,11 @@ async function startOverStdio(server: string): Promise<Startup> {
   };
 }
 
-describe.skipIf(!LIVE)(`live bMS ${BASE_URL} (${RELEASE}): startup`, () => {
+describe(`live bMS ${BASE_URL} (${RELEASE}): startup`, () => {
   it.each(SERVERS)('%s starts with the probe on', async (server) => {
     expect(existsSync(join(ROOT, server, 'build', 'index.js')), `${server} is not built: run the build first`).toBe(true);
     const s = await startOverStdio(server);
+    if (s.initialized) started++;
     expect(s.initialized, `no initialize answer; stderr:\n${s.stderr}`).toBe(true);
     expect(s.tools, 'tools/list').toBeGreaterThan(0);
     expect(s.nonJson, 'stdout lines that are not JSON-RPC').toBe(0);
@@ -120,8 +125,8 @@ const idsByRoute = new Map<string, string[]>();
 
 let exchanges: Exchange[] = [];
 let pending: Array<Promise<void>> = [];
-const basePath = LIVE ? new URL(BASE_URL).pathname.replace(/\/$/, '') : '';
-const origin = LIVE ? new URL(BASE_URL).origin : '';
+const basePath = config.baseUrl.pathname.replace(/\/$/, '');
+const origin = config.baseUrl.origin;
 
 const guard = setupServer(
   http.all('*', ({ request }) => {
@@ -223,7 +228,7 @@ async function exercise(server: string, conn: ConnectedServer, tool: ConnectedSe
   return { ...base, outcome: 'failed', detail };
 }
 
-describe.skipIf(!LIVE)(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
+describe(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
   const saved = { ...process.env };
   const conns = new Map<string, ConnectedServer>();
   const tables = new Map<string, Readonly<Record<string, readonly string[]>>>();
@@ -231,7 +236,7 @@ describe.skipIf(!LIVE)(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
 
   beforeAll(async () => {
     expect(RELEASES).toContain(RELEASE);
-    Object.assign(process.env, config!.env);
+    Object.assign(process.env, config.env);
     guard.listen({ onUnhandledRequest: 'error' });
     for (const server of SERVERS) {
       const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
@@ -276,13 +281,13 @@ function writeReport(): void {
   mkdirSync(join(ROOT, 'reports'), { recursive: true });
   const file = join(ROOT, 'reports', 'live-bms.json');
   writeFileSync(file, JSON.stringify({
-    bms: BASE_URL, release: RELEASE, tlsVerified: config!.tlsVerified, caFile: config!.caFile, at: new Date().toISOString(), node: process.version, platform: process.platform,
+    bms: BASE_URL, release: RELEASE, tlsVerified: config.tlsVerified, caFile: config.caFile, at: new Date().toISOString(), node: process.version, platform: process.platform,
     totals: { ok: count('ok'), unavailable: count('unavailable'), failed: count('failed'), skipped: count('skipped'), schemaDrift: withSchema.length },
     runs,
   }, null, 2));
   const lines = [
-    config!.tlsVerified
-      ? `TLS: certificates verified (${config!.caFile ? 'CA from BCONNECT_CA_CERT_PATH' : 'system and Node trust store'})`
+    config.tlsVerified
+      ? `TLS: certificates verified (${config.caFile ? 'CA from BCONNECT_CA_CERT_PATH' : 'system and Node trust store'})`
       : 'WARNING: TLS certificate verification was OFF (NODE_TLS_REJECT_UNAUTHORIZED=0 in the env file)',
     `live bMS ${BASE_URL} (${RELEASE}): ${count('ok')} ok, ${count('unavailable')} unavailable, ${count('failed')} failed, ${count('skipped')} skipped`,
     ...runs.filter((r) => r.outcome === 'unavailable').map((r) => `  unavailable  ${r.server} ${r.tool} [${r.statuses?.join(',')}]`),

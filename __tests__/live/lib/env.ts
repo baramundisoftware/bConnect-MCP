@@ -8,6 +8,8 @@
  * The keys are found in the source, not listed by hand.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import http from 'node:http';
+import https from 'node:https';
 import { join } from 'node:path';
 import { parse } from 'dotenv';
 import { RELEASES, type Release } from '../../lib/spec.js';
@@ -67,7 +69,15 @@ export interface LiveConfig {
 
 export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS.ProcessEnv }): LiveConfig {
   const { root, file, shell } = args;
+  if (!existsSync(file)) throw new LiveConfigError(`the env file ${file} does not exist (set BCONNECT_LIVE_ENV or create .env.local)`);
   const values = parse(readFileSync(file));
+  if (!values.BCONNECT_BASE_URL) throw new LiveConfigError(`${file} sets no BCONNECT_BASE_URL`);
+  if (!URL.canParse(values.BCONNECT_BASE_URL) || !/^https?:$/.test(new URL(values.BCONNECT_BASE_URL).protocol)) {
+    throw new LiveConfigError(`BCONNECT_BASE_URL in ${file} is not an http(s) URL`);
+  }
+  if (values.BCONNECT_CA_CERT_PATH && !existsSync(values.BCONNECT_CA_CERT_PATH)) {
+    throw new LiveConfigError(`BCONNECT_CA_CERT_PATH in ${file} names a file that does not exist`);
+  }
   for (const key of FORCED_EMPTY) {
     if (values[key]) throw new LiveConfigError(`${file} must not set ${key}: the live run keeps writes, secrets and the startup check fixed`);
   }
@@ -95,6 +105,40 @@ export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS
     caFile: env.BCONNECT_CA_CERT_PATH !== '',
     secrets,
   };
+}
+
+/**
+ * One authenticated GET of `<base>/info`, with the run's TLS settings. Any HTTP
+ * answer proves the bMS is reachable; the bMS version comes back when the
+ * credentials work. Network and TLS errors fail the run. The host stays out of
+ * the message.
+ */
+export function checkReachable(config: LiveConfig): Promise<{ status: number; bmsVersion?: string }> {
+  const { env } = config;
+  const url = new URL(`${config.baseUrl.href.replace(/\/$/, '')}/info`);
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (env.BCONNECT_API_KEY) headers['X-Api-Key'] = env.BCONNECT_API_KEY;
+  else if (env.BCONNECT_USERNAME) headers.Authorization = `Basic ${Buffer.from(`${env.BCONNECT_USERNAME}:${env.BCONNECT_PASSWORD}`).toString('base64')}`;
+  const options: https.RequestOptions = {
+    method: 'GET', headers, timeout: 15_000,
+    rejectUnauthorized: config.tlsVerified,
+    ...(config.caFile && { ca: readFileSync(env.BCONNECT_CA_CERT_PATH) }),
+  };
+  return new Promise((resolve, reject) => {
+    const req = (url.protocol === 'https:' ? https : http).request(url, options, (res) => {
+      let text = '';
+      res.setEncoding('utf8');
+      res.on('data', (d: string) => { text += d; });
+      res.on('end', () => {
+        let bmsVersion: string | undefined;
+        try { const v: unknown = JSON.parse(text)?.bMSVersion; if (typeof v === 'string') bmsVersion = v; } catch { /* not JSON */ }
+        resolve({ status: res.statusCode ?? 0, bmsVersion });
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', (e: NodeJS.ErrnoException) => reject(new LiveConfigError(`the bMS is not reachable (${e.code ?? e.message}); check BCONNECT_BASE_URL, the network and the TLS settings in ${config.file}`)));
+    req.end();
+  });
 }
 
 /** The environment of a spawned server: the shell without any controlled key, then the live values. */

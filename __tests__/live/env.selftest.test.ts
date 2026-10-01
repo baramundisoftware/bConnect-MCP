@@ -6,7 +6,8 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT } from '../lib/exerciser.js';
-import { childEnv, controlledKeys, loadLiveConfig } from './lib/env.js';
+import { checkReachable, childEnv, controlledKeys, loadLiveConfig } from './lib/env.js';
+import { assertExercised } from './lib/report.js';
 
 const dir = mkdtempSync(join(tmpdir(), 'live-env-'));
 afterAll(() => rmSync(dir, { recursive: true, force: true }));
@@ -75,5 +76,34 @@ describe('live env: isolated', () => {
   it('refuses NODE_EXTRA_CA_CERTS from the shell, which the test process cannot drop', () => {
     expect(() => loadLiveConfig({ root: ROOT, file: envFile('extra.env', [BASE]), shell: { NODE_EXTRA_CA_CERTS: 'C:/ca.pem' } }))
       .toThrow(/NODE_EXTRA_CA_CERTS/);
+  });
+});
+
+describe('live env: fails loudly when misconfigured', () => {
+  it('fails when the env file does not exist', () => {
+    expect(() => loadLiveConfig({ root: ROOT, file: join(dir, 'missing.env'), shell: {} })).toThrow(/does not exist/);
+  });
+
+  it('fails when the file has no base URL, or an invalid one', () => {
+    expect(() => loadLiveConfig({ root: ROOT, file: envFile('nourl.env', ['BCONNECT_USERNAME=u']), shell: {} }))
+      .toThrow(/BCONNECT_BASE_URL/);
+    expect(() => loadLiveConfig({ root: ROOT, file: envFile('badurl.env', ['BCONNECT_BASE_URL=bms:444']), shell: {} }))
+      .toThrow(/BCONNECT_BASE_URL/);
+  });
+
+  it('fails when the CA file does not exist', () => {
+    expect(() => loadLiveConfig({ root: ROOT, file: envFile('noca.env', [BASE, `BCONNECT_CA_CERT_PATH=${join(dir, 'none.pem')}`]), shell: {} }))
+      .toThrow(/BCONNECT_CA_CERT_PATH/);
+  });
+
+  it('fails when the bMS cannot be reached', async () => {
+    const config = loadLiveConfig({ root: ROOT, file: envFile('closed.env', ['BCONNECT_BASE_URL=http://127.0.0.1:1/bconnect']), shell: {} });
+    await expect(checkReachable(config)).rejects.toThrow(/not reachable/);
+  });
+
+  it('fails when nothing was exercised', () => {
+    expect(() => assertExercised({ startups: 0, calls: 0 })).toThrow(/nothing/);
+    expect(() => assertExercised({ startups: 13, calls: 0 })).toThrow(/no read tool/);
+    expect(() => assertExercised({ startups: 13, calls: 90 })).not.toThrow();
   });
 });
