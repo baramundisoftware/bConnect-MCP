@@ -193,7 +193,9 @@ The resource doesn't exist. List resources first to get a valid ID:
 
 ### 429 Too Many Requests
 
-The bMS API is throttling requests. Reduce them by enabling the server's **outbound** rate limiter so it self-throttles its calls to bMS:
+The bMS API is throttling requests. Reduce them with a smaller `PageSize` and fewer tool calls in parallel; behind the HTTP gateway, limit inbound requests with `MCP_GATEWAY_RATE_LIMIT_*`.
+
+The server's own **outbound** rate limiter doesn't help here yet: each tool call creates a new client, so the limit applies only within one call (#160), and when it is reached the call fails instead of waiting. Its settings, for reference:
 ```env
 BCONNECT_RATE_LIMIT_ENABLED=true
 BCONNECT_RATE_LIMIT_MAX_REQUESTS=100
@@ -309,7 +311,7 @@ Use filters and specific queries to reduce result set size.
 ### Frequent Timeouts
 
 - Use a smaller `PageSize` and page through results.
-- Enable the outbound rate limiter (`BCONNECT_RATE_LIMIT_*`) if request bursts overload the bMS server.
+- Reduce parallel tool calls if bursts overload the bMS server. The outbound rate limiter (`BCONNECT_RATE_LIMIT_*`) applies only within one tool call for now (#160) and fails the call instead of waiting.
 - Check network latency between the MCP host and the bMS server.
 
 ---

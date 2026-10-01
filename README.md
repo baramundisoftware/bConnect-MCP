@@ -214,7 +214,7 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `BCONNECT_API_KEY` | Yes* | — | API key for authentication |
 | `BCONNECT_USERNAME` | Yes* | — | Username for Basic Auth |
 | `BCONNECT_PASSWORD` | Yes* | — | Password for Basic Auth |
-| `BCONNECT_RELEASE` | — | `26R1` | bMS version: `25R2` or `26R1` |
+| `BCONNECT_RELEASE` | — | `26R1` | bMS version: `25R2` or `26R1`. servermanagement has no default and hides its 26R1 tools unless this is `26R1` |
 | `BCONNECT_CA_CERT_PATH` | — | — | Path to CA certificate (PEM) for self-signed certs |
 | `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `all`, `write`, `security` or `none`; any other value means `none`. Entries go to stdout, which breaks stdio mode (#168) |
 | `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Limit the requests one client sends. Each tool call still creates a new client, so the limit doesn't apply across calls yet (#160) |

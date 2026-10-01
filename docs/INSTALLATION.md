@@ -140,8 +140,9 @@ BCONNECT_AUDIT_LEVEL=none            # Audit logging: none | security | write | 
 ALLOW_WRITE_OPERATIONS=false         # Enable write/destructive tools (default: off)
 ALLOW_SECRET_READ=false              # Enable secret-returning reads (default: off) — see below
 
-# Outbound rate limiting (server → bMS). Throttles the calls each MCP server
-# makes to the bMS API. Off by default; set ENABLED=true to activate.
+# Outbound rate limiting (server → bMS). Limits the requests one client sends and
+# fails a request over the limit. Each tool call still creates a new client, so the
+# limit applies only within one tool call for now (#160). Off by default.
 BCONNECT_RATE_LIMIT_ENABLED=false    # Enable the client-side rate limiter
 BCONNECT_RATE_LIMIT_MAX_REQUESTS=100 # Max requests per window (default: 100)
 BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min)

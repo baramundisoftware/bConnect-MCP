@@ -129,7 +129,7 @@ The gateway uses one bConnect **service credential** (`BCONNECT_API_KEY`, or
 | `BCONNECT_BASE_URL` | bConnect V2.0 API base URL | `https://bms-server/bconnect` |
 | `BCONNECT_API_KEY` | API key (or use username/password below) | *(one credential required)* |
 | `BCONNECT_USERNAME` / `BCONNECT_PASSWORD` | API username + password (alternative to the key) | — |
-| `BCONNECT_RELEASE` | API release: `25R2` or `26R1` | `26R1` |
+| `BCONNECT_RELEASE` | API release: `25R2` or `26R1` (servermanagement has no default: set `26R1` for its 2026 R1 tools) | `26R1` |
 | `BCONNECT_AUDIT_LEVEL` | `none`, `security`, `write`, `all` | `none` |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | Set to `0` for self-signed certs (dev only) | `1` |
 | `BCONNECT_CA_CERT_PATH` | Path to a CA certificate inside the container | — |
@@ -171,13 +171,12 @@ On Node.js ≥ 22.15 the image also honors the OS trust store automatically; see
 
 ## Server Compatibility
 
-The gateway serves all 13 servers on 26R1. On 25R2, two servers are unavailable and
-return no tools:
+The gateway serves all 13 servers on 26R1. On 25R2, two servers don't work:
 
 | Server | Requires 26R1 |
 |--------|--------------|
-| bconnect-compliance-mcp | Yes (`BCONNECT_RELEASE=26R1`) |
-| bconnect-universaldynamicgroups-mcp | Yes (`BCONNECT_RELEASE=26R1`) |
+| bconnect-compliance-mcp | Yes: its tools are always offered and fail against 25R2, where the compliance API doesn't exist |
+| bconnect-universaldynamicgroups-mcp | Yes: with `BCONNECT_RELEASE=25R2` it offers no tools |
 | All others | No (works with 25R2 and 26R1) |
 
 ---

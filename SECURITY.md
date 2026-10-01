@@ -78,7 +78,7 @@ Production deployments must use proper TLS certificate verification. Never set `
 
 ### Audit Logging
 
-Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`none` / `security` / `write` / `all`). Enable it in production to track API calls.
+Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`none` / `security` / `write` / `all`). Audit entries are currently written to stdout, which breaks stdio mode (#168), so enable it only in HTTP or gateway deployments until that is fixed.
 
 ### Write-Operation Gating
 
