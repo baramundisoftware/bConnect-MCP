@@ -36,6 +36,7 @@ import { pathToFileURL } from 'node:url';
 import { brotliDecompressSync, gunzipSync, inflateSync } from 'node:zlib';
 import { ROOT, SERVERS, connect, domainOf, type ConnectedServer, type JsonSchema } from '../lib/exerciser.js';
 import { RELEASES, findOperation, loadOperations, type ApiOperation, type Release } from '../lib/spec.js';
+import { operationIn } from '../lib/conformance.js';
 import { createResponseValidator, type SchemaFinding } from '../lib/response-schema.js';
 import { checkReachable, childEnv, loadLiveConfig, redact as redactSecrets } from './lib/env.js';
 import { assertExercised } from './lib/report.js';
@@ -176,12 +177,13 @@ const parentRoute = (path: string): string | undefined => (path.includes('{') ? 
 function readOperations(server: string, table: Readonly<Record<string, readonly string[]>>, tool: string): ApiOperation[] | string {
   const ids = table[tool];
   if (!ids?.length) return 'no operation declared';
-  // In the server's own spec: operationIds such as GetFolder recur across specs.
-  const ops = ids.map((id) => loadOperations(RELEASE).find((op) => op.domain === domainOf(server) && op.operationId === id));
-  if (ops.some((op) => !op)) return `operation not in the ${RELEASE} spec`;
-  if (ops.some((op) => op!.method !== 'GET')) return 'write tool';
-  if (ops.some((op) => op!.secretFields.length > 0)) return 'returns credentials (secret gate)';
-  return ops as ApiOperation[];
+  // In the server's own spec, as the conformance guard does: operationIds such as GetFolder recur across specs.
+  const ops = ids.map((id) => operationIn(loadOperations(RELEASE), domainOf(server), id))
+    .filter((op): op is ApiOperation => op !== undefined);
+  if (ops.length !== ids.length) return `operation not in the ${RELEASE} spec`;
+  if (ops.some((op) => op.method !== 'GET')) return 'write tool';
+  if (ops.some((op) => op.secretFields.length > 0)) return 'returns credentials (secret gate)';
+  return ops;
 }
 
 /** Arguments for a tool, or why none can be built: required args must be one ID fed from its parent list. */
