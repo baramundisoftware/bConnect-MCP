@@ -19,6 +19,7 @@
     "ci": "bash scripts/ci-local.sh",
     "build": "for d in bconnect-*-mcp bconnect-server-template; do (cd \"$d\" && npm run build) || exit 1; done",
     "test": "vitest run",
+    "check:spec": "vitest run __tests__/spec-conformance.guard.test.ts",
     "lint": "eslint \"bconnect-*-mcp/src/**/*.ts\" \"bconnect-server-template/src/**/*.ts\" \"packages/mcp-core/src/**/*.ts\" --max-warnings 0",
     "lint:prune-casts": "eslint \"bconnect-*-mcp/src/**/*.ts\" \"bconnect-server-template/src/**/*.ts\" \"packages/mcp-core/src/**/*.ts\" --prune-suppressions",
     "test:watch": "vitest",

@@ -1,13 +1,19 @@
 /**
- * Which bConnect API operations return a secret, derived from the OpenAPI specs.
+ * The bConnect API operations of each release, read from the bundled OpenAPI
+ * specs (`openapi-specs/<release>/*.json`). Shared by the guard tests; nothing
+ * here is a hand-written list of routes or tools.
  *
+ * Secret classification:
  * An operation is secret-bearing when one of its 2xx response schemas contains a
  * STRING field whose name contains one of SECRET_KEYWORDS (case-insensitive).
  * Substring, because the API uses camelCase (`initialStartupPin`); string-only,
  * because status flags such as `isStartupPinEnabled` are booleans, not secrets.
  *
- * Nothing here is a hand-written list of routes or tools: the answer is recomputed
- * from `openapi-specs/<release>/*.json` on every run (REQ-SRV-017, ADR-0004).
+ * The answer is recomputed on every run (REQ-SRV-017, ADR-0004).
+ *
+ * Contract data for the spec-conformance guard (REQ-QA-001): operationId,
+ * summary, query parameters, request bodies per content type, and whether a 2xx
+ * response declares a body.
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -26,12 +32,16 @@ export interface ApiOperation {
   method: string;          // upper-case HTTP method
   path: string;            // spec path template, e.g. /v2.0/BitLocker/WindowsEndpoints/{id}/Secrets
   operationId: string;
+  summary: string;
   secretFields: string[];  // e.g. ["BitLockerSecrets.initialStartupPin"]; empty = not secret-bearing
   queryParams: string[];   // names of the query parameters the operation accepts, e.g. ["Page", "PageSize"]
+  requestBodies: Record<string, Schema>;  // content type → schema (may be a $ref into the spec)
+  returnsBody: boolean;    // a 2xx response declares content
+  spec: Schema;            // the whole spec document, for resolving $refs
   matches(method: string, path: string): boolean;
 }
 
-type Schema = Record<string, any>;
+export type Schema = Record<string, any>;
 
 const SPEC_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'openapi-specs');
 const cache = new Map<Release, ApiOperation[]>();
@@ -90,9 +100,17 @@ export function loadOperations(release: Release): ApiOperation[] {
           }
         }
         const upper = method.toUpperCase();
+        const requestBodies: Record<string, Schema> = {};
+        for (const [type, media] of Object.entries<Schema>(op.requestBody?.content ?? {})) {
+          requestBodies[type] = media.schema ?? {};
+        }
+        const returnsBody = Object.entries<Schema>(op.responses)
+          .some(([code, response]) => /^2/.test(code) && Object.keys(response.content ?? {}).length > 0);
         ops.push({
           release, domain, method: upper, path, operationId: op.operationId ?? '',
+          summary: op.summary ?? '',
           secretFields: [...fields],
+          requestBodies, returnsBody, spec,
           queryParams: (op.parameters ?? []).filter((q: Schema) => q.in === 'query').map((q: Schema) => q.name),
           matches: (m, p) => m.toUpperCase() === upper && pattern.test(p),
         });
@@ -117,4 +135,9 @@ export function findOperation(release: Release, method: string, requestPath: str
   if (!m) return undefined;
   const [, domain, rest] = m;
   return loadOperations(release).find((op) => op.domain === domain.toLowerCase() && op.matches(method, rest));
+}
+
+/** The operation with this operationId in the release, or undefined. */
+export function operationById(release: Release, operationId: string): ApiOperation | undefined {
+  return loadOperations(release).find((op) => op.operationId === operationId);
 }

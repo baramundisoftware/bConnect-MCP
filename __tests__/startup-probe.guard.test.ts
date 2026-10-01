@@ -15,7 +15,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
-import { RELEASES, findOperation, loadOperations } from './lib/spec-secrets.js';
+import { RELEASES, findOperation, loadOperations } from './lib/spec.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BASE_URL = 'http://bms.probe.test/bconnect';
