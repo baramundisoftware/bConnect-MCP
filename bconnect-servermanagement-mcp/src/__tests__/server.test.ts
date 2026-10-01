@@ -3,7 +3,7 @@
  *
  * Verifies that:
  * 1. createServer() lists exactly 25 tools in 25R2 mode
- * 2. createServer() lists exactly 30 tools in 26R1 mode
+ * 2. createServer() lists exactly 30 tools in 26R1 mode, the default when unset
  * 3. All expected tool names are registered
  * 4. 26R1-only tools only appear in 26R1 mode
  * 5. Unknown tool calls return MethodNotFound
@@ -50,20 +50,13 @@ const EXPECTED_26R1_ONLY_TOOLS = [
   'get_download_job',
 ];
 
-async function startServer(): Promise<{ client: InstanceType<typeof Client> }> {
+/** Start a server with BCONNECT_RELEASE set to `release`, or unset when omitted. */
+async function startServer(release?: string): Promise<{ client: InstanceType<typeof Client> }> {
+  // Assigning undefined to process.env stores the string "undefined"; delete really unsets it.
+  if (release === undefined) {delete process.env.BCONNECT_RELEASE;}
+  else {process.env.BCONNECT_RELEASE = release;}
   const { server } = createServer();
-  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
-  await server.connect(serverTransport);
-
-  const client = new Client({ name: 'test-client', version: '1.0.0' }, { capabilities: {} });
-  await client.connect(clientTransport);
-  return { client };
-}
-
-async function startServerWith26R1(): Promise<{ client: InstanceType<typeof Client> }> {
-  process.env.BCONNECT_RELEASE = '26R1';
-  const { server } = createServer();
-  process.env.BCONNECT_RELEASE = undefined;
+  delete process.env.BCONNECT_RELEASE;
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
 
@@ -74,19 +67,32 @@ async function startServerWith26R1(): Promise<{ client: InstanceType<typeof Clie
 
 describe('bconnect-servermanagement-mcp', () => {
   it('lists exactly 25 servermanagement tools in 25R2 mode', async () => {
-    const { client } = await startServer();
+    const { client } = await startServer('25R2');
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(25);
   });
 
   it('lists exactly 30 servermanagement tools in 26R1 mode', async () => {
-    const { client } = await startServerWith26R1();
+    const { client } = await startServer('26R1');
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(30);
   });
 
-  it('registers all expected 25R2 tool names', async () => {
+  it('defaults to 26R1 when BCONNECT_RELEASE is unset, like the other servers', async () => {
     const { client } = await startServer();
+    const names = (await client.listTools()).tools.map((t) => t.name);
+    expect(names).toHaveLength(30);
+    for (const tool of EXPECTED_26R1_ONLY_TOOLS) {expect(names).toContain(tool);}
+  });
+
+  it('hides the 26R1-only tools for an empty BCONNECT_RELEASE, like the other servers', async () => {
+    const { client } = await startServer('');
+    const { tools } = await client.listTools();
+    expect(tools).toHaveLength(25);
+  });
+
+  it('registers all expected 25R2 tool names', async () => {
+    const { client } = await startServer('25R2');
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
     for (const expected of EXPECTED_25R2_TOOLS) {
@@ -95,7 +101,7 @@ describe('bconnect-servermanagement-mcp', () => {
   });
 
   it('registers 26R1-only tools in 26R1 mode', async () => {
-    const { client } = await startServerWith26R1();
+    const { client } = await startServer('26R1');
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
     for (const expected of EXPECTED_26R1_ONLY_TOOLS) {
@@ -104,7 +110,7 @@ describe('bconnect-servermanagement-mcp', () => {
   });
 
   it('does not register 26R1-only tools in 25R2 mode', async () => {
-    const { client } = await startServer();
+    const { client } = await startServer('25R2');
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
     for (const tool of EXPECTED_26R1_ONLY_TOOLS) {

@@ -80,6 +80,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **servermanagement now defaults `BCONNECT_RELEASE` to `26R1` too.** It missed the default
+  change under Changed: with the variable unset it still hid its five 26R1-only tools
+  (`list_api_keys`, `simulate_msw_cleanup`, `msw_cleanup`, `list_download_jobs`,
+  `get_download_job`), offering 25 tools instead of 30.
 - **groups tools now work against a bConnect server with an internal CA (#197).** The groups
   server's tool calls ignored `BCONNECT_CA_CERT_PATH` and `NODE_TLS_REJECT_UNAUTHORIZED`:
   the server started, and then every groups tool failed with a TLS error. Its tool calls now

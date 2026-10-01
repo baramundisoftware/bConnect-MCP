@@ -32,7 +32,8 @@ import { ServerManagementRules } from "./utils/mcp-tool-validation-rules.js";
 export type { BConnectCredentials } from "@bconnect/mcp-core";
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
-  const is26R1 = process.env.BCONNECT_RELEASE === '26R1';
+  const release = process.env.BCONNECT_RELEASE ?? "26R1";
+  const is26R1 = release === "26R1";
 
   const server = new Server(
     {
