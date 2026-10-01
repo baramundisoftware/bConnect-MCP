@@ -29,6 +29,9 @@ test is skipped.
    The host name must match the certificate. To use another file, set
    `BCONNECT_LIVE_ENV=/path/to/file`.
 
+   Without the CA, `NODE_TLS_REJECT_UNAUTHORIZED=0` in the file turns certificate
+   checks off. The summary and the report then say that TLS was not verified.
+
 ## What it checks
 
 1. **Startup.** Each built server starts over stdio with the startup probe on
@@ -39,8 +42,9 @@ test is skipped.
    in-process. List tools run first with `PageSize=5`. The IDs they return feed the
    tools that need one: a tool on `/v2.0/Endpoints/{id}/Software` gets an ID from
    `/v2.0/Endpoints`. A call fails the test when the tool returns an error, unless
-   the bMS answered only 403 or 501 (module not available on this bMS). A throttled
-   call (429) is retried.
+   the bMS answered only 403, 409, 501 or 503: the module, service or data is not
+   available on this bMS, which the report lists as `unavailable`. A throttled call
+   (429) is retried.
 3. **Spec drift.** Every 2xx response is validated against its operation's response
    schema in `openapi-specs/<release>/`. Differences are reported, not failed.
 

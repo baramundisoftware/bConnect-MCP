@@ -28,6 +28,7 @@ import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { brotliDecompressSync, gunzipSync, inflateSync } from 'node:zlib';
 import { parse } from 'dotenv';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse, passthrough } from 'msw';
@@ -40,15 +41,22 @@ const fileEnv = existsSync(ENV_FILE) ? parse(readFileSync(ENV_FILE)) : {};
 const BASE_URL = fileEnv.BCONNECT_BASE_URL ?? '';
 const LIVE = BASE_URL !== '';
 const RELEASE = (fileEnv.BCONNECT_RELEASE ?? '26R1') as Release;
+/** NODE_TLS_REJECT_UNAUTHORIZED=0 in the env file: certificates are not checked; every summary says so. */
+const TLS_UNVERIFIED = fileEnv.NODE_TLS_REJECT_UNAUTHORIZED === '0';
 const PAGE_SIZE = 5;
-/** Statuses that mean "this bMS does not offer it" (module not licensed, route absent), not a defect. */
-const UNAVAILABLE = new Set([403, 501]);
+/**
+ * Statuses that mean "this bMS cannot answer that here", not a defect: module not
+ * licensed (403), not implemented (501), backing service down (503), or no such
+ * data for this object (409, e.g. "Requested resource has no maintenance window").
+ */
+const UNAVAILABLE = new Set([403, 409, 501, 503]);
 
 /** What the servers see: the bMS, its credentials and CA from the file; gates closed; probe on. */
 const liveEnv: Record<string, string> = {
   BCONNECT_BASE_URL: BASE_URL,
   BCONNECT_RELEASE: RELEASE,
-  ...pick(fileEnv, ['BCONNECT_API_KEY', 'BCONNECT_USERNAME', 'BCONNECT_PASSWORD', 'BCONNECT_CA_CERT_PATH']),
+  ...pick(fileEnv, ['BCONNECT_API_KEY', 'BCONNECT_USERNAME', 'BCONNECT_PASSWORD', 'BCONNECT_CA_CERT_PATH',
+    'NODE_TLS_REJECT_UNAUTHORIZED']),
   // Empty, not deleted: dotenv never overrides a key that is present.
   ALLOW_WRITE_OPERATIONS: '',
   ALLOW_SECRET_READ: '',
@@ -148,12 +156,24 @@ const guard = setupServer(
 guard.events.on('response:bypass', ({ request, response }) => {
   const url = new URL(request.url);
   const path = url.pathname.slice(basePath.length);
-  pending.push(response.clone().text().then((text) => {
+  pending.push(response.clone().arrayBuffer().then((raw) => {
+    // The bypass copy is the body as sent: IIS compresses (br), axios decompresses only its own copy.
+    const decoded = decode(Buffer.from(raw), response.headers.get('content-encoding'));
+    const text = decoded.charCodeAt(0) === 0xfeff ? decoded.slice(1) : decoded;  // UTF-8 BOM
     let body: unknown = text;
     try { body = text ? JSON.parse(text) : null; } catch { /* not JSON: keep the text */ }
     exchanges.push({ method: request.method, path, status: response.status, body, op: findOperation(RELEASE, request.method, path) });
   }));
 });
+
+function decode(raw: Buffer, encoding: string | null): string {
+  switch (encoding?.trim().toLowerCase()) {
+    case 'br': return brotliDecompressSync(raw).toString('utf8');
+    case 'gzip': return gunzipSync(raw).toString('utf8');
+    case 'deflate': return inflateSync(raw).toString('utf8');
+    default: return raw.toString('utf8');
+  }
+}
 
 /** The items of a list response: the body if it is an array, else its first array-valued property. */
 function itemsOf(body: unknown): unknown[] {
@@ -276,11 +296,12 @@ function writeReport(): void {
   mkdirSync(join(ROOT, 'reports'), { recursive: true });
   const file = join(ROOT, 'reports', 'live-bms.json');
   writeFileSync(file, JSON.stringify({
-    bms: BASE_URL, release: RELEASE, at: new Date().toISOString(), node: process.version, platform: process.platform,
+    bms: BASE_URL, release: RELEASE, tlsVerified: !TLS_UNVERIFIED, at: new Date().toISOString(), node: process.version, platform: process.platform,
     totals: { ok: count('ok'), unavailable: count('unavailable'), failed: count('failed'), skipped: count('skipped'), schemaDrift: withSchema.length },
     runs,
   }, null, 2));
   const lines = [
+    ...(TLS_UNVERIFIED ? ['WARNING: TLS certificate verification was OFF (NODE_TLS_REJECT_UNAUTHORIZED=0 in the env file)'] : []),
     `live bMS ${BASE_URL} (${RELEASE}): ${count('ok')} ok, ${count('unavailable')} unavailable, ${count('failed')} failed, ${count('skipped')} skipped`,
     ...runs.filter((r) => r.outcome === 'unavailable').map((r) => `  unavailable  ${r.server} ${r.tool} [${r.statuses?.join(',')}]`),
     `schema drift in ${withSchema.length} tool responses:`,
