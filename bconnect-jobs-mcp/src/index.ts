@@ -521,6 +521,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     "assign_job_to_dynamic_group",
     "assign_job_to_universal_dynamic_group",
     "create_kiosk_release",
+    "withdraw_kiosk_release",
     ]);
     if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
       return {

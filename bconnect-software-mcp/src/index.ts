@@ -399,6 +399,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     "create_bundle_folder",
     "delete_bundle_folder",
     "update_bundle_folder",
+    "replace_application_in_bundle",
     ]);
     if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
       return {

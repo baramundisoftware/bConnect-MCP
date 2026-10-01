@@ -823,6 +823,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     "delete_network_endpoint",
     "delete_endpoint",
     "delete_unmanaged_endpoint",
+    "link_entra_id_data",
+    "unlink_entra_id_data",
     ]);
     if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
       return {
