@@ -1277,7 +1277,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 async function main(): Promise<void> {
   dotenv.config();
 
-  let config: BConnectConfig;
+  let config: Readonly<BConnectConfig>;
   try {
     config = clientConfigFromEnv(process.env);
   } catch (error) {

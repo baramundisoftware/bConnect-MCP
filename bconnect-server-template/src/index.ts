@@ -175,7 +175,7 @@ async function main(): Promise<void> {
   // Startup connectivity check (REQ-SRV-013). Set BCONNECT_SKIP_CONNECTIVITY_CHECK=true
   // to disable when the management server is reachable only after a delay.
   if (process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK !== "true") {
-    let _config: BConnectConfig;
+    let _config: Readonly<BConnectConfig>;
     try {
       _config = clientConfigFromEnv(process.env);
     } catch (error) {

@@ -454,7 +454,7 @@ async function main(): Promise<void> {
   // Startup connectivity check (REQ-SRV-013)
   dotenv.config();
   {
-    let _config: BConnectConfig;
+    let _config: Readonly<BConnectConfig>;
     try {
       _config = clientConfigFromEnv(process.env);
     } catch (error) {
