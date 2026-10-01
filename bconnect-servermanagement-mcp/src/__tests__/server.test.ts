@@ -127,6 +127,20 @@ describe('bconnect-servermanagement-mcp', () => {
     }
   });
 
+  it('refuses a 26R1-only tool at call time in 25R2 mode, with the same message as the other servers', async () => {
+    process.env.BCONNECT_API_KEY = 'test-key';
+    process.env.BCONNECT_BASE_URL = 'http://bms.test/bconnect';
+    try {
+      const { client } = await startServer('25R2');
+      await expect(client.callTool({ name: 'list_api_keys', arguments: {} })).rejects.toThrow(
+        'list_api_keys is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.',
+      );
+    } finally {
+      delete process.env.BCONNECT_API_KEY;
+      delete process.env.BCONNECT_BASE_URL;
+    }
+  });
+
   it('returns MethodNotFound for unknown tool', async () => {
     const { client } = await startServer();
     await expect(

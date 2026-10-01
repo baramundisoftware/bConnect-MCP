@@ -8,7 +8,7 @@
  * microservices, security groups/profiles, API keys, and download jobs.
  *
  * 25 tools work in both 25R2 and 26R1. 5 additional tools are only
- * registered when BCONNECT_RELEASE=26R1.
+ * registered when BCONNECT_RELEASE=26R1 (the default).
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -468,7 +468,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
       const requires26R1 = (): void => {
         if (!is26R1) {
-          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+          throw new McpError(ErrorCode.MethodNotFound, `${name} is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.`);
         }
       };
 
