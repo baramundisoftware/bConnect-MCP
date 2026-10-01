@@ -13,7 +13,8 @@ Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST 
 BCONNECT_BASE_URL=https://<your-bms-server>:443/bconnect
 BCONNECT_USERNAME=mcp-reader
 BCONNECT_PASSWORD=<password>
-BCONNECT_RELEASE=26R1   # this server hides the tools that need baramundi 2026 R1 unless this is 26R1
+# This server hides the tools that need baramundi 2026 R1 unless this is 26R1:
+BCONNECT_RELEASE=26R1
 # Optional: BCONNECT_CA_CERT_PATH=/path/to/internal-ca.pem
 ```
 

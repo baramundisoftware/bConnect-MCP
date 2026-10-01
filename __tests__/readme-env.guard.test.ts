@@ -12,7 +12,7 @@
  * examples) that the server doesn't read.
  */
 import { describe, expect, it } from 'vitest';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, relative } from 'node:path';
 import { ROOT, SERVERS } from './lib/exerciser.js';
@@ -52,7 +52,8 @@ const sourceFiles = (dirPath: string): string[] =>
 function isEntryGuard(lines: string[], at: number, exempt: { allowedAt: RegExp; allowedBody: RegExp }): boolean {
   if (!exempt.allowedAt.test(lines[at] ?? '')) return false;
   const end = lines.findIndex((line, i) => i > at && line === '}');
-  if (end < 0) return false;
+  // No else: it would run exactly where VITEST is set (tests, and the gateway in production).
+  if (end < 0 || /^\s*else\b/.test(lines[end + 1] ?? '')) return false;
   const body = lines.slice(at + 1, end).map((l) => l.trim()).join(' ');
   return exempt.allowedBody.test(body);
 }
@@ -86,7 +87,9 @@ function listedVariables(readme: string): string[] | null {
   const block = readme
     .slice(start + START.length, end)
     .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/^(```|~~~)[\s\S]*?(?:^\1|$(?![\s\S]))/gm, '');
+    // A fence may be indented up to three spaces and closes with the same character,
+    // at least as long; an unclosed fence runs to the end.
+    .replace(/^ {0,3}((`|~)\2{2,})[^\n]*\n[\s\S]*?(?:^ {0,3}\1\2*[ \t]*$|$(?![\s\S]))/gm, '');
   // A table row starts with | after at most three spaces; four or more make it code.
   const rows = block.split('\n').filter((line) => /^ {0,3}\|/.test(line));
   const names = rows
@@ -184,6 +187,9 @@ describe('guard self-tests', () => {
     ['a fenced code block', ['```', WRITES, '```']],
     ['an unclosed code fence', ['```', WRITES]],
     ['an indented code block', [`    ${WRITES}`]],
+    ['a fence indented two spaces', ['  ```', WRITES, '  ```']],
+    ['a four-backtick fence holding a three-backtick line', ['````', '```', WRITES, '````']],
+    ['a tilde fence', ['~~~', WRITES, '~~~']],
   ])('ignores a row hidden in %s inside the block', (_label, hiddenRows) => {
     expect(compare(readme([BASE, ...hiddenRows]), read).undocumented).toEqual(['ALLOW_WRITE_OPERATIONS']);
   });
@@ -264,8 +270,20 @@ describe('guard self-tests', () => {
       ['outside index.ts', 'helper.ts', ENTRY],
       ['in a file whose name only ends in index.ts', 'xindex.ts', ENTRY],
       ['as an entry guard whose body does more', 'index.ts', ENTRY.replace('process.exit(1);', 'process.exit(1);\n    disableGates();')],
+      ['as an entry guard with an else', 'index.ts', `${ENTRY.trimEnd()}\nelse {\n  disableGates();\n}\n`],
     ])('reports VITEST used %s', (_label, name, text) => {
       expect(scan({ [name]: text }).hidden).toEqual([expect.stringContaining('main() entry guard')]);
+    });
+
+    it('scans generated code, which is compiled into the build', () => {
+      const dir = mkdtempSync(join(tmpdir(), 'readme-env-'));
+      try {
+        mkdirSync(join(dir, 'generated'));
+        writeFileSync(join(dir, 'generated', 'g.ts'), 'process.env.MCP_PORT;');
+        expect(variablesRead([dir]).names).toEqual(new Set(['MCP_PORT']));
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
 
     it('scans .mts and .cts files', () => {
