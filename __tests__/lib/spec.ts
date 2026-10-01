@@ -36,6 +36,7 @@ export interface ApiOperation {
   secretFields: string[];  // e.g. ["BitLockerSecrets.initialStartupPin"]; empty = not secret-bearing
   queryParams: string[];   // names of the query parameters the operation accepts, e.g. ["Page", "PageSize"]
   requestBodies: Record<string, Schema>;  // content type → schema (may be a $ref into the spec)
+  bodyRequired: boolean;   // requestBody.required
   returnsBody: boolean;    // a 2xx response declares content
   spec: Schema;            // the whole spec document, for resolving $refs
   matches(method: string, path: string): boolean;
@@ -110,7 +111,7 @@ export function loadOperations(release: Release): ApiOperation[] {
           release, domain, method: upper, path, operationId: op.operationId ?? '',
           summary: op.summary ?? '',
           secretFields: [...fields],
-          requestBodies, returnsBody, spec,
+          requestBodies, bodyRequired: op.requestBody?.required === true, returnsBody, spec,
           queryParams: (op.parameters ?? []).filter((q: Schema) => q.in === 'query').map((q: Schema) => q.name),
           matches: (m, p) => m.toUpperCase() === upper && pattern.test(p),
         });
