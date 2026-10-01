@@ -206,7 +206,7 @@ Install only the servers you need. Most users start with `bconnect-endpoints-mcp
 
 ## Configuration Reference
 
-All servers use the same environment variables:
+The variables most deployments set. Each server's README lists exactly the variables that server reads.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -216,8 +216,8 @@ All servers use the same environment variables:
 | `BCONNECT_PASSWORD` | Yes* | — | Password for Basic Auth |
 | `BCONNECT_RELEASE` | — | `26R1` | bMS version: `25R2` or `26R1` |
 | `BCONNECT_CA_CERT_PATH` | — | — | Path to CA certificate (PEM) for self-signed certs |
-| `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `none`, `info`, or `verbose` |
-| `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Enable rate limiting to protect the bConnect API |
+| `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `all`, `write`, `security` or `none`; any other value means `none`. Entries go to stdout, which breaks stdio mode (#168) |
+| `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Limit the requests one client sends. Each tool call still creates a new client, so the limit doesn't apply across calls yet (#160) |
 | `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (network) |
 | `MCP_PORT` | — | `3000` | HTTP port (when `MCP_TRANSPORT=http`) |
 | `MCP_GATEWAY_PORT` | — | `3001` | Gateway listen port (when using `bconnect-mcp-gateway`) |
@@ -433,8 +433,8 @@ For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING
 - **Never hardcode credentials** — always use environment variables or `.env` files
 - **Use API keys** instead of username/password when possible
 - **Use `BCONNECT_CA_CERT_PATH`** for self-signed certificates instead of disabling TLS
-- **Enable audit logging** (`BCONNECT_AUDIT_LEVEL=info`) on production servers
-- **Enable rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) to protect your bConnect API
+- **Audit logging** (`BCONNECT_AUDIT_LEVEL=write`, `security` or `all`) writes to stdout, so use it only in HTTP or gateway deployments until #168 is fixed
+- **Rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) applies only within one tool call for now; it does not protect the bConnect API across calls (#160)
 
 See [SECURITY.md](SECURITY.md) for the full security policy.
 

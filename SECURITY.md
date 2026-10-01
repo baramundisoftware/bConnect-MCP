@@ -90,7 +90,7 @@ A tool whose response contains live credentials is **disabled by default**, what
 
 ### Rate Limiting
 
-Each server can enforce a token-bucket rate limiter to protect the bConnect API. Enable and tune it via `BCONNECT_RATE_LIMIT_ENABLED`, `BCONNECT_RATE_LIMIT_MAX_REQUESTS`, and `BCONNECT_RATE_LIMIT_WINDOW_MS`.
+Each server's bConnect client has a token-bucket rate limiter, set via `BCONNECT_RATE_LIMIT_ENABLED`, `BCONNECT_RATE_LIMIT_MAX_REQUESTS` and `BCONNECT_RATE_LIMIT_WINDOW_MS`. Each tool call still creates a new client, so the limit applies only within one tool call and does not yet protect the bConnect API across calls (#160).
 
 ### HTTP Gateway (`bconnect-mcp-gateway`)
 

@@ -171,7 +171,8 @@ BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min
 > service account is permitted to do.
 
 > **Two layers of rate limiting.** The `BCONNECT_RATE_LIMIT_*` vars above throttle
-> a server's **outbound** calls to bMS (per process). They do **not** limit
+> a server's **outbound** calls to bMS, but only within one tool call for now: each
+> tool call creates a new client, so the limit doesn't apply across calls yet (#160). They do **not** limit
 > **inbound** requests to the HTTP gateway — that is configured separately on the
 > gateway (`MCP_GATEWAY_RATE_LIMIT_*`, see the Gateway environment variables table).
 
