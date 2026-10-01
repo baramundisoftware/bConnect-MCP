@@ -38,8 +38,8 @@ import { ROOT, SERVERS, connect, domainOf, type ConnectedServer, type JsonSchema
 import { RELEASES, findOperation, loadOperations, type ApiOperation, type Release } from '../lib/spec.js';
 import { operationIn } from '../lib/conformance.js';
 import { createResponseValidator, type SchemaFinding } from '../lib/response-schema.js';
-import { checkReachable, childEnv, loadLiveConfig, redact as redactSecrets } from './lib/env.js';
-import { assertExercised } from './lib/report.js';
+import { checkReachable, childEnv, loadLiveConfig } from './lib/env.js';
+import { assertExercised, sanitise, sanitisedSummary, type ToolRun } from './lib/report.js';
 import { createGuard } from './lib/guard.mjs';
 import { expectedAnswer } from './lib/expected.js';
 import { CHILD_GUARD, readGuardLog, startupProblems, type LoggedRequest } from './lib/child.js';
@@ -47,15 +47,15 @@ import { CHILD_GUARD, readGuardLog, startupProblems, type LoggedRequest } from '
 const ENV_FILE = process.env.BCONNECT_LIVE_ENV ?? join(ROOT, '.env.local');
 // A missing or incomplete env file fails the run here, before any test (lib/env.ts).
 const config = loadLiveConfig({ root: ROOT, file: ENV_FILE, shell: process.env });
-const BASE_URL = config.baseUrl.href;
 const RELEASE: Release = config.release;
 const PAGE_SIZE = 5;
 
-/** Credentials never reach test output, whatever a server prints. */
-const redact = (s: string): string => redactSecrets(config, s);
+/** Console text: no credentials, host or object IDs, whatever a server prints (lib/report.ts). */
+const clean = (s: string): string => sanitise(s, { hostname: config.baseUrl.hostname, secrets: config.secrets });
 
 let started = 0;
-beforeAll(() => checkReachable(config), 30_000);
+let bmsVersion: string | undefined;
+beforeAll(async () => { ({ bmsVersion } = await checkReachable(config)); }, 30_000);
 afterAll(() => assertExercised({ startups: started, calls: runs.filter((r) => r.outcome !== 'skipped').length }));
 
 // ─── Startup over stdio ──────────────────────────────────────────────────────
@@ -99,12 +99,12 @@ async function startOverStdio(server: string): Promise<Startup> {
     initialized: !!init?.result,
     tools: list?.result?.tools?.length ?? 0,
     nonJson: messages().filter((m) => m === null || m.jsonrpc !== '2.0').length,
-    stderr: redact(err.split('\n').slice(-8).join('\n')),
+    stderr: clean(err.split('\n').slice(-8).join('\n')),
     requests: readGuardLog(log),
   };
 }
 
-describe(`live bMS ${BASE_URL} (${RELEASE}): startup`, () => {
+describe(`live bMS (${RELEASE}): startup`, () => {
   it.each(SERVERS)('%s starts with the probe on', async (server) => {
     expect(existsSync(join(ROOT, server, 'build', 'index.js')), `${server} is not built: run the build first`).toBe(true);
     const s = await startOverStdio(server);
@@ -119,11 +119,6 @@ describe(`live bMS ${BASE_URL} (${RELEASE}): startup`, () => {
 // ─── Read tools in-process, behind the network guard ─────────────────────────
 
 interface Exchange { method: string; path: string; status: number; body: unknown; op?: ApiOperation }
-type Outcome = 'ok' | 'expected' | 'failed' | 'skipped';
-interface ToolRun {
-  server: string; tool: string; outcome: Outcome; detail: string;
-  args?: Record<string, unknown>; ms?: number; statuses?: number[]; requests?: string[]; schema?: SchemaFinding[];
-}
 
 const runs: ToolRun[] = [];
 /** Spec route of a list operation (`<domain> <path>`) → IDs its responses carried. */
@@ -224,10 +219,10 @@ async function exercise(server: string, conn: ConnectedServer, tool: ConnectedSe
   // Only a listed tool with its listed answer is expected (lib/expected.ts); its reason is reported.
   const reason = expectedAnswer(tool.name, exchanges.filter((e) => e.status < 200 || e.status > 299));
   if (reason) return { ...base, outcome: 'expected', detail: reason };
-  return { ...base, outcome: 'failed', detail: redact(result.text).slice(0, 300) };
+  return { ...base, outcome: 'failed', detail: result.text.slice(0, 300) };
 }
 
-describe(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
+describe(`live bMS (${RELEASE}): read tools`, () => {
   const saved = { ...process.env };
   const conns = new Map<string, ConnectedServer>();
   const tables = new Map<string, Readonly<Record<string, readonly string[]>>>();
@@ -268,32 +263,27 @@ describe(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
         mine.push(run);
       }
       expect(guard.refused, 'requests the guard stopped (must be none: tools are read-only)').toEqual([]);
-      const failed = mine.filter((r) => r.outcome === 'failed').map((r) => `${r.tool} [${r.requests?.join(", ")}] ${r.detail}`);
+      const failed = mine.filter((r) => r.outcome === 'failed').map((r) => clean(`${r.tool} [${r.requests?.join(', ')}] ${r.detail}`));
       expect(failed, `${server} read tools that failed on the live bMS`).toEqual([]);
     }, 300_000);
   }
 });
 
+/**
+ * reports/live-bms.json keeps everything, host and raw details included (gitignored).
+ * reports/live-bms-summary.md and the console get the sanitised summary only.
+ */
 function writeReport(): void {
-  const count = (o: Outcome): number => runs.filter((r) => r.outcome === o).length;
-  const withSchema = runs.filter((r) => r.schema?.length);
-  mkdirSync(join(ROOT, 'reports'), { recursive: true });
-  const file = join(ROOT, 'reports', 'live-bms.json');
-  writeFileSync(file, JSON.stringify({
-    bms: BASE_URL, release: RELEASE, tlsVerified: config.tlsVerified, caFile: config.caFile, at: new Date().toISOString(), node: process.version, platform: process.platform,
-    totals: { ok: count('ok'), expected: count('expected'), failed: count('failed'), skipped: count('skipped'), schemaDrift: withSchema.length },
-    runs,
+  const dir = join(ROOT, 'reports');
+  mkdirSync(dir, { recursive: true });
+  const summary = sanitisedSummary({
+    release: RELEASE, bmsVersion, tlsVerified: config.tlsVerified, caFile: config.caFile,
+    startups: { ok: started, total: SERVERS.length }, runs,
+  });
+  writeFileSync(join(dir, 'live-bms.json'), JSON.stringify({
+    bms: config.baseUrl.href, release: RELEASE, bmsVersion, tlsVerified: config.tlsVerified, caFile: config.caFile,
+    at: new Date().toISOString(), node: process.version, platform: process.platform, runs,
   }, null, 2));
-  const lines = [
-    config.tlsVerified
-      ? `TLS: certificates verified (${config.caFile ? 'CA from BCONNECT_CA_CERT_PATH' : 'system and Node trust store'})`
-      : 'WARNING: TLS certificate verification was OFF (NODE_TLS_REJECT_UNAUTHORIZED=0 in the env file)',
-    `live bMS ${BASE_URL} (${RELEASE}): ${count('ok')} ok, ${count('expected')} expected, ${count('failed')} failed, ${count('skipped')} skipped`,
-    ...runs.filter((r) => r.outcome === 'expected').map((r) => `  expected  ${r.tool} [${r.statuses?.join(',')}]: ${r.detail}`),
-    `schema drift in ${withSchema.length} tool responses:`,
-    ...withSchema.flatMap((r) => [`  ${r.server} ${r.tool}`, ...r.schema!.slice(0, 5).map((f) => `      ${f.path} ${f.message}`),
-      ...(r.schema!.length > 5 ? [`      … ${r.schema!.length - 5} more`] : [])]),
-    `report: ${file}`,
-  ];
-  console.log(lines.join('\n'));
+  writeFileSync(join(dir, 'live-bms-summary.md'), summary);
+  console.log(`${summary}\nLocal report (not for publishing): reports/live-bms.json\nPublishable summary: reports/live-bms-summary.md`);
 }

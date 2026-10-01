@@ -149,8 +149,3 @@ export function childEnv(config: LiveConfig, shell: NodeJS.ProcessEnv): NodeJS.P
   }
   return { ...env, ...config.env, NODE_ENV: 'production' };
 }
-
-/** Replace every secret of the run in `text`. */
-export function redact(config: Pick<LiveConfig, 'secrets'>, text: string): string {
-  return config.secrets.reduce((out, secret) => out.split(secret).join('***'), text);
-}
