@@ -109,3 +109,103 @@ export function compareWithBaseline(observed: Violation[], baseline: Baseline): 
     untriaged: Object.entries(baseline).filter(([, issue]) => !(Number.isInteger(issue) && issue > 0)).map(([k]) => k).sort(),
   };
 }
+
+/** One tool call with every documented argument plus one undeclared one. */
+export interface ParamCall {
+  tool: string;
+  inputSchema: Record<string, any>;
+  /** Distinct GUID per ID-like argument, so a path slot can be traced to its argument. */
+  idsByArg: Record<string, string>;
+  /** Name and value of the undeclared argument; neither may reach the wire. */
+  unknownName: string;
+  unknownValue: string;
+  /** The tool call returned an error. */
+  failed: boolean;
+  requests: Array<{ method: string; path: string; query: Array<[string, string]>; body: string }>;
+}
+
+/** Path-slot names of a spec template, e.g. ['logicalGroupId'] for /v2.0/LogicalGroups/{logicalGroupId}/Endpoints. */
+const slotsOf = (template: string): Array<string | null> =>
+  template.split('/').map((seg) => /^\{(\w+)\}$/.exec(seg)?.[1] ?? null);
+
+/**
+ * True when the argument fills the slot by name: the same name ignoring case
+ * and a trailing `Id`, or either side is the generic `id`. `dynamicGroupId`
+ * doesn't fit `{universalDynamicGroupId}`: different entities.
+ */
+function slotFits(slot: string, arg: string): boolean {
+  const norm = (s: string): string => s.toLowerCase().replace(/id$/, '');
+  return norm(slot) === '' || norm(arg) === '' || norm(slot) === norm(arg);
+}
+
+/**
+ * Parameter checks for calls made with all documented arguments:
+ * - `arg-leak`: the undeclared argument's value reached the query or the body.
+ * - `query-undeclared`: a query parameter the operation doesn't declare was sent.
+ * - `query-not-offered`: a query parameter the operation declares is neither in the tool's input
+ *   schema nor sent (a tool may offer it under its own argument name).
+ * - `path-slot`: a path slot is filled by an argument whose name doesn't fit the slot.
+ * - `page-description`: a page argument (any case) isn't described as zero-based, or a page-size
+ *   argument doesn't state the 1000 maximum.
+ * - `params-not-exercised`: the call failed or sent nothing, so none of the above could be checked.
+ * Requests that don't match a declared operation are left to the route check (arg-leak and the
+ * descriptions are still checked).
+ *
+ * Argument names are compared exactly (case matters: `includeSubGroups` is not `includeSubfolders`).
+ */
+export function checkParams(args: {
+  release: Release;
+  server: string;
+  domain: string;
+  table: Readonly<Record<string, readonly string[]>>;
+  calls: ParamCall[];
+  operations?: ApiOperation[];
+}): Violation[] {
+  const { release, server, domain, table, calls } = args;
+  const ops = args.operations ?? loadOperations(release);
+  const out: Violation[] = [];
+  const v = (check: string, tool: string, detail: string): void => {
+    out.push({ check, release, server, tool, detail });
+  };
+  for (const call of calls) {
+    const props: Record<string, any> = call.inputSchema.properties ?? {};
+    for (const [name, schema] of Object.entries(props)) {
+      const text = String(schema?.description ?? '');
+      if (/^page$/i.test(name) && !(/zero[- ]?(based|indexed)|\b0-(based|indexed)|starts? (at|from) 0\b/i.test(text)
+        && !/1-based|one-based|starts? (at|from) 1\b/i.test(text))) {
+        v('page-description', call.tool, name);
+      }
+      if (/^page-?size$/i.test(name) && !/max\w*[^0-9]{0,12}1000\b|up to 1000\b|\b1\s*[–-]\s*1000\b/i.test(text)) v('page-description', call.tool, name);
+    }
+    if (call.failed || call.requests.length === 0) v('params-not-exercised', call.tool, '-');
+
+    const declared = (table[call.tool] ?? [])
+      .map((id) => ops.find((op) => op.domain === domain && op.operationId === id))
+      .filter((op): op is ApiOperation => !!op);
+    for (const r of call.requests) {
+      const leaked = (text: string): boolean => text.includes(call.unknownValue) || text.includes(call.unknownName);
+      if (leaked(r.body) || leaked(r.path) || r.query.some(([k, val]) => leaked(k) || leaked(val))) {
+        v('arg-leak', call.tool, '-');
+      }
+      const m = /^\/([^/]+)(\/.*)$/.exec(r.path);
+      const op = m && m[1].toLowerCase() === domain ? declared.find((o) => o.matches(r.method, m[2])) : undefined;
+      if (!op) continue;
+      for (const [name, val] of r.query) {
+        if (!op.queryParams.includes(name) && !val.includes(call.unknownValue)) v('query-undeclared', call.tool, name);
+      }
+      // Offered = in the input schema, or sent (a tool may map its own argument name onto it).
+      const sent = new Set(r.query.map(([k]) => k));
+      for (const name of op.queryParams) {
+        if (!(name in props) && !sent.has(name)) v('query-not-offered', call.tool, name);
+      }
+      const segments = m![2].split('/');
+      slotsOf(op.path).forEach((slot, i) => {
+        if (!slot) return;
+        const arg = Object.entries(call.idsByArg).find(([, guid]) => guid === segments[i])?.[0];
+        if (arg && !slotFits(slot, arg)) v('path-slot', call.tool, `{${slot}} ← ${arg}`);
+      });
+    }
+  }
+  // A tool calls one operation, so each finding appears once per call; keep keys unique.
+  return [...new Map(out.map((x) => [keyOf(x), x])).values()];
+}

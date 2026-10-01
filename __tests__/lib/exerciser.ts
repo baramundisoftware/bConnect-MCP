@@ -57,6 +57,31 @@ export function requiredArguments(inputSchema: JsonSchema): Record<string, unkno
   return args;
 }
 
+/** The value of the undeclared argument added by `allArguments`; it must never reach the wire. */
+export const UNKNOWN_NAME = 'zzGuardUnknown';
+export const UNKNOWN_VALUE = 'zz-guard-unknown-argument';
+
+/**
+ * Sample values for every documented argument, a distinct GUID for each ID-like
+ * argument (so a path slot can be traced back to its argument), and one
+ * undeclared argument.
+ */
+export function allArguments(inputSchema: JsonSchema): { args: Record<string, unknown>; idsByArg: Record<string, string> } {
+  const args: Record<string, unknown> = {};
+  const idsByArg: Record<string, string> = {};
+  let n = 1;
+  for (const [name, schema] of Object.entries<JsonSchema>(inputSchema.properties ?? {})) {
+    if (schema.type === 'string' && /id$/i.test(name)) {
+      idsByArg[name] = `00000000-0000-4000-8000-${String(n++).padStart(12, '0')}`;
+      args[name] = idsByArg[name];
+    } else {
+      args[name] = sample(name, schema);
+    }
+  }
+  args[UNKNOWN_NAME] = UNKNOWN_VALUE;
+  return { args, idsByArg };
+}
+
 /** One HTTP request as a server sent it. `path` is below the base URL, e.g. `/jobs/v2.0/Folders`. */
 export interface RecordedRequest {
   method: string;
