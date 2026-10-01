@@ -17,8 +17,9 @@
  *    that need one (the ID source is the operation whose route is the part of
  *    the tool's route before its first `{param}`).
  *
- * Read-only by construction: an MSW network guard passes GET requests to the bMS
- * host through and fails every other request before it leaves the process; the
+ * Read-only by construction: an MSW request guard (lib/guard.mjs) passes GET
+ * requests to the bMS through and fails every other method and origin, every
+ * credential-returning route and every redirect before it leaves the process; the
  * write and secret gates stay closed as well.
  *
  * Where a real response differs from its OpenAPI schema, the difference is
@@ -31,13 +32,12 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { brotliDecompressSync, gunzipSync, inflateSync } from 'node:zlib';
-import { setupServer } from 'msw/node';
-import { http, HttpResponse, passthrough } from 'msw';
 import { ROOT, SERVERS, connect, domainOf, type ConnectedServer, type JsonSchema } from '../lib/exerciser.js';
 import { RELEASES, findOperation, loadOperations, type ApiOperation, type Release } from '../lib/spec.js';
 import { createResponseValidator, type SchemaFinding } from '../lib/response-schema.js';
 import { checkReachable, childEnv, loadLiveConfig, redact as redactSecrets } from './lib/env.js';
 import { assertExercised } from './lib/report.js';
+import { createGuard } from './lib/guard.mjs';
 
 const ENV_FILE = process.env.BCONNECT_LIVE_ENV ?? join(ROOT, '.env.local');
 // A missing or incomplete env file fails the run here, before any test (lib/env.ts).
@@ -119,7 +119,6 @@ interface ToolRun {
 }
 
 const runs: ToolRun[] = [];
-const blocked: string[] = [];
 /** Spec route of a list operation (`<domain> <path>`) → IDs its responses carried. */
 const idsByRoute = new Map<string, string[]>();
 
@@ -128,17 +127,8 @@ let pending: Array<Promise<void>> = [];
 const basePath = config.baseUrl.pathname.replace(/\/$/, '');
 const origin = config.baseUrl.origin;
 
-const guard = setupServer(
-  http.all('*', ({ request }) => {
-    const url = new URL(request.url);
-    if (request.method !== 'GET' || url.origin !== origin) {
-      blocked.push(`${request.method} ${url.origin}${url.pathname}`);
-      return HttpResponse.error();
-    }
-    return passthrough();
-  }),
-);
-guard.events.on('response:bypass', ({ request, response }) => {
+// Only GETs to the bMS that return no credentials leave the process; redirects fail the run (lib/guard.mjs).
+const guard = createGuard({ origin, onResponse: (request, response) => {
   const url = new URL(request.url);
   const path = url.pathname.slice(basePath.length);
   pending.push(response.clone().arrayBuffer().then((raw) => {
@@ -149,7 +139,7 @@ guard.events.on('response:bypass', ({ request, response }) => {
     try { body = text ? JSON.parse(text) : null; } catch { /* not JSON: keep the text */ }
     exchanges.push({ method: request.method, path, status: response.status, body, op: findOperation(RELEASE, request.method, path) });
   }));
-});
+} });
 
 function decode(raw: Buffer, encoding: string | null): string {
   switch (encoding?.trim().toLowerCase()) {
@@ -237,7 +227,7 @@ describe(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
   beforeAll(async () => {
     expect(RELEASES).toContain(RELEASE);
     Object.assign(process.env, config.env);
-    guard.listen({ onUnhandledRequest: 'error' });
+    guard.server.listen({ onUnhandledRequest: 'error' });
     for (const server of SERVERS) {
       const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
       tables.set(server, mod.TOOL_OPERATIONS);
@@ -247,7 +237,7 @@ describe(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
 
   afterAll(async () => {
     for (const conn of conns.values()) await conn.close();
-    guard.close();
+    guard.server.close();
     process.env = saved;
     writeReport();
   });
@@ -268,7 +258,7 @@ describe(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
         runs.push(run);
         mine.push(run);
       }
-      expect(blocked, 'requests the network guard stopped (must be none: tools are read-only)').toEqual([]);
+      expect(guard.refused, 'requests the guard stopped (must be none: tools are read-only)').toEqual([]);
       const failed = mine.filter((r) => r.outcome === 'failed').map((r) => `${r.tool} [${r.requests?.join(", ")}] ${r.detail}`);
       expect(failed, `${server} read tools that failed on the live bMS`).toEqual([]);
     }, 300_000);

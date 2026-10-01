@@ -1,0 +1,73 @@
+/**
+ * Self-test of the live tier's request guard against a local HTTP server. Needs no bMS.
+ * Requests go through axios, as the servers' do (including its redirect handling).
+ */
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { createServer, type Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
+import axios from 'axios';
+import { createGuard } from './lib/guard.mjs';
+
+const SECRET = '/bconnect/defensecontrol/v2.0/BitLocker/WindowsEndpoints/00000000-0000-4000-8000-000000000001/Secrets';
+let server: Server;
+let origin = '';
+const hits: string[] = [];
+
+beforeAll(async () => {
+  server = createServer((req, res) => {
+    hits.push(`${req.method} ${req.url}`);
+    if (req.url === '/bconnect/redirect') {
+      res.writeHead(302, { Location: '/bconnect/target' });
+      res.end();
+      return;
+    }
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end('{"ok":true}');
+  });
+  await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+  origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+});
+afterAll(() => new Promise<void>((resolve) => server.close(() => resolve())));
+
+describe('live request guard', () => {
+  let guard: ReturnType<typeof createGuard>;
+  beforeAll(() => {
+    guard = createGuard({ origin });
+    guard.server.listen({ onUnhandledRequest: 'error' });
+  });
+  afterAll(() => guard.server.close());
+  beforeEach(() => {
+    guard.refused.length = 0;
+    hits.length = 0;
+  });
+
+  it('lets a GET to the bMS through', async () => {
+    const res = await axios.get(`${origin}/bconnect/endpoints/v2.0/Endpoints`);
+    expect(res.status).toBe(200);
+    expect(hits).toEqual(['GET /bconnect/endpoints/v2.0/Endpoints']);
+    expect(guard.refused).toEqual([]);
+  });
+
+  it.each(['POST', 'PUT', 'PATCH', 'DELETE'])('refuses %s before it leaves the process', async (method) => {
+    await expect(axios.request({ method, url: `${origin}/bconnect/endpoints/v2.0/Endpoints`, data: {} })).rejects.toThrow();
+    expect(hits).toEqual([]);
+    expect(guard.refused).toEqual([{ method, path: '/bconnect/endpoints/v2.0/Endpoints', reason: `method ${method}` }]);
+  });
+
+  it('refuses another origin', async () => {
+    await expect(axios.get('http://other.selftest.invalid/bconnect/endpoints/v2.0/Endpoints')).rejects.toThrow();
+    expect(guard.refused).toEqual([{ method: 'GET', path: '/bconnect/endpoints/v2.0/Endpoints', reason: 'another origin' }]);
+  });
+
+  it('refuses a credential-returning route', async () => {
+    await expect(axios.get(`${origin}${SECRET}`)).rejects.toThrow();
+    expect(hits).toEqual([]);
+    expect(guard.refused).toEqual([{ method: 'GET', path: SECRET, reason: 'credential route' }]);
+  });
+
+  it('records a redirect and refuses to follow it', async () => {
+    await expect(axios.get(`${origin}/bconnect/redirect`)).rejects.toThrow();
+    expect(hits).toEqual(['GET /bconnect/redirect']);
+    expect(guard.refused.map((r) => r.reason)).toEqual(['redirect (302)', 'redirect target']);
+  });
+});
