@@ -17,12 +17,14 @@
  * The runtime check started as the guard test of PR #193.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { BConnectConfig } from '@bconnect/mcp-core';
-import { ROOT, SERVERS, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
-import { envReads, functionCalls } from './lib/env-reads.js';
+import { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+import { ROOT, SERVERS, connect, createRecorder, guardEnv, requiredArguments, type ToolResult } from './lib/exerciser.js';
+import { clientConstructions, envReads, functionCalls, helperProvenance } from './lib/env-reads.js';
 
 const built = vi.hoisted(() => [] as BConnectConfig[]);
 
@@ -54,12 +56,12 @@ const CLIENT_VARS = [
   'BCONNECT_REJECT_UNAUTHORIZED',
 ];
 const HELPER = 'clientConfigFromEnv';
+const MISSING_CREDENTIALS = 'Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required';
 
 const CA = '-----BEGIN CERTIFICATE-----\nguard-test-ca\n-----END CERTIFICATE-----\n';
 const dir = mkdtempSync(join(tmpdir(), 'client-config-'));
 const caPath = join(dir, 'ca.pem');
 const recorder = createRecorder();
-const savedEnv = { ...process.env };
 
 beforeAll(() => {
   writeFileSync(caPath, CA);
@@ -67,9 +69,32 @@ beforeAll(() => {
 });
 afterAll(() => {
   recorder.close();
-  process.env = savedEnv;
+  vi.unstubAllEnvs();
   rmSync(dir, { recursive: true, force: true });
 });
+
+/** Every client variable is set, '' unless given: dotenv never overrides a present key. */
+function setEnv(env: Record<string, string>): void {
+  const all = {
+    ...Object.fromEntries(CLIENT_VARS.map((v) => [v, ''])),
+    ...guardEnv('26R1', { writes: false, secretRead: false }),
+    ...env,
+  };
+  for (const [key, value] of Object.entries(all)) vi.stubEnv(key, value);
+}
+
+/** The result of the server's first read tool (never gated), under `env`. */
+async function firstReadToolResult(server: string, env: Record<string, string>): Promise<ToolResult> {
+  setEnv(env);
+  const conn = await connect(server);
+  try {
+    const tool = conn.tools.find((t) => /^(list|get)_/.test(t.name));
+    if (!tool) throw new Error(`${server}: no read tool`);
+    return await conn.call(tool.name, requiredArguments(tool.inputSchema));
+  } finally {
+    await conn.close();
+  }
+}
 
 /**
  * The config of the client a server builds for a tool call, under `env`.
@@ -81,9 +106,7 @@ async function clientConfig(
   env: Record<string, string>,
   opts: { credentials?: Record<string, string>; tools?: string[] } = {},
 ): Promise<BConnectConfig> {
-  // Every client variable is set, '' unless given: dotenv never overrides a present key.
-  const blank = Object.fromEntries(CLIENT_VARS.map((v) => [v, '']));
-  Object.assign(process.env, blank, guardEnv('26R1', { writes: false, secretRead: false }), env);
+  setEnv(env);
   const conn = await connect(server, opts.credentials);
   try {
     const tools = opts.tools
@@ -135,6 +158,8 @@ describe('guard self-tests', () => {
       ['renamed destructuring', 'const { BCONNECT_RATE_LIMIT_ENABLED: on } = process.env;', 'BCONNECT_RATE_LIMIT_ENABLED'],
       ['env parameter', 'function f(env = process.env) { return env.BCONNECT_BASE_URL; }', 'BCONNECT_BASE_URL'],
       ['groups-style switch', "rejectUnauthorized: process.env.BCONNECT_REJECT_UNAUTHORIZED !== 'false'", 'BCONNECT_REJECT_UNAUTHORIZED'],
+      ['globalThis', 'const x = globalThis.process.env.BCONNECT_REJECT_UNAUTHORIZED;', 'BCONNECT_REJECT_UNAUTHORIZED'],
+      ['process element access', "const x = process['env'].BCONNECT_CA_CERT_PATH;", 'BCONNECT_CA_CERT_PATH'],
     ])('sees a %s read', (_label, source, name) => {
       expect(envReads(source).map((r) => r.name)).toContain(name);
     });
@@ -145,6 +170,9 @@ describe('guard self-tests', () => {
       ['computed key', 'const k = "X"; process.env[k];'],
       ['rest element', 'const { ...all } = process.env;'],
       ['passed to another function', 'readSettings(process.env);'],
+      ['destructured from process', 'const { env: pe } = process; pe.BCONNECT_CA_CERT_PATH;'],
+      ['reached through a copy of process', 'const p = process; p.env.BCONNECT_CA_CERT_PATH;'],
+      ['reached through process passed on', 'readSettings(process);'],
     ])('reports a hidden read when process.env is %s', (_label, source) => {
       expect(envReads(source).some((r) => r.name === null)).toBe(true);
     });
@@ -156,6 +184,10 @@ describe('guard self-tests', () => {
         'const s = `set NODE_TLS_REJECT_UNAUTHORIZED=0`;',
       ].join('\n');
       expect(envReads(source)).toEqual([]);
+    });
+
+    it('allows other members of process', () => {
+      expect(envReads('process.exit(1); process.stdout.write("x"); globalThis.process.on("exit", f);')).toEqual([]);
     });
 
     it('allows handing process.env to the helper', () => {
@@ -186,6 +218,70 @@ describe('guard self-tests', () => {
     it('reports a missing function as undefined', () => {
       expect(functionCalls(source, 'start', HELPER)).toBeUndefined();
     });
+
+    it('does not count a mere reference as a call', () => {
+      const ref = 'async function main() { const f = clientConfigFromEnv; f(process.env); }';
+      expect(functionCalls(ref, 'main', HELPER)).toBe(false);
+    });
+  });
+
+  describe('clientConstructions', () => {
+    const fromHelper = (source: string) =>
+      clientConstructions(source, 'BConnectClient', HELPER).map((c) => c.fromHelper);
+
+    it.each([
+      ['the helper call directly', 'new BConnectClient(clientConfigFromEnv(process.env, credentials));'],
+      ['a variable assigned only the helper', 'const config = clientConfigFromEnv(process.env); new BConnectClient(config);'],
+      [
+        'a variable declared first and assigned the helper in a try',
+        'let c: BConnectConfig; try { c = clientConfigFromEnv(process.env); } catch { process.exit(1); } new BConnectClient(c);',
+      ],
+    ])('accepts %s', (_label, source) => {
+      expect(fromHelper(source)).toEqual([true]);
+    });
+
+    it.each([
+      ['a hand-built object', 'new BConnectClient({ baseUrl: url, rejectUnauthorized: true });'],
+      ['the helper result with overrides', 'new BConnectClient({ ...clientConfigFromEnv(process.env), rejectUnauthorized: true });'],
+      [
+        'a variable that overrides the helper result',
+        'let c; c = { ...clientConfigFromEnv(process.env), ca: undefined }; new BConnectClient(c);',
+      ],
+      [
+        'a variable assigned the helper and then something else',
+        'let c = clientConfigFromEnv(process.env); c = { baseUrl: "x" }; new BConnectClient(c);',
+      ],
+      ['a variable never assigned', 'let c: BConnectConfig; new BConnectClient(c);'],
+      ['no argument', 'new BConnectClient();'],
+    ])('rejects %s', (_label, source) => {
+      expect(fromHelper(source)).toEqual([false]);
+    });
+  });
+
+  describe('helperProvenance', () => {
+    const IMPORT = 'import { clientConfigFromEnv } from "@bconnect/mcp-core";';
+    const check = (source: string) => helperProvenance(source, HELPER, '@bconnect/mcp-core');
+
+    it('accepts the helper imported from the core', () => {
+      expect(check(`${IMPORT}\nnew BConnectClient(clientConfigFromEnv(process.env));`)).toEqual([]);
+    });
+
+    it.each([
+      ['a local function of the same name', `${IMPORT}\nfunction clientConfigFromEnv(e) { return {}; }`],
+      ['a local variable of the same name', `${IMPORT}\nconst clientConfigFromEnv = (e) => ({});`],
+      ['an import from elsewhere', 'import { clientConfigFromEnv } from "./config.js"; clientConfigFromEnv(process.env);'],
+      ['a renamed import', 'import { other as clientConfigFromEnv } from "@bconnect/mcp-core"; clientConfigFromEnv(process.env);'],
+      ['no import at all', 'clientConfigFromEnv(process.env);'],
+    ])('rejects %s', (_label, source) => {
+      expect(check(source)).not.toEqual([]);
+    });
+  });
+
+  it('scans every source file of a server, not only index.ts', () => {
+    const files = sourceFiles(join(ROOT, 'bconnect-groups-mcp', 'src')).map((f) => f.slice(ROOT.length + 1));
+    expect(files).toContain(join('bconnect-groups-mcp', 'src', 'index.ts'));
+    expect(files).toContain(join('bconnect-groups-mcp', 'src', 'bconnect-client.ts'));
+    expect(files.some((f) => f.includes(`${join('src', 'modules')}`))).toBe(true);
   });
 });
 
@@ -209,6 +305,27 @@ describe('source: only the core helper reads the client variables', () => {
 
     it(`builds the startup-probe client with ${HELPER}() in main()`, () => {
       expect(functionCalls(index, 'main', HELPER)).toBe(true);
+    });
+
+    it(`passes every BConnectClient the ${HELPER}() result unchanged`, () => {
+      const constructions = files.flatMap((file) =>
+        clientConstructions(readFileSync(file, 'utf8'), 'BConnectClient', HELPER, file).map((c) => ({
+          ...c,
+          where: `${file.slice(ROOT.length + 1)}:${c.line}`,
+        })),
+      );
+      // One for tool calls, one for the startup probe.
+      expect(constructions.length).toBeGreaterThanOrEqual(2);
+      expect(constructions.filter((c) => !c.fromHelper).map((c) => `${c.where} ${c.text}`)).toEqual([]);
+    });
+
+    it(`imports ${HELPER} from the core and doesn't declare its own`, () => {
+      const problems = files.flatMap((file) =>
+        helperProvenance(readFileSync(file, 'utf8'), HELPER, '@bconnect/mcp-core', file).map(
+          (p) => `${file.slice(ROOT.length + 1)}: ${p}`,
+        ),
+      );
+      expect(problems).toEqual([]);
     });
   });
 });
@@ -255,4 +372,52 @@ describe.each(SERVERS)('%s: the client a tool call builds', (server) => {
     expect(config.baseUrl).toBe('http://bms.request.test/bconnect');
     expect(config.apiKey).toBe('request-key');
   });
+
+  it('refuses a tool call without credentials with the shared message and an internal error', async () => {
+    const result = await firstReadToolResult(server, { BCONNECT_USERNAME: '', BCONNECT_PASSWORD: '' });
+    expect(result.isError).toBe(true);
+    expect(result.code).toBe(ErrorCode.InternalError);
+    // Exactly the helper's message: only the SDK's "MCP error <code>: " prefix (server and
+    // client each add one), no server-specific wrapper ("bConnect API error: …").
+    const prefix = `MCP error ${ErrorCode.InternalError}: `;
+    expect(result.text.replaceAll(prefix, '')).toBe(MISSING_CREDENTIALS);
+    expect(result.text.startsWith(prefix)).toBe(true);
+  });
 });
+
+/**
+ * main() can't run in-process, so the startup path runs as a real process
+ * (the build CI makes before the tests). Without credentials it must exit 1
+ * with one line naming both ways to authenticate: no stack, nothing on stdout.
+ */
+function startServer(server: string, env: Record<string, string>) {
+  const entry = join(ROOT, server, 'build', 'index.js');
+  const source = join(ROOT, server, 'src', 'index.ts');
+  if (!existsSync(entry) || statSync(entry).mtimeMs < statSync(source).mtimeMs) {
+    throw new Error(`${server}: build/index.js is missing or older than src/index.ts; run npm run build`);
+  }
+  const blank = Object.fromEntries(CLIENT_VARS.map((v) => [v, '']));
+  // cwd without a .env file; VITEST unset so main() runs.
+  return spawnSync(process.execPath, [entry], {
+    cwd: dir,
+    env: { PATH: process.env.PATH ?? '', ...blank, BCONNECT_BASE_URL: 'http://127.0.0.1:9/bconnect', ...env },
+    encoding: 'utf8',
+    timeout: 30_000,
+  });
+}
+
+describe('startup without credentials', () => {
+  it('self-test: a server with credentials fails for another reason, so the message check can tell', () => {
+    const run = startServer('bconnect-groups-mcp', { BCONNECT_API_KEY: 'guard-key' });
+    expect(run.status).toBe(1);
+    expect(run.stderr).not.toContain(MISSING_CREDENTIALS);
+  });
+
+  it.each(SERVERS)('%s exits 1 with one line naming both ways to authenticate', (server) => {
+    const run = startServer(server, {});
+    expect(run.status).toBe(1);
+    expect(run.stdout).toBe('');
+    expect(run.stderr.trim()).toBe(`${server}: ${MISSING_CREDENTIALS}`);
+  });
+});
+

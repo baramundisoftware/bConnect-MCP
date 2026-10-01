@@ -15,11 +15,27 @@ export interface EnvRead {
   text: string;
 }
 
-const isProcessEnv = (node: ts.Node): boolean =>
-  ts.isPropertyAccessExpression(node) &&
-  node.name.text === 'env' &&
-  ts.isIdentifier(node.expression) &&
-  node.expression.text === 'process';
+const GLOBALS = ['globalThis', 'global'];
+
+/** A string key or property name: `.x`, `['x']`. */
+const keyOf = (node: ts.Node): string | undefined => {
+  if (ts.isPropertyAccessExpression(node)) return node.name.text;
+  if (ts.isElementAccessExpression(node) && ts.isStringLiteralLike(node.argumentExpression)) {
+    return node.argumentExpression.text;
+  }
+  return undefined;
+};
+
+const isAccess = (node: ts.Node): node is ts.PropertyAccessExpression | ts.ElementAccessExpression =>
+  ts.isPropertyAccessExpression(node) || ts.isElementAccessExpression(node);
+
+/** `process`, `globalThis.process`, `global['process']`. */
+const isProcess = (node: ts.Node): boolean =>
+  (ts.isIdentifier(node) && node.text === 'process') ||
+  (isAccess(node) && keyOf(node) === 'process' && ts.isIdentifier(node.expression) && GLOBALS.includes(node.expression.text));
+
+/** `process.env`, `process['env']`, `globalThis.process.env`. */
+const isProcessEnv = (node: ts.Node): boolean => isAccess(node) && keyOf(node) === 'env' && isProcess(node.expression);
 
 /** An object the code reads variables from: `process.env`, or anything called `env`. */
 const isEnvObject = (node: ts.Node): boolean =>
@@ -33,10 +49,11 @@ export const ENV_TAKERS = ['clientConfigFromEnv'];
 
 /**
  * Every environment read in `source`: `process.env.X`, `process.env['X']`,
- * `env.X`, `env['X']`, `const { X } = process.env`. Reads whose name can't be
- * known (a computed key, `process.env` copied into a variable or passed to a
- * function other than `takers`, destructured with a rest element) are
- * returned with `name: null`.
+ * `process['env'].X`, `globalThis.process.env.X`, `env.X`, `env['X']`,
+ * `const { X } = process.env`. Reads whose name can't be known (a computed
+ * key, `process.env` or `process` copied into a variable, destructured or
+ * passed to a function other than `takers`, a rest element) are returned with
+ * `name: null`.
  */
 export function envReads(source: string, fileName = 'source.ts', takers: string[] = ENV_TAKERS): EnvRead[] {
   const file = parse(source, fileName);
@@ -54,7 +71,15 @@ export function envReads(source: string, fileName = 'source.ts', takers: string[
     } else if (ts.isElementAccessExpression(node) && isEnvObject(node.expression)) {
       const key = node.argumentExpression;
       add(node, ts.isStringLiteralLike(key) ? key.text : null);
-    } else if (isProcessEnv(node)) {
+    } else if (isProcess(node) && !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node)) {
+      // `process` itself is fine when a member other than env is used (`process.exit`); copied,
+      // destructured (`const { env } = process`) or passed on, the reads behind it can't be seen.
+      const parent = node.parent;
+      const member = isAccess(parent) && parent.expression === node;
+      const inner = ts.isIdentifier(node) && isAccess(parent) && isProcess(parent);
+      if (!member && !inner) add(node, null);
+    }
+    if (isProcessEnv(node)) {
       const parent = node.parent;
       const read = ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent);
       const passed =
@@ -120,4 +145,95 @@ export function functionCalls(source: string, fn: string, callee: string, fileNa
   };
   visit(decl.body);
   return found;
+}
+
+export interface ClientConstruction {
+  line: number;
+  text: string;
+  /** Built from `helper(...)` directly, or from a variable that is only ever assigned `helper(...)`. */
+  fromHelper: boolean;
+}
+
+const isHelperCall = (node: ts.Node | undefined, helper: string): boolean =>
+  node !== undefined &&
+  ts.isCallExpression(node) &&
+  ts.isIdentifier(node.expression) &&
+  node.expression.text === helper;
+
+/**
+ * Every `new <ctor>(...)` in `source`, and whether its config comes from `helper(...)`
+ * unchanged. An object literal, a spread or a variable assigned anything else doesn't.
+ */
+export function clientConstructions(source: string, ctor: string, helper: string, fileName = 'source.ts'): ClientConstruction[] {
+  const file = parse(source, fileName);
+  // Every value assigned to each variable name in the file.
+  const assigned = new Map<string, Array<ts.Expression | undefined>>();
+  const remember = (name: string, value: ts.Expression | undefined) =>
+    assigned.set(name, [...(assigned.get(name) ?? []), value]);
+  const found: Array<{ node: ts.NewExpression; arg: ts.Expression | undefined }> = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) remember(node.name.text, node.initializer);
+    if (
+      ts.isBinaryExpression(node) &&
+      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      ts.isIdentifier(node.left)
+    ) {
+      remember(node.left.text, node.right);
+    }
+    if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === ctor) {
+      found.push({ node, arg: node.arguments?.[0] });
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return found.map(({ node, arg }) => {
+    let fromHelper = isHelperCall(arg, helper);
+    if (!fromHelper && arg !== undefined && ts.isIdentifier(arg)) {
+      // A declaration without a value (`let config: T;`) is fine; every assignment must be the helper.
+      const values = (assigned.get(arg.text) ?? []).filter((v): v is ts.Expression => v !== undefined);
+      fromHelper = values.length > 0 && values.every((v) => isHelperCall(v, helper));
+    }
+    return {
+      line: file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1,
+      text: node.getText(file),
+      fromHelper,
+    };
+  });
+}
+
+/**
+ * Problems with where `helper` comes from in `source`: it must be imported from
+ * `module` and not declared again in the file (a local function of the same name
+ * would pass every other check). Empty when the file doesn't use it.
+ */
+export function helperProvenance(source: string, helper: string, module: string, fileName = 'source.ts'): string[] {
+  const file = parse(source, fileName);
+  const problems: string[] = [];
+  let imported = false;
+  let used = false;
+  const visit = (node: ts.Node): void => {
+    if (ts.isImportDeclaration(node)) {
+      const from = ts.isStringLiteral(node.moduleSpecifier) ? node.moduleSpecifier.text : '';
+      const bindings = node.importClause?.namedBindings;
+      if (bindings && ts.isNamedImports(bindings)) {
+        for (const element of bindings.elements) {
+          if (element.name.text !== helper) continue;
+          if (from === module && (element.propertyName ?? element.name).text === helper) imported = true;
+          else problems.push(`imports ${helper} from ${from}`);
+        }
+      }
+      return;
+    }
+    const declared =
+      (ts.isFunctionDeclaration(node) || ts.isVariableDeclaration(node) || ts.isParameter(node) || ts.isClassDeclaration(node)) &&
+      node.name !== undefined &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === helper;
+    if (declared) problems.push(`declares its own ${helper} (line ${file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1})`);
+    if (ts.isIdentifier(node) && node.text === helper) used = true;
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  if (used && !imported) problems.push(`uses ${helper} without importing it from ${module}`);
+  return problems;
 }

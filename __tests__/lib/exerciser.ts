@@ -139,6 +139,8 @@ export function guardEnv(release: Release, gates: { writes: boolean; secretRead:
 export interface ToolResult {
   text: string;
   isError: boolean;
+  /** JSON-RPC error code, when the call failed with a protocol error rather than an error result. */
+  code?: number;
 }
 
 export interface ConnectedServer {
@@ -165,7 +167,8 @@ export async function connect(server: string, credentials?: Record<string, strin
         const result = await client.callTool({ name: tool, arguments: args });
         return { text: JSON.stringify(result.content ?? ''), isError: result.isError === true };
       } catch (error) {
-        return { text: String((error as Error).message), isError: true };
+        const code = (error as { code?: unknown }).code;
+        return { text: String((error as Error).message), isError: true, ...(typeof code === 'number' && { code }) };
       }
     },
     close: () => client.close(),
