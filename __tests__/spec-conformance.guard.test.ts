@@ -276,6 +276,13 @@ describe('the checks report known-bad cases (self-test)', () => {
       });
       expect(checkParams({ release: '26R1', server: 'demo-server', domain: 'demo', table: { list_things_by_group: ['GetThingsByGroup'] }, calls: [c], operations: ops })
         .map((x) => `${x.check} ${x.detail}`)).toEqual(['query-undeclared includeSubGroups', 'query-not-offered includeSubfolders']);
+      // Case only: the spelling split between routes (includeSubFolders vs includeSubfolders).
+      const caseOnly = call({
+        inputSchema: { properties: { groupId: { type: 'string' }, includeSubFolders: { type: 'boolean' } } },
+        requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [], body: '' }],
+      });
+      expect(checkParams({ release: '26R1', server: 'demo-server', domain: 'demo', table: { list_things_by_group: ['GetThingsByGroup'] }, calls: [caseOnly], operations: ops })
+        .map((x) => `${x.check} ${x.detail}`)).toEqual(['query-not-offered includeSubfolders']);
     });
 
     it('reports a call that failed or sent nothing', () => {
