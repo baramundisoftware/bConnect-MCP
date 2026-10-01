@@ -19,10 +19,10 @@ import {
   ErrorCode,
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
-import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, MissingCredentialsError } from "@bconnect/mcp-core";
+import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 import type { paths as JobsPaths } from "./generated/jobs-types.js";
 
@@ -35,12 +35,7 @@ type FolderForCreation = JobsPaths["/v2.0/Folders"]["post"]["requestBody"]["cont
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
-export interface BConnectCredentials {
-  baseUrl?: string;
-  username?: string;
-  password?: string;
-  apiKey?: string;
-}
+export type { BConnectCredentials } from "@bconnect/mcp-core";
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const server = new Server(
@@ -538,48 +533,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     // This allows the server to be instantiated in tests without real credentials.
     const getBconnect = (): BConnectClient => {
       dotenv.config();
-      const baseUrl = credentials?.baseUrl ?? process.env.BCONNECT_BASE_URL ?? "https://bms.example.com:443/bconnect";
-      const username = credentials?.username ?? process.env.BCONNECT_USERNAME;
-      const password = credentials?.password ?? process.env.BCONNECT_PASSWORD;
-      const apiKey = credentials?.apiKey ?? process.env.BCONNECT_API_KEY;
-
-      if (!apiKey && (!username || !password)) {
-        throw new McpError(
-          ErrorCode.InternalError,
-          "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required"
-        );
+      try {
+        return new BConnectClient(clientConfigFromEnv(process.env, credentials));
+      } catch (error) {
+        if (error instanceof MissingCredentialsError) {
+          throw new McpError(ErrorCode.InternalError, error.message);
+        }
+        throw error;
       }
-
-      const caCertPath = process.env.BCONNECT_CA_CERT_PATH;
-      const caCert = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
-
-      const rateLimitEnabled = process.env.BCONNECT_RATE_LIMIT_ENABLED === "true";
-      const rateLimitMaxRequests = parseInt(process.env.BCONNECT_RATE_LIMIT_MAX_REQUESTS ?? "", 10);
-      const rateLimitWindowMs = parseInt(process.env.BCONNECT_RATE_LIMIT_WINDOW_MS ?? "", 10);
-
-      const auditLevelRaw = process.env.BCONNECT_AUDIT_LEVEL ?? "none";
-      const auditLevel = (["none", "security", "write", "all"] as const).includes(auditLevelRaw as never)
-        ? (auditLevelRaw as "none" | "security" | "write" | "all")
-        : "none";
-
-      return new BConnectClient({
-        baseUrl,
-        username,
-        password,
-        apiKey,
-        rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
-        ...(caCert && { ca: caCert }),
-        ...(rateLimitEnabled && {
-          rateLimit: {
-            enabled: true,
-            maxRequests: isNaN(rateLimitMaxRequests) ? 100 : rateLimitMaxRequests,
-            windowMs: isNaN(rateLimitWindowMs) ? 60000 : rateLimitWindowMs,
-          }
-        }),
-        auditLog: {
-          level: auditLevel,
-        },
-      });
     };
 
     try {
@@ -822,46 +783,10 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 async function main(): Promise<void> {
   dotenv.config();
 
-  const baseUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:443/bconnect";
-  const username = process.env.BCONNECT_USERNAME;
-  const password = process.env.BCONNECT_PASSWORD;
-  const apiKey = process.env.BCONNECT_API_KEY;
-
-  if (!apiKey && (!username || !password)) {
-    throw new Error("Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD environment variables are required");
-  }
-
-  const caCertPath = process.env.BCONNECT_CA_CERT_PATH;
-  const caCert = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
-
-  const rateLimitEnabled = process.env.BCONNECT_RATE_LIMIT_ENABLED === "true";
-  const rateLimitMaxRequests = parseInt(process.env.BCONNECT_RATE_LIMIT_MAX_REQUESTS ?? "", 10);
-  const rateLimitWindowMs = parseInt(process.env.BCONNECT_RATE_LIMIT_WINDOW_MS ?? "", 10);
-
-  const auditLevelRaw = process.env.BCONNECT_AUDIT_LEVEL ?? "none";
-  const auditLevel = (["none", "security", "write", "all"] as const).includes(auditLevelRaw as never)
-    ? (auditLevelRaw as "none" | "security" | "write" | "all")
-    : "none";
-
+  const config = clientConfigFromEnv(process.env);
+  const baseUrl = config.baseUrl;
   // Pre-construct a single BConnectClient for the long-running process
-  const bconnect = new BConnectClient({
-    baseUrl,
-    username,
-    password,
-    apiKey,
-    rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
-    ...(caCert && { ca: caCert }),
-    ...(rateLimitEnabled && {
-      rateLimit: {
-        enabled: true,
-        maxRequests: isNaN(rateLimitMaxRequests) ? 100 : rateLimitMaxRequests,
-        windowMs: isNaN(rateLimitWindowMs) ? 60000 : rateLimitWindowMs,
-      }
-    }),
-    auditLog: {
-      level: auditLevel,
-    },
-  });
+  const bconnect = new BConnectClient(config);
 
   // Verify client is initialised (unused var kept for side-effect)
   void bconnect;
