@@ -37,8 +37,8 @@ const intOr = (value: string | undefined, fallback: number): number => {
  * and never writes to stdout, which carries JSON-RPC in stdio mode.
  *
  * Certificate verification is off only for NODE_TLS_REJECT_UNAUTHORIZED=0.
- * Throws MissingCredentialsError when no way to authenticate is set, and the
- * fs error when BCONNECT_CA_CERT_PATH can't be read.
+ * Throws MissingCredentialsError when no way to authenticate is set, and an
+ * error when BCONNECT_CA_CERT_PATH can't be read or the file is empty.
  */
 export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConnectCredentials): BConnectConfig {
   const baseUrl = credentials?.baseUrl || env.BCONNECT_BASE_URL || DEFAULT_BASE_URL;
@@ -52,6 +52,10 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
 
   const caCertPath = env.BCONNECT_CA_CERT_PATH;
   const ca = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
+  if (ca !== undefined && ca.trim() === "") {
+    // An empty CA would silently replace the default trust store with Node's bundled CAs only.
+    throw new Error(`BCONNECT_CA_CERT_PATH points to an empty file: ${caCertPath}`);
+  }
   const auditLevel = env.BCONNECT_AUDIT_LEVEL;
 
   return {

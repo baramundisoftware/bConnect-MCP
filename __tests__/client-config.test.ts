@@ -145,6 +145,18 @@ describe('clientConfigFromEnv', () => {
         expect(clientConfigFromEnv({ ...BASIC, BCONNECT_CA_CERT_PATH: '' }).ca).toBeUndefined();
       });
 
+      it.each([['empty', ''], ['whitespace-only', '  \n']])(
+        'fails on an %s CA file instead of connecting with fewer trusted CAs',
+        (_label, content) => {
+          dir = mkdtempSync(join(tmpdir(), 'client-config-'));
+          const path = join(dir, 'ca.pem');
+          writeFileSync(path, content);
+          expect(() => clientConfigFromEnv({ ...BASIC, BCONNECT_CA_CERT_PATH: path })).toThrow(
+            /BCONNECT_CA_CERT_PATH.*empty/,
+          );
+        },
+      );
+
       it('fails when the CA file cannot be read, instead of connecting without it', () => {
         expect(() =>
           clientConfigFromEnv({ ...BASIC, BCONNECT_CA_CERT_PATH: join(tmpdir(), 'does-not-exist', 'ca.pem') }),
