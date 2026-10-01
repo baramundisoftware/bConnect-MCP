@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Four write tools are now refused while write operations are disabled.**
+  `withdraw_kiosk_release`, `link_entra_id_data`, `unlink_entra_id_data` and
+  `replace_application_in_bundle` were missing from their server's write gate and sent
+  their request even with `ALLOW_WRITE_OPERATIONS` unset. They now return the same
+  refusal as every other write tool (#190).
 - **Updated dependencies with known advisories.** All updates stay within their major
   version: axios 1.20.0, hono 4.13.12, @hono/node-server 1.19.17, js-yaml 4.3.2,
   fast-uri 3.1.8, ip-address 10.7.2, qs 6.16.0, body-parser, and express 4.22.3 in the
