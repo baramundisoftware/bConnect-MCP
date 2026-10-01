@@ -8,7 +8,7 @@ import {
   SECRET_ROUTES, SecretRouteBlockedError, assertSecretRouteAllowed, isSecretRoute,
 } from '../packages/mcp-core/src/secret-routes.js';
 import { BConnectClientBase } from '../packages/mcp-core/src/bconnect-client-base.js';
-import { RELEASES, secretBearingOperations } from './lib/spec-secrets.js';
+import { RELEASES, secretBearingOperations } from './lib/spec.js';
 
 const ID = '00000000-0000-4000-8000-000000000001';
 const BITLOCKER = `/defensecontrol/v2.0/BitLocker/WindowsEndpoints/${ID}/Secrets`;

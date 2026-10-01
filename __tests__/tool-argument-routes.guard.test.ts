@@ -17,28 +17,15 @@
  * so a renamed argument can't silently switch its rule off.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { setupServer } from 'msw/node';
-import { http, HttpResponse } from 'msw';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { RELEASES, type Release } from './lib/spec-secrets.js';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { RELEASES, type Release } from './lib/spec.js';
+import {
+  BASE_PATH, ID, ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, sample, type JsonSchema,
+} from './lib/exerciser.js';
 
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const BASE_URL = 'http://bms.routes.test/bconnect';
-const BASE_PATH = new URL(BASE_URL).pathname;
-const ID = '00000000-0000-4000-8000-000000000001';
 const MARKER = '11111111-2222-4333-8444-555555555555';
-
-const SERVERS = readdirSync(ROOT).filter((d) => /^bconnect-.+-mcp$/.test(d)).sort();
 const RULE_MAP_SERVERS = ['bconnect-endpoints-mcp', 'bconnect-groups-mcp', 'bconnect-jobs-mcp'];
-
-const domainOf = (server: string) => {
-  const name = server.replace(/^bconnect-/, '').replace(/-mcp$/, '');
-  return name === 'groups' ? 'endpoints' : name;
-};
 
 /** Hostile values aimed at a route of another domain. */
 function payloads(domain: string): Record<string, string> {
@@ -53,21 +40,6 @@ function payloads(domain: string): Record<string, string> {
   };
 }
 
-type JsonSchema = Record<string, any>;
-
-function sample(name: string, schema: JsonSchema): unknown {
-  if (Array.isArray(schema.enum) && schema.enum.length) return schema.enum[0];
-  switch (schema.type) {
-    case 'string': return /id$/i.test(name) ? ID : 'x';
-    case 'integer':
-    case 'number': return 1;
-    case 'boolean': return false;
-    case 'array': return /patch|operations/i.test(name) ? [{ op: 'replace', path: '/name', value: 'x' }] : [];
-    case 'object': return { name: 'x' };
-    default: return 'x';
-  }
-}
-
 function argumentsWith(inputSchema: JsonSchema, target: string, value: string): Record<string, unknown> {
   const required: string[] = inputSchema.required ?? [];
   const args: Record<string, unknown> = {};
@@ -78,13 +50,7 @@ function argumentsWith(inputSchema: JsonSchema, target: string, value: string): 
   return args;
 }
 
-let recorded: URL[] = [];
-const msw = setupServer(
-  http.all('*', ({ request }) => {
-    recorded.push(new URL(request.url));
-    return HttpResponse.json({});
-  }),
-);
+const recorder = createRecorder();
 
 interface Finding { release: Release; server: string; tool: string; arg: string; payload: string; problem: string }
 
@@ -98,42 +64,21 @@ function escapeOf(url: URL, domain: string): string | undefined {
 }
 
 async function sweep(release: Release): Promise<{ findings: Finding[]; pathIds: number }> {
-  Object.assign(process.env, {
-    BCONNECT_BASE_URL: BASE_URL,
-    BCONNECT_USERNAME: 'guard',
-    BCONNECT_PASSWORD: 'guard',
-    BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true',
-    BCONNECT_RELEASE: release,
-    ALLOW_WRITE_OPERATIONS: 'true',
-    ALLOW_SECRET_READ: 'true',
-  });
+  Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
   const findings: Finding[] = [];
   let pathIds = 0;
   for (const server of SERVERS) {
     const domain = domainOf(server);
-    const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'index.ts')).href);
-    const { server: mcp } = mod.createServer();
-    const [serverSide, clientSide] = InMemoryTransport.createLinkedPair();
-    const client = new Client({ name: 'argument-route-guard', version: '0' });
-    await Promise.all([mcp.connect(serverSide), client.connect(clientSide)]);
+    const conn = await connect(server);
 
     const call = async (tool: string, args: Record<string, unknown>) => {
-      recorded = [];
-      let text: string;
-      let isError = false;
-      try {
-        const result = await client.callTool({ name: tool, arguments: args });
-        text = JSON.stringify(result.content ?? '');
-        isError = result.isError === true;
-      } catch (error) {
-        text = String((error as Error).message);
-        isError = true;
-      }
-      return { requests: [...recorded], text, isError };
+      recorder.take();
+      const { text, isError } = await conn.call(tool, args);
+      return { requests: recorder.take().map((r) => r.url), text, isError };
     };
 
-    for (const tool of (await client.listTools()).tools) {
-      const schema = tool.inputSchema as JsonSchema;
+    for (const tool of conn.tools) {
+      const schema = tool.inputSchema;
       const idArgs = Object.entries<JsonSchema>(schema.properties ?? {})
         .filter(([name, s]) => s.type === 'string' && /id$/i.test(name))
         .map(([name]) => name);
@@ -154,15 +99,15 @@ async function sweep(release: Release): Promise<{ findings: Finding[]; pathIds: 
         }
       }
     }
-    await client.close();
+    await conn.close();
   }
   return { findings, pathIds };
 }
 
 const savedEnv = { ...process.env };
-beforeAll(() => msw.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => recorder.listen());
 afterAll(() => {
-  msw.close();
+  recorder.close();
   process.env = savedEnv;
 });
 
@@ -188,12 +133,9 @@ describe.each(RULE_MAP_SERVERS)('%s validation rules', (server) => {
     process.env.BCONNECT_RELEASE = '26R1';
     const utils = await import(pathToFileURL(join(ROOT, server, 'src', 'utils', 'mcp-tool-validation-rules.ts')).href);
     rules = utils.TOOL_RULES;
-    const { server: mcp } = (await import(pathToFileURL(join(ROOT, server, 'src', 'index.ts')).href)).createServer();
-    const [serverSide, clientSide] = InMemoryTransport.createLinkedPair();
-    const client = new Client({ name: 'rule-map-guard', version: '0' });
-    await Promise.all([mcp.connect(serverSide), client.connect(clientSide)]);
-    tools = (await client.listTools()).tools as typeof tools;
-    await client.close();
+    const conn = await connect(server);
+    tools = conn.tools;
+    await conn.close();
   });
 
   it('has a TOOL_RULES entry for every registered tool', () => {

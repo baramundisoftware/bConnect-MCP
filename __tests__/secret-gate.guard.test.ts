@@ -6,7 +6,7 @@
  *
  * Pass A (writes on, ALLOW_SECRET_READ unset):
  *   no request may reach an operation whose response carries a secret, as derived
- *   from the OpenAPI specs (see lib/spec-secrets.ts). Every tool must be
+ *   from the OpenAPI specs (see lib/spec.ts). Every tool must be
  *   exercised: it either sent a request or was refused by the secret gate.
  * Pass B (all gates open):
  *   every request must go to an operation that exists in the spec. A tool whose
@@ -19,21 +19,10 @@
  * longer occurs fails the test, so the lists can't go stale.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { readdirSync } from 'node:fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { setupServer } from 'msw/node';
-import { http, HttpResponse } from 'msw';
-import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import {
   RELEASES, type Release, findOperation, loadOperations, secretBearingOperations,
-} from './lib/spec-secrets.js';
-
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const BASE_URL = 'http://bms.guard.test/bconnect';
-const BASE_PATH = new URL(BASE_URL).pathname;
-const ID = '00000000-0000-4000-8000-000000000001';
+} from './lib/spec.js';
+import { ID, SERVERS, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
 
 /** Tools allowed to reach a secret-bearing operation with ALLOW_SECRET_READ unset. */
 const SECRET_ALLOW: Record<string, string> = {
@@ -79,87 +68,34 @@ interface Call {
   refusedBySecretGate: boolean;
 }
 
-type JsonSchema = Record<string, any>;
-
-/** A value that passes the servers' argument validation for the given property. */
-function sample(name: string, schema: JsonSchema): unknown {
-  if (Array.isArray(schema.enum) && schema.enum.length) return schema.enum[0];
-  switch (schema.type) {
-    case 'string': return /id$/i.test(name) ? ID : 'x';
-    case 'integer':
-    case 'number': return 1;
-    case 'boolean': return false;
-    case 'array': return /patch|operations/i.test(name) ? [{ op: 'replace', path: '/name', value: 'x' }] : [];
-    case 'object': return { name: 'x' };
-    default: return 'x';
-  }
-}
-
-function argumentsFor(inputSchema: JsonSchema): Record<string, unknown> {
-  const required: string[] = inputSchema.required ?? [];
-  const args: Record<string, unknown> = {};
-  for (const [name, schema] of Object.entries<JsonSchema>(inputSchema.properties ?? {})) {
-    if (required.includes(name)) args[name] = sample(name, schema);
-  }
-  return args;
-}
-
-const SERVERS = readdirSync(ROOT).filter((d) => /^bconnect-.+-mcp$/.test(d)).sort();
-
-let recorded: Array<{ method: string; path: string }> = [];
-const msw = setupServer(
-  http.all('*', ({ request }) => {
-    recorded.push({ method: request.method, path: new URL(request.url).pathname });
-    return HttpResponse.json({});
-  }),
-);
-
+const recorder = createRecorder();
 const savedEnv = { ...process.env };
 
 /** Call every tool of every server once, for one release and one gate setting. */
 async function exerciseAll(release: Release, secretRead: boolean): Promise<Call[]> {
-  Object.assign(process.env, {
-    BCONNECT_BASE_URL: BASE_URL,
-    BCONNECT_USERNAME: 'guard',
-    BCONNECT_PASSWORD: 'guard',
-    BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true',
-    BCONNECT_RELEASE: release,
-    ALLOW_WRITE_OPERATIONS: 'true',
-    // Empty, not deleted: dotenv never overrides a key that is present.
-    ALLOW_SECRET_READ: secretRead ? 'true' : '',
-  });
+  Object.assign(process.env, guardEnv(release, { writes: true, secretRead }));
   const calls: Call[] = [];
   for (const server of SERVERS) {
-    const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'index.ts')).href);
-    const { server: mcp } = mod.createServer();
-    const [serverSide, clientSide] = InMemoryTransport.createLinkedPair();
-    const client = new Client({ name: 'secret-gate-guard', version: '0' });
-    await Promise.all([mcp.connect(serverSide), client.connect(clientSide)]);
-    for (const tool of (await client.listTools()).tools) {
-      recorded = [];
-      let text = '';
-      try {
-        const result = await client.callTool({ name: tool.name, arguments: argumentsFor(tool.inputSchema) });
-        text = JSON.stringify(result.content ?? '');
-      } catch (error) {
-        text = String((error as Error).message);
-      }
+    const conn = await connect(server);
+    for (const tool of conn.tools) {
+      recorder.take();
+      const { text } = await conn.call(tool.name, requiredArguments(tool.inputSchema));
+      const requests = recorder.take().map((r) => ({ method: r.method, path: r.path }));
       calls.push({
-        release, server, tool: tool.name,
-        requests: recorded.map((r) => ({ method: r.method, path: r.path.slice(BASE_PATH.length) })),
-        refusedBySecretGate: recorded.length === 0 && /ALLOW_SECRET_READ/.test(text),
+        release, server, tool: tool.name, requests,
+        refusedBySecretGate: requests.length === 0 && /ALLOW_SECRET_READ/.test(text),
       });
     }
-    await client.close();
+    await conn.close();
   }
   return calls;
 }
 
 const template = (path: string) => path.split(ID).join('{id}');
 
-beforeAll(() => msw.listen({ onUnhandledRequest: 'error' }));
+beforeAll(() => recorder.listen());
 afterAll(() => {
-  msw.close();
+  recorder.close();
   process.env = savedEnv;
 });
 
