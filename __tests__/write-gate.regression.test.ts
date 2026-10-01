@@ -37,7 +37,7 @@ describe.each(CASES)('%s %s with writes off', (server, tool) => {
     await conn.close();
     expect(sent.map((r) => `${r.method} ${r.path}`)).toEqual([]);
     expect(result.isError).toBe(true);
-    expect(result.text).toContain('ALLOW_WRITE_OPERATIONS');
+    expect(result.text).toContain(`Write operation '${tool}' is disabled. Set ALLOW_WRITE_OPERATIONS=true`);
   });
 
   it('still works with writes on', async () => {
