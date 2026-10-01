@@ -68,12 +68,25 @@ export function envReads(source: string, fileName = 'source.ts', takers: string[
 
   const visit = (node: ts.Node): void => {
     // `import … from "node:process"` / `require("process")`: process under another name.
-    const moduleName = ts.isImportDeclaration(node)
-      ? node.moduleSpecifier
-      : ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'require'
-        ? node.arguments[0]
-        : undefined;
+    const moduleName =
+      ts.isImportDeclaration(node) || ts.isExportDeclaration(node)
+        ? node.moduleSpecifier
+        : ts.isCallExpression(node) &&
+            ((ts.isIdentifier(node.expression) && node.expression.text === 'require') ||
+              node.expression.kind === ts.SyntaxKind.ImportKeyword)
+          ? node.arguments[0]
+          : undefined;
     if (moduleName && ts.isStringLiteralLike(moduleName) && PROCESS_MODULES.includes(moduleName.text)) {
+      add(node, null);
+    }
+    // `const g = globalThis; g.process.env.X`: the global object copied or passed on.
+    if (
+      ts.isIdentifier(node) &&
+      GLOBALS.includes(node.text) &&
+      !(isAccess(node.parent) && node.parent.expression === node) &&
+      !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node) &&
+      !(ts.isVariableDeclaration(node.parent) && node.parent.name === node)
+    ) {
       add(node, null);
     }
     if (ts.isPropertyAccessExpression(node) && isEnvObject(node.expression)) {
@@ -117,7 +130,10 @@ export function envReads(source: string, fileName = 'source.ts', takers: string[
 
 /** `function f(env = process.env)`: the reads happen through `env`, which is scanned. */
 const isDeclaredParameterDefault = (node: ts.Node): boolean =>
-  ts.isParameter(node.parent) && node.parent.initializer === node;
+  ts.isParameter(node.parent) &&
+  node.parent.initializer === node &&
+  ts.isIdentifier(node.parent.name) &&
+  node.parent.name.text === 'env';
 
 /** `f(...)` or `x.f(...)` → `f`. */
 function calleeName(call: ts.CallExpression): string | undefined {
@@ -177,11 +193,14 @@ const isHelperCall = (node: ts.Expression | undefined, helper: string): boolean 
 };
 
 /** Whether `node` (a use of a variable) only reads it: a member read, or the argument of `new <ctor>`. */
+const isWrapper = (node: ts.Node): boolean =>
+  ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isSatisfiesExpression(node) || ts.isNonNullExpression(node);
+
+/** Climb from `node` through parentheses and type assertions. */
+const outermost = (node: ts.Node): ts.Node => (isWrapper(node.parent) ? outermost(node.parent) : node);
+
 function onlyReads(node: ts.Identifier, ctor: string): boolean {
-  let use: ts.Node = node;
-  while (ts.isParenthesizedExpression(use.parent) || ts.isAsExpression(use.parent) || ts.isNonNullExpression(use.parent)) {
-    use = use.parent;
-  }
+  const use = outermost(node);
   const parent = use.parent;
   if (ts.isNewExpression(parent) && ts.isIdentifier(parent.expression) && parent.expression.text === ctor) {
     return parent.arguments?.length === 1 && parent.arguments[0] === use;
@@ -189,15 +208,21 @@ function onlyReads(node: ts.Identifier, ctor: string): boolean {
   if (!(ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) || parent.expression !== use) {
     return false; // passed on, copied, spread, Object.assign'ed, …
   }
-  // A member is read, unless the member access is itself written or deleted.
-  let member: ts.Node = parent;
-  while (isAccess(member.parent) && member.parent.expression === member) member = member.parent;
+  // A member is read, unless the member access (or a nested one) is written, deleted,
+  // or handed to a call or a spread, which could change a nested object
+  // (Object.assign(config.rateLimit, …)). Copying a member into a variable is allowed:
+  // the members are strings and numbers, and the nested objects are frozen.
+  let member: ts.Node = outermost(parent);
+  while (isAccess(member.parent) && member.parent.expression === member) member = outermost(member.parent);
   const outer = member.parent;
   const written =
     (ts.isBinaryExpression(outer) && outer.left === member && isAssignment(outer.operatorToken.kind)) ||
     ts.isDeleteExpression(outer) ||
     ((ts.isPrefixUnaryExpression(outer) || ts.isPostfixUnaryExpression(outer)) &&
-      (outer.operator === ts.SyntaxKind.PlusPlusToken || outer.operator === ts.SyntaxKind.MinusMinusToken));
+      (outer.operator === ts.SyntaxKind.PlusPlusToken || outer.operator === ts.SyntaxKind.MinusMinusToken)) ||
+    ((ts.isCallExpression(outer) || ts.isNewExpression(outer)) && (outer.arguments ?? []).some((a) => a === member)) ||
+    ts.isSpreadElement(outer) ||
+    ts.isSpreadAssignment(outer);
   return !written;
 }
 
@@ -209,19 +234,34 @@ const isAssignment = (kind: ts.SyntaxKind): boolean =>
  * unchanged: the call itself, or a variable that is only ever assigned that call and
  * otherwise only read (member reads, the constructor). An object literal, a spread, a
  * variable assigned anything else, written to, deleted from, copied or passed on doesn't.
- * Variables are matched by name across the file, which errs on the strict side.
+ * Variables are matched by name across the file: any binding of the name that isn't
+ * assigned the helper (a parameter, a loop or catch variable, a destructured or imported
+ * name) makes every use of that name fail, so a same-named binding can't hide anything.
  */
 export function clientConstructions(source: string, ctor: string, helper: string, fileName = 'source.ts'): ClientConstruction[] {
   const file = parse(source, fileName);
   // Every value assigned to each variable name in the file, and every other use of it.
-  const assigned = new Map<string, Array<ts.Expression | undefined>>();
+  const assigned = new Map<string, Array<ts.Expression | undefined | typeof OTHER>>();
   const uses = new Map<string, ts.Identifier[]>();
-  const remember = (name: string, value: ts.Expression | undefined) =>
+  const remember = (name: string, value: ts.Expression | undefined | typeof OTHER) =>
     assigned.set(name, [...(assigned.get(name) ?? []), value]);
   const found: Array<{ node: ts.NewExpression; arg: ts.Expression | undefined }> = [];
   const visit = (node: ts.Node): void => {
     if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
-      remember(node.name.text, node.initializer);
+      // A loop or catch variable gets its value from elsewhere.
+      const list = node.parent;
+      const elsewhere =
+        ts.isCatchClause(list) ||
+        (ts.isVariableDeclarationList(list) && (ts.isForOfStatement(list.parent) || ts.isForInStatement(list.parent)));
+      remember(node.name.text, elsewhere ? OTHER : node.initializer);
+    } else if (
+      (ts.isParameter(node) || ts.isBindingElement(node) || ts.isFunctionDeclaration(node) || ts.isClassDeclaration(node) ||
+        ts.isImportSpecifier(node) || ts.isImportClause(node) || ts.isNamespaceImport(node)) &&
+      node.name !== undefined &&
+      ts.isIdentifier(node.name)
+    ) {
+      // Any other binding of the same name gets its value from somewhere the check can't see.
+      remember(node.name.text, OTHER);
     } else if (
       ts.isBinaryExpression(node) &&
       isAssignment(node.operatorToken.kind) &&
@@ -242,10 +282,10 @@ export function clientConstructions(source: string, ctor: string, helper: string
     const name = arg !== undefined && ts.isIdentifier(unwrap(arg)) ? (unwrap(arg) as ts.Identifier).text : undefined;
     if (!fromHelper && name !== undefined && node.arguments?.length === 1) {
       // A declaration without a value (`let config: T;`) is fine; every assignment must be the helper.
-      const values = (assigned.get(name) ?? []).filter((v): v is ts.Expression => v !== undefined);
+      const values = (assigned.get(name) ?? []).filter((v) => v !== undefined);
       fromHelper =
         values.length > 0 &&
-        values.every((v) => isHelperCall(v, helper)) &&
+        values.every((v) => v !== OTHER && isHelperCall(v, helper)) &&
         (uses.get(name) ?? []).every((use) => onlyReads(use, ctor));
     }
     return {
@@ -256,39 +296,20 @@ export function clientConstructions(source: string, ctor: string, helper: string
   });
 }
 
+/** A binding whose value comes from a parameter, loop, catch, import or destructuring. */
+const OTHER = Symbol('other binding');
+
 /** An identifier used as a value: not a declaration name, a property name or an assignment target. */
 function isValueUse(node: ts.Identifier): boolean {
   const parent = node.parent;
+  if (ts.isTypeQueryNode(parent)) return false;
+  if ((ts.isBindingElement(parent) || ts.isClassDeclaration(parent) || ts.isImportClause(parent) || ts.isNamespaceImport(parent)) && parent.name === node) return false;
   if (ts.isVariableDeclaration(parent) && parent.name === node) return false;
   if (ts.isPropertyAccessExpression(parent) && parent.name === node) return false;
   if (ts.isBinaryExpression(parent) && parent.left === node && isAssignment(parent.operatorToken.kind)) return false;
   if (ts.isParameter(parent) || ts.isFunctionDeclaration(parent) || ts.isPropertyAssignment(parent) && parent.name === node) return false;
   if (ts.isImportSpecifier(parent) || ts.isTypeReferenceNode(parent) || ts.isQualifiedName(parent)) return false;
   return true;
-}
-
-/**
- * The argument lists (as source text) of every `helper(...)` call in the top-level
- * function `fn`, and the names of `fn`'s parameters. `undefined` when there is no such function.
- */
-export function helperCallArguments(
-  source: string,
-  fn: string,
-  helper: string,
-  fileName = 'source.ts',
-): { calls: string[][]; parameters: string[] } | undefined {
-  const file = parse(source, fileName);
-  const decl = topLevelFunction(file, fn);
-  if (!decl?.body) return undefined;
-  const calls: string[][] = [];
-  const visit = (node: ts.Node): void => {
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === helper) {
-      calls.push(node.arguments.map((a) => a.getText(file)));
-    }
-    ts.forEachChild(node, visit);
-  };
-  visit(decl.body);
-  return { calls, parameters: decl.parameters.map((p) => p.name.getText(file)) };
 }
 
 /**
@@ -326,4 +347,32 @@ export function helperProvenance(source: string, helper: string, module: string,
   visit(file);
   if (used && !imported) problems.push(`uses ${helper} without importing it from ${module}`);
   return problems;
+}
+
+/**
+ * Every `helper(...)` call in `source`, with its arguments (as source text), the
+ * top-level function it sits in, and that function's parameter names.
+ */
+export function helperCalls(
+  source: string,
+  helper: string,
+  fileName = 'source.ts',
+): Array<{ fn: string | undefined; args: string[]; parameters: string[] }> {
+  const file = parse(source, fileName);
+  const calls: Array<{ fn: string | undefined; args: string[]; parameters: string[] }> = [];
+  for (const statement of file.statements) {
+    const fn = ts.isFunctionDeclaration(statement) ? statement : undefined;
+    const visit = (node: ts.Node): void => {
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === helper) {
+        calls.push({
+          fn: fn?.name?.text,
+          args: node.arguments.map((a) => a.getText(file)),
+          parameters: fn ? fn.parameters.map((p) => p.name.getText(file)) : [],
+        });
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(statement);
+  }
+  return calls;
 }
