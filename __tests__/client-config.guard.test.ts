@@ -17,14 +17,14 @@
  * The runtime check started as the guard test of PR #193.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 import type { BConnectConfig } from '@bconnect/mcp-core';
 import { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import { ROOT, SERVERS, connect, createRecorder, guardEnv, requiredArguments, type ToolResult } from './lib/exerciser.js';
-import { clientConstructions, envReads, functionCalls, helperProvenance } from './lib/env-reads.js';
+import { clientConstructions, envReads, functionCalls, helperCallArguments, helperProvenance } from './lib/env-reads.js';
 
 const built = vi.hoisted(() => [] as BConnectConfig[]);
 
@@ -135,11 +135,46 @@ const SOURCE_PACKAGES = [...SERVERS, 'bconnect-server-template'].filter((d) =>
   existsSync(join(ROOT, d, 'src', 'index.ts')),
 );
 
+/** Every BConnectClient must get the helper's result unchanged; at least two (tool calls, startup probe). */
+function constructionProblems(sources: Array<{ name: string; text: string }>): string[] {
+  const constructions = sources.flatMap(({ name, text }) =>
+    clientConstructions(text, 'BConnectClient', HELPER, name).map((c) => ({ ...c, where: `${name}:${c.line}` })),
+  );
+  return [
+    ...(constructions.length < 2 ? [`only ${constructions.length} BConnectClient construction(s); expected tool client and startup probe`] : []),
+    ...constructions.filter((c) => !c.fromHelper).map((c) => `${c.where} ${c.text}`),
+  ];
+}
+
+/** main() passes only process.env; createServer() passes process.env and its own credentials parameter. */
+function helperArgumentProblems(index: string): string[] {
+  const problems: string[] = [];
+  const main = helperCallArguments(index, 'main', HELPER);
+  const create = helperCallArguments(index, 'createServer', HELPER);
+  if (!main?.calls.length) problems.push(`main() doesn't call ${HELPER}`);
+  for (const args of main?.calls ?? []) {
+    if (args.join(', ') !== 'process.env') problems.push(`main(): ${HELPER}(${args.join(', ')})`);
+  }
+  if (!create?.calls.length) problems.push(`createServer() doesn't call ${HELPER}`);
+  const credentials = create?.parameters[0];
+  for (const args of create?.calls ?? []) {
+    if (credentials === undefined || args.join(', ') !== `process.env, ${credentials}`) {
+      problems.push(`createServer(${credentials ?? ''}): ${HELPER}(${args.join(', ')})`);
+    }
+  }
+  return problems;
+}
+
 describe('guard self-tests', () => {
   it('finds the servers from the repo', () => {
     expect(SERVERS.length).toBeGreaterThanOrEqual(13);
     expect(SOURCE_PACKAGES).toContain('bconnect-server-template');
     expect(SOURCE_PACKAGES).toContain('bconnect-groups-mcp');
+  });
+
+  it('skips a tool that builds no client and takes the next one', async () => {
+    const config = await clientConfig('bconnect-endpoints-mcp', {}, { tools: ['delete_endpoint', 'list_endpoints'] });
+    expect(config.baseUrl).toBeDefined();
   });
 
   it('fails when the tool call builds no client', async () => {
@@ -173,6 +208,9 @@ describe('guard self-tests', () => {
       ['destructured from process', 'const { env: pe } = process; pe.BCONNECT_CA_CERT_PATH;'],
       ['reached through a copy of process', 'const p = process; p.env.BCONNECT_CA_CERT_PATH;'],
       ['reached through process passed on', 'readSettings(process);'],
+      ['imported under another name', 'import * as p from "node:process"; p.env.BCONNECT_CA_CERT_PATH;'],
+      ['imported as env', 'import { env as e } from "process"; e.BCONNECT_CA_CERT_PATH;'],
+      ['required', 'const p = require("node:process"); p.env.BCONNECT_CA_CERT_PATH;'],
     ])('reports a hidden read when process.env is %s', (_label, source) => {
       expect(envReads(source).some((r) => r.name === null)).toBe(true);
     });
@@ -232,6 +270,8 @@ describe('guard self-tests', () => {
     it.each([
       ['the helper call directly', 'new BConnectClient(clientConfigFromEnv(process.env, credentials));'],
       ['a variable assigned only the helper', 'const config = clientConfigFromEnv(process.env); new BConnectClient(config);'],
+      ['the helper call in parentheses or with a type assertion', 'new BConnectClient((clientConfigFromEnv(process.env) as BConnectConfig));'],
+      ['a variable whose members are read', 'const c = clientConfigFromEnv(process.env); log(c.baseUrl); new BConnectClient(c);'],
       [
         'a variable declared first and assigned the helper in a try',
         'let c: BConnectConfig; try { c = clientConfigFromEnv(process.env); } catch { process.exit(1); } new BConnectClient(c);',
@@ -252,6 +292,13 @@ describe('guard self-tests', () => {
         'let c = clientConfigFromEnv(process.env); c = { baseUrl: "x" }; new BConnectClient(c);',
       ],
       ['a variable never assigned', 'let c: BConnectConfig; new BConnectClient(c);'],
+      ['a helper result changed in place', 'const c = clientConfigFromEnv(process.env); c.ca = undefined; new BConnectClient(c);'],
+      ['a helper result changed by Object.assign', 'const c = clientConfigFromEnv(process.env); Object.assign(c, { rejectUnauthorized: false }); new BConnectClient(c);'],
+      ['a helper result with a member deleted', 'const c = clientConfigFromEnv(process.env); delete c.ca; new BConnectClient(c);'],
+      ['a helper result changed through a copy', 'const c = clientConfigFromEnv(process.env); const a = c; a.ca = undefined; new BConnectClient(c);'],
+      ['a nested member written', 'const c = clientConfigFromEnv(process.env); c.rateLimit.maxRequests = 1; new BConnectClient(c);'],
+      ['a compound assignment', 'let c = clientConfigFromEnv(process.env); c ||= other; new BConnectClient(c);'],
+      ['a second argument', 'new BConnectClient(clientConfigFromEnv(process.env), extra);'],
       ['no argument', 'new BConnectClient();'],
     ])('rejects %s', (_label, source) => {
       expect(fromHelper(source)).toEqual([false]);
@@ -274,6 +321,73 @@ describe('guard self-tests', () => {
       ['no import at all', 'clientConfigFromEnv(process.env);'],
     ])('rejects %s', (_label, source) => {
       expect(check(source)).not.toEqual([]);
+    });
+  });
+
+  it('reports a server with fewer than two client constructions', () => {
+    const one = [{ name: 'index.ts', text: 'new BConnectClient(clientConfigFromEnv(process.env));' }];
+    expect(constructionProblems(one)).toEqual([expect.stringContaining('only 1')]);
+    expect(constructionProblems([...one, ...one])).toEqual([]);
+  });
+
+  describe('helper arguments', () => {
+    const index = (mainArgs: string, createArgs: string) =>
+      [
+        `export function createServer(credentials?: BConnectCredentials) { new BConnectClient(clientConfigFromEnv(${createArgs})); }`,
+        `async function main() { new BConnectClient(clientConfigFromEnv(${mainArgs})); }`,
+      ].join('\n');
+
+    it('accepts process.env in main() and process.env plus the credentials parameter in createServer()', () => {
+      expect(helperArgumentProblems(index('process.env', 'process.env, credentials'))).toEqual([]);
+    });
+
+    it.each([
+      ['main() passing credentials', 'process.env, { baseUrl: "https://other/bconnect" }', 'process.env, credentials'],
+      ['main() passing a hand-made env', '{ BCONNECT_API_KEY: "x" }', 'process.env, credentials'],
+      ['createServer() dropping the credentials', 'process.env', 'process.env'],
+      ['createServer() passing other credentials', 'process.env', 'process.env, { apiKey: "x" }'],
+    ])('rejects %s', (_label, mainArgs, createArgs) => {
+      expect(helperArgumentProblems(index(mainArgs, createArgs))).not.toEqual([]);
+    });
+  });
+
+  describe('stale build', () => {
+    const tree = (buildAge: number, sourceAges: number[]) => {
+      const root = mkdtempSync(join(dir, 'stale-'));
+      const now = Date.now() / 1000;
+      mkdirSync(join(root, 'build'));
+      mkdirSync(join(root, 'src', 'modules'), { recursive: true });
+      writeFileSync(join(root, 'build', 'index.js'), '');
+      utimesSync(join(root, 'build', 'index.js'), now - buildAge, now - buildAge);
+      sourceAges.forEach((age, i) => {
+        const file = join(root, 'src', i === 0 ? 'index.ts' : join('modules', `m${i}.ts`));
+        writeFileSync(file, '');
+        utimesSync(file, now - age, now - age);
+      });
+      return root;
+    };
+
+    it('accepts a build newer than every source', () => {
+      expect(staleBuild(tree(10, [100, 100]), [])).toBeUndefined();
+    });
+
+    it('reports a build older than any source file, not only index.ts', () => {
+      expect(staleBuild(tree(10, [100, 1]), [])).toMatch(/older than/);
+    });
+
+    it('reports a build older than the core sources', () => {
+      const core = tree(0, [1]);
+      expect(staleBuild(tree(10, [100]), [join(core, 'src')])).toMatch(/older than/);
+    });
+
+    it('stops startServer() from running a stale build', () => {
+      expect(() => startServer('stale-server', {}, tree(10, [1]))).toThrow(/older than/);
+    });
+
+    it('reports a missing build', () => {
+      const root = tree(10, [100]);
+      rmSync(join(root, 'build'), { recursive: true });
+      expect(staleBuild(root, [])).toMatch(/missing/);
     });
   });
 
@@ -308,15 +422,12 @@ describe('source: only the core helper reads the client variables', () => {
     });
 
     it(`passes every BConnectClient the ${HELPER}() result unchanged`, () => {
-      const constructions = files.flatMap((file) =>
-        clientConstructions(readFileSync(file, 'utf8'), 'BConnectClient', HELPER, file).map((c) => ({
-          ...c,
-          where: `${file.slice(ROOT.length + 1)}:${c.line}`,
-        })),
-      );
-      // One for tool calls, one for the startup probe.
-      expect(constructions.length).toBeGreaterThanOrEqual(2);
-      expect(constructions.filter((c) => !c.fromHelper).map((c) => `${c.where} ${c.text}`)).toEqual([]);
+      const sources = files.map((file) => ({ name: file.slice(ROOT.length + 1), text: readFileSync(file, 'utf8') }));
+      expect(constructionProblems(sources)).toEqual([]);
+    });
+
+    it(`calls ${HELPER}(process.env) in main() and ${HELPER}(process.env, <its credentials>) in createServer()`, () => {
+      expect(helperArgumentProblems(index)).toEqual([]);
     });
 
     it(`imports ${HELPER} from the core and doesn't declare its own`, () => {
@@ -385,17 +496,26 @@ describe.each(SERVERS)('%s: the client a tool call builds', (server) => {
   });
 });
 
+/** Why `<pkg>/build/index.js` can't be trusted to match the sources, or undefined. */
+function staleBuild(pkg: string, extraSourceDirs: string[]): string | undefined {
+  const entry = join(pkg, 'build', 'index.js');
+  if (!existsSync(entry)) return 'build/index.js is missing';
+  const built = statSync(entry).mtimeMs;
+  const newer = [join(pkg, 'src'), ...extraSourceDirs]
+    .flatMap((d) => sourceFiles(d))
+    .filter((f) => statSync(f).mtimeMs > built);
+  return newer.length ? `build/index.js is older than ${newer.map((f) => relative(ROOT, f)).join(', ')}` : undefined;
+}
+
 /**
  * main() can't run in-process, so the startup path runs as a real process
  * (the build CI makes before the tests). Without credentials it must exit 1
  * with one line naming both ways to authenticate: no stack, nothing on stdout.
  */
-function startServer(server: string, env: Record<string, string>) {
-  const entry = join(ROOT, server, 'build', 'index.js');
-  const source = join(ROOT, server, 'src', 'index.ts');
-  if (!existsSync(entry) || statSync(entry).mtimeMs < statSync(source).mtimeMs) {
-    throw new Error(`${server}: build/index.js is missing or older than src/index.ts; run npm run build`);
-  }
+function startServer(server: string, env: Record<string, string>, pkg = join(ROOT, server)) {
+  const entry = join(pkg, 'build', 'index.js');
+  const stale = staleBuild(pkg, [join(ROOT, 'packages', 'mcp-core', 'src')]);
+  if (stale) throw new Error(`${server}: ${stale}; run npm run build`);
   const blank = Object.fromEntries(CLIENT_VARS.map((v) => [v, '']));
   // cwd without a .env file; VITEST unset so main() runs.
   return spawnSync(process.execPath, [entry], {

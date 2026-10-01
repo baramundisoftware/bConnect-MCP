@@ -16,6 +16,7 @@ export interface EnvRead {
 }
 
 const GLOBALS = ['globalThis', 'global'];
+const PROCESS_MODULES = ['process', 'node:process'];
 
 /** A string key or property name: `.x`, `['x']`. */
 const keyOf = (node: ts.Node): string | undefined => {
@@ -66,6 +67,15 @@ export function envReads(source: string, fileName = 'source.ts', takers: string[
     });
 
   const visit = (node: ts.Node): void => {
+    // `import … from "node:process"` / `require("process")`: process under another name.
+    const moduleName = ts.isImportDeclaration(node)
+      ? node.moduleSpecifier
+      : ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'require'
+        ? node.arguments[0]
+        : undefined;
+    if (moduleName && ts.isStringLiteralLike(moduleName) && PROCESS_MODULES.includes(moduleName.text)) {
+      add(node, null);
+    }
     if (ts.isPropertyAccessExpression(node) && isEnvObject(node.expression)) {
       add(node, node.name.text);
     } else if (ts.isElementAccessExpression(node) && isEnvObject(node.expression)) {
@@ -154,31 +164,72 @@ export interface ClientConstruction {
   fromHelper: boolean;
 }
 
-const isHelperCall = (node: ts.Node | undefined, helper: string): boolean =>
-  node !== undefined &&
-  ts.isCallExpression(node) &&
-  ts.isIdentifier(node.expression) &&
-  node.expression.text === helper;
+/** `(x)`, `x as T`, `x satisfies T`, `x!` → `x`. */
+const unwrap = (node: ts.Expression): ts.Expression =>
+  ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isSatisfiesExpression(node) || ts.isNonNullExpression(node)
+    ? unwrap(node.expression)
+    : node;
+
+const isHelperCall = (node: ts.Expression | undefined, helper: string): boolean => {
+  if (node === undefined) return false;
+  const call = unwrap(node);
+  return ts.isCallExpression(call) && ts.isIdentifier(call.expression) && call.expression.text === helper;
+};
+
+/** Whether `node` (a use of a variable) only reads it: a member read, or the argument of `new <ctor>`. */
+function onlyReads(node: ts.Identifier, ctor: string): boolean {
+  let use: ts.Node = node;
+  while (ts.isParenthesizedExpression(use.parent) || ts.isAsExpression(use.parent) || ts.isNonNullExpression(use.parent)) {
+    use = use.parent;
+  }
+  const parent = use.parent;
+  if (ts.isNewExpression(parent) && ts.isIdentifier(parent.expression) && parent.expression.text === ctor) {
+    return parent.arguments?.length === 1 && parent.arguments[0] === use;
+  }
+  if (!(ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) || parent.expression !== use) {
+    return false; // passed on, copied, spread, Object.assign'ed, …
+  }
+  // A member is read, unless the member access is itself written or deleted.
+  let member: ts.Node = parent;
+  while (isAccess(member.parent) && member.parent.expression === member) member = member.parent;
+  const outer = member.parent;
+  const written =
+    (ts.isBinaryExpression(outer) && outer.left === member && isAssignment(outer.operatorToken.kind)) ||
+    ts.isDeleteExpression(outer) ||
+    ((ts.isPrefixUnaryExpression(outer) || ts.isPostfixUnaryExpression(outer)) &&
+      (outer.operator === ts.SyntaxKind.PlusPlusToken || outer.operator === ts.SyntaxKind.MinusMinusToken));
+  return !written;
+}
+
+const isAssignment = (kind: ts.SyntaxKind): boolean =>
+  kind >= ts.SyntaxKind.FirstAssignment && kind <= ts.SyntaxKind.LastAssignment;
 
 /**
  * Every `new <ctor>(...)` in `source`, and whether its config comes from `helper(...)`
- * unchanged. An object literal, a spread or a variable assigned anything else doesn't.
+ * unchanged: the call itself, or a variable that is only ever assigned that call and
+ * otherwise only read (member reads, the constructor). An object literal, a spread, a
+ * variable assigned anything else, written to, deleted from, copied or passed on doesn't.
+ * Variables are matched by name across the file, which errs on the strict side.
  */
 export function clientConstructions(source: string, ctor: string, helper: string, fileName = 'source.ts'): ClientConstruction[] {
   const file = parse(source, fileName);
-  // Every value assigned to each variable name in the file.
+  // Every value assigned to each variable name in the file, and every other use of it.
   const assigned = new Map<string, Array<ts.Expression | undefined>>();
+  const uses = new Map<string, ts.Identifier[]>();
   const remember = (name: string, value: ts.Expression | undefined) =>
     assigned.set(name, [...(assigned.get(name) ?? []), value]);
   const found: Array<{ node: ts.NewExpression; arg: ts.Expression | undefined }> = [];
   const visit = (node: ts.Node): void => {
-    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) remember(node.name.text, node.initializer);
-    if (
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name)) {
+      remember(node.name.text, node.initializer);
+    } else if (
       ts.isBinaryExpression(node) &&
-      node.operatorToken.kind === ts.SyntaxKind.EqualsToken &&
+      isAssignment(node.operatorToken.kind) &&
       ts.isIdentifier(node.left)
     ) {
-      remember(node.left.text, node.right);
+      remember(node.left.text, node.operatorToken.kind === ts.SyntaxKind.EqualsToken ? node.right : node);
+    } else if (ts.isIdentifier(node) && isValueUse(node)) {
+      uses.set(node.text, [...(uses.get(node.text) ?? []), node]);
     }
     if (ts.isNewExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === ctor) {
       found.push({ node, arg: node.arguments?.[0] });
@@ -187,11 +238,15 @@ export function clientConstructions(source: string, ctor: string, helper: string
   };
   visit(file);
   return found.map(({ node, arg }) => {
-    let fromHelper = isHelperCall(arg, helper);
-    if (!fromHelper && arg !== undefined && ts.isIdentifier(arg)) {
+    let fromHelper = (node.arguments?.length ?? 0) === 1 && isHelperCall(arg, helper);
+    const name = arg !== undefined && ts.isIdentifier(unwrap(arg)) ? (unwrap(arg) as ts.Identifier).text : undefined;
+    if (!fromHelper && name !== undefined && node.arguments?.length === 1) {
       // A declaration without a value (`let config: T;`) is fine; every assignment must be the helper.
-      const values = (assigned.get(arg.text) ?? []).filter((v): v is ts.Expression => v !== undefined);
-      fromHelper = values.length > 0 && values.every((v) => isHelperCall(v, helper));
+      const values = (assigned.get(name) ?? []).filter((v): v is ts.Expression => v !== undefined);
+      fromHelper =
+        values.length > 0 &&
+        values.every((v) => isHelperCall(v, helper)) &&
+        (uses.get(name) ?? []).every((use) => onlyReads(use, ctor));
     }
     return {
       line: file.getLineAndCharacterOfPosition(node.getStart(file)).line + 1,
@@ -199,6 +254,41 @@ export function clientConstructions(source: string, ctor: string, helper: string
       fromHelper,
     };
   });
+}
+
+/** An identifier used as a value: not a declaration name, a property name or an assignment target. */
+function isValueUse(node: ts.Identifier): boolean {
+  const parent = node.parent;
+  if (ts.isVariableDeclaration(parent) && parent.name === node) return false;
+  if (ts.isPropertyAccessExpression(parent) && parent.name === node) return false;
+  if (ts.isBinaryExpression(parent) && parent.left === node && isAssignment(parent.operatorToken.kind)) return false;
+  if (ts.isParameter(parent) || ts.isFunctionDeclaration(parent) || ts.isPropertyAssignment(parent) && parent.name === node) return false;
+  if (ts.isImportSpecifier(parent) || ts.isTypeReferenceNode(parent) || ts.isQualifiedName(parent)) return false;
+  return true;
+}
+
+/**
+ * The argument lists (as source text) of every `helper(...)` call in the top-level
+ * function `fn`, and the names of `fn`'s parameters. `undefined` when there is no such function.
+ */
+export function helperCallArguments(
+  source: string,
+  fn: string,
+  helper: string,
+  fileName = 'source.ts',
+): { calls: string[][]; parameters: string[] } | undefined {
+  const file = parse(source, fileName);
+  const decl = topLevelFunction(file, fn);
+  if (!decl?.body) return undefined;
+  const calls: string[][] = [];
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === helper) {
+      calls.push(node.arguments.map((a) => a.getText(file)));
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(decl.body);
+  return { calls, parameters: decl.parameters.map((p) => p.name.getText(file)) };
 }
 
 /**
