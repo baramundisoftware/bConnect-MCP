@@ -83,9 +83,10 @@ export function envReads(source: string, fileName = 'source.ts', takers: string[
     if (
       ts.isIdentifier(node) &&
       GLOBALS.includes(node.text) &&
-      !(isAccess(node.parent) && node.parent.expression === node) &&
+      !isMemberBase(node) &&
       !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node) &&
-      !(ts.isVariableDeclaration(node.parent) && node.parent.name === node)
+      !(ts.isVariableDeclaration(node.parent) && node.parent.name === node) &&
+      !isBenignName(node)
     ) {
       add(node, null);
     }
@@ -94,11 +95,15 @@ export function envReads(source: string, fileName = 'source.ts', takers: string[
     } else if (ts.isElementAccessExpression(node) && isEnvObject(node.expression)) {
       const key = node.argumentExpression;
       add(node, ts.isStringLiteralLike(key) ? key.text : null);
-    } else if (isProcess(node) && !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node)) {
+    } else if (
+      isProcess(node) &&
+      !(ts.isPropertyAccessExpression(node.parent) && node.parent.name === node) &&
+      !isBenignName(node)
+    ) {
       // `process` itself is fine when a member other than env is used (`process.exit`); copied,
       // destructured (`const { env } = process`) or passed on, the reads behind it can't be seen.
       const parent = node.parent;
-      const member = isAccess(parent) && parent.expression === node;
+      const member = isMemberBase(node);
       const inner = ts.isIdentifier(node) && isAccess(parent) && isProcess(parent);
       if (!member && !inner) add(node, null);
     }
@@ -126,6 +131,28 @@ export function envReads(source: string, fileName = 'source.ts', takers: string[
   };
   visit(file);
   return reads;
+}
+
+/** `x.y`, `(x as T).y`, `x!.y`: the node is the object a member is read from. */
+const isMemberBase = (node: ts.Node): boolean => {
+  const base = outermost(node);
+  return isAccess(base.parent) && base.parent.expression === base;
+};
+
+/**
+ * A name that isn't the global object or `process` itself: a property name
+ * (`{ process: x }`, `interface J { process: string }`), a type position
+ * (`typeof globalThis` as a type), `declare global`, or a `typeof x` test.
+ */
+function isBenignName(node: ts.Node): boolean {
+  const parent = node.parent;
+  if ((ts.isPropertyAssignment(parent) || ts.isPropertySignature(parent) || ts.isPropertyDeclaration(parent) ||
+    ts.isMethodDeclaration(parent)) && parent.name === node) return true;
+  if (ts.isModuleDeclaration(parent) || ts.isTypeOfExpression(parent)) return true;
+  for (let n: ts.Node | undefined = parent; n && !ts.isSourceFile(n); n = n.parent) {
+    if (ts.isTypeNode(n)) return true;
+  }
+  return false;
 }
 
 /** `function f(env = process.env)`: the reads happen through `env`, which is scanned. */
@@ -208,10 +235,10 @@ function onlyReads(node: ts.Identifier, ctor: string): boolean {
   if (!(ts.isPropertyAccessExpression(parent) || ts.isElementAccessExpression(parent)) || parent.expression !== use) {
     return false; // passed on, copied, spread, Object.assign'ed, …
   }
-  // A member is read, unless the member access (or a nested one) is written, deleted,
-  // or handed to a call or a spread, which could change a nested object
-  // (Object.assign(config.rateLimit, …)). Copying a member into a variable is allowed:
-  // the members are strings and numbers, and the nested objects are frozen.
+  // A member is read, unless the member access (or a nested one) is written or deleted,
+  // or a nested object (rateLimit, auditLog, …) is handed to a call or a spread, which
+  // could change it (Object.assign(config.rateLimit, …)). Plain values may be passed on
+  // (log(config.baseUrl)) or copied; the nested objects are also frozen.
   let member: ts.Node = outermost(parent);
   while (isAccess(member.parent) && member.parent.expression === member) member = outermost(member.parent);
   const outer = member.parent;
@@ -220,10 +247,22 @@ function onlyReads(node: ts.Identifier, ctor: string): boolean {
     ts.isDeleteExpression(outer) ||
     ((ts.isPrefixUnaryExpression(outer) || ts.isPostfixUnaryExpression(outer)) &&
       (outer.operator === ts.SyntaxKind.PlusPlusToken || outer.operator === ts.SyntaxKind.MinusMinusToken)) ||
-    ((ts.isCallExpression(outer) || ts.isNewExpression(outer)) && (outer.arguments ?? []).some((a) => a === member)) ||
-    ts.isSpreadElement(outer) ||
-    ts.isSpreadAssignment(outer);
+    (handsOn(member) &&
+      (((ts.isCallExpression(outer) || ts.isNewExpression(outer)) && (outer.arguments ?? []).some((a) => a === member)) ||
+        ts.isSpreadElement(outer) ||
+        ts.isSpreadAssignment(outer)));
   return !written;
+}
+
+/** Config members that are objects: handing one to a call or a spread could change it. */
+const NESTED = ['rateLimit', 'auditLog', 'cache', 'batch'];
+
+/** Whether `member` (an access chain on the config) hands on one of its nested objects. */
+function handsOn(member: ts.Node): boolean {
+  let node: ts.Node = member;
+  while (isWrapper(node)) node = (node as ts.ParenthesizedExpression).expression;
+  const key = isAccess(node) ? keyOf(node) : undefined;
+  return key !== undefined ? NESTED.includes(key) : true;
 }
 
 const isAssignment = (kind: ts.SyntaxKind): boolean =>

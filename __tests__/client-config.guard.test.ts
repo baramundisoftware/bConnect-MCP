@@ -149,18 +149,13 @@ function constructionProblems(sources: Array<{ name: string; text: string }>): s
 
 /**
  * Every helper call in the package passes only process.env, except in createServer(),
- * which passes process.env and its own credentials parameter. main() and createServer()
- * in index.ts each call it.
+ * which passes process.env and its own credentials parameter.
  */
 function helperArgumentProblems(sources: Array<{ name: string; text: string }>): string[] {
   const problems: string[] = [];
   for (const { name, text } of sources) {
-    const calls = helperCalls(text, HELPER, name);
-    if (name.endsWith('index.ts')) {
-      if (!calls.some((c) => c.fn === 'main')) problems.push(`${name}: main() doesn't call ${HELPER}`);
-      if (!calls.some((c) => c.fn === 'createServer')) problems.push(`${name}: createServer() doesn't call ${HELPER}`);
-    }
-    for (const call of calls) {
+    // That main() and createServer() call it at all is checked with functionCalls().
+    for (const call of helperCalls(text, HELPER, name)) {
       const args = call.args.join(', ');
       const expected = call.fn === 'createServer' ? `process.env, ${call.parameters[0] ?? '<no parameter>'}` : 'process.env';
       if (args !== expected) problems.push(`${name}: ${call.fn ?? '<top level>'}(): ${HELPER}(${args})`);
@@ -232,6 +227,16 @@ describe('guard self-tests', () => {
       expect(envReads(source)).toEqual([]);
     });
 
+    it.each([
+      ['a property name', 'const o = { process: "x", globalThis: 1 }; interface J { process: string }'],
+      ['a type position', 'type G = typeof globalThis; let p: typeof process;'],
+      ['declare global', 'declare global { var x: number }'],
+      ['a typeof test', 'if (typeof globalThis !== "undefined" && typeof process === "object") {}'],
+      ['a member behind a type assertion', '(globalThis as any).fetch; (process as NodeJS.Process).exit(0);'],
+    ])('does not report %s as a hidden read', (_label, source) => {
+      expect(envReads(source)).toEqual([]);
+    });
+
     it('allows other members of process', () => {
       expect(envReads('process.exit(1); process.stdout.write("x"); globalThis.process.on("exit", f);')).toEqual([]);
     });
@@ -280,6 +285,7 @@ describe('guard self-tests', () => {
       ['a variable assigned only the helper', 'const config = clientConfigFromEnv(process.env); new BConnectClient(config);'],
       ['the helper call in parentheses or with a type assertion', 'new BConnectClient((clientConfigFromEnv(process.env) as BConnectConfig));'],
       ['a variable whose members are read', 'const c = clientConfigFromEnv(process.env); const url = c.baseUrl; new BConnectClient(c);'],
+      ['a plain member passed to a call', 'const c = clientConfigFromEnv(process.env); log("probing", c.baseUrl); new URL(c.baseUrl); new BConnectClient(c);'],
       ['optional chaining and a type query', 'const c = clientConfigFromEnv(process.env); let u: typeof c | undefined; void c?.baseUrl; new BConnectClient(c);'],
       ['satisfies at the constructor', 'const c = clientConfigFromEnv(process.env); new BConnectClient(c satisfies BConnectConfig);'],
       [
@@ -321,6 +327,17 @@ describe('guard self-tests', () => {
         'an arrow parameter of the same name',
         'const c = clientConfigFromEnv(process.env); const probe = (c: BConnectConfig) => new BConnectClient(c); probe({ ...c, ca: undefined });',
       ],
+      ['a nested member spread', 'const c = clientConfigFromEnv(process.env); const r = { ...c.rateLimit }; new BConnectClient(c);'],
+      ['a catch variable of the same name', 'let c = clientConfigFromEnv(process.env); try { f(); } catch (c) { new BConnectClient(c); }'],
+      ['a for-in variable of the same name', 'let c = clientConfigFromEnv(process.env); for (const c in other) new BConnectClient(c);'],
+      ['a destructured name of the same name', 'let c = clientConfigFromEnv(process.env); const { c } = other; new BConnectClient(c);'],
+      // A helper-assigned local elsewhere in the file must not vouch for an imported name.
+      ['an imported name of the same name', 'import { c } from "./other.js"; function f() { const c = clientConfigFromEnv(process.env); void c.baseUrl; } new BConnectClient(c);'],
+      ['a default import of the same name', 'import c from "./other.js"; function f() { const c = clientConfigFromEnv(process.env); void c.baseUrl; } new BConnectClient(c);'],
+      ['a namespace import of the same name', 'import * as c from "./other.js"; function f() { const c = clientConfigFromEnv(process.env); void c.baseUrl; } new BConnectClient(c);'],
+      ['a nested write behind a type assertion', 'const c = clientConfigFromEnv(process.env); (c.rateLimit!.window as W).ms = 1; new BConnectClient(c);'],
+      ['a function of the same name', 'let c = clientConfigFromEnv(process.env); function c() {} new BConnectClient(c);'],
+      ['a class of the same name', 'let c = clientConfigFromEnv(process.env); class c {} new BConnectClient(c);'],
       [
         'a loop variable of the same name',
         'let c = clientConfigFromEnv(process.env); for (const c of [{ ...other }]) new BConnectClient(c);',
@@ -439,6 +456,15 @@ describe('guard self-tests', () => {
       rmSync(join(root, 'build'), { recursive: true });
       expect(staleBuild(root, [])).toMatch(/missing/);
     });
+  });
+
+  it('scans generated code and .mts/.cts files, which are compiled into the build', () => {
+    const root = mkdtempSync(join(dir, 'scan-'));
+    mkdirSync(join(root, 'generated'));
+    for (const f of ['generated/types.ts', 'a.mts', 'b.cts', 'c.d.ts']) writeFileSync(join(root, f), '');
+    expect(sourceFiles(root).map((f) => relative(root, f)).sort()).toEqual(
+      ['a.mts', 'b.cts', join('generated', 'types.ts')].sort(),
+    );
   });
 
   it('scans every source file of a server, not only index.ts', () => {
