@@ -1,0 +1,79 @@
+/**
+ * Self-test of the live tier's environment handling. Needs no bMS.
+ */
+import { afterAll, describe, expect, it } from 'vitest';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { ROOT } from '../lib/exerciser.js';
+import { childEnv, controlledKeys, loadLiveConfig } from './lib/env.js';
+
+const dir = mkdtempSync(join(tmpdir(), 'live-env-'));
+afterAll(() => rmSync(dir, { recursive: true, force: true }));
+
+function envFile(name: string, lines: string[]): string {
+  const file = join(dir, name);
+  writeFileSync(file, lines.join('\n'));
+  return file;
+}
+
+const BASE = 'BCONNECT_BASE_URL=https://bms.selftest.invalid:444/bconnect';
+
+describe('live env: isolated', () => {
+  it('controls every variable the servers and the shared core read', () => {
+    const keys = controlledKeys(ROOT);
+    for (const key of ['BCONNECT_BASE_URL', 'BCONNECT_API_KEY', 'BCONNECT_USERNAME', 'BCONNECT_PASSWORD',
+      'BCONNECT_CA_CERT_PATH', 'NODE_TLS_REJECT_UNAUTHORIZED', 'BCONNECT_AUDIT_LEVEL',
+      'BCONNECT_RATE_LIMIT_ENABLED', 'BCONNECT_RATE_LIMIT_MAX_REQUESTS', 'BCONNECT_RATE_LIMIT_WINDOW_MS',
+      'MCP_TRANSPORT', 'MCP_PORT', 'ALLOW_WRITE_OPERATIONS', 'ALLOW_SECRET_READ',
+      'BCONNECT_SKIP_CONNECTIVITY_CHECK', 'HTTPS_PROXY', 'https_proxy', 'NO_PROXY']) {
+      expect(keys, key).toContain(key);
+    }
+  });
+
+  it('sets every controlled key, empty when the file has no value', () => {
+    const config = loadLiveConfig({ root: ROOT, file: envFile('basic.env', [BASE, 'BCONNECT_USERNAME=u', 'BCONNECT_PASSWORD=p']), shell: {} });
+    for (const key of controlledKeys(ROOT)) expect(config.env, key).toHaveProperty(key);
+    expect(config.env.BCONNECT_API_KEY).toBe('');
+    expect(config.env.BCONNECT_CA_CERT_PATH).toBe('');
+    expect(config.env.BCONNECT_USERNAME).toBe('u');
+  });
+
+  it('ignores credential, TLS and proxy values from the shell', () => {
+    const shell = { BCONNECT_API_KEY: 'from-shell', NODE_TLS_REJECT_UNAUTHORIZED: '0', HTTPS_PROXY: 'http://proxy.invalid:8080', PATH: '/bin' };
+    const config = loadLiveConfig({ root: ROOT, file: envFile('shell.env', [BASE, 'BCONNECT_USERNAME=u', 'BCONNECT_PASSWORD=p']), shell });
+    expect(config.env.BCONNECT_API_KEY).toBe('');
+    expect(config.env.NODE_TLS_REJECT_UNAUTHORIZED).toBe('');
+    expect(config.env.HTTPS_PROXY).toBe('');
+    expect(config.tlsVerified).toBe(true);
+    const child = childEnv(config, shell);
+    expect(child.BCONNECT_API_KEY).toBe('');
+    expect(child.HTTPS_PROXY).toBe('');
+    expect(child.PATH).toBe('/bin');
+  });
+
+  it('keeps the write and secret gates closed and the startup check on', () => {
+    for (const line of ['ALLOW_WRITE_OPERATIONS=true', 'ALLOW_SECRET_READ=true', 'BCONNECT_SKIP_CONNECTIVITY_CHECK=true', 'MCP_TRANSPORT=http']) {
+      expect(() => loadLiveConfig({ root: ROOT, file: envFile('gate.env', [BASE, line]), shell: {} }), line)
+        .toThrow(/must not set/);
+    }
+    const config = loadLiveConfig({ root: ROOT, file: envFile('gates.env', [BASE]), shell: { ALLOW_WRITE_OPERATIONS: 'true' } });
+    expect(config.env.ALLOW_WRITE_OPERATIONS).toBe('');
+    expect(config.env.ALLOW_SECRET_READ).toBe('');
+    expect(config.env.BCONNECT_SKIP_CONNECTIVITY_CHECK).toBe('');
+  });
+
+  it('reports the effective TLS setting', () => {
+    const off = loadLiveConfig({ root: ROOT, file: envFile('off.env', [BASE, 'NODE_TLS_REJECT_UNAUTHORIZED=0']), shell: {} });
+    expect(off.tlsVerified).toBe(false);
+    const ca = envFile('ca.pem', ['-----BEGIN CERTIFICATE-----', 'x', '-----END CERTIFICATE-----']);
+    const on = loadLiveConfig({ root: ROOT, file: envFile('on.env', [BASE, `BCONNECT_CA_CERT_PATH=${ca}`]), shell: {} });
+    expect(on.tlsVerified).toBe(true);
+    expect(on.caFile).toBe(true);
+  });
+
+  it('refuses NODE_EXTRA_CA_CERTS from the shell, which the test process cannot drop', () => {
+    expect(() => loadLiveConfig({ root: ROOT, file: envFile('extra.env', [BASE]), shell: { NODE_EXTRA_CA_CERTS: 'C:/ca.pem' } }))
+      .toThrow(/NODE_EXTRA_CA_CERTS/);
+  });
+});

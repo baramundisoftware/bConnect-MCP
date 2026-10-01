@@ -3,7 +3,8 @@
  *
  * Opt-in. Runs only when the live env file (default `.env.local`, override with
  * BCONNECT_LIVE_ENV) sets BCONNECT_BASE_URL; otherwise every test is skipped.
- * Not part of `npm test`.
+ * Not part of `npm test`. Every variable the servers read comes from that file or
+ * is empty (lib/env.ts): nothing leaks in from the repo `.env` or the shell.
  *
  *   npm run test:live
  *
@@ -35,14 +36,14 @@ import { http, HttpResponse, passthrough } from 'msw';
 import { ROOT, SERVERS, connect, domainOf, type ConnectedServer, type JsonSchema } from '../lib/exerciser.js';
 import { RELEASES, findOperation, loadOperations, type ApiOperation, type Release } from '../lib/spec.js';
 import { createResponseValidator, type SchemaFinding } from '../lib/response-schema.js';
+import { childEnv, loadLiveConfig, redact as redactSecrets } from './lib/env.js';
 
 const ENV_FILE = process.env.BCONNECT_LIVE_ENV ?? join(ROOT, '.env.local');
-const fileEnv = existsSync(ENV_FILE) ? parse(readFileSync(ENV_FILE)) : {};
-const BASE_URL = fileEnv.BCONNECT_BASE_URL ?? '';
-const LIVE = BASE_URL !== '';
-const RELEASE = (fileEnv.BCONNECT_RELEASE ?? '26R1') as Release;
-/** NODE_TLS_REJECT_UNAUTHORIZED=0 in the env file: certificates are not checked; every summary says so. */
-const TLS_UNVERIFIED = fileEnv.NODE_TLS_REJECT_UNAUTHORIZED === '0';
+const config = existsSync(ENV_FILE) && parse(readFileSync(ENV_FILE)).BCONNECT_BASE_URL
+  ? loadLiveConfig({ root: ROOT, file: ENV_FILE, shell: process.env }) : undefined;
+const LIVE = config !== undefined;
+const BASE_URL = config?.baseUrl.href ?? '';
+const RELEASE: Release = config?.release ?? '26R1';
 const PAGE_SIZE = 5;
 /**
  * Statuses that mean "this bMS cannot answer that here", not a defect: module not
@@ -51,36 +52,15 @@ const PAGE_SIZE = 5;
  */
 const UNAVAILABLE = new Set([403, 409, 501, 503]);
 
-/** What the servers see: the bMS, its credentials and CA from the file; gates closed; probe on. */
-const liveEnv: Record<string, string> = {
-  BCONNECT_BASE_URL: BASE_URL,
-  BCONNECT_RELEASE: RELEASE,
-  ...pick(fileEnv, ['BCONNECT_API_KEY', 'BCONNECT_USERNAME', 'BCONNECT_PASSWORD', 'BCONNECT_CA_CERT_PATH',
-    'NODE_TLS_REJECT_UNAUTHORIZED']),
-  // Empty, not deleted: dotenv never overrides a key that is present.
-  ALLOW_WRITE_OPERATIONS: '',
-  ALLOW_SECRET_READ: '',
-  BCONNECT_SKIP_CONNECTIVITY_CHECK: '',
-};
-
-function pick(from: Record<string, string>, keys: string[]): Record<string, string> {
-  return Object.fromEntries(keys.filter((k) => from[k]).map((k) => [k, from[k]]));
-}
-
 /** Credentials never reach test output, whatever a server prints. */
-const SECRETS = [fileEnv.BCONNECT_PASSWORD, fileEnv.BCONNECT_API_KEY,
-  fileEnv.BCONNECT_USERNAME && fileEnv.BCONNECT_PASSWORD
-    ? Buffer.from(`${fileEnv.BCONNECT_USERNAME}:${fileEnv.BCONNECT_PASSWORD}`).toString('base64') : undefined,
-].filter((s): s is string => !!s && s.length >= 4);
-const redact = (s: string): string => SECRETS.reduce((out, secret) => out.split(secret).join('***'), s);
+const redact = (s: string): string => (config ? redactSecrets(config, s) : s);
 
 // ─── Startup over stdio ──────────────────────────────────────────────────────
 
 interface Startup { exitCode: number | null; initialized: boolean; tools: number; nonJson: number; stderr: string }
 
 async function startOverStdio(server: string): Promise<Startup> {
-  const env: NodeJS.ProcessEnv = { ...process.env, ...liveEnv, NODE_ENV: 'production' };
-  delete env.VITEST;
+  const env = childEnv(config!, process.env);
   const child = spawn(process.execPath, [join(ROOT, server, 'build', 'index.js')], { env, cwd: ROOT });
   let out = '';
   let err = '';
@@ -251,7 +231,7 @@ describe.skipIf(!LIVE)(`live bMS ${BASE_URL} (${RELEASE}): read tools`, () => {
 
   beforeAll(async () => {
     expect(RELEASES).toContain(RELEASE);
-    Object.assign(process.env, liveEnv);
+    Object.assign(process.env, config!.env);
     guard.listen({ onUnhandledRequest: 'error' });
     for (const server of SERVERS) {
       const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
@@ -296,12 +276,14 @@ function writeReport(): void {
   mkdirSync(join(ROOT, 'reports'), { recursive: true });
   const file = join(ROOT, 'reports', 'live-bms.json');
   writeFileSync(file, JSON.stringify({
-    bms: BASE_URL, release: RELEASE, tlsVerified: !TLS_UNVERIFIED, at: new Date().toISOString(), node: process.version, platform: process.platform,
+    bms: BASE_URL, release: RELEASE, tlsVerified: config!.tlsVerified, caFile: config!.caFile, at: new Date().toISOString(), node: process.version, platform: process.platform,
     totals: { ok: count('ok'), unavailable: count('unavailable'), failed: count('failed'), skipped: count('skipped'), schemaDrift: withSchema.length },
     runs,
   }, null, 2));
   const lines = [
-    ...(TLS_UNVERIFIED ? ['WARNING: TLS certificate verification was OFF (NODE_TLS_REJECT_UNAUTHORIZED=0 in the env file)'] : []),
+    config!.tlsVerified
+      ? `TLS: certificates verified (${config!.caFile ? 'CA from BCONNECT_CA_CERT_PATH' : 'system and Node trust store'})`
+      : 'WARNING: TLS certificate verification was OFF (NODE_TLS_REJECT_UNAUTHORIZED=0 in the env file)',
     `live bMS ${BASE_URL} (${RELEASE}): ${count('ok')} ok, ${count('unavailable')} unavailable, ${count('failed')} failed, ${count('skipped')} skipped`,
     ...runs.filter((r) => r.outcome === 'unavailable').map((r) => `  unavailable  ${r.server} ${r.tool} [${r.statuses?.join(',')}]`),
     `schema drift in ${withSchema.length} tool responses:`,
