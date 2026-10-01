@@ -71,6 +71,13 @@ describe('clientConfigFromEnv', () => {
       });
     });
 
+    it('keeps an empty per-request API key as given (decision on empty per-request values: #160)', () => {
+      // Pins today's behaviour: credentials fields override with ?? (empty stays empty),
+      // only the base URL falls back with ||.
+      const config = clientConfigFromEnv({ ...BASIC, BCONNECT_API_KEY: 'env-key' }, { apiKey: '' });
+      expect(config.apiKey).toBe('');
+    });
+
     it('accepts an API key alone', () => {
       expect(clientConfigFromEnv({ BCONNECT_API_KEY: 'key' }).apiKey).toBe('key');
     });
@@ -212,6 +219,16 @@ describe('clientConfigFromEnv', () => {
         BCONNECT_RATE_LIMIT_WINDOW_MS: '',
       });
       expect(config.rateLimit).toEqual({ enabled: true, maxRequests: 100, windowMs: 60000 });
+    });
+  });
+
+  describe('result', () => {
+    it('is frozen, so nobody can change the shared settings for one client', () => {
+      const config = clientConfigFromEnv({ ...BASIC, BCONNECT_RATE_LIMIT_ENABLED: 'true' });
+      expect(Object.isFrozen(config)).toBe(true);
+      expect(Object.isFrozen(config.rateLimit)).toBe(true);
+      expect(Object.isFrozen(config.auditLog)).toBe(true);
+      expect(() => Object.assign(config, { rejectUnauthorized: false })).toThrow(TypeError);
     });
   });
 

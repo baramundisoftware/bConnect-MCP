@@ -34,13 +34,14 @@ const intOr = (value: string | undefined, fallback: number): number => {
 /**
  * The BConnectClient config every server uses, for tool calls and the startup
  * probe alike. Reads only `env` (servers load their .env file before calling)
- * and never writes to stdout, which carries JSON-RPC in stdio mode.
+ * and never writes to stdout, which carries JSON-RPC in stdio mode. The result
+ * is frozen: a server can't change the shared settings for one of its clients.
  *
  * Certificate verification is off only for NODE_TLS_REJECT_UNAUTHORIZED=0.
  * Throws MissingCredentialsError when no way to authenticate is set, and an
  * error when BCONNECT_CA_CERT_PATH can't be read or the file is empty.
  */
-export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConnectCredentials): BConnectConfig {
+export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConnectCredentials): Readonly<BConnectConfig> {
   const baseUrl = credentials?.baseUrl || env.BCONNECT_BASE_URL || DEFAULT_BASE_URL;
   const username = credentials?.username ?? env.BCONNECT_USERNAME;
   const password = credentials?.password ?? env.BCONNECT_PASSWORD;
@@ -58,7 +59,7 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
   }
   const auditLevel = env.BCONNECT_AUDIT_LEVEL;
 
-  return {
+  return Object.freeze({
     baseUrl,
     username,
     password,
@@ -66,12 +67,12 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
     rejectUnauthorized: env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
     ...(ca !== undefined && { ca }),
     ...(env.BCONNECT_RATE_LIMIT_ENABLED === "true" && {
-      rateLimit: {
+      rateLimit: Object.freeze({
         enabled: true,
         maxRequests: intOr(env.BCONNECT_RATE_LIMIT_MAX_REQUESTS, DEFAULT_RATE_LIMIT_MAX_REQUESTS),
         windowMs: intOr(env.BCONNECT_RATE_LIMIT_WINDOW_MS, DEFAULT_RATE_LIMIT_WINDOW_MS),
-      },
+      }),
     }),
-    auditLog: { level: isAuditLevel(auditLevel) ? auditLevel : "none" },
-  };
+    auditLog: Object.freeze({ level: isAuditLevel(auditLevel) ? auditLevel : "none" }),
+  });
 }
