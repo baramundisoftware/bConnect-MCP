@@ -36,7 +36,7 @@ describe('sanitised summary', () => {
 
   it('holds counts, tool names, statuses and finding classes', () => {
     expect(summary).toContain('13/13');
-    expect(summary).toMatch(/2 ok, 1 expected, 1 failed, 1 skipped/);
+    expect(summary).toMatch(/2 ok, 1 expected, 1 failed, 0 not verified live, 1 skipped/);
     expect(summary).toContain('get_endpoint');
     expect(summary).toContain('500');
     expect(summary).toContain('get_maintenance_window_for_endpoint');

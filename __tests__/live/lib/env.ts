@@ -13,6 +13,7 @@ import https from 'node:https';
 import { join } from 'node:path';
 import { parse } from 'dotenv';
 import { RELEASES, type Release } from '../../lib/spec.js';
+import { declared, type Declared } from './profile.js';
 
 /** Proxy variables axios honors; a shell proxy must not reroute the run. */
 const PROXY_KEYS = ['HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy'];
@@ -63,6 +64,8 @@ export interface LiveConfig {
   tlsVerified: boolean;
   /** BCONNECT_CA_CERT_PATH is set. */
   caFile: boolean;
+  /** What the operator declares about the bMS; the API can't tell (lib/profile.ts). */
+  declared: { mdm: Declared; entraId: Declared };
   /** Values that must never appear in output. */
   secrets: string[];
 }
@@ -103,6 +106,7 @@ export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS
     release,
     tlsVerified: env.NODE_TLS_REJECT_UNAUTHORIZED !== '0',
     caFile: env.BCONNECT_CA_CERT_PATH !== '',
+    declared: { mdm: declared(values.BCONNECT_LIVE_MDM), entraId: declared(values.BCONNECT_LIVE_ENTRA_ID) },
     secrets,
   };
 }

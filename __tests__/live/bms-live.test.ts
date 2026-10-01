@@ -42,6 +42,7 @@ import { checkReachable, childEnv, loadLiveConfig } from './lib/env.js';
 import { assertExercised, sanitise, sanitisedSummary, type ToolRun } from './lib/report.js';
 import { createGuard } from './lib/guard.mjs';
 import { expectedAnswer } from './lib/expected.js';
+import { classifyByProfile, endpointTypesFrom, type Profile } from './lib/profile.js';
 import { CHILD_GUARD, readGuardLog, startupProblems, type LoggedRequest } from './lib/child.js';
 
 const ENV_FILE = process.env.BCONNECT_LIVE_ENV ?? join(ROOT, '.env.local');
@@ -123,6 +124,8 @@ interface Exchange { method: string; path: string; status: number; body: unknown
 const runs: ToolRun[] = [];
 /** Spec route of a list operation (`<domain> <path>`) → IDs its responses carried. */
 const idsByRoute = new Map<string, string[]>();
+/** Every 2xx answer by spec route, for the environment profile (endpoint counts). */
+const answers: Array<{ domain: string; path: string; body: unknown }> = [];
 
 let exchanges: Exchange[] = [];
 let pending: Array<Promise<void>> = [];
@@ -212,9 +215,10 @@ async function exercise(server: string, conn: ConnectedServer, tool: ConnectedSe
     schema.push(...validator.check(e.op, e.body));
     const ids = itemsOf(e.body).map((i) => (i as Record<string, unknown>)?.id).filter((id): id is string => typeof id === 'string');
     if (ids.length) idsByRoute.set(routeKey(e.op), ids);
+    answers.push({ domain: e.op.domain, path: e.op.path, body: e.body });
   }
   const requests = exchanges.map((e) => `${e.method} ${e.path} ${e.status}`);
-  const base = { server, tool: tool.name, args, ms, statuses, requests, schema };
+  const base = { server, tool: tool.name, args, ms, statuses, requests, schema, route: routeKey(ops[0]) };
   if (!result.isError) return { ...base, outcome: 'ok', detail: `${ops[0].method} ${ops[0].path}` };
   // Only a listed tool with its listed answer is expected (lib/expected.ts); its reason is reported.
   const reason = expectedAnswer(tool.name, exchanges.filter((e) => e.status < 200 || e.status > 299));
@@ -257,7 +261,7 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
         const ops = readOperations(server, tables.get(server)!, tool.name);
         if (typeof ops === 'string') { runs.push({ server, tool: tool.name, outcome: 'skipped', detail: ops }); continue; }
         const args = argumentsFor(tool, ops[0]);
-        if (typeof args === 'string') { runs.push({ server, tool: tool.name, outcome: 'skipped', detail: args }); continue; }
+        if (typeof args === 'string') { runs.push({ server, tool: tool.name, outcome: 'skipped', detail: args, route: routeKey(ops[0]) }); continue; }
         const run = await exercise(server, conn, tool, ops, args, validator);
         runs.push(run);
         mine.push(run);
@@ -276,13 +280,20 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
 function writeReport(): void {
   const dir = join(ROOT, 'reports');
   mkdirSync(dir, { recursive: true });
+  // What this bMS can show; tools whose data class it lacks are "not verified live" (lib/profile.ts).
+  const profile: Profile = {
+    release: RELEASE, bmsVersion, endpointTypes: endpointTypesFrom(answers),
+    mdm: config.declared.mdm, entraId: config.declared.entraId,
+    untestedReleases: RELEASES.filter((r) => r !== RELEASE),
+  };
+  const classified = classifyByProfile(runs, profile);
   const summary = sanitisedSummary({
     release: RELEASE, bmsVersion, tlsVerified: config.tlsVerified, caFile: config.caFile,
-    startups: { ok: started, total: SERVERS.length }, runs,
+    startups: { ok: started, total: SERVERS.length }, runs: classified, profile,
   });
   writeFileSync(join(dir, 'live-bms.json'), JSON.stringify({
     bms: config.baseUrl.href, release: RELEASE, bmsVersion, tlsVerified: config.tlsVerified, caFile: config.caFile,
-    at: new Date().toISOString(), node: process.version, platform: process.platform, runs,
+    at: new Date().toISOString(), node: process.version, platform: process.platform, profile, runs: classified,
   }, null, 2));
   writeFileSync(join(dir, 'live-bms-summary.md'), summary);
   console.log(`${summary}\nLocal report (not for publishing): reports/live-bms.json\nPublishable summary: reports/live-bms-summary.md`);

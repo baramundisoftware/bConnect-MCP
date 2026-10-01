@@ -8,19 +8,22 @@
  */
 import type { SchemaFinding } from '../../lib/response-schema.js';
 import { LiveConfigError } from './env.js';
+import type { Profile } from './profile.js';
 
-export type Outcome = 'ok' | 'expected' | 'failed' | 'skipped';
+export type Outcome = 'ok' | 'expected' | 'failed' | 'not verified live' | 'skipped';
 export interface ToolRun {
   server: string;
   tool: string;
   outcome: Outcome;
-  /** ok: the operation; expected: the reason; failed: the tool's error; skipped: why. Local report only. */
+  /** ok: the operation; expected: the reason; failed: the tool's error; not verified live / skipped: why. Local report only. */
   detail: string;
   args?: Record<string, unknown>;
   ms?: number;
   statuses?: number[];
   requests?: string[];
   schema?: SchemaFinding[];
+  /** `<domain> <spec path>` of the tool's operation. */
+  route?: string;
 }
 
 /** A live run that exercised nothing is a failed run, not a pass. */
@@ -45,6 +48,7 @@ export interface SummaryInput {
   caFile: boolean;
   startups: { ok: number; total: number };
   runs: ToolRun[];
+  profile?: Profile;
 }
 
 /** Markdown for a PR, an issue or release notes: counts, tool names, statuses, finding classes. */
@@ -64,10 +68,24 @@ export function sanitisedSummary(input: SummaryInput): string {
     `- bMS release ${input.release}${input.bmsVersion ? ` (version ${input.bmsVersion})` : ''}`,
     `- TLS: ${input.tlsVerified ? `certificates verified${input.caFile ? ' (CA file set)' : ''}` : 'NOT verified (NODE_TLS_REJECT_UNAUTHORIZED=0)'}`,
     `- Startup: ${input.startups.ok}/${input.startups.total} servers started with the startup check and sent nothing else`,
-    `- Read tools: ${by('ok').length} ok, ${by('expected').length} expected, ${by('failed').length} failed, ${by('skipped').length} skipped`,
+    `- Read tools: ${by('ok').length} ok, ${by('expected').length} expected, ${by('failed').length} failed, ${by('not verified live').length} not verified live, ${by('skipped').length} skipped`,
   ];
+  const p = input.profile;
+  if (p) {
+    const types = Object.entries(p.endpointTypes)
+      .map(([type, n]) => `${type} ${n.total}${n.total > 0 && n.enrolled === 0 ? ' (none enrolled)' : ''}`).join(', ');
+    lines.push(
+      `- Endpoint types: ${types || 'none counted'}`,
+      `- MDM: ${p.mdm}; Entra ID: ${p.entraId}`,
+      ...p.untestedReleases.map((r) => `- ${r}: not verified live (no test installation)`),
+    );
+  }
   if (by('failed').length) {
     lines.push('', '### Failed', '', '| Tool | Status |', '| --- | --- |', ...by('failed').map((r) => `| \`${r.tool}\` | ${statuses(r)} |`));
+  }
+  if (by('not verified live').length) {
+    lines.push('', '### Not verified live (data class missing on this bMS)', '', '| Tool | Why |', '| --- | --- |',
+      ...by('not verified live').map((r) => `| \`${r.tool}\` | ${r.detail} |`));
   }
   if (by('expected').length) {
     lines.push('', '### Expected non-success answers', '', '| Tool | Status |', '| --- | --- |',
