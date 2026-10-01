@@ -25,10 +25,11 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { RELEASES, type Release, type ApiOperation } from './lib/spec.js';
 import {
-  ID, ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, requiredArguments,
+  ID, ROOT, SERVERS, UNKNOWN_VALUE, allArguments, connect, createRecorder, domainOf, guardEnv, requiredArguments,
 } from './lib/exerciser.js';
 import {
-  type Baseline, type Violation, checkCoverage, checkStaleBindings, checkTools, compareWithBaseline, keyOf,
+  type Baseline, type ParamCall, type Violation,
+  checkCoverage, checkParams, checkStaleBindings, checkTools, compareWithBaseline, keyOf,
 } from './lib/conformance.js';
 
 const BASELINE_PATH = join(ROOT, '__tests__', 'spec-conformance.baseline.json');
@@ -60,17 +61,27 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
     const table = await tableOf(server);
     const conn = await connect(server);
     const exercised = [];
+    const paramCalls: ParamCall[] = [];
     for (const tool of conn.tools) {
+      // Pass 1, required arguments: route checks.
       recorder.take();
       await conn.call(tool.name, requiredArguments(tool.inputSchema));
       // The sample GUID becomes {id}, so baseline keys read like routes.
       exercised.push({ tool: tool.name, requests: recorder.take().map((r) => ({ method: r.method, path: r.path.split(ID).join('{id}') })) });
+      // Pass 2, every documented argument plus an undeclared one: parameter checks.
+      const { args, idsByArg } = allArguments(tool.inputSchema);
+      await conn.call(tool.name, args);
+      paramCalls.push({
+        tool: tool.name, inputSchema: tool.inputSchema, idsByArg, unknownValue: UNKNOWN_VALUE,
+        requests: recorder.take().map((r) => ({ method: r.method, path: r.path, query: r.query, body: r.body })),
+      });
     }
     await conn.close();
     registered.set(server, new Set(conn.tools.map((t) => t.name)));
     const covered = coveredByDomain.get(domain) ?? new Set<string>();
     coveredByDomain.set(domain, covered);
     violations.push(...checkTools({ release, server, domain, table, exercised, covered }));
+    violations.push(...checkParams({ release, server, domain, table, calls: paramCalls }));
   }
   for (const [domain, covered] of coveredByDomain) violations.push(...checkCoverage(release, domain, covered));
   return { violations, registered };
@@ -122,10 +133,10 @@ describe('spec conformance (REQ-QA-001)', () => {
 
 /** Known-bad fixtures: each check must report its case (REQ-QA-001 AC 11). */
 describe('the checks report known-bad cases (self-test)', () => {
-  const op = (method: string, path: string, operationId: string): ApiOperation => {
+  const op = (method: string, path: string, operationId: string, queryParams: string[] = []): ApiOperation => {
     const pattern = new RegExp('^' + path.replace(/\{[^}]+\}/g, '[^/]+') + '/?$');
     return {
-      release: '26R1', domain: 'demo', method, path, operationId, summary: '', secretFields: [], queryParams: [],
+      release: '26R1', domain: 'demo', method, path, operationId, summary: '', secretFields: [], queryParams,
       requestBodies: {}, returnsBody: true, spec: {},
       matches: (m, p) => m.toUpperCase() === method && pattern.test(p),
     };
@@ -196,6 +207,67 @@ describe('the checks report known-bad cases (self-test)', () => {
       .toEqual(['binding-stale - demo-server gone -']);
     expect(checkCoverage('26R1', 'demo', new Set(['GetThings', 'GetThing']), operations).map(keyOf))
       .toEqual(['coverage 26R1 demo - DeleteThing']);
+  });
+
+  describe('parameters', () => {
+    const paramOps = [
+      op('GET', '/v2.0/Groups/{groupId}/Things', 'GetThingsByGroup', ['Page', 'PageSize', 'Name']),
+      op('POST', '/v2.0/Things', 'CreateThing'),
+    ];
+    const good = {
+      type: 'object',
+      properties: {
+        groupId: { type: 'string' },
+        Page: { type: 'number', description: 'Zero-indexed page number (default: 0).' },
+        PageSize: { type: 'number', description: 'Items per page (max: 1000).' },
+        Name: { type: 'string' },
+      },
+    };
+    const G = '00000000-0000-4000-8000-000000000001';
+    const call = (over: Partial<ParamCall>): ParamCall => ({
+      tool: 'list_things_by_group', inputSchema: good, idsByArg: { groupId: G }, unknownValue: 'UNK',
+      requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['Page', '1'], ['Name', 'x']], body: '' }],
+      ...over,
+    });
+    const run = (c: ParamCall, table: Record<string, string[]> = { list_things_by_group: ['GetThingsByGroup'], create_thing: ['CreateThing'] }) =>
+      checkParams({ release: '26R1', server: 'demo-server', domain: 'demo', table, calls: [c], operations: paramOps })
+        .map((x) => `${x.check} ${x.tool} ${x.detail}`);
+
+    it('accepts a tool that offers and sends exactly what its operation declares', () => {
+      expect(run(call({}))).toEqual([]);
+    });
+
+    it('reports an undeclared argument that reaches the query or the body', () => {
+      expect(run(call({ requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['zz', 'UNK']], body: '' }] })))
+        .toEqual(['arg-leak list_things_by_group -']);
+      expect(run(call({ tool: 'create_thing', inputSchema: { properties: {} }, idsByArg: {}, requests: [{ method: 'POST', path: '/demo/v2.0/Things', query: [], body: '{"zz":"UNK"}' }] })))
+        .toEqual(['arg-leak create_thing -']);
+    });
+
+    it('reports a query parameter the operation does not declare (e.g. a path ID repeated in the query)', () => {
+      expect(run(call({ requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['groupId', G], ['includeSubGroups', 'true']], body: '' }] })))
+        .toEqual(['query-undeclared list_things_by_group groupId', 'query-undeclared list_things_by_group includeSubGroups']);
+    });
+
+    it('reports a declared query parameter the tool does not offer', () => {
+      const { Name: _dropped, ...props } = good.properties;
+      const sendsPageOnly = [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['Page', '1']] as Array<[string, string]>, body: '' }];
+      expect(run(call({ inputSchema: { properties: props }, requests: sendsPageOnly }))).toEqual(['query-not-offered list_things_by_group Name']);
+      // Offered under the tool's own argument name: sent, so not reported.
+      expect(run(call({ inputSchema: { properties: { ...props, name: { type: 'string' } } } }))).toEqual([]);
+    });
+
+    it('reports a path slot filled by an argument whose name does not fit it', () => {
+      expect(run(call({ inputSchema: { properties: { ...good.properties, endpointId: { type: 'string' } } }, idsByArg: { endpointId: G } })))
+        .toEqual(['path-slot list_things_by_group {groupId} ← endpointId']);
+    });
+
+    it('reports a 1-based or missing Page description and a PageSize without the 1000 limit', () => {
+      const props = (page?: string, size?: string) => ({ properties: { ...good.properties, Page: { type: 'number', description: page }, PageSize: { type: 'number', description: size } } });
+      expect(run(call({ inputSchema: props('Page number (1-based)', 'Items per page (max: 1000).') }))).toEqual(['page-description list_things_by_group Page']);
+      expect(run(call({ inputSchema: props(undefined, 'Items per page.') })))
+        .toEqual(['page-description list_things_by_group Page', 'page-description list_things_by_group PageSize']);
+    });
   });
 
   it('ratchets: new, stale and untriaged baseline entries are reported', () => {
