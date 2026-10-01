@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   redirect now stops with a message naming the target address and asking to set
   `BCONNECT_BASE_URL` to it. **Behaviour change:** a bMS behind a front end that redirects (for
   example from `http://` to `https://`) needs its final address in `BCONNECT_BASE_URL`.
+- **Local secret files are ignored by git.** `.gitignore` now covers every `.env` and `.env.*`
+  copy in any directory (for example the `.env.gateway` the gateway setup asks for) and a
+  `secrets/` directory. The `*.example` templates stay tracked.
 - **Four write tools are now refused while write operations are disabled.**
   `withdraw_kiosk_release`, `link_entra_id_data`, `unlink_entra_id_data` and
   `replace_application_in_bundle` were missing from their server's write gate and sent

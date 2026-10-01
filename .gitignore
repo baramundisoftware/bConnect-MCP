@@ -8,9 +8,12 @@ build/
 dist/
 coverage/
 
-# Environment variables
+# Environment variables and local secrets (REQ-REPO-001). Any .env or .env.*
+# copy in any directory holds real credentials; the *.example templates stay tracked.
 .env
-.env.local
+.env.*
+!*.example
+secrets/
 
 # Logs
 *.log
