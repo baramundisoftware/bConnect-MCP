@@ -39,6 +39,7 @@ export interface ApiOperation {
   bodyRequired: boolean;   // requestBody.required
   returnsBody: boolean;    // a 2xx response declares content
   okStatus?: string;       // the first 2xx status with an application/json schema, e.g. "200"; undefined = none
+  okSchema?: Schema;       // the first 2xx application/json response schema (may be a $ref into the spec)
   spec: Schema;            // the whole spec document, for resolving $refs
   matches(method: string, path: string): boolean;
 }
@@ -110,11 +111,15 @@ export function loadOperations(release: Release): ApiOperation[] {
           .some(([code, response]) => /^2/.test(code) && Object.keys(response.content ?? {}).length > 0);
         const okStatus = Object.entries<Schema>(op.responses)
           .find(([code, response]) => /^2/.test(code) && response.content?.['application/json']?.schema)?.[0];
+        const okSchema: Schema | undefined = Object.entries<Schema>(op.responses)
+          .filter(([code]) => /^2/.test(code))
+          .map(([, response]) => response.content?.['application/json']?.schema)
+          .find(Boolean);
         ops.push({
           release, domain, method: upper, path, operationId: op.operationId ?? '',
           summary: op.summary ?? '',
           secretFields: [...fields],
-          requestBodies, bodyRequired: op.requestBody?.required === true, returnsBody, okStatus, spec,
+          requestBodies, bodyRequired: op.requestBody?.required === true, returnsBody, okStatus, okSchema, spec,
           queryParams: (op.parameters ?? []).filter((q: Schema) => q.in === 'query').map((q: Schema) => q.name),
           matches: (m, p) => m.toUpperCase() === upper && pattern.test(p),
         });
