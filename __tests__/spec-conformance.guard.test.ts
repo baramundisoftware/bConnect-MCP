@@ -5,12 +5,13 @@
  * calls. This guard calls every tool of every server, for both bMS releases,
  * with all gates open and valid arguments, records the requests, and checks
  * them against the declared operation in that release's spec. It also checks
- * that every spec operation is declared by some tool.
+ * that every spec operation is reached by some tool's request.
  *
  * Known violations are in spec-conformance.baseline.json, each with the GitHub
  * issue that fixes it. A new violation fails; so does a baseline entry that no
  * longer occurs (the fix is proven: remove the entry), and an entry without an
- * issue number.
+ * issue number. The baseline is the only exemption list: every exception is a
+ * known defect with an issue.
  *
  *   npm run check:spec                                  # run
  *   SPEC_BASELINE=prune npm run check:spec              # drop entries that no longer occur
@@ -33,6 +34,7 @@ import {
 const BASELINE_PATH = join(ROOT, '__tests__', 'spec-conformance.baseline.json');
 const baseline: Baseline = JSON.parse(readFileSync(BASELINE_PATH, 'utf8'));
 const mode = process.env.SPEC_BASELINE ?? '';
+if (!['', 'prune', 'add-new'].includes(mode)) throw new Error(`SPEC_BASELINE must be prune or add-new, not '${mode}'`);
 
 const recorder = createRecorder();
 const savedEnv = { ...process.env };
@@ -52,7 +54,7 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
   Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
   const violations: Violation[] = [];
   const registered = new Map<string, Set<string>>();
-  const declaredByDomain = new Map<string, Set<string>>();
+  const coveredByDomain = new Map<string, Set<string>>();
   for (const server of SERVERS) {
     const domain = domainOf(server);
     const table = await tableOf(server);
@@ -66,12 +68,11 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
     }
     await conn.close();
     registered.set(server, new Set(conn.tools.map((t) => t.name)));
-    violations.push(...checkTools({ release, server, domain, table, exercised }));
-    const declared = declaredByDomain.get(domain) ?? new Set<string>();
-    for (const id of Object.values(table).flat()) declared.add(id);
-    declaredByDomain.set(domain, declared);
+    const covered = coveredByDomain.get(domain) ?? new Set<string>();
+    coveredByDomain.set(domain, covered);
+    violations.push(...checkTools({ release, server, domain, table, exercised, covered }));
   }
-  for (const [domain, declared] of declaredByDomain) violations.push(...checkCoverage(release, domain, declared));
+  for (const [domain, covered] of coveredByDomain) violations.push(...checkCoverage(release, domain, covered));
   return { violations, registered };
 }
 
@@ -90,7 +91,7 @@ describe('spec conformance (REQ-QA-001)', () => {
       }
     }
     for (const server of SERVERS) {
-      observed.push(...checkStaleBindings(server, RELEASES[0], await tableOf(server), registeredAny.get(server)!));
+      observed.push(...checkStaleBindings(server, await tableOf(server), registeredAny.get(server)!));
     }
     if (mode === 'prune' || mode === 'add-new') {
       const keys = new Set(observed.map(keyOf));
@@ -162,12 +163,37 @@ describe('the checks report known-bad cases (self-test)', () => {
       { tool: 'a', requests: [{ method: 'GET', path: '/demo/v2.0/Things' }] },
       { tool: 'b', requests: [{ method: 'GET', path: '/demo/v2.0/Things' }] },
       { tool: 'c', requests: [] },
-    ])).toEqual(['binding-missing a -', 'binding-unknown-op b NoSuchOp', 'no-request c -']);
+    ])).toEqual(['binding-missing a -', 'binding-unknown-op b NoSuchOp', 'route b GET /demo/v2.0/Things', 'no-request c -']);
+  });
+
+  it('counts an operation as covered only when a request reached it', () => {
+    const covered = new Set<string>();
+    checkTools({
+      release: '26R1', server: 'demo-server', domain: 'demo', operations, covered,
+      table: { get_thing: ['GetThing'], list_things: ['GetThings'] },
+      exercised: [
+        { tool: 'get_thing', requests: [{ method: 'GET', path: '/demo/v2.0/Thingz/abc' }] },
+        { tool: 'list_things', requests: [{ method: 'GET', path: '/demo/v2.0/Things' }] },
+      ],
+    });
+    expect([...covered]).toEqual(['GetThings']);
+    expect(checkCoverage('26R1', 'demo', covered, operations).map((x) => x.detail)).toEqual(['GetThing', 'DeleteThing']);
+  });
+
+  it('matches against the real 26R1 spec (route templates, domain prefix)', () => {
+    const real = (path: string) => checkTools({
+      release: '26R1', server: 'bconnect-assets-mcp', domain: 'assets',
+      table: { get_asset: ['GetAsset'] },
+      exercised: [{ tool: 'get_asset', requests: [{ method: 'GET', path }] }],
+    }).map((x) => x.check);
+    expect(real('/assets/v2.0/Assets/00000000-0000-4000-8000-000000000001')).toEqual([]);
+    expect(real('/assets/v2.0/Asset/00000000-0000-4000-8000-000000000001')).toEqual(['route']);
+    expect(real('/v2.0/Assets/00000000-0000-4000-8000-000000000001')).toEqual(['route']);
   });
 
   it('reports a dead table entry and an operation no tool declares', () => {
-    expect(checkStaleBindings('demo-server', '26R1', { gone: ['GetThing'] }, new Set(['other'])).map(keyOf))
-      .toEqual(['binding-stale 26R1 demo-server gone -']);
+    expect(checkStaleBindings('demo-server', { gone: ['GetThing'] }, new Set(['other'])).map(keyOf))
+      .toEqual(['binding-stale - demo-server gone -']);
     expect(checkCoverage('26R1', 'demo', new Set(['GetThings', 'GetThing']), operations).map(keyOf))
       .toEqual(['coverage 26R1 demo - DeleteThing']);
   });

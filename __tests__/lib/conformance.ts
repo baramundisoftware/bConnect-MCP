@@ -10,7 +10,7 @@ import { type ApiOperation, type Release, loadOperations } from './spec.js';
 
 export interface Violation {
   check: string;
-  release: Release;
+  release: Release | '-'; // '-' for checks that don't depend on the release
   server: string;
   tool: string; // '-' for checks that aren't about one tool
   detail: string;
@@ -33,7 +33,12 @@ function operationIn(ops: ApiOperation[], domain: string, operationId: string): 
  * - `binding-missing`: a registered tool has no entry in TOOL_OPERATIONS.
  * - `binding-unknown-op`: a declared operationId doesn't exist in this release's spec.
  * - `no-request`: the tool sent nothing (all gates open, valid arguments).
- * - `route`: a request doesn't go to the method + route of a declared operation.
+ * - `route`: a request doesn't go to the method + route of a declared operation
+ *   (also when none of the declared operations exists in this release, so the
+ *   baseline pins the exact path).
+ *
+ * `covered` collects the operationIds a request actually reached, for the
+ * coverage check: a table row alone doesn't count.
  */
 export function checkTools(args: {
   release: Release;
@@ -42,8 +47,9 @@ export function checkTools(args: {
   table: Readonly<Record<string, readonly string[]>>;
   exercised: ExercisedTool[];
   operations?: ApiOperation[];
+  covered?: Set<string>;
 }): Violation[] {
-  const { release, server, domain, table, exercised } = args;
+  const { release, server, domain, table, exercised, covered } = args;
   const ops = args.operations ?? loadOperations(release);
   const out: Violation[] = [];
   const v = (check: string, tool: string, detail: string): void => {
@@ -63,27 +69,27 @@ export function checkTools(args: {
       v('no-request', tool, '-');
       continue;
     }
-    if (known.length === 0) continue; // nothing to compare with; reported above
     for (const r of requests) {
       const m = /^\/([^/]+)(\/.*)$/.exec(r.path);
-      const ok = !!m && m[1].toLowerCase() === domain && known.some((op) => op.matches(r.method, m[2]));
-      if (!ok) v('route', tool, `${r.method} ${r.path}`);
+      const hit = m && m[1].toLowerCase() === domain ? known.find((op) => op.matches(r.method, m[2])) : undefined;
+      if (hit) covered?.add(hit.operationId);
+      else v('route', tool, `${r.method} ${r.path}`);
     }
   }
   return out;
 }
 
 /** Table rows for tools no release registers (dead entries). */
-export function checkStaleBindings(server: string, release: Release, table: Readonly<Record<string, readonly string[]>>, registeredInAnyRelease: Set<string>): Violation[] {
+export function checkStaleBindings(server: string, table: Readonly<Record<string, readonly string[]>>, registeredInAnyRelease: Set<string>): Violation[] {
   return Object.keys(table)
     .filter((tool) => !registeredInAnyRelease.has(tool))
-    .map((tool) => ({ check: 'binding-stale', release, server, tool, detail: '-' }));
+    .map((tool) => ({ check: 'binding-stale', release: '-', server, tool, detail: '-' }));
 }
 
-/** `coverage`: an operation of the release's spec that no tool declares. */
-export function checkCoverage(release: Release, domain: string, declared: Set<string>, operations?: ApiOperation[]): Violation[] {
+/** `coverage`: an operation of the release's spec that no tool's request reached. */
+export function checkCoverage(release: Release, domain: string, covered: Set<string>, operations?: ApiOperation[]): Violation[] {
   return (operations ?? loadOperations(release))
-    .filter((op) => op.domain === domain && !declared.has(op.operationId))
+    .filter((op) => op.domain === domain && !covered.has(op.operationId))
     .map((op) => ({ check: 'coverage', release, server: domain, tool: '-', detail: op.operationId }));
 }
 
