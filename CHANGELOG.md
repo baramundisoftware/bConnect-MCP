@@ -47,9 +47,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **One shared function builds every server's bConnect client config.** `@bconnect/mcp-core`
   now reads the connection settings (base URL, credentials, API key, CA certificate, TLS,
   audit level, rate limit) for the tool client and the startup check of all 13 servers, so
-  the servers can't drift apart again. The groups server no longer refuses to start
-  without `BCONNECT_BASE_URL`. Like the other servers, it falls back to the placeholder URL,
-  and the startup check then fails against it (#197).
+  the servers can't drift apart again (#197). Effects:
+  - The groups server no longer refuses to start without `BCONNECT_BASE_URL`. Like the other
+    servers, it falls back to the placeholder URL `https://bms.example.com:443/bconnect`;
+    run alone, its startup check then fails against it. In the gateway, where no startup
+    check runs, groups tool calls now go to the placeholder URL instead of being refused,
+    as the other servers' calls already did.
+  - Ten servers used `https://bms-server/bconnect` as the tool calls' fallback base URL and
+    a different one for the startup check; all now use the same placeholder.
+  - An empty `BCONNECT_BASE_URL`, or an empty base URL passed per request, now counts as
+    unset (it used to be passed on as an empty URL).
+  - Missing credentials give the same error in every server: tool calls fail with an
+    internal error (groups returned an invalid-request error with a different text), and
+    the server exits at startup with one line naming both ways to authenticate (endpoints
+    and jobs printed a stack trace).
+  - An empty `BCONNECT_CA_CERT_PATH` file is an error. It used to replace the trusted CAs
+    with Node's built-in list without saying so.
 - **`BCONNECT_RELEASE` now defaults to `26R1`** (was `25R2`), matching the documented
   default and the advertised tool counts (e.g. 66 endpoints tools, 276 total). Following
   the README with no `BCONNECT_RELEASE` set previously registered the smaller 25R2 subset
@@ -70,7 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **groups tools now work against a bConnect server with an internal CA (#197).** The groups
   server's tool calls ignored `BCONNECT_CA_CERT_PATH` and `NODE_TLS_REJECT_UNAUTHORIZED`:
   the server started, and then every groups tool failed with a TLS error. Its tool calls now
-  use the CA, TLS and `BCONNECT_AUDIT_LEVEL` settings like every other server.
+  use the CA, TLS and `BCONNECT_AUDIT_LEVEL` settings like every other server. With an audit
+  level set, groups now also writes audit entries to stdout, which breaks stdio mode in every
+  server (#168).
 - **The `BCONNECT_RATE_LIMIT_*` settings now reach every server's client.** Nine servers
   (compliance, defensecontrol, groups, operatingsystems, servermanagement, software,
   universaldynamicgroups, updatemanagement, variables) never passed them on. Each tool call
