@@ -1,0 +1,62 @@
+{
+  "bconnect-activedirectory-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 13
+    }
+  },
+  "bconnect-assets-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 19
+    }
+  },
+  "bconnect-compliance-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "bconnect-defensecontrol-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "bconnect-endpoints-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 31
+    }
+  },
+  "bconnect-jobs-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 13
+    }
+  },
+  "bconnect-operatingsystems-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 7
+    }
+  },
+  "bconnect-servermanagement-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 8
+    }
+  },
+  "bconnect-software-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 15
+    }
+  },
+  "bconnect-universaldynamicgroups-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 5
+    }
+  },
+  "bconnect-updatemanagement-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 3
+    }
+  },
+  "bconnect-variables-mcp/src/index.ts": {
+    "no-restricted-syntax": {
+      "count": 11
+    }
+  }
+}

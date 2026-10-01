@@ -27,7 +27,7 @@ export const SECRET_ROUTES: readonly SecretRoute[] = Object.freeze([
   { method: "PATCH", domain: "defensecontrol", path: "/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/{id}" },
 ]);
 
-const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escape = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const MATCHERS = SECRET_ROUTES.map((route) => ({
   method: route.method,
@@ -69,13 +69,18 @@ function canonicalPathOf(url: string): string {
     } catch {
       break; // malformed escape: match on what we have
     }
-    if (decoded === path) break;
+    if (decoded === path) {
+      break;
+    }
     path = decoded;
   }
   const segments: string[] = [];
   for (const segment of path.replace(/\\/g, "/").split("/")) {
-    if (segment === "..") segments.pop();
-    else if (segment !== ".") segments.push(segment);
+    if (segment === "..") {
+      segments.pop();
+    } else if (segment !== ".") {
+      segments.push(segment);
+    }
   }
   return "/" + segments.filter((s, i) => s !== "" || i === segments.length - 1).join("/");
 }
@@ -92,7 +97,9 @@ export function assertSecretRouteAllowed(
   url: string,
   env: NodeJS.ProcessEnv = process.env,
 ): void {
-  if (!isSecretRoute(method, url) || env.ALLOW_SECRET_READ === "true") return;
+  if (!isSecretRoute(method, url) || env.ALLOW_SECRET_READ === "true") {
+    return;
+  }
   throw new SecretRouteBlockedError(
     `Refusing ${String(method).toUpperCase()} ${pathOf(url)}: the response contains live credentials ` +
     `(BitLocker recovery keys / PIN or a LAPS password). An operator must set ALLOW_SECRET_READ=true ` +

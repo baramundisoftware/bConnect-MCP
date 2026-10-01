@@ -21,7 +21,7 @@ import { createServer } from "../index.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-async function connectClient(credentials?: Parameters<typeof createServer>[0]) {
+async function connectClient(credentials?: Parameters<typeof createServer>[0]): Promise<Client> {
   const { server } = createServer(credentials);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
