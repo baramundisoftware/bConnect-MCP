@@ -6,5 +6,6 @@ export function refusal(method: string, url: string, origin: string): string | u
 
 export function createGuard(options: {
   origin: string;
+  onRequest?: (request: Request, refusedBecause: string | undefined) => void;
   onResponse?: (request: Request, response: Response) => void;
 }): { server: SetupServerApi; refused: Refused[] };

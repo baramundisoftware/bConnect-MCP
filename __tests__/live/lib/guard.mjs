@@ -22,12 +22,13 @@ export function refusal(method, url, origin) {
 /**
  * An MSW server that passes allowed requests through to the bMS and fails the
  * others before they leave the process. `refused` lists them by method and path
- * (no host). `onResponse` sees every answer that came back from the bMS.
+ * (no host). `onRequest` sees every request with the reason it was refused, if it
+ * was; `onResponse` sees every answer that came back from the bMS.
  *
  * A redirect answer is recorded as refused, and the request that would follow it
  * is refused: a run that meets a redirect fails.
  */
-export function createGuard({ origin, onResponse }) {
+export function createGuard({ origin, onRequest, onResponse }) {
   const refused = [];
   const redirectTargets = new Set();
   const refuse = (request, reason) => {
@@ -36,8 +37,8 @@ export function createGuard({ origin, onResponse }) {
   };
   const server = setupServer(
     http.all('*', ({ request }) => {
-      if (redirectTargets.delete(request.url)) return refuse(request, 'redirect target');
-      const reason = refusal(request.method, request.url, origin);
+      const reason = redirectTargets.delete(request.url) ? 'redirect target' : refusal(request.method, request.url, origin);
+      onRequest?.(request, reason);
       return reason ? refuse(request, reason) : passthrough();
     }),
   );

@@ -11,7 +11,8 @@
  *
  * 1. Startup: each built server starts over stdio with the startup probe on
  *    (TLS + authentication against the bMS), answers initialize and tools/list,
- *    and writes nothing but JSON-RPC to stdout.
+ *    and writes nothing but JSON-RPC to stdout. It runs under the same request
+ *    guard (child-guard.mjs) and may send only its startup check.
  * 2. Read tools: each tool whose declared operations are all non-secret GETs is
  *    called in-process. List tools go first; the IDs they return feed the tools
  *    that need one (the ID source is the operation whose route is the part of
@@ -28,7 +29,8 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { brotliDecompressSync, gunzipSync, inflateSync } from 'node:zlib';
@@ -38,6 +40,7 @@ import { createResponseValidator, type SchemaFinding } from '../lib/response-sch
 import { checkReachable, childEnv, loadLiveConfig, redact as redactSecrets } from './lib/env.js';
 import { assertExercised } from './lib/report.js';
 import { createGuard } from './lib/guard.mjs';
+import { CHILD_GUARD, readGuardLog, startupProblems, type LoggedRequest } from './lib/child.js';
 
 const ENV_FILE = process.env.BCONNECT_LIVE_ENV ?? join(ROOT, '.env.local');
 // A missing or incomplete env file fails the run here, before any test (lib/env.ts).
@@ -61,11 +64,17 @@ afterAll(() => assertExercised({ startups: started, calls: runs.filter((r) => r.
 
 // ─── Startup over stdio ──────────────────────────────────────────────────────
 
-interface Startup { exitCode: number | null; initialized: boolean; tools: number; nonJson: number; stderr: string }
+interface Startup { exitCode: number | null; initialized: boolean; tools: number; nonJson: number; stderr: string; requests: LoggedRequest[] }
+
+/** Request logs of the spawned servers (child-guard.mjs), one file per server. */
+const guardLogs = mkdtempSync(join(tmpdir(), 'live-guard-'));
+afterAll(() => rmSync(guardLogs, { recursive: true, force: true }));
 
 async function startOverStdio(server: string): Promise<Startup> {
-  const env = childEnv(config, process.env);
-  const child = spawn(process.execPath, [join(ROOT, server, 'build', 'index.js')], { env, cwd: ROOT });
+  // The server runs under the same request guard as this process, and logs what it sends.
+  const log = join(guardLogs, `${server}.jsonl`);
+  const env = { ...childEnv(config, process.env), LIVE_GUARD_LOG: log };
+  const child = spawn(process.execPath, ['--import', CHILD_GUARD, join(ROOT, server, 'build', 'index.js')], { env, cwd: ROOT });
   let out = '';
   let err = '';
   child.stdout.on('data', (d) => { out += d; });
@@ -95,6 +104,7 @@ async function startOverStdio(server: string): Promise<Startup> {
     tools: list?.result?.tools?.length ?? 0,
     nonJson: messages().filter((m) => m === null || m.jsonrpc !== '2.0').length,
     stderr: redact(err.split('\n').slice(-8).join('\n')),
+    requests: readGuardLog(log),
   };
 }
 
@@ -106,6 +116,7 @@ describe(`live bMS ${BASE_URL} (${RELEASE}): startup`, () => {
     expect(s.initialized, `no initialize answer; stderr:\n${s.stderr}`).toBe(true);
     expect(s.tools, 'tools/list').toBeGreaterThan(0);
     expect(s.nonJson, 'stdout lines that are not JSON-RPC').toBe(0);
+    expect(startupProblems(s.requests, domainOf(server), basePath), 'requests at startup besides the startup check').toEqual([]);
   });
 });
 
