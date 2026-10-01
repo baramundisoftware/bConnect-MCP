@@ -64,7 +64,7 @@ function variablesRead(dirs: string[]): { names: Set<string>; hidden: string[] }
   const hidden: string[] = [];
   for (const file of dirs.flatMap(sourceFiles)) {
     const source = readFileSync(file, 'utf8');
-    const lines = source.split('\n');
+    const lines = lf(source).split('\n');
     for (const read of envReads(source, file)) {
       const where = `${relative(ROOT, file)}:${read.line} ${read.text}`;
       const exempt = read.name !== null ? NOT_CONFIGURATION[read.name] : undefined;
@@ -79,14 +79,34 @@ function variablesRead(dirs: string[]): { names: Set<string>; hidden: string[] }
 }
 
 /** The variables listed in the README's marked block, or `null` when the block is missing. */
-function listedVariables(readme: string): string[] | null {
+/** Windows checkouts have CRLF line endings; parse everything as LF. */
+const lf = (text: string): string => text.replace(/\r\n?/g, '\n');
+
+/**
+ * `text` without HTML comments, as a reader of the rendered page sees it: each `<!--`
+ * runs to the first `-->` after it, an unclosed one to the end. The output is never
+ * scanned again, so text around a removed comment can't form a new one.
+ */
+function withoutComments(text: string): string {
+  let out = '';
+  let at = 0;
+  for (;;) {
+    const open = text.indexOf('<!--', at);
+    if (open < 0) return out + text.slice(at);
+    out += text.slice(at, open);
+    const close = text.indexOf('-->', open + 4);
+    if (close < 0) return out;
+    at = close + 3;
+  }
+}
+
+function listedVariables(original: string): string[] | null {
+  const readme = lf(original);
   const start = readme.indexOf(START);
   const end = readme.indexOf(END);
   if (start < 0 || end < start) return null;
   // What a reader of the rendered README sees: no HTML comments, no fenced code.
-  const block = readme
-    .slice(start + START.length, end)
-    .replace(/<!--[\s\S]*?-->/g, '')
+  const block = withoutComments(readme.slice(start + START.length, end))
     // A fence may be indented up to three spaces and closes with the same character,
     // at least as long; an unclosed fence runs to the end.
     .replace(/^ {0,3}((`|~)\2{2,})[^\n]*\n[\s\S]*?(?:^ {0,3}\1\2*[ \t]*$|$(?![\s\S]))/gm, '');
@@ -188,10 +208,22 @@ describe('guard self-tests', () => {
     ['an unclosed code fence', ['```', WRITES]],
     ['an indented code block', [`    ${WRITES}`]],
     ['a fence indented two spaces', ['  ```', WRITES, '  ```']],
+    ['an unclosed HTML comment', ['<!--', WRITES]],
+    ['a comment that opens inside a broken one', ['<!-<!-- x -->', '<!--', WRITES, '-->']],
     ['a four-backtick fence holding a three-backtick line', ['````', '```', WRITES, '````']],
     ['a tilde fence', ['~~~', WRITES, '~~~']],
   ])('ignores a row hidden in %s inside the block', (_label, hiddenRows) => {
     expect(compare(readme([BASE, ...hiddenRows]), read).undocumented).toEqual(['ALLOW_WRITE_OPERATIONS']);
+  });
+
+  it('reads a README with Windows line endings (CRLF) like one with LF', () => {
+    const crlf = (text: string) => text.replace(/\n/g, '\r\n');
+    expect(compare(crlf(readme([BASE, WRITES])), read)).toEqual(CLEAN);
+    expect(compare(crlf(readme([BASE, '```', WRITES, '```'])), read).undocumented).toEqual(['ALLOW_WRITE_OPERATIONS']);
+  });
+
+  it('keeps a row after a closed comment, as a reader sees it', () => {
+    expect(compare(readme([BASE, '<!-- note -->', WRITES]), read)).toEqual(CLEAN);
   });
 
   it('reports a variable listed twice', () => {
@@ -262,6 +294,11 @@ describe('guard self-tests', () => {
 
     it('accepts VITEST as the main() entry guard of index.ts', () => {
       const result = scan({ 'index.ts': ENTRY });
+      expect(result).toEqual({ names: new Set(), hidden: [] });
+    });
+
+    it('accepts the entry guard with Windows line endings (CRLF)', () => {
+      const result = scan({ 'index.ts': ENTRY.replace(/\n/g, '\r\n') });
       expect(result).toEqual({ names: new Set(), hidden: [] });
     });
 
