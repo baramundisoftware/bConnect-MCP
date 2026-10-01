@@ -194,6 +194,10 @@ describe('guard self-tests', () => {
       ['groups-style switch', "rejectUnauthorized: process.env.BCONNECT_REJECT_UNAUTHORIZED !== 'false'", 'BCONNECT_REJECT_UNAUTHORIZED'],
       ['globalThis', 'const x = globalThis.process.env.BCONNECT_REJECT_UNAUTHORIZED;', 'BCONNECT_REJECT_UNAUTHORIZED'],
       ['process element access', "const x = process['env'].BCONNECT_CA_CERT_PATH;", 'BCONNECT_CA_CERT_PATH'],
+      ['process behind a type assertion', 'const x = (process as NodeJS.Process).env.BCONNECT_REJECT_UNAUTHORIZED;', 'BCONNECT_REJECT_UNAUTHORIZED'],
+      ['process behind !', 'const x = process!.env.BCONNECT_CA_CERT_PATH;', 'BCONNECT_CA_CERT_PATH'],
+      ['process in parentheses', 'const x = (process).env.BCONNECT_CA_CERT_PATH;', 'BCONNECT_CA_CERT_PATH'],
+      ['globalThis behind a type assertion', 'const x = (globalThis as any).process.env.BCONNECT_CA_CERT_PATH;', 'BCONNECT_CA_CERT_PATH'],
     ])('sees a %s read', (_label, source, name) => {
       expect(envReads(source).map((r) => r.name)).toContain(name);
     });
@@ -214,6 +218,9 @@ describe('guard self-tests', () => {
       ['re-exported from another file', 'export { env } from "node:process";'],
       ['reached through a copy of globalThis', 'const g = globalThis; g.process.env.BCONNECT_CA_CERT_PATH;'],
       ['the default of a parameter not named env', 'function f(e = process.env) { return e.BCONNECT_CA_CERT_PATH; }'],
+      ['copied from behind a type assertion', 'const e = (process as any).env; e.BCONNECT_CA_CERT_PATH;'],
+      ['passed to a class extends clause', 'class A extends mixin(process) {}'],
+      ['globalThis passed to a class extends clause', 'class A extends mixin(globalThis) {}'],
     ])('reports a hidden read when process.env is %s', (_label, source) => {
       expect(envReads(source).some((r) => r.name === null)).toBe(true);
     });
@@ -229,6 +236,8 @@ describe('guard self-tests', () => {
 
     it.each([
       ['a property name', 'const o = { process: "x", globalThis: 1 }; interface J { process: string }'],
+      ['a class property or method name', 'class C { process = 1; globalThis() {} }'],
+      ['an interface extends clause', 'interface J extends Base<typeof process> {}'],
       ['a type position', 'type G = typeof globalThis; let p: typeof process;'],
       ['declare global', 'declare global { var x: number }'],
       ['a typeof test', 'if (typeof globalThis !== "undefined" && typeof process === "object") {}'],
@@ -328,6 +337,10 @@ describe('guard self-tests', () => {
         'const c = clientConfigFromEnv(process.env); const probe = (c: BConnectConfig) => new BConnectClient(c); probe({ ...c, ca: undefined });',
       ],
       ['a nested member spread', 'const c = clientConfigFromEnv(process.env); const r = { ...c.rateLimit }; new BConnectClient(c);'],
+      ...['auditLog', 'cache', 'batch'].map((m) => [
+        `the nested member ${m} handed to a call`,
+        `const c = clientConfigFromEnv(process.env); Object.assign(c.${m}, {}); new BConnectClient(c);`,
+      ]),
       ['a catch variable of the same name', 'let c = clientConfigFromEnv(process.env); try { f(); } catch (c) { new BConnectClient(c); }'],
       ['a for-in variable of the same name', 'let c = clientConfigFromEnv(process.env); for (const c in other) new BConnectClient(c);'],
       ['a destructured name of the same name', 'let c = clientConfigFromEnv(process.env); const { c } = other; new BConnectClient(c);'],

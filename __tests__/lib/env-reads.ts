@@ -33,10 +33,13 @@ const isAccess = (node: ts.Node): node is ts.PropertyAccessExpression | ts.Eleme
 /** `process`, `globalThis.process`, `global['process']`. */
 const isProcess = (node: ts.Node): boolean =>
   (ts.isIdentifier(node) && node.text === 'process') ||
-  (isAccess(node) && keyOf(node) === 'process' && ts.isIdentifier(node.expression) && GLOBALS.includes(node.expression.text));
+  (isAccess(node) && keyOf(node) === 'process' && isGlobalObject(unwrap(node.expression)));
+
+const isGlobalObject = (node: ts.Node): boolean => ts.isIdentifier(node) && GLOBALS.includes(node.text);
 
 /** `process.env`, `process['env']`, `globalThis.process.env`. */
-const isProcessEnv = (node: ts.Node): boolean => isAccess(node) && keyOf(node) === 'env' && isProcess(node.expression);
+// Look through `as`, `!` and parentheses: `(process as X).env` is still process.env.
+const isProcessEnv = (node: ts.Node): boolean => isAccess(node) && keyOf(node) === 'env' && isProcess(unwrap(node.expression));
 
 /** An object the code reads variables from: `process.env`, or anything called `env`. */
 const isEnvObject = (node: ts.Node): boolean =>
@@ -150,6 +153,9 @@ function isBenignName(node: ts.Node): boolean {
     ts.isMethodDeclaration(parent)) && parent.name === node) return true;
   if (ts.isModuleDeclaration(parent) || ts.isTypeOfExpression(parent)) return true;
   for (let n: ts.Node | undefined = parent; n && !ts.isSourceFile(n); n = n.parent) {
+    // `class A extends mixin(process)`: the extends expression runs; it isn't a type.
+    if (ts.isExpressionWithTypeArguments(n) && ts.isHeritageClause(n.parent) &&
+      n.parent.token === ts.SyntaxKind.ExtendsKeyword && !ts.isInterfaceDeclaration(n.parent.parent)) return false;
     if (ts.isTypeNode(n)) return true;
   }
   return false;
