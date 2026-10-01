@@ -14,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, relative } from 'node:path';
+import { basename, join, relative } from 'node:path';
 import { ROOT, SERVERS } from './lib/exerciser.js';
 import { envReads } from './lib/env-reads.js';
 
@@ -26,10 +26,13 @@ const CORE_SRC = join(ROOT, 'packages', 'mcp-core', 'src');
  * doesn't run on import. Anywhere else the read is reported, because the gateway sets
  * VITEST in production and a VITEST switch would be live there.
  */
-const NOT_CONFIGURATION: Record<string, { reason: string; allowedAt: RegExp }> = {
+const NOT_CONFIGURATION: Record<string, { reason: string; allowedAt: RegExp; allowedBody: RegExp }> = {
   VITEST: {
     reason: 'set by the test runner and the gateway preload so main() does not run on import',
     allowedAt: /^if \((?:!process\.env\.VITEST|process\.env\.VITEST === undefined)\) \{$/,
+    // The guarded block only starts main() and reports a fatal error.
+    allowedBody:
+      /^main\(\)\.catch\(\((\w+)\) => \{ (?:console\.error\("Fatal error:", \1\)|process\.stderr\.write\(`Fatal error: \$\{\1\.message\}\\n`\)); process\.exit\(1\); \}\);$/,
   },
 };
 
@@ -43,7 +46,16 @@ const sourceFiles = (dirPath: string): string[] =>
   readdirSync(dirPath, { withFileTypes: true, recursive: true })
     .filter((e) => e.isFile() && /\.[mc]?ts$/.test(e.name) && !/\.d\.[mc]?ts$/.test(e.name))
     .map((e) => join(e.parentPath, e.name))
-    .filter((f) => !/[\\/](__tests__|__mocks__|generated)[\\/]/.test(f));
+    .filter((f) => !/[\\/](__tests__|__mocks__)[\\/]/.test(f));
+
+/** Whether line `at` opens a top-level block matching `allowedAt` whose body matches `allowedBody`. */
+function isEntryGuard(lines: string[], at: number, exempt: { allowedAt: RegExp; allowedBody: RegExp }): boolean {
+  if (!exempt.allowedAt.test(lines[at] ?? '')) return false;
+  const end = lines.findIndex((line, i) => i > at && line === '}');
+  if (end < 0) return false;
+  const body = lines.slice(at + 1, end).map((l) => l.trim()).join(' ');
+  return exempt.allowedBody.test(body);
+}
 
 /** Variables read by the given source directories; hidden reads are returned separately. */
 function variablesRead(dirs: string[]): { names: Set<string>; hidden: string[] } {
@@ -57,7 +69,7 @@ function variablesRead(dirs: string[]): { names: Set<string>; hidden: string[] }
       const exempt = read.name !== null ? NOT_CONFIGURATION[read.name] : undefined;
       if (read.name === null) hidden.push(where);
       else if (!exempt) names.add(read.name);
-      else if (!(file.endsWith('index.ts') && exempt.allowedAt.test(lines[read.line - 1] ?? ''))) {
+      else if (!(basename(file) === 'index.ts' && isEntryGuard(lines, read.line - 1, exempt))) {
         hidden.push(`${where} (${read.name} is allowed only as the main() entry guard)`);
       }
     }
@@ -74,8 +86,9 @@ function listedVariables(readme: string): string[] | null {
   const block = readme
     .slice(start + START.length, end)
     .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/^(```|~~~)[\s\S]*?^\1/gm, '');
-  const rows = block.split('\n').filter((line) => line.trimStart().startsWith('|'));
+    .replace(/^(```|~~~)[\s\S]*?(?:^\1|$(?![\s\S]))/gm, '');
+  // A table row starts with | after at most three spaces; four or more make it code.
+  const rows = block.split('\n').filter((line) => /^ {0,3}\|/.test(line));
   const names = rows
     .map((row) => /^\s*\|\s*`([A-Z][A-Z0-9_]*)`/.exec(row)?.[1])
     .filter((name): name is string => name !== undefined);
@@ -116,6 +129,11 @@ const CLEAN: Mismatch = { missingBlock: false, duplicated: [], undocumented: [],
 function checkPackage(sourceDirs: string[], readme: string): Mismatch & { hidden: string[] } {
   const { names, hidden } = variablesRead(sourceDirs);
   return { ...compare(readme, names), hidden };
+}
+
+/** Fails unless the package's README and code agree and no read is hidden. */
+function assertPackageClean(sourceDirs: string[], readme: string): void {
+  expect(checkPackage(sourceDirs, readme)).toEqual({ ...CLEAN, hidden: [] });
 }
 
 const PACKAGES = [...SERVERS, 'bconnect-server-template'].filter((d) => existsSync(join(ROOT, d, 'src')));
@@ -164,6 +182,8 @@ describe('guard self-tests', () => {
   it.each([
     ['an HTML comment', ['<!--', WRITES, '-->']],
     ['a fenced code block', ['```', WRITES, '```']],
+    ['an unclosed code fence', ['```', WRITES]],
+    ['an indented code block', [`    ${WRITES}`]],
   ])('ignores a row hidden in %s inside the block', (_label, hiddenRows) => {
     expect(compare(readme([BASE, ...hiddenRows]), read).undocumented).toEqual(['ALLOW_WRITE_OPERATIONS']);
   });
@@ -195,6 +215,15 @@ describe('guard self-tests', () => {
   });
 
   describe('source fixtures', () => {
+    const ENTRY = [
+      'if (!process.env.VITEST) {',
+      '  main().catch((err) => {',
+      '    console.error("Fatal error:", err);',
+      '    process.exit(1);',
+      '  });',
+      '}',
+      '',
+    ].join('\n');
     const scan = (files: Record<string, string>) => {
       const dir = mkdtempSync(join(tmpdir(), 'readme-env-'));
       try {
@@ -217,19 +246,24 @@ describe('guard self-tests', () => {
         const result = checkPackage([dir], readme);
         expect({ ...result, hidden: [] }).toEqual({ ...CLEAN, hidden: [] });
         expect(result.hidden).toHaveLength(1);
+        expect(() => assertPackageClean([dir], readme)).toThrow();
+        writeFileSync(join(dir, 'a.ts'), 'process.env.MCP_PORT;');
+        expect(() => assertPackageClean([dir], readme)).not.toThrow();
       } finally {
         rmSync(dir, { recursive: true, force: true });
       }
     });
 
     it('accepts VITEST as the main() entry guard of index.ts', () => {
-      const result = scan({ 'index.ts': 'if (process.env.VITEST === undefined) {\n  main();\n}\n' });
+      const result = scan({ 'index.ts': ENTRY });
       expect(result).toEqual({ names: new Set(), hidden: [] });
     });
 
     it.each([
       ['as a switch in other code', 'index.ts', 'const gate = process.env.VITEST ? "off" : "on";'],
-      ['outside index.ts', 'helper.ts', 'if (process.env.VITEST === undefined) {\n  main();\n}\n'],
+      ['outside index.ts', 'helper.ts', ENTRY],
+      ['in a file whose name only ends in index.ts', 'xindex.ts', ENTRY],
+      ['as an entry guard whose body does more', 'index.ts', ENTRY.replace('process.exit(1);', 'process.exit(1);\n    disableGates();')],
     ])('reports VITEST used %s', (_label, name, text) => {
       expect(scan({ [name]: text }).hidden).toEqual([expect.stringContaining('main() entry guard')]);
     });
@@ -251,6 +285,7 @@ describe.each(PACKAGES)('%s README', (pkg) => {
   it('documents exactly the environment variables the server reads', () => {
     const path = join(ROOT, pkg, 'README.md');
     const readme = existsSync(path) ? readFileSync(path, 'utf8') : '';
-    expect(checkPackage([join(ROOT, pkg, 'src'), CORE_SRC], readme)).toEqual({ ...CLEAN, hidden: [] });
+    expect.assertions(1);
+    assertPackageClean([join(ROOT, pkg, 'src'), CORE_SRC], readme);
   });
 });
