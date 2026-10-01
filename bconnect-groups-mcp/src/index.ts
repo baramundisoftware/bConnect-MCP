@@ -20,20 +20,15 @@ import {
   ErrorCode,
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
-import * as fs from "fs";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, MissingCredentialsError } from "@bconnect/mcp-core";
+import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 
 // ── Factory exported for testing ─────────────────────────────────────────────
 
-export interface BConnectCredentials {
-  baseUrl?: string;
-  username?: string;
-  password?: string;
-  apiKey?: string;
-}
+export type { BConnectCredentials } from "@bconnect/mcp-core";
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const server = new Server(
@@ -263,22 +258,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     // Lazy-initialize client on first tool call (not during testing)
     const getClient = (): BConnectClient => {
       dotenv.config();
-      const baseUrl  = credentials?.baseUrl ?? process.env.BCONNECT_BASE_URL;
-      const username = credentials?.username ?? process.env.BCONNECT_USERNAME;
-      const password = credentials?.password ?? process.env.BCONNECT_PASSWORD;
-      const apiKey = credentials?.apiKey ?? process.env.BCONNECT_API_KEY;
-
-      if (!baseUrl || (!apiKey && (!username || !password))) {
-        throw new McpError(ErrorCode.InvalidRequest, "Missing required bConnect credentials: BCONNECT_BASE_URL and either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD");
+      try {
+        return new BConnectClient(clientConfigFromEnv(process.env, credentials));
+      } catch (error) {
+        if (error instanceof MissingCredentialsError) {
+          throw new McpError(ErrorCode.InternalError, error.message);
+        }
+        throw error;
       }
-
-      return new BConnectClient({
-        baseUrl,
-        username,
-        password,
-        apiKey,
-        rejectUnauthorized: process.env.BCONNECT_REJECT_UNAUTHORIZED !== 'false',
-      });
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -490,42 +477,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 async function main(): Promise<void> {
   dotenv.config();
 
-  const baseUrl  = process.env.BCONNECT_BASE_URL;
-  const username = process.env.BCONNECT_USERNAME;
-  const password = process.env.BCONNECT_PASSWORD;
-  const apiKey = process.env.BCONNECT_API_KEY;
-
-  if (!baseUrl || (!apiKey && (!username || !password))) {
-    console.error("Error: Missing required environment variables.");
-    console.error("  BCONNECT_BASE_URL  — e.g. https://bconnect.example.com/bconnect");
-    console.error("  Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD");
-    process.exit(1);
-  }
-
-  
-
-  
   // Startup connectivity check (REQ-SRV-013)
-  dotenv.config();
   {
-    const _startupUrl = process.env.BCONNECT_BASE_URL || "https://bms.example.com:443/bconnect";
-    const _startupUser = process.env.BCONNECT_USERNAME;
-    const _startupPass = process.env.BCONNECT_PASSWORD;
-    const _startupApiKey = process.env.BCONNECT_API_KEY;
-    if (!_startupApiKey && (!_startupUser || !_startupPass)) {
-      console.error("bconnect-groups-mcp: Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
+    let _config: Readonly<BConnectConfig>;
+    try {
+      _config = clientConfigFromEnv(process.env);
+    } catch (error) {
+      if (!(error instanceof MissingCredentialsError)) { throw error; }
+      console.error(`bconnect-groups-mcp: ${error.message}`);
       process.exit(1);
     }
-    const _caCertPath = process.env.BCONNECT_CA_CERT_PATH;
-    const _caCert = _caCertPath ? fs.readFileSync(_caCertPath, "utf8") : undefined;
-    const _startupClient = new BConnectClient({
-      baseUrl: _startupUrl,
-      username: _startupUser,
-      password: _startupPass,
-      apiKey: _startupApiKey,
-      rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
-      ...(_caCert && { ca: _caCert }),
-    });
+    const _startupUrl = _config.baseUrl;
+    const _startupClient = new BConnectClient(_config);
     console.error(`bconnect-groups-mcp: verifying bConnect API connectivity...`);
     const _connected = await _startupClient.testConnection();
     if (!_connected) {

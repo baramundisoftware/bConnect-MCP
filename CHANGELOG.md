@@ -40,6 +40,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **`BCONNECT_REJECT_UNAUTHORIZED` is removed.** Only the groups server read it, while the
+  READMEs listed it for every server. To turn certificate checks off for development, set
+  `NODE_TLS_REJECT_UNAUTHORIZED=0`, which every server honors. In production, keep
+  verification on and point `BCONNECT_CA_CERT_PATH` at your internal CA instead (#197).
+- **One shared function builds every server's bConnect client config.** `@bconnect/mcp-core`
+  now reads the connection settings (base URL, credentials, API key, CA certificate, TLS,
+  audit level, rate limit) for the tool client and the startup check of all 13 servers, so
+  the servers can't drift apart again (#197). Effects:
+  - The groups server no longer refuses to start without `BCONNECT_BASE_URL`. Like the other
+    servers, it falls back to the placeholder URL `https://bms.example.com:443/bconnect`;
+    run alone, its startup check then fails against it. In the gateway, where no startup
+    check runs, groups tool calls now go to the placeholder URL instead of being refused,
+    as the other servers' calls already did.
+  - Ten servers used `https://bms-server/bconnect` as the tool calls' fallback base URL and
+    a different one for the startup check; all now use the same placeholder.
+  - An empty `BCONNECT_BASE_URL`, or an empty base URL passed per request, now counts as
+    unset (it used to be passed on as an empty URL).
+  - Missing credentials give the same error in every server: tool calls fail with an
+    internal error (groups returned an invalid-request error with a different text), and
+    the server exits at startup with one line naming both ways to authenticate (endpoints
+    and jobs printed a stack trace).
+  - An empty `BCONNECT_CA_CERT_PATH` file is an error. It used to replace the trusted CAs
+    with Node's built-in list without saying so.
 - **`BCONNECT_RELEASE` now defaults to `26R1`** (was `25R2`), matching the documented
   default and the advertised tool counts (e.g. 66 endpoints tools, 276 total). Following
   the README with no `BCONNECT_RELEASE` set previously registered the smaller 25R2 subset
@@ -57,6 +80,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **groups tools now work against a bConnect server with an internal CA (#197).** The groups
+  server's tool calls ignored `BCONNECT_CA_CERT_PATH` and `NODE_TLS_REJECT_UNAUTHORIZED`:
+  the server started, and then every groups tool failed with a TLS error. Its tool calls now
+  use the CA, TLS and `BCONNECT_AUDIT_LEVEL` settings like every other server. With an audit
+  level set, groups now also writes audit entries to stdout, which breaks stdio mode in every
+  server (#168). The startup check now uses the same settings as tool calls, so with
+  `BCONNECT_AUDIT_LEVEL=all`, every server also writes an audit entry for it to stdout
+  before the stdio transport starts (#168).
+- **The `BCONNECT_RATE_LIMIT_*` settings now reach every server's client.** Nine servers
+  (compliance, defensecontrol, groups, operatingsystems, servermanagement, software,
+  universaldynamicgroups, updatemanagement, variables) never passed them on. Each tool call
+  still creates a new client, so the limit applies only within one tool call, not across
+  calls, until #160 is done.
 - **Servers no longer exit at startup with "Resource not found" (#111).** The connectivity
   check requested `/v2.0/WindowsEndpoints` without a domain prefix, a route bConnect doesn't
   have, so every server stopped unless `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` was set. Each
