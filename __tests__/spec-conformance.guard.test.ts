@@ -7,7 +7,8 @@
  * release's spec:
  * - pass 1 (all gates open, required arguments): route, request body and
  *   content type, and that the tool returns what the API answered;
- * - pass 2 (every documented argument plus an undeclared one): parameters;
+ * - pass 2 (every documented argument plus an undeclared one): parameters, and
+ *   request bodies built from optional arguments;
  * - pass 3 (writes off): no request other than GET.
  * It also checks that every spec operation is reached by some tool's request.
  *
@@ -44,7 +45,7 @@ if (!['', 'prune', 'add-new'].includes(mode)) throw new Error(`SPEC_BASELINE mus
 
 /** Every API answer carries this; a tool that returns what the API sent shows it in its result. */
 const MARKER = 'zz-guard-response-marker';
-const recorder = createRecorder(() => ({ guardMarker: MARKER }));
+const recorder = createRecorder(() => ({ id: MARKER, name: MARKER, guardMarker: MARKER }));
 const savedEnv = { ...process.env };
 beforeAll(() => recorder.listen());
 afterAll(() => {
@@ -55,6 +56,20 @@ afterAll(() => {
 async function tableOf(server: string): Promise<Readonly<Record<string, readonly string[]>>> {
   const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
   return mod.TOOL_OPERATIONS;
+}
+
+/** The JSON body without one top-level key; other bodies unchanged. */
+function withoutKey(body: string, key: string): string {
+  try {
+    const data = JSON.parse(body);
+    if (data && typeof data === 'object' && !Array.isArray(data) && key in data) {
+      delete data[key];
+      return JSON.stringify(data);
+    }
+  } catch {
+    // not JSON: validated as is
+  }
+  return body;
 }
 
 /** All violations for one release, plus the tools each server registers. */
@@ -82,10 +97,16 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
       // Pass 2, every documented argument plus an undeclared one: parameter checks.
       const { args, idsByArg } = allArguments(tool.inputSchema);
       const { isError } = await conn.call(tool.name, args);
+      const pass2 = recorder.take();
       paramCalls.push({
         tool: tool.name, inputSchema: tool.inputSchema, idsByArg,
         unknownName: UNKNOWN_NAME, unknownValue: UNKNOWN_VALUE, failed: isError,
-        requests: recorder.take().map((r) => ({ method: r.method, path: r.path, query: r.query, body: r.body })),
+        requests: pass2.map((r) => ({ method: r.method, path: r.path, query: r.query, body: r.body })),
+      });
+      // Bodies built from optional arguments too; the undeclared one is arg-leak's business.
+      writeCalls.push({
+        tool: tool.name, sampleValues: true,
+        requests: pass2.map((r) => ({ method: r.method, path: r.path, contentType: r.contentType, body: withoutKey(r.body, UNKNOWN_NAME) })),
       });
     }
     await conn.close();
@@ -164,7 +185,7 @@ describe('the checks report known-bad cases (self-test)', () => {
     const pattern = new RegExp('^' + path.replace(/\{[^}]+\}/g, '[^/]+') + '/?$');
     return {
       release: '26R1', domain: 'demo', method, path, operationId, summary: '', secretFields: [], queryParams,
-      requestBodies: {}, returnsBody: true, spec: {},
+      requestBodies: {}, bodyRequired: true, returnsBody: true, spec: {},
       matches: (m, p) => m.toUpperCase() === method && pattern.test(p),
     };
   };
@@ -346,15 +367,17 @@ describe('the checks report known-bad cases (self-test)', () => {
       { ...op('POST', '/v2.0/Things', 'CreateThing'), requestBodies: { 'application/json': { type: 'object', required: ['name'], properties: { name: { type: 'string' } }, additionalProperties: false } } },
       { ...op('PATCH', '/v2.0/Things/{id}', 'UpdateThing'), requestBodies: { 'application/json-patch+json': {} } },
       { ...op('DELETE', '/v2.0/Things/{id}', 'DeleteThing'), returnsBody: false },
+      { ...op('POST', '/v2.0/Things/{id}/Reset', 'ResetThing'), returnsBody: false, bodyRequired: false, requestBodies: { 'application/json-patch+json': {} } },
     ];
     // A stand-in validator: object schema → required + additionalProperties; patch → RFC 6902 shape.
     const validate = (o: ApiOperation, contentType: string, body: string): string[] => {
+      if (body === '' && !o.bodyRequired) return [];
       const type = o.requestBodies[contentType] ? contentType : Object.keys(o.requestBodies)[0];
       const data = body ? JSON.parse(body) : undefined;
       if (type === 'application/json-patch+json') return jsonPatchProblems(data);
       return data && typeof data.name === 'string' && Object.keys(data).length === 1 ? [] : ['invalid'];
     };
-    const table = { create_thing: ['CreateThing'], update_thing: ['UpdateThing'], delete_thing: ['DeleteThing'] };
+    const table = { create_thing: ['CreateThing'], update_thing: ['UpdateThing'], delete_thing: ['DeleteThing'], reset_thing: ['ResetThing'] };
     const run = (calls: WriteCall[]) => checkBodies({ release: '26R1', server: 'demo-server', domain: 'demo', table, calls, marker: 'MARK', validate, operations: bodyOps })
       .map((x) => `${x.check} ${x.tool} ${x.detail}`);
     const req = (method: string, path: string, contentType: string | null, body: string) => ({ method, path, contentType, body });
@@ -403,6 +426,37 @@ describe('the checks report known-bad cases (self-test)', () => {
       expect(real(createFolder!, 'application/json', '{"name":"Folder","parentId":null}')).toEqual([]);
       expect(real(createFolder!, 'application/json', '{"name":42}').length).toBeGreaterThan(0);
       expect(real(createFolder!, 'application/json', 'not json')).toEqual(['body is not JSON']);
+    });
+
+    it('validates JSON Patch routes with the real 26R1 spec, also when sent as application/json', () => {
+      const real = bodyValidator('26R1');
+      const find = (domain: string, id: string) => loadOperations('26R1').find((o) => o.domain === domain && o.operationId === id)!;
+      const updateAsset = find('assets', 'UpdateAsset');
+      expect(real(updateAsset, 'application/json-patch+json', '[{"op":"replace","path":"/name","value":"text"}]')).toEqual([]);
+      // Wrong content type: still checked as the declared JSON Patch, not skipped.
+      expect(real(updateAsset, 'application/json', '{"name":"text"}')).toEqual(['not a JSON Patch array']);
+      // Empty body: an error where the body is required, fine where it is optional.
+      expect(real(updateAsset, 'application/json-patch+json', '')).toEqual(['not a JSON Patch array']);
+      const updatePin = find('defensecontrol', 'UpdateBitLockerPinByWindowsEndpointId');
+      expect(updatePin.bodyRequired).toBe(false);
+      expect(real(updatePin, 'application/json-patch+json', '')).toEqual([]);
+      // guid is a real format; sample values may skip format checks.
+      const createFolder = find('assets', 'CreateAssetStockFolder');
+      expect(real(createFolder, 'application/json', '{"name":"F","parentId":"not-a-guid"}').length).toBeGreaterThan(0);
+      expect(real(createFolder, 'application/json', '{"name":"F","parentId":"not-a-guid"}', { ignoreFormats: true })).toEqual([]);
+    });
+
+    it('reports no content type problem when no body is sent, and a PATCH with writes off', () => {
+      expect(run([{ tool: 'delete_thing', result: 'Deleted.', requests: [req('DELETE', '/demo/v2.0/Things/1', 'application/json', '')] }])).toEqual([]);
+      // Optional body declared, none sent: a default content type header is not a finding.
+      expect(run([{ tool: 'reset_thing', result: 'Reset.', requests: [req('POST', '/demo/v2.0/Things/1/Reset', 'application/json', '')] }])).toEqual([]);
+      expect(checkWritesOff('26R1', 'demo-server', [{ tool: 'update_thing', requests: [{ method: 'PATCH' }] }]).map((x) => x.detail)).toEqual(['PATCH']);
+    });
+
+    it('skips the response check for calls without a result, and accepts a returned field', () => {
+      const create = (result?: string): WriteCall => ({ tool: 'create_thing', result, requests: [req('POST', '/demo/v2.0/Things', 'application/json', '{"name":"x"}')] });
+      expect(run([create(undefined)])).toEqual([]);
+      expect(run([create('Created thing MARK.')])).toEqual([]);
     });
 
     it('rewrites OpenAPI nullable to JSON Schema', () => {

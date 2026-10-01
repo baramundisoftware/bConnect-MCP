@@ -210,12 +210,14 @@ export function checkParams(args: {
   return [...new Map(out.map((x) => [keyOf(x), x])).values()];
 }
 
-/** One tool call with required arguments, for the body and response checks. */
+/** One tool call, for the body and response checks. */
 export interface WriteCall {
   tool: string;
   requests: Array<{ method: string; path: string; contentType: string | null; body: string }>;
-  /** The tool's result text. */
-  result: string;
+  /** The tool's result text; leave out to skip the response check. */
+  result?: string;
+  /** Argument values are guard samples: ignore `format` errors in the body. */
+  sampleValues?: boolean;
 }
 
 /**
@@ -224,8 +226,9 @@ export interface WriteCall {
  * - `body-invalid`: the body doesn't match the operation's request schema (JSON Patch format for
  *   `application/json-patch+json`).
  * - `body-undeclared`: a body is sent to an operation that declares none.
- * - `response-dropped`: the operation declares a 2xx body, but the tool's result doesn't contain
- *   what the API returned (`marker`).
+ * - `response-dropped`: the operation declares a 2xx body, but the tool's result contains none of
+ *   what the API returned (the mock puts `marker` in `id`, `name` and `guardMarker`, so returning
+ *   the relevant fields is enough).
  * Requests that don't match a declared operation are left to the route check.
  */
 export function checkBodies(args: {
@@ -235,7 +238,7 @@ export function checkBodies(args: {
   table: Readonly<Record<string, readonly string[]>>;
   calls: WriteCall[];
   marker: string;
-  validate: (op: ApiOperation, contentType: string, body: string) => string[];
+  validate: (op: ApiOperation, contentType: string, body: string, options?: { ignoreFormats?: boolean }) => string[];
   operations?: ApiOperation[];
 }): Violation[] {
   const { release, server, domain, table, calls, marker, validate } = args;
@@ -258,9 +261,9 @@ export function checkBodies(args: {
         if (r.body !== '') v('body-undeclared', call.tool, '-');
       } else {
         if (r.body !== '' && !types.includes(contentType)) v('body-content-type', call.tool, contentType || '(none)');
-        if (validate(op, contentType, r.body).length > 0) v('body-invalid', call.tool, '-');
+        if (validate(op, contentType, r.body, { ignoreFormats: call.sampleValues }).length > 0) v('body-invalid', call.tool, '-');
       }
-      if (op.returnsBody && !call.result.includes(marker)) v('response-dropped', call.tool, '-');
+      if (call.result !== undefined && op.returnsBody && !call.result.includes(marker)) v('response-dropped', call.tool, '-');
     }
   }
   return [...new Map(out.map((x) => [keyOf(x), x])).values()];

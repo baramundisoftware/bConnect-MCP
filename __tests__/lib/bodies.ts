@@ -24,7 +24,12 @@ const addFormats = require('ajv-formats') as (ajv: AjvInstance) => AjvInstance;
 
 export const JSON_PATCH = 'application/json-patch+json';
 
-/** OpenAPI 3.0 `nullable` → JSON Schema. */
+/**
+ * OpenAPI 3.0 `nullable` → JSON Schema.
+ * Note: an inline `enum` with `nullable` would still reject null unless the enum
+ * lists it; the bundled specs have no such case (nullable sits on types, allOf
+ * and $ref only).
+ */
 export function withoutNullable(node: unknown): unknown {
   if (Array.isArray(node)) return node.map(withoutNullable);
   if (!node || typeof node !== 'object') return node;
@@ -56,11 +61,14 @@ export function jsonPatchProblems(data: unknown): string[] {
 const escapePointer = (s: string): string => s.replace(/~/g, '~0').replace(/\//g, '~1');
 
 /** Validators for one release, one compiled spec document per domain. */
-export function bodyValidator(release: Release): (op: ApiOperation, contentType: string, body: string) => string[] {
+export type BodyValidator = (op: ApiOperation, contentType: string, body: string, options?: { ignoreFormats?: boolean }) => string[];
+
+export function bodyValidator(release: Release): BodyValidator {
   const ajv = new Ajv({ strict: false, allErrors: true });
   addFormats(ajv);
-  // Formats the specs use that ajv-formats doesn't define; the type is checked, the format isn't.
-  for (const format of ['guid', 'int32', 'int64', 'double', 'float']) ajv.addFormat(format, true);
+  ajv.addFormat('guid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+  // Numeric formats the specs use that ajv-formats doesn't define; the type is checked.
+  for (const format of ['int32', 'int64', 'double', 'float']) ajv.addFormat(format, true);
   const ids = new Map<Schema, string>();
   for (const op of loadOperations(release)) {
     if (ids.has(op.spec)) continue;
@@ -70,8 +78,13 @@ export function bodyValidator(release: Release): (op: ApiOperation, contentType:
   }
   const cache = new Map<string, ValidateFunction>();
 
-  return (op, contentType, body) => {
+  /**
+   * Problems with a request body; empty when it is valid. `ignoreFormats` drops
+   * `format` errors (for calls whose argument values are the guard's samples).
+   */
+  return (op, contentType, body, options = {}) => {
     const declared = Object.keys(op.requestBodies);
+    if (body === '' && !op.bodyRequired) return [];
     // Validate against the declared type that matches, or the operation's first declared type.
     const type = declared.includes(contentType) ? contentType : declared[0];
     let data: unknown;
@@ -88,6 +101,9 @@ export function bodyValidator(release: Release): (op: ApiOperation, contentType:
       if (!validate) throw new Error(`no request schema at ${pointer}`);
       cache.set(pointer, validate);
     }
-    return validate(data) ? [] : (validate.errors ?? []).map((e) => `${e.instancePath || '(body)'} ${e.message}`);
+    if (validate(data)) return [];
+    return (validate.errors ?? [])
+      .filter((e) => !(options.ignoreFormats && e.keyword === 'format'))
+      .map((e) => `${e.instancePath || '(body)'} ${e.message}`);
   };
 }
