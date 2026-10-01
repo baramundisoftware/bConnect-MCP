@@ -22,7 +22,7 @@ import {
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
 import { validateOrThrow, clientConfigFromEnv, MissingCredentialsError } from "@bconnect/mcp-core";
-import type { BConnectCredentials } from "@bconnect/mcp-core";
+import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 import type { paths as JobsPaths } from "./generated/jobs-types.js";
 
@@ -783,7 +783,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 async function main(): Promise<void> {
   dotenv.config();
 
-  const config = clientConfigFromEnv(process.env);
+  let config: BConnectConfig;
+  try {
+    config = clientConfigFromEnv(process.env);
+  } catch (error) {
+    if (!(error instanceof MissingCredentialsError)) { throw error; }
+    console.error(`bconnect-jobs-mcp: ${error.message}`);
+    process.exit(1);
+  }
   const baseUrl = config.baseUrl;
   // Pre-construct a single BConnectClient for the long-running process
   const bconnect = new BConnectClient(config);

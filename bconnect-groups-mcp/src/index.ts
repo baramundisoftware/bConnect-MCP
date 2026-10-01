@@ -262,7 +262,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         return new BConnectClient(clientConfigFromEnv(process.env, credentials));
       } catch (error) {
         if (error instanceof MissingCredentialsError) {
-          throw new McpError(ErrorCode.InvalidRequest, error.message);
+          throw new McpError(ErrorCode.InternalError, error.message);
         }
         throw error;
       }
@@ -477,12 +477,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 async function main(): Promise<void> {
   dotenv.config();
 
-
-  
-
-  
   // Startup connectivity check (REQ-SRV-013)
-  dotenv.config();
   {
     let _config: BConnectConfig;
     try {
