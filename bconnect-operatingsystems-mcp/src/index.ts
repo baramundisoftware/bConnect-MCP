@@ -262,6 +262,10 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       const caCertPath = process.env.BCONNECT_CA_CERT_PATH;
       const caCert = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
 
+      const rateLimitEnabled = process.env.BCONNECT_RATE_LIMIT_ENABLED === "true";
+      const rateLimitMaxRequests = parseInt(process.env.BCONNECT_RATE_LIMIT_MAX_REQUESTS ?? "", 10);
+      const rateLimitWindowMs = parseInt(process.env.BCONNECT_RATE_LIMIT_WINDOW_MS ?? "", 10);
+
       const auditLevelRaw = process.env.BCONNECT_AUDIT_LEVEL ?? "none";
       const auditLevel = (["none", "security", "write", "all"] as const).includes(auditLevelRaw as never)
         ? (auditLevelRaw as "none" | "security" | "write" | "all")
@@ -274,6 +278,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         apiKey,
         rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
         ...(caCert && { ca: caCert }),
+        ...(rateLimitEnabled && {
+          rateLimit: {
+            enabled: true,
+            maxRequests: isNaN(rateLimitMaxRequests) ? 100 : rateLimitMaxRequests,
+            windowMs: isNaN(rateLimitWindowMs) ? 60000 : rateLimitWindowMs,
+          }
+        }),
         auditLog: { level: auditLevel },
       });
     };

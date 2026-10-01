@@ -13,9 +13,9 @@ Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST 
 BCONNECT_BASE_URL=https://<your-bms-server>:443/bconnect
 BCONNECT_USERNAME=mcp-reader
 BCONNECT_PASSWORD=<password>
-BCONNECT_REJECT_UNAUTHORIZED=true
-# Optional: BCONNECT_RELEASE=26R1   (enables additional tools for baramundi 2026 R1)
-# Optional: AUDIT_LOG_LEVEL=write   (all / write / security / none)
+# Optional: BCONNECT_CA_CERT_PATH=/path/to/bms-ca.pem   (CA of a self-signed or internal certificate)
+# Optional: BCONNECT_RELEASE=25R2   (for a bMS 2025 R2: hides the tools that need 2026 R1)
+# Optional: BCONNECT_AUDIT_LEVEL=write   (all / write / security / none)
 ```
 
 ```bash
@@ -77,9 +77,9 @@ node build/index.js
 | `BCONNECT_BASE_URL` | Yes | — | bConnect REST API base URL |
 | `BCONNECT_USERNAME` | Yes | — | API username |
 | `BCONNECT_PASSWORD` | Yes | — | API password |
-| `BCONNECT_REJECT_UNAUTHORIZED` | No | `true` | Set `false` to allow self-signed TLS |
-| `BCONNECT_RELEASE` | No | `25R2` | Set `26R1` to enable additional tools |
-| `AUDIT_LOG_LEVEL` | No | `write` | `all` / `write` / `security` / `none` |
+| `BCONNECT_CA_CERT_PATH` | No | — | PEM file with the CA of a self-signed or internal bMS certificate |
+| `BCONNECT_RELEASE` | No | `26R1` | Set `25R2` for a bMS 2025 R2: hides the tools that need 2026 R1 |
+| `BCONNECT_AUDIT_LEVEL` | No | `none` | `all` / `write` / `security` / `none` |
 
 ---
 

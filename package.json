@@ -63,6 +63,7 @@
     "@rollup/rollup-linux-arm64-gnu": "^4.62.2"
   },
   "devDependencies": {
+    "@bconnect/mcp-core": "*",
     "@cyclonedx/cyclonedx-npm": "^6.0.0",
     "@types/node": "^22.20.0",
     "@typescript-eslint/eslint-plugin": "^8.64.0",

@@ -272,12 +272,33 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         throw new McpError(ErrorCode.InvalidRequest, "Missing required bConnect credentials: BCONNECT_BASE_URL and either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD");
       }
 
+      const caCertPath = process.env.BCONNECT_CA_CERT_PATH;
+      const caCert = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
+
+      const rateLimitEnabled = process.env.BCONNECT_RATE_LIMIT_ENABLED === "true";
+      const rateLimitMaxRequests = parseInt(process.env.BCONNECT_RATE_LIMIT_MAX_REQUESTS ?? "", 10);
+      const rateLimitWindowMs = parseInt(process.env.BCONNECT_RATE_LIMIT_WINDOW_MS ?? "", 10);
+
+      const auditLevel = (["none", "security", "write", "all"] as const)
+        .find((level) => level === process.env.BCONNECT_AUDIT_LEVEL) ?? "none";
+
       return new BConnectClient({
         baseUrl,
         username,
         password,
         apiKey,
-        rejectUnauthorized: process.env.BCONNECT_REJECT_UNAUTHORIZED !== 'false',
+        rejectUnauthorized: process.env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
+        ...(caCert && { ca: caCert }),
+        ...(rateLimitEnabled && {
+          rateLimit: {
+            enabled: true,
+            maxRequests: isNaN(rateLimitMaxRequests) ? 100 : rateLimitMaxRequests,
+            windowMs: isNaN(rateLimitWindowMs) ? 60000 : rateLimitWindowMs,
+          }
+        }),
+        auditLog: {
+          level: auditLevel,
+        },
       });
     };
 

@@ -52,6 +52,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **The groups server honors `BCONNECT_CA_CERT_PATH` for tool calls.** Its tools built
+  their client from an undocumented `BCONNECT_REJECT_UNAUTHORIZED` and ignored the CA file
+  and `NODE_TLS_REJECT_UNAUTHORIZED`. With an internal CA, the startup check passed and
+  every groups tool then failed TLS, in stdio mode and in the gateway.
+  `BCONNECT_REJECT_UNAUTHORIZED` is no longer read; use `BCONNECT_CA_CERT_PATH`.
+- **`BCONNECT_RATE_LIMIT_*` applies in every server.** The compliance, defensecontrol,
+  operatingsystems, servermanagement, software, universaldynamicgroups, updatemanagement and
+  variables servers ignored it for tool calls.
+- **Server READMEs list the variables the servers read.** `BCONNECT_REJECT_UNAUTHORIZED`
+  is replaced by `BCONNECT_CA_CERT_PATH` and `AUDIT_LOG_LEVEL` by `BCONNECT_AUDIT_LEVEL`
+  (default `none`). `BCONNECT_RELEASE` defaults to `26R1` and is listed only for the
+  servers that read it.
 - **Servers no longer exit at startup with "Resource not found" (#111).** The connectivity
   check requested `/v2.0/WindowsEndpoints` without a domain prefix, a route bConnect doesn't
   have, so every server stopped unless `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` was set. Each
