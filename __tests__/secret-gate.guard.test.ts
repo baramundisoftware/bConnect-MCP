@@ -4,19 +4,17 @@
  * Every tool of every server is called, for both bMS releases, with arguments
  * generated from its input schema. MSW records the HTTP requests the tools send.
  *
- * Pass A (writes on, ALLOW_SECRET_READ unset):
+ * With writes on and ALLOW_SECRET_READ unset:
  *   no request may reach an operation whose response carries a secret, as derived
  *   from the OpenAPI specs (see lib/spec.ts). Every tool must be
  *   exercised: it either sent a request or was refused by the secret gate.
- * Pass B (all gates open):
- *   every request must go to an operation that exists in the spec. A tool whose
- *   path drifted from the spec is broken against a real bMS, and the secret check
- *   in pass A cannot see it.
+ * Whether each request goes to the operation its tool declares is checked by
+ * the spec-conformance guard (spec-conformance.guard.test.ts).
  *
  * The expectations come from the spec and the behaviour from the traffic, so a
  * hand-maintained list can't make this pass on its own.
- * Exceptions live in the allow-lists below, each with a reason; an entry that no
- * longer occurs fails the test, so the lists can't go stale.
+ * Exceptions live in the allow-list below, each with a reason; an entry that no
+ * longer occurs fails the test, so the list can't go stale.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
@@ -30,35 +28,6 @@ const SECRET_ALLOW: Record<string, string> = {
   start_ios_enrollment: 'deferred: enrollment-token classification pending (separate issue)',
   start_mac_enrollment: 'deferred: enrollment-token classification pending (separate issue)',
 };
-
-/**
- * Requests to paths that are not in the spec, known on 2026-09-30 (ratchet).
- * Pre-existing drift, not triaged yet; new entries must not be added to hide a bug.
- */
-const DRIFT = 'pre-existing, untriaged path drift (2026-09-30)';
-const UNKNOWN_PATH_ALLOW: Record<string, string> = Object.fromEntries([
-  '25R2 list_detected_rule_violations GET /compliance/v2.0/DetectedRuleViolations',
-  '25R2 list_detected_rule_violations_for_endpoint GET /compliance/v2.0/Endpoints/{id}/DetectedRuleViolations',
-  '25R2 list_detected_vulnerabilities GET /compliance/v2.0/DetectedVulnerabilities',
-  '25R2 list_detected_vulnerabilities_for_endpoint GET /compliance/v2.0/WindowsEndpoints/{id}/DetectedVulnerabilities',
-  '25R2 list_mobile_device_rules GET /compliance/v2.0/MobileDeviceRules',
-  '25R2 get_mobile_device_rule GET /compliance/v2.0/MobileDeviceRules/{id}',
-  '25R2 list_vulnerabilities GET /compliance/v2.0/Vulnerabilities',
-  '25R2 get_vulnerability GET /compliance/v2.0/Vulnerabilities/{id}',
-  '25R2 update_maintenance_window_for_endpoint PATCH /endpoints/v2.0/Endpoints/{id}/MaintenanceWindow',
-  '25R2 update_maintenance_window_for_logical_group PATCH /endpoints/v2.0/LogicalGroups/{id}/MaintenanceWindow',
-  '26R1 list_mobile_device_rules GET /compliance/v2.0/MobileDeviceRules',
-  '26R1 get_mobile_device_rule GET /compliance/v2.0/MobileDeviceRules/{id}',
-  '26R1 list_industrial_endpoints GET /endpoints/v2.0/IndustrialEndpoints',
-  '26R1 get_industrial_endpoint GET /endpoints/v2.0/IndustrialEndpoints/{id}',
-  '26R1 create_industrial_endpoint POST /endpoints/v2.0/IndustrialEndpoints',
-  '26R1 update_industrial_endpoint PATCH /endpoints/v2.0/IndustrialEndpoints/{id}',
-  '26R1 delete_industrial_endpoint DELETE /endpoints/v2.0/IndustrialEndpoints/{id}',
-  '26R1 get_entra_id_data GET /endpoints/v2.0/Endpoints/{id}/EntraIdData',
-  '26R1 list_industrial_endpoints_by_logical_group GET /endpoints/v2.0/LogicalGroups/{id}/IndustrialEndpoints',
-  '26R1 list_industrial_endpoints_by_static_group GET /endpoints/v2.0/StaticGroups/{id}/IndustrialEndpoints',
-  '26R1 list_industrial_endpoints_by_universal_dynamic_group GET /endpoints/v2.0/UniversalDynamicGroups/{id}/IndustrialEndpoints',
-].map((k) => [k, DRIFT]));
 
 interface Call {
   release: Release;
@@ -126,11 +95,9 @@ describe('secret derivation from the OpenAPI specs (self-check)', () => {
 
 describe.each(RELEASES)('secret gate, bMS %s', (release) => {
   let closed: Call[];
-  let open: Call[];
 
   beforeAll(async () => {
     closed = await exerciseAll(release, false);
-    open = await exerciseAll(release, true);
   }, 120_000);
 
   it('exercises every tool (no silent gaps)', () => {
@@ -150,20 +117,6 @@ describe.each(RELEASES)('secret gate, bMS %s', (release) => {
       }
     }
     expect(leaks).toEqual([]);
-  });
-
-  it('sends every request to an operation that exists in the spec', () => {
-    const unknown = new Set<string>();
-    for (const call of open) {
-      for (const r of call.requests) {
-        if (!findOperation(release, r.method, r.path)) unknown.add(`${release} ${call.tool} ${r.method} ${template(r.path)}`);
-      }
-    }
-    const notAllowed = [...unknown].filter((k) => !UNKNOWN_PATH_ALLOW[k]);
-    expect(notAllowed).toEqual([]);
-    // Ratchet: an allow-list entry that no longer happens must be removed.
-    const stale = Object.keys(UNKNOWN_PATH_ALLOW).filter((k) => k.startsWith(release + ' ') && !unknown.has(k));
-    expect(stale).toEqual([]);
   });
 
   it('keeps every secret allow-list entry in use', () => {
