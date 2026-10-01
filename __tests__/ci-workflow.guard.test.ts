@@ -109,7 +109,9 @@ function npmRuns(): NpmRun[] {
           if (w === '-w' || w === '--workspace') workspace = args[i + 1];
           else if (w.startsWith('--workspace=')) workspace = w.slice('--workspace='.length);
         });
-        const script = args.slice(run + 1).find((w) => !w.startsWith('-')) ?? '';
+        // The script is the first word after `run` that is neither a flag nor a flag's value.
+        const flagValue = (i: number): boolean => i > 0 && (args[i - 1] === '-w' || args[i - 1] === '--workspace');
+        const script = args.slice(run + 1).find((w, i) => !w.startsWith('-') && !flagValue(run + 1 + i)) ?? '';
         const allWorkspaces = args.some((w) => w === '-ws' || w === '--workspaces');
         return [{ job, command: segment.trim(), script, workspace, allWorkspaces }];
       }),

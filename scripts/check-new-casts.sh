@@ -14,10 +14,19 @@ set -euo pipefail
 
 base="${1:-$(git merge-base origin/main HEAD)}"
 
-added=$(git diff -U0 "$base" -- \
+# Fail when the base can't be resolved (e.g. a shallow checkout without the
+# parent): a check that can't compare must not report "no casts".
+if ! git rev-parse --verify --quiet "${base}^{commit}" >/dev/null; then
+  echo "::error::check-new-casts: base '${base}' is not available (shallow checkout?); nothing was checked."
+  exit 2
+fi
+
+# git diff runs on its own so its failure stops the script (set -e); only the
+# grep may come back empty.
+diff=$(git diff -U0 "$base" -- \
   'bconnect-*-mcp/src/*' 'bconnect-server-template/src/*' 'packages/mcp-core/src/*' \
-  ':(exclude,glob)**/__tests__/**' \
-  | grep -E '^\+[^+]' | grep -E '\bas never\b|\bas unknown as\b' || true)
+  ':(exclude,glob)**/__tests__/**')
+added=$(printf '%s\n' "$diff" | grep -E '^\+[^+]' | grep -E '\bas\s+never\b|\bas\s+unknown\s+as\b' || true)
 
 if [ -n "$added" ]; then
   echo "::error::Added lines contain type-defeating casts (REQ-QA-002). Build the value with the generated types instead:"
