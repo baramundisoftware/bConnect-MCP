@@ -68,7 +68,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the README with no `BCONNECT_RELEASE` set previously registered the smaller 25R2 subset
   (60 endpoints tools) silently. Set `BCONNECT_RELEASE=25R2` explicitly on older servers;
   the 26R1-only tools 404 there. Added `BCONNECT_RELEASE` to the endpoints/jobs
-  `.env.example` files.
+  `.env.example` files. This applies to every server that reads the variable, including
+  servermanagement, which now also refuses a 26R1-only tool on 25R2 with the same message
+  as the others.
 
 ### Removed
 - **Per-server container files** (aligning with ADR-0003 — only the gateway is

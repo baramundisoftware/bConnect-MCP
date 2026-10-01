@@ -13,8 +13,7 @@ Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST 
 BCONNECT_BASE_URL=https://<your-bms-server>:443/bconnect
 BCONNECT_USERNAME=mcp-reader
 BCONNECT_PASSWORD=<password>
-# This server hides the tools that need baramundi 2026 R1 unless this is 26R1:
-BCONNECT_RELEASE=26R1
+# Optional: BCONNECT_RELEASE=25R2   (hides the tools that need baramundi 2026 R1)
 # Optional: BCONNECT_CA_CERT_PATH=/path/to/internal-ca.pem
 ```
 
@@ -94,7 +93,7 @@ Run inside the HTTP gateway, the server's own startup code doesn't run: `MCP_TRA
 | `BCONNECT_PASSWORD` | One of | — | Password for `BCONNECT_USERNAME`. |
 | `BCONNECT_CA_CERT_PATH` | No | — | PEM file with the CA certificate that signed the bMS server certificate (internal CA). When set, only this CA is trusted; when unset, Node's default and (Node 22.15 or later) the operating system's trusted CAs are used. The server fails if the file can't be read or is empty. |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | No | verify | `0` turns certificate verification off for every TLS connection of the process. Development only; use `BCONNECT_CA_CERT_PATH` instead. |
-| `BCONNECT_RELEASE` | No | unset | Set `26R1` to offer the tools that need baramundi Management Suite 2026 R1. Unlike the other servers, this one doesn't default to `26R1`: unset, empty or any other value hides those tools. |
+| `BCONNECT_RELEASE` | No | `26R1` | Any value other than `26R1` (e.g. `25R2`, but also an empty value) hides the tools that need baramundi Management Suite 2026 R1. |
 | `ALLOW_WRITE_OPERATIONS` | No | off | `true` enables the tools that create, change or delete data, or start actions. |
 | `ALLOW_SECRET_READ` | No | off | `true` lets the shared client call the BitLocker-secret and LAPS operations. This server has no tool that calls them, so the setting has no effect here. |
 | `BCONNECT_AUDIT_LEVEL` | No | `none` | `all`, `write`, `security` or `none`; any other value means `none`. Request entries, and the response entries of successful calls, are written to stdout (warnings and errors to stderr), which breaks stdio mode (#168). |

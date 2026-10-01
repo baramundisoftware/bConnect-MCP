@@ -129,7 +129,7 @@ The gateway uses one bConnect **service credential** (`BCONNECT_API_KEY`, or
 | `BCONNECT_BASE_URL` | bConnect V2.0 API base URL | `https://bms-server/bconnect` |
 | `BCONNECT_API_KEY` | API key (or use username/password below) | *(one credential required)* |
 | `BCONNECT_USERNAME` / `BCONNECT_PASSWORD` | API username + password (alternative to the key) | — |
-| `BCONNECT_RELEASE` | API release: `25R2` or `26R1` (servermanagement has no default: set `26R1` for its 2026 R1 tools) | `26R1` |
+| `BCONNECT_RELEASE` | API release: `25R2` or `26R1` | `26R1` |
 | `BCONNECT_AUDIT_LEVEL` | `none`, `security`, `write`, `all` | `none` |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | Set to `0` for self-signed certs (dev only) | `1` |
 | `BCONNECT_CA_CERT_PATH` | Path to a CA certificate inside the container | — |
