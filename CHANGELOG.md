@@ -85,7 +85,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the server started, and then every groups tool failed with a TLS error. Its tool calls now
   use the CA, TLS and `BCONNECT_AUDIT_LEVEL` settings like every other server. With an audit
   level set, groups now also writes audit entries to stdout, which breaks stdio mode in every
-  server (#168).
+  server (#168). The startup check now uses the same settings as tool calls, so with an audit
+  level set, every server also writes an audit entry for it to stdout before the stdio
+  transport starts (#168).
 - **The `BCONNECT_RATE_LIMIT_*` settings now reach every server's client.** Nine servers
   (compliance, defensecontrol, groups, operatingsystems, servermanagement, software,
   universaldynamicgroups, updatemanagement, variables) never passed them on. Each tool call
