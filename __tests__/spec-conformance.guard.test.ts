@@ -3,9 +3,13 @@
  *
  * Every server declares, in src/operations.ts, the OpenAPI operation each tool
  * calls. This guard calls every tool of every server, for both bMS releases,
- * with all gates open and valid arguments, records the requests, and checks
- * them against the declared operation in that release's spec. It also checks
- * that every spec operation is reached by some tool's request.
+ * and checks the recorded requests against the declared operation in that
+ * release's spec:
+ * - pass 1 (all gates open, required arguments): route, request body and
+ *   content type, and that the tool returns what the API answered;
+ * - pass 2 (every documented argument plus an undeclared one): parameters;
+ * - pass 3 (writes off): no request other than GET.
+ * It also checks that every spec operation is reached by some tool's request.
  *
  * Known violations are in spec-conformance.baseline.json, each with the GitHub
  * issue that fixes it. A new violation fails; so does a baseline entry that no
@@ -23,21 +27,24 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { RELEASES, type Release, type ApiOperation } from './lib/spec.js';
+import { RELEASES, type Release, type ApiOperation, loadOperations } from './lib/spec.js';
 import {
   ID, ROOT, SERVERS, UNKNOWN_NAME, UNKNOWN_VALUE, allArguments, connect, createRecorder, domainOf, guardEnv, requiredArguments,
 } from './lib/exerciser.js';
 import {
-  type Baseline, type ParamCall, type Violation,
-  checkCoverage, checkParams, checkStaleBindings, checkTools, compareWithBaseline, keyOf,
+  type Baseline, type ParamCall, type Violation, type WriteCall,
+  checkBodies, checkCoverage, checkParams, checkStaleBindings, checkTools, checkWritesOff, compareWithBaseline, keyOf,
 } from './lib/conformance.js';
+import { bodyValidator, jsonPatchProblems, withoutNullable } from './lib/bodies.js';
 
 const BASELINE_PATH = join(ROOT, '__tests__', 'spec-conformance.baseline.json');
 const baseline: Baseline = JSON.parse(readFileSync(BASELINE_PATH, 'utf8'));
 const mode = process.env.SPEC_BASELINE ?? '';
 if (!['', 'prune', 'add-new'].includes(mode)) throw new Error(`SPEC_BASELINE must be prune or add-new, not '${mode}'`);
 
-const recorder = createRecorder();
+/** Every API answer carries this; a tool that returns what the API sent shows it in its result. */
+const MARKER = 'zz-guard-response-marker';
+const recorder = createRecorder(() => ({ guardMarker: MARKER }));
 const savedEnv = { ...process.env };
 beforeAll(() => recorder.listen());
 afterAll(() => {
@@ -56,18 +63,22 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
   const violations: Violation[] = [];
   const registered = new Map<string, Set<string>>();
   const coveredByDomain = new Map<string, Set<string>>();
+  const validate = bodyValidator(release);
   for (const server of SERVERS) {
     const domain = domainOf(server);
     const table = await tableOf(server);
     const conn = await connect(server);
     const exercised = [];
     const paramCalls: ParamCall[] = [];
+    const writeCalls: WriteCall[] = [];
     for (const tool of conn.tools) {
-      // Pass 1, required arguments: route checks.
+      // Pass 1, required arguments: route, body and response checks.
       recorder.take();
-      await conn.call(tool.name, requiredArguments(tool.inputSchema));
+      const { text } = await conn.call(tool.name, requiredArguments(tool.inputSchema));
+      const pass1 = recorder.take();
       // The sample GUID becomes {id}, so baseline keys read like routes.
-      exercised.push({ tool: tool.name, requests: recorder.take().map((r) => ({ method: r.method, path: r.path.split(ID).join('{id}') })) });
+      exercised.push({ tool: tool.name, requests: pass1.map((r) => ({ method: r.method, path: r.path.split(ID).join('{id}') })) });
+      writeCalls.push({ tool: tool.name, result: text, requests: pass1.map((r) => ({ method: r.method, path: r.path, contentType: r.contentType, body: r.body })) });
       // Pass 2, every documented argument plus an undeclared one: parameter checks.
       const { args, idsByArg } = allArguments(tool.inputSchema);
       const { isError } = await conn.call(tool.name, args);
@@ -83,6 +94,21 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
     coveredByDomain.set(domain, covered);
     violations.push(...checkTools({ release, server, domain, table, exercised, covered }));
     violations.push(...checkParams({ release, server, domain, table, calls: paramCalls }));
+    violations.push(...checkBodies({ release, server, domain, table, calls: writeCalls, marker: MARKER, validate }));
+  }
+
+  // Pass 3, writes off: no tool may send anything but GET.
+  Object.assign(process.env, guardEnv(release, { writes: false, secretRead: true }));
+  for (const server of SERVERS) {
+    const conn = await connect(server);
+    const calls = [];
+    for (const tool of conn.tools) {
+      recorder.take();
+      await conn.call(tool.name, requiredArguments(tool.inputSchema));
+      calls.push({ tool: tool.name, requests: recorder.take() });
+    }
+    await conn.close();
+    violations.push(...checkWritesOff(release, server, calls));
   }
   for (const [domain, covered] of coveredByDomain) violations.push(...checkCoverage(release, domain, covered));
   return { violations, registered };
@@ -312,6 +338,77 @@ describe('the checks report known-bad cases (self-test)', () => {
       // Lower-case argument names are checked too.
       expect(run(call({ inputSchema: { properties: { ...good.properties, pageSize: { type: 'number', description: 'default: 50' } } } })))
         .toEqual(['page-description list_things_by_group pageSize']);
+    });
+  });
+
+  describe('bodies, responses and writes off', () => {
+    const bodyOps = [
+      { ...op('POST', '/v2.0/Things', 'CreateThing'), requestBodies: { 'application/json': { type: 'object', required: ['name'], properties: { name: { type: 'string' } }, additionalProperties: false } } },
+      { ...op('PATCH', '/v2.0/Things/{id}', 'UpdateThing'), requestBodies: { 'application/json-patch+json': {} } },
+      { ...op('DELETE', '/v2.0/Things/{id}', 'DeleteThing'), returnsBody: false },
+    ];
+    // A stand-in validator: object schema → required + additionalProperties; patch → RFC 6902 shape.
+    const validate = (o: ApiOperation, contentType: string, body: string): string[] => {
+      const type = o.requestBodies[contentType] ? contentType : Object.keys(o.requestBodies)[0];
+      const data = body ? JSON.parse(body) : undefined;
+      if (type === 'application/json-patch+json') return jsonPatchProblems(data);
+      return data && typeof data.name === 'string' && Object.keys(data).length === 1 ? [] : ['invalid'];
+    };
+    const table = { create_thing: ['CreateThing'], update_thing: ['UpdateThing'], delete_thing: ['DeleteThing'] };
+    const run = (calls: WriteCall[]) => checkBodies({ release: '26R1', server: 'demo-server', domain: 'demo', table, calls, marker: 'MARK', validate, operations: bodyOps })
+      .map((x) => `${x.check} ${x.tool} ${x.detail}`);
+    const req = (method: string, path: string, contentType: string | null, body: string) => ({ method, path, contentType, body });
+
+    it('accepts a valid body with the declared content type, and a returned answer', () => {
+      expect(run([
+        { tool: 'create_thing', result: '{"guardMarker":"MARK"}', requests: [req('POST', '/demo/v2.0/Things', 'application/json; charset=utf-8', '{"name":"x"}')] },
+        { tool: 'update_thing', result: 'MARK', requests: [req('PATCH', '/demo/v2.0/Things/1', 'application/json-patch+json', '[{"op":"replace","path":"/name","value":"y"}]')] },
+        { tool: 'delete_thing', result: 'Deleted.', requests: [req('DELETE', '/demo/v2.0/Things/1', null, '')] },
+      ])).toEqual([]);
+    });
+
+    it('reports a wrong content type, an invalid body, a body where none is declared, and a dropped answer', () => {
+      expect(run([
+        { tool: 'update_thing', result: 'MARK', requests: [req('PATCH', '/demo/v2.0/Things/1', 'application/json', '{"name":"y"}')] },
+        { tool: 'create_thing', result: 'Created.', requests: [req('POST', '/demo/v2.0/Things', 'application/json', '{"Name":"x","extra":1}')] },
+        { tool: 'delete_thing', result: 'Deleted.', requests: [req('DELETE', '/demo/v2.0/Things/1', 'application/json', '{"id":"1"}')] },
+      ])).toEqual([
+        'body-content-type update_thing application/json',
+        'body-invalid update_thing -',
+        'body-invalid create_thing -',
+        'response-dropped create_thing -',
+        'body-undeclared delete_thing -',
+      ]);
+    });
+
+    it('reports a request other than GET with writes off', () => {
+      expect(checkWritesOff('26R1', 'demo-server', [
+        { tool: 'list_things', requests: [{ method: 'GET' }] },
+        { tool: 'delete_thing', requests: [{ method: 'DELETE' }, { method: 'DELETE' }] },
+      ]).map(keyOf)).toEqual(['write-with-writes-off 26R1 demo-server delete_thing DELETE']);
+    });
+
+    it('JSON Patch: accepts any value type, rejects a non-array and unknown operations', () => {
+      expect(jsonPatchProblems([{ op: 'replace', path: '/comment', value: 'text' }, { op: 'Remove', path: '/x' }])).toEqual([]);
+      expect(jsonPatchProblems({ comment: 'text' })).toEqual(['not a JSON Patch array']);
+      expect(jsonPatchProblems([{ op: 'merge', path: 'x' }])).toEqual(['/0/op is not a JSON Patch operation', '/0/path must start with "/"']);
+    });
+
+    it('validates against the real 26R1 spec, including OpenAPI nullable', () => {
+      const real = bodyValidator('26R1');
+      const createFolder = loadOperations('26R1').find((o) => o.domain === 'assets' && o.operationId === 'CreateAssetStockFolder');
+      expect(createFolder, 'CreateAssetStockFolder not in the 26R1 assets spec').toBeDefined();
+      const schemaName = Object.keys(createFolder!.requestBodies)[0];
+      expect(schemaName).toBe('application/json');
+      expect(real(createFolder!, 'application/json', '{"name":"Folder","parentId":null}')).toEqual([]);
+      expect(real(createFolder!, 'application/json', '{"name":42}').length).toBeGreaterThan(0);
+      expect(real(createFolder!, 'application/json', 'not json')).toEqual(['body is not JSON']);
+    });
+
+    it('rewrites OpenAPI nullable to JSON Schema', () => {
+      expect(withoutNullable({ type: 'string', nullable: true })).toEqual({ type: ['string', 'null'] });
+      expect(withoutNullable({ allOf: [{ $ref: '#/x' }], nullable: true })).toEqual({ anyOf: [{ allOf: [{ $ref: '#/x' }] }, { type: 'null' }] });
+      expect(withoutNullable({ type: 'string', nullable: false })).toEqual({ type: 'string' });
     });
   });
 

@@ -209,3 +209,65 @@ export function checkParams(args: {
   // A tool calls one operation, so each finding appears once per call; keep keys unique.
   return [...new Map(out.map((x) => [keyOf(x), x])).values()];
 }
+
+/** One tool call with required arguments, for the body and response checks. */
+export interface WriteCall {
+  tool: string;
+  requests: Array<{ method: string; path: string; contentType: string | null; body: string }>;
+  /** The tool's result text. */
+  result: string;
+}
+
+/**
+ * Body and response checks:
+ * - `body-content-type`: a body is sent with a content type the operation doesn't declare.
+ * - `body-invalid`: the body doesn't match the operation's request schema (JSON Patch format for
+ *   `application/json-patch+json`).
+ * - `body-undeclared`: a body is sent to an operation that declares none.
+ * - `response-dropped`: the operation declares a 2xx body, but the tool's result doesn't contain
+ *   what the API returned (`marker`).
+ * Requests that don't match a declared operation are left to the route check.
+ */
+export function checkBodies(args: {
+  release: Release;
+  server: string;
+  domain: string;
+  table: Readonly<Record<string, readonly string[]>>;
+  calls: WriteCall[];
+  marker: string;
+  validate: (op: ApiOperation, contentType: string, body: string) => string[];
+  operations?: ApiOperation[];
+}): Violation[] {
+  const { release, server, domain, table, calls, marker, validate } = args;
+  const ops = args.operations ?? loadOperations(release);
+  const out: Violation[] = [];
+  const v = (check: string, tool: string, detail: string): void => {
+    out.push({ check, release, server, tool, detail });
+  };
+  for (const call of calls) {
+    const declared = (table[call.tool] ?? [])
+      .map((id) => ops.find((op) => op.domain === domain && op.operationId === id))
+      .filter((op): op is ApiOperation => !!op);
+    for (const r of call.requests) {
+      const m = /^\/([^/]+)(\/.*)$/.exec(r.path);
+      const op = m && m[1].toLowerCase() === domain ? declared.find((o) => o.matches(r.method, m[2])) : undefined;
+      if (!op) continue;
+      const types = Object.keys(op.requestBodies);
+      const contentType = (r.contentType ?? '').split(';')[0].trim().toLowerCase();
+      if (types.length === 0) {
+        if (r.body !== '') v('body-undeclared', call.tool, '-');
+      } else {
+        if (r.body !== '' && !types.includes(contentType)) v('body-content-type', call.tool, contentType || '(none)');
+        if (validate(op, contentType, r.body).length > 0) v('body-invalid', call.tool, '-');
+      }
+      if (op.returnsBody && !call.result.includes(marker)) v('response-dropped', call.tool, '-');
+    }
+  }
+  return [...new Map(out.map((x) => [keyOf(x), x])).values()];
+}
+
+/** `write-with-writes-off`: a non-GET request sent while ALLOW_WRITE_OPERATIONS is off. */
+export function checkWritesOff(release: Release, server: string, calls: Array<{ tool: string; requests: Array<{ method: string }> }>): Violation[] {
+  return calls.flatMap((c) => [...new Set(c.requests.filter((r) => r.method !== 'GET').map((r) => r.method))]
+    .map((method) => ({ check: 'write-with-writes-off', release, server, tool: c.tool, detail: method })));
+}
