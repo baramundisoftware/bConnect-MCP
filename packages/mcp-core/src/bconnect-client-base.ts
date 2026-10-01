@@ -26,6 +26,7 @@ import tls, { PeerCertificate } from "node:tls";
  * keeps Node's existing bundled-only behavior — no regression.
  */
 function buildDefaultTrustStore(): string[] | undefined {
+  // eslint-disable-next-line no-restricted-syntax -- feature probe: @types/node may lack tls.getCACertificates (Node >= 22.15); not an API body
   const getCACertificates = (tls as unknown as {
     getCACertificates?: (type: "default" | "system" | "bundled" | "extra") => string[];
   }).getCACertificates;

@@ -32,6 +32,10 @@ for d in bconnect-*-mcp bconnect-server-template; do
   fi
 done
 
+section "Lint (servers + core, casts ratcheted)"
+npm run lint >/dev/null 2>&1; check $? "lint"
+bash scripts/check-new-casts.sh >/dev/null 2>&1; check $? "no new casts vs origin/main"
+
 section "Build + test gateway (non-workspace)"
 ( cd bconnect-mcp-gateway && npx tsc >/dev/null 2>&1 ); check $? "gateway build"
 ( cd bconnect-mcp-gateway && npx vitest run --passWithNoTests >/dev/null 2>&1 ); check $? "gateway test"
