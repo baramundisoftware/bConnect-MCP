@@ -58,6 +58,7 @@ export function requiredArguments(inputSchema: JsonSchema): Record<string, unkno
 }
 
 /** The value of the undeclared argument added by `allArguments`; it must never reach the wire. */
+export const UNKNOWN_NAME = 'zzGuardUnknown';
 export const UNKNOWN_VALUE = 'zz-guard-unknown-argument';
 
 /**
@@ -77,7 +78,7 @@ export function allArguments(inputSchema: JsonSchema): { args: Record<string, un
       args[name] = sample(name, schema);
     }
   }
-  args.zzGuardUnknown = UNKNOWN_VALUE;
+  args[UNKNOWN_NAME] = UNKNOWN_VALUE;
   return { args, idsByArg };
 }
 

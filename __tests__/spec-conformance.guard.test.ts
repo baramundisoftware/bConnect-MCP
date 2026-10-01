@@ -25,7 +25,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { RELEASES, type Release, type ApiOperation } from './lib/spec.js';
 import {
-  ID, ROOT, SERVERS, UNKNOWN_VALUE, allArguments, connect, createRecorder, domainOf, guardEnv, requiredArguments,
+  ID, ROOT, SERVERS, UNKNOWN_NAME, UNKNOWN_VALUE, allArguments, connect, createRecorder, domainOf, guardEnv, requiredArguments,
 } from './lib/exerciser.js';
 import {
   type Baseline, type ParamCall, type Violation,
@@ -70,9 +70,10 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
       exercised.push({ tool: tool.name, requests: recorder.take().map((r) => ({ method: r.method, path: r.path.split(ID).join('{id}') })) });
       // Pass 2, every documented argument plus an undeclared one: parameter checks.
       const { args, idsByArg } = allArguments(tool.inputSchema);
-      await conn.call(tool.name, args);
+      const { isError } = await conn.call(tool.name, args);
       paramCalls.push({
-        tool: tool.name, inputSchema: tool.inputSchema, idsByArg, unknownValue: UNKNOWN_VALUE,
+        tool: tool.name, inputSchema: tool.inputSchema, idsByArg,
+        unknownName: UNKNOWN_NAME, unknownValue: UNKNOWN_VALUE, failed: isError,
         requests: recorder.take().map((r) => ({ method: r.method, path: r.path, query: r.query, body: r.body })),
       });
     }
@@ -225,7 +226,7 @@ describe('the checks report known-bad cases (self-test)', () => {
     };
     const G = '00000000-0000-4000-8000-000000000001';
     const call = (over: Partial<ParamCall>): ParamCall => ({
-      tool: 'list_things_by_group', inputSchema: good, idsByArg: { groupId: G }, unknownValue: 'UNK',
+      tool: 'list_things_by_group', inputSchema: good, idsByArg: { groupId: G }, unknownName: 'zzUnknown', unknownValue: 'UNK', failed: false,
       requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['Page', '1'], ['Name', 'x']], body: '' }],
       ...over,
     });
@@ -262,11 +263,48 @@ describe('the checks report known-bad cases (self-test)', () => {
         .toEqual(['path-slot list_things_by_group {groupId} ← endpointId']);
     });
 
+    it('reports an undeclared argument whose key reaches the wire with another value', () => {
+      expect(run(call({ requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['zzUnknown', 'other']], body: '' }] })))
+        .toEqual(['arg-leak list_things_by_group -', 'query-undeclared list_things_by_group zzUnknown']);
+    });
+
+    it('compares argument names exactly: includeSubGroups is not includeSubfolders', () => {
+      const ops = [op('GET', '/v2.0/Groups/{groupId}/Things', 'GetThingsByGroup', ['includeSubfolders'])];
+      const c = call({
+        inputSchema: { properties: { groupId: { type: 'string' }, includeSubGroups: { type: 'boolean' } } },
+        requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['includeSubGroups', 'false']], body: '' }],
+      });
+      expect(checkParams({ release: '26R1', server: 'demo-server', domain: 'demo', table: { list_things_by_group: ['GetThingsByGroup'] }, calls: [c], operations: ops })
+        .map((x) => `${x.check} ${x.detail}`)).toEqual(['query-undeclared includeSubGroups', 'query-not-offered includeSubfolders']);
+    });
+
+    it('reports a call that failed or sent nothing', () => {
+      expect(run(call({ failed: true, requests: [] }))).toEqual(['params-not-exercised list_things_by_group -']);
+    });
+
+    it('does not let a related but different argument fill a slot', () => {
+      const ops = [op('GET', '/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/Things', 'GetThingsByUdg')];
+      const c = call({
+        inputSchema: { properties: { dynamicGroupId: { type: 'string' } } }, idsByArg: { dynamicGroupId: G },
+        requests: [{ method: 'GET', path: `/demo/v2.0/UniversalDynamicGroups/${G}/Things`, query: [], body: '' }],
+      });
+      expect(checkParams({ release: '26R1', server: 'demo-server', domain: 'demo', table: { list_things_by_group: ['GetThingsByUdg'] }, calls: [c], operations: ops })
+        .map((x) => `${x.check} ${x.detail}`)).toEqual(['path-slot {universalDynamicGroupId} ← dynamicGroupId']);
+    });
+
     it('reports a 1-based or missing Page description and a PageSize without the 1000 limit', () => {
       const props = (page?: string, size?: string) => ({ properties: { ...good.properties, Page: { type: 'number', description: page }, PageSize: { type: 'number', description: size } } });
       expect(run(call({ inputSchema: props('Page number (1-based)', 'Items per page (max: 1000).') }))).toEqual(['page-description list_things_by_group Page']);
       expect(run(call({ inputSchema: props(undefined, 'Items per page.') })))
         .toEqual(['page-description list_things_by_group Page', 'page-description list_things_by_group PageSize']);
+      // Says nothing about where pages start; a default of 0 isn't enough.
+      expect(run(call({ inputSchema: props('Page number (default: 0).', 'Items per page (default 1000).') })))
+        .toEqual(['page-description list_things_by_group Page', 'page-description list_things_by_group PageSize']);
+      // A range states the maximum as well.
+      expect(run(call({ inputSchema: props('Zero-indexed page number.', 'Results per page (1–1000, default 20)') }))).toEqual([]);
+      // Lower-case argument names are checked too.
+      expect(run(call({ inputSchema: { properties: { ...good.properties, pageSize: { type: 'number', description: 'default: 50' } } } })))
+        .toEqual(['page-description list_things_by_group pageSize']);
     });
   });
 
