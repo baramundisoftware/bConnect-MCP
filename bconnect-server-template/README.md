@@ -1,54 +1,12 @@
-# bconnect-updatemanagement-mcp
+# bconnect-DOMAIN-mcp (server template)
 
-Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
+Skeleton for a new bConnect MCP server. The steps to turn it into a real server are at the
+top of `src/index.ts`. Copy this README along with the code and keep the environment table
+below in sync with what the new server reads. A test compares the table with the variables
+the server's `src/` and `@bconnect/mcp-core` actually read, and fails on any difference.
 
-**Domain:** Windows Update management — Microsoft Update profile assignment and status for managed Windows endpoints  
-**Tools:** 3
-
----
-
-## Quick Start
-
-```env
-BCONNECT_BASE_URL=https://<your-bms-server>:443/bconnect
-BCONNECT_USERNAME=mcp-reader
-BCONNECT_PASSWORD=<password>
-# Optional: BCONNECT_CA_CERT_PATH=/path/to/internal-ca.pem
-```
-
-```bash
-# Run directly (development)
-cd bconnect-updatemanagement-mcp
-npm install && npm run build
-node build/index.js
-
-# Claude Code / Claude Desktop entry (~/.claude.json or claude_desktop_config.json):
-{
-  "mcpServers": {
-    "bconnect-updatemanagement": {
-      "command": "node",
-      "args": ["/opt/bconnect-mcp-suite/bconnect-updatemanagement-mcp/build/index.js"],
-      "env": {
-        "BCONNECT_BASE_URL": "https://bms-server:443/bconnect",
-        "BCONNECT_USERNAME": "mcp-reader",
-        "BCONNECT_PASSWORD": "<password>"
-      }
-    }
-  }
-}
-```
-
----
-
-## Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `list_update_management_endpoints` | List all Windows endpoints with update management status |
-| `get_update_management_endpoint` | Get update management status for a specific endpoint |
-| `update_update_management_endpoint` | Assign or remove an update profile from an endpoint |
-
----
+The connection settings (base URL, credentials, CA certificate, TLS, audit level, rate limit)
+are read by `clientConfigFromEnv()` in `@bconnect/mcp-core`. Don't read them in the server.
 
 ## Environment Variables
 
@@ -75,22 +33,3 @@ Run inside the HTTP gateway, the server's own startup code doesn't run: `MCP_TRA
 | `MCP_BIND` | No | `127.0.0.1` | Address to bind in HTTP mode. HTTP mode has no client authentication: keep it on loopback, or put an authenticating reverse proxy in front. |
 | `MCP_ALLOW_NO_AUTH` | No | off | `true` allows binding HTTP mode to an address other than loopback, without authentication. Not recommended. |
 <!-- env:end -->
-
----
-
-## Part of the Suite
-
-This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).
-
----
-
-## Compatibility
-
-| MCP server version | Supported bMS release | bConnect API | Notes |
-|--------------------|-----------------------|--------------|-------|
-| `26.1.7` | baramundi Management Suite 2026R1 | V2.0 | Current — full tool set |
-| `25.2.0` *(planned)* | baramundi Management Suite 2025R2 | V2.0 | Subset of tools (25R2 spec) |
-| `1.0.0` (legacy) | ≤25R2 (unspecified) | V2.0 | Pre-versioning-scheme release |
-
-> Version scheme: `<bMS-year-2digit>.<bMS-release-number>.<mcp-patch>`
-> Example: `26.1.7` targets bMS 2026R1; patch-only fixes increment the last digit.

@@ -78,7 +78,7 @@ Production deployments must use proper TLS certificate verification. Never set `
 
 ### Audit Logging
 
-Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`none` / `security` / `write` / `all`). Enable it in production to track API calls.
+Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`none` / `security` / `write` / `all`). Audit entries are currently written to stdout, which breaks stdio mode (#168), so enable it only in HTTP or gateway deployments until that is fixed.
 
 ### Write-Operation Gating
 
@@ -90,7 +90,7 @@ A tool whose response contains live credentials is **disabled by default**, what
 
 ### Rate Limiting
 
-Each server can enforce a token-bucket rate limiter to protect the bConnect API. Enable and tune it via `BCONNECT_RATE_LIMIT_ENABLED`, `BCONNECT_RATE_LIMIT_MAX_REQUESTS`, and `BCONNECT_RATE_LIMIT_WINDOW_MS`.
+Each server's bConnect client has a token-bucket rate limiter, set via `BCONNECT_RATE_LIMIT_ENABLED`, `BCONNECT_RATE_LIMIT_MAX_REQUESTS` and `BCONNECT_RATE_LIMIT_WINDOW_MS`. Each tool call still creates a new client, so the limit applies only within one tool call and does not yet protect the bConnect API across calls (#160).
 
 ### HTTP Gateway (`bconnect-mcp-gateway`)
 
