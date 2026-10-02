@@ -16,13 +16,14 @@ updates:
     labels:
       - "dependencies"
   - package-ecosystem: "npm"
-    # Cover the root, the gateway, the template, and all 13 domain servers.
-    # Glob support in `directories` fans this single entry across every manifest.
+    # The root is an npm workspace: its package-lock.json covers packages/*, the
+    # 13 servers and the template, so "/" updates all of them in one PR. Listing a
+    # workspace directory on its own makes Dependabot treat it as a separate
+    # project: one PR per manifest and a root lockfile without the workspaces
+    # (npm ci fails; #181, #240-#256). The gateway has its own lockfile.
     directories:
       - "/"
       - "/bconnect-mcp-gateway"
-      - "/bconnect-server-template"
-      - "/bconnect-*-mcp"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -57,6 +58,10 @@ updates:
       - dependency-name: "vitest"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@vitest/coverage-v8"
+        update-types: ["version-update:semver-major"]
+      # msw 3 is a migration of the test suite (54 test files use it); planned, not
+      # a routine PR.
+      - dependency-name: "msw"
         update-types: ["version-update:semver-major"]
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
