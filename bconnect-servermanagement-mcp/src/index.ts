@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, jsonPatchArgument } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { ServerManagementRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -287,8 +287,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Server Restart ────────────────────────────────────────────────────
       {
         name: "restart_management_server",
-        description: "Restart the baramundi Management Server. Initiates a server restart and requires server setting rights. Use with caution as this interrupts all active management operations and connections.",
-        inputSchema: { type: "object", properties: {}, required: [] }
+        description: "Restart the baramundi Management Server, immediately or at a scheduled time. Without utcScheduleRestartTime the restart is immediate and interrupts all active management operations and connections; prefer a scheduled time outside working hours. Requires server setting rights; a scheduled restart can be cancelled with cancel_scheduled_restart.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            utcScheduleRestartTime: {
+              type: "string",
+              format: "date-time",
+              description: "When to restart, as an ISO 8601 date-time in UTC (e.g. 2026-10-02T22:00:00Z). Omit for an immediate restart.",
+            },
+          },
+          required: [],
+        }
       },
       {
         name: "cancel_scheduled_restart",
@@ -546,8 +556,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_security_group": {
-          await sm.updateSecurityGroup(args!.id as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true }, null, 2) }] };
+          const result = await sm.updateSecurityGroup(args!.id as string, jsonPatchArgument(args!.patchOperations, "patchOperations"));
+          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "delete_security_group": {
@@ -571,8 +581,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_security_profile": {
-          await sm.updateSecurityProfile(args!.id as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true }, null, 2) }] };
+          const result = await sm.updateSecurityProfile(args!.id as string, jsonPatchArgument(args!.patchOperations, "patchOperations"));
+          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "delete_security_profile": {
@@ -586,13 +596,17 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_object_permission": {
-          await sm.updateObjectPermission(args!.id as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true }, null, 2) }] };
+          const result = await sm.updateObjectPermission(args!.id as string, jsonPatchArgument(args!.patchOperations, "patchOperations"));
+          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "restart_management_server": {
-          await sm.restartManagementServer();
-          return { content: [{ type: "text", text: "Management server restart initiated." }] };
+          const scheduled = typeof args?.utcScheduleRestartTime === "string" ? args.utcScheduleRestartTime : undefined;
+          const result = await sm.restartManagementServer(scheduled);
+          const text = scheduled
+            ? `Management server restart scheduled for ${JSON.stringify(result)} (requested: ${scheduled}).`
+            : `Management server restart initiated now (bMS reports ${JSON.stringify(result)}).`;
+          return { content: [{ type: "text", text }] };
         }
 
         case "cancel_scheduled_restart": {
@@ -609,15 +623,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "simulate_msw_cleanup": {
-          requires26R1();
-          await sm.simulateMSWCleanup();
-          return { content: [{ type: "text", text: "MSW cleanup simulation completed." }] };
+          const result = await sm.simulateMSWCleanup();
+          return { content: [{ type: "text", text: `MSW cleanup simulation completed:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "msw_cleanup": {
-          requires26R1();
-          await sm.mswCleanup();
-          return { content: [{ type: "text", text: "MSW cleanup executed." }] };
+          const result = await sm.mswCleanup();
+          return { content: [{ type: "text", text: `MSW cleanup executed:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "list_download_jobs": {

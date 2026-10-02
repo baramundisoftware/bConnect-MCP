@@ -22,9 +22,20 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, objectArgument, ClientConfigError } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
+
+/**
+ * The Mac enrollment answer without the QR code image: a base64 PNG only fills
+ * the model's context, and qrCodeText carries the same content as text.
+ */
+function withoutQrImage(result: unknown): unknown {
+  if (typeof result === "object" && result !== null && "qrCodeImageBase64" in result && typeof result.qrCodeImageBase64 === "string") {
+    return { ...result, qrCodeImageBase64: `(omitted: ${result.qrCodeImageBase64.length} characters of base64 image data; use qrCodeText)` };
+  }
+  return result;
+}
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
@@ -996,8 +1007,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           if (args!.logicalGroupId !== undefined) {patchOperations.push({ op: "replace", path: "/logicalGroupId", value: args!.logicalGroupId } as never);}
           if (args!.comment !== undefined) {patchOperations.push({ op: "replace", path: "/comment", value: args!.comment } as never);}
           if (args!.serialNumber !== undefined) {patchOperations.push({ op: "replace", path: "/serialNumber", value: args!.serialNumber } as never);}
-          await bconnect.endpoints.updateAndroidEndpoint(args!.id as string, patchOperations);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, message: `Android endpoint ${args!.id} updated successfully` }, null, 2) }] };
+          const result = await bconnect.endpoints.updateAndroidEndpoint(args!.id as string, patchOperations);
+          return { content: [{ type: "text", text: `Android endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "delete_android_endpoint": {
@@ -1020,8 +1031,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           if (args!.displayName !== undefined) {patchOps.push({ op: "replace", path: "/displayName", value: args!.displayName } as never);}
           if (args!.logicalGroupId !== undefined) {patchOps.push({ op: "replace", path: "/logicalGroupId", value: args!.logicalGroupId } as never);}
           if (args!.comment !== undefined) {patchOps.push({ op: "replace", path: "/comment", value: args!.comment } as never);}
-          await bconnect.endpoints.updateIosEndpoint(args!.id as string, patchOps);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, message: `iOS endpoint ${args!.id} updated successfully` }, null, 2) }] };
+          const result = await bconnect.endpoints.updateIosEndpoint(args!.id as string, patchOps);
+          return { content: [{ type: "text", text: `iOS endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "delete_ios_endpoint": {
@@ -1045,13 +1056,19 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "start_windows_enrollment": {
-          await bconnect.endpoints.startWindowsEndpointEnrollment(args!.id as string, args! as never);
-          return { content: [{ type: "text", text: `Windows endpoint ${args!.id} enrollment started` }] };
+          const { id: _endpointId, ...windowsEnrollment } = objectArgument(args, "arguments");
+          const result = await bconnect.endpoints.startWindowsEndpointEnrollment(args!.id as string, windowsEnrollment);
+          return { content: [{ type: "text", text: `Windows endpoint ${args!.id} enrollment started:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "trigger_intune_installation": {
-          await bconnect.endpoints.triggerInstallationViaIntune(args!.id as string);
-          return { content: [{ type: "text", text: `Intune installation triggered for endpoint ${args!.id}` }] };
+          const result = await bconnect.endpoints.triggerInstallationViaIntune(args!.id as string);
+          const text = result === true
+            ? `Intune installation triggered for endpoint ${args!.id}.`
+            : result === false
+              ? `Intune installation was not triggered for endpoint ${args!.id} (bMS answered false).`
+              : `Intune installation for endpoint ${args!.id}: result unknown (bMS answered ${JSON.stringify(result)}).`;
+          return { content: [{ type: "text", text }] };
         }
 
         case "create_linux_endpoint": {
@@ -1085,8 +1102,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "start_mac_enrollment": {
-          await bconnect.endpoints.startMacEndpointEnrollment(args!.id as string, args! as never);
-          return { content: [{ type: "text", text: `Mac endpoint ${args!.id} enrollment started` }] };
+          const { id: _endpointId, ...macEnrollment } = objectArgument(args, "arguments");
+          const result = await bconnect.endpoints.startMacEndpointEnrollment(args!.id as string, macEnrollment);
+          return { content: [{ type: "text", text: `Mac endpoint ${args!.id} enrollment started:\n${JSON.stringify(withoutQrImage(result), null, 2)}` }] };
         }
 
         case "create_logical_group": {
@@ -1110,8 +1128,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_maintenance_window_for_endpoint": {
-          await bconnect.endpoints.updateMaintenanceWindowForEndpoint(args!.id as string, args!.maintenanceWindowData as never);
-          return { content: [{ type: "text", text: `Maintenance window for endpoint ${args!.id} updated successfully` }] };
+          const result = await bconnect.endpoints.updateMaintenanceWindowForEndpoint(args!.id as string, objectArgument(args!.maintenanceWindowData, "maintenanceWindowData"));
+          return { content: [{ type: "text", text: `Maintenance window for endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "delete_maintenance_window_for_endpoint": {
@@ -1125,8 +1143,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_maintenance_window_for_logical_group": {
-          await bconnect.endpoints.updateMaintenanceWindowForLogicalGroup(args!.id as string, args!.maintenanceWindowData as never);
-          return { content: [{ type: "text", text: `Maintenance window for logical group ${args!.id} updated successfully` }] };
+          const result = await bconnect.endpoints.updateMaintenanceWindowForLogicalGroup(args!.id as string, objectArgument(args!.maintenanceWindowData, "maintenanceWindowData"));
+          return { content: [{ type: "text", text: `Maintenance window for logical group ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "delete_maintenance_window_for_logical_group": {
@@ -1151,8 +1169,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_industrial_endpoint": {
-          await bconnect.endpoints.updateIndustrialEndpoint(args!.id as string, args!.updateData as never);
-          return { content: [{ type: "text", text: `Industrial endpoint ${args!.id} updated successfully` }] };
+          const result = await bconnect.endpoints.updateIndustrialEndpoint(args!.id as string, objectArgument(args!.updateData, "updateData"));
+          return { content: [{ type: "text", text: `Industrial endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "delete_industrial_endpoint": {
@@ -1166,8 +1184,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_network_endpoint": {
-          await bconnect.endpoints.updateNetworkEndpoint(args!.id as string, args!.updateData as never);
-          return { content: [{ type: "text", text: `Network endpoint ${args!.id} updated successfully` }] };
+          const result = await bconnect.endpoints.updateNetworkEndpoint(args!.id as string, objectArgument(args!.updateData, "updateData"));
+          return { content: [{ type: "text", text: `Network endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "delete_network_endpoint": {

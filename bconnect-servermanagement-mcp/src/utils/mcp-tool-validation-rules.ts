@@ -81,7 +81,10 @@ export const ServerManagementRules = {
   updateObjectPermission: (): ValidationRule[] => [CommonRules.guid('id'), patchOperationsRule],
 
   // ── Server Restart ────────────────────────────────────────────────
-  restartManagementServer: (): ValidationRule[] => noArgs(),
+  restartManagementServer: (): ValidationRule[] => [
+    { name: 'utcScheduleRestartTime', required: false, type: 'string', format: 'iso-date',
+      message: 'utcScheduleRestartTime must be an ISO 8601 date-time in UTC, e.g. 2026-10-02T22:00:00Z' },
+  ],
   cancelScheduledRestart: (): ValidationRule[] => noArgs(),
 
   // ── 26R1-only ─────────────────────────────────────────────────────

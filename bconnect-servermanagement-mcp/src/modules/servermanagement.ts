@@ -1,3 +1,4 @@
+import type { JsonPatchOperation } from "@bconnect/mcp-core";
 import type { AxiosInstance } from 'axios';
 import type { components, operations } from '../generated/servermanagement-types.js';
 
@@ -21,10 +22,7 @@ type GetSecurityProfilesParams = operations['GetSecurityProfiles']['parameters']
 
 // Write operation types - Phase 2
 type SecurityGroupForCreation = operations['CreateSecurityGroup']['requestBody']['content']['application/json'];
-type SecurityGroupUpdate = operations['UpdateSecurityGroup']['requestBody']['content']['application/json-patch+json'];
 type SecurityProfileForCreation = operations['CreateSecurityProfile']['requestBody']['content']['application/json'];
-type SecurityProfileUpdate = operations['UpdateSecurityProfile']['requestBody']['content']['application/json-patch+json'];
-type ObjectPermissionUpdate = operations['UpdateObjectPermission']['requestBody']['content']['application/json-patch+json'];
 
 export class ServerManagementModule {
   private basePath = '/servermanagement/v2.0';
@@ -118,8 +116,11 @@ export class ServerManagementModule {
    * Restart the baramundi Management Server
    * Requires server setting rights (43F30D47-4410-438E-AAD0-98157456322D)
    */
-  async restartManagementServer(): Promise<void> {
-    await this.httpClient.post(`${this.basePath}/Restart`);
+  async restartManagementServer(utcScheduleRestartTime?: string): Promise<unknown> {
+    const response = await this.httpClient.post(`${this.basePath}/Restart`, undefined, {
+      ...(utcScheduleRestartTime && { params: { utcScheduleRestartTime } }),
+    });
+    return response.data;
   }
 
   /**
@@ -168,8 +169,9 @@ export class ServerManagementModule {
   /**
    * Update an existing security group
    */
-  async updateSecurityGroup(id: string, data: SecurityGroupUpdate): Promise<void> {
-    await this.httpClient.patch(`${this.basePath}/SecurityGroups/${id}`, data);
+  async updateSecurityGroup(id: string, data: JsonPatchOperation[]): Promise<unknown> {
+    const response = await this.httpClient.patch(`${this.basePath}/SecurityGroups/${id}`, data);
+    return response.data;
   }
 
   /**
@@ -193,8 +195,9 @@ export class ServerManagementModule {
   /**
    * Update an existing security profile
    */
-  async updateSecurityProfile(id: string, data: SecurityProfileUpdate): Promise<void> {
-    await this.httpClient.patch(`${this.basePath}/SecurityProfiles/${id}`, data);
+  async updateSecurityProfile(id: string, data: JsonPatchOperation[]): Promise<unknown> {
+    const response = await this.httpClient.patch(`${this.basePath}/SecurityProfiles/${id}`, data);
+    return response.data;
   }
 
   /**
@@ -207,8 +210,9 @@ export class ServerManagementModule {
   /**
    * Update object permissions
    */
-  async updateObjectPermission(id: string, data: ObjectPermissionUpdate): Promise<void> {
-    await this.httpClient.patch(`${this.basePath}/Objects/${id}`, data);
+  async updateObjectPermission(id: string, data: JsonPatchOperation[]): Promise<unknown> {
+    const response = await this.httpClient.patch(`${this.basePath}/Objects/${id}`, data);
+    return response.data;
   }
 
   // ============================================================================
@@ -222,13 +226,15 @@ export class ServerManagementModule {
   }
 
   /** Simulate MSW cleanup on a DIP server (26R1 only) */
-  async simulateMSWCleanup(): Promise<void> {
-    await this.httpClient.post(`${this.basePath}/Dips/SimulateMSWCleanup`);
+  async simulateMSWCleanup(): Promise<unknown> {
+    const response = await this.httpClient.post(`${this.basePath}/Dips/SimulateMSWCleanup`);
+    return response.data;
   }
 
   /** Trigger MSW cleanup on a DIP server (26R1 only) */
-  async mswCleanup(): Promise<void> {
-    await this.httpClient.post(`${this.basePath}/Dips/MSWCleanup`);
+  async mswCleanup(): Promise<unknown> {
+    const response = await this.httpClient.post(`${this.basePath}/Dips/MSWCleanup`);
+    return response.data;
   }
 
   /** Get all download jobs in baramundi Management Suite (26R1 only) */

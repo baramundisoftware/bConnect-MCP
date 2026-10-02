@@ -21,7 +21,7 @@
   },
   "bconnect-endpoints-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 29
+      "count": 23
     }
   },
   "bconnect-jobs-mcp/src/index.ts": {
@@ -36,7 +36,7 @@
   },
   "bconnect-servermanagement-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 7
+      "count": 4
     }
   },
   "bconnect-software-mcp/src/index.ts": {

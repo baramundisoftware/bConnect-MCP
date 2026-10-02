@@ -99,6 +99,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **`restart_management_server` can schedule the restart** with `utcScheduleRestartTime`
+  (ISO 8601, UTC). Without it the restart is immediate, as before; the description now says so.
+- **Write tools report what bMS returned.** Windows and Mac enrollment return the install
+  command, token, URL and QR text; `trigger_intune_installation` reports "not triggered" when bMS
+  answers false; endpoint and maintenance-window updates, the MSW cleanup (and its simulation) and
+  security group, profile and permission updates return bMS's result instead of a fixed text.
+  Malformed object or JSON Patch arguments are refused before any request.
 - **Job write tools send what the API accepts and report what happened.** `create_kiosk_release`
   sends `assignmentTargetId`, `update_job_folder` sends a JSON Patch (and refuses a call that
   changes nothing), and the four `assign_job_to_*_group` tools send only the assignment fields.
