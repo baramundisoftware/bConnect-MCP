@@ -216,7 +216,7 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `BCONNECT_PASSWORD` | Yes* | — | Password for Basic Auth |
 | `BCONNECT_RELEASE` | — | `26R1` | bMS version: `25R2` or `26R1` |
 | `BCONNECT_CA_CERT_PATH` | — | — | Path to CA certificate (PEM) for self-signed certs |
-| `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `none`, `security`, `write` or `all`, in any case; levels are cumulative. Any other value stops the server. Entries go to stderr |
+| `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `none`, `security`, `write` or `all`, in any case; levels are cumulative. Any other value stops the server. Entries go to stderr; what each level records: [docs/AUDIT.md](docs/AUDIT.md) |
 | `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Limit the requests one client sends. Each tool call still creates a new client, so the limit doesn't apply across calls yet (#160) |
 | `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (network) |
 | `MCP_PORT` | — | `3000` | HTTP port (when `MCP_TRANSPORT=http`) |
@@ -434,7 +434,7 @@ For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING
 - **Never hardcode credentials** — always use environment variables or `.env` files
 - **Use API keys** instead of username/password when possible
 - **Use `BCONNECT_CA_CERT_PATH`** for self-signed certificates instead of disabling TLS
-- **Audit logging** (`BCONNECT_AUDIT_LEVEL=security`, `write` or `all`) writes to stderr; `security` already records BitLocker and LAPS credential reads and changes
+- **Audit logging** (`BCONNECT_AUDIT_LEVEL=security`, `write` or `all`) writes to stderr; `security` records every call to a security-relevant route: credentials, API keys, object rights, security groups and profiles ([docs/AUDIT.md](docs/AUDIT.md))
 - **Write tools are not yet verified against a live bMS.** They are off unless `ALLOW_WRITE_OPERATIONS=true`, and each says "Not yet verified against a live bMS." in its description until its live check is recorded. Try writes on a test system first
 - **Rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) applies only within one tool call for now; it does not protect the bConnect API across calls (#160)
 

@@ -29,15 +29,24 @@ export const SECRET_ROUTES: readonly SecretRoute[] = Object.freeze([
 
 const escape = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-const MATCHERS = SECRET_ROUTES.map((route) => ({
-  method: route.method,
-  // Exact path shape: the template's placeholders match one segment, and the
-  // path must end there (…/{id}/TriggerUpdateOnClient is not the LAPS resource).
-  pattern: new RegExp(
-    "(?:^|/)" + escape(route.domain) + escape(route.path).replace(/\\\{[^}]+\\\}/g, "[^/]+") + "/?$",
-    "i",
-  ),
-}));
+/**
+ * A matcher for a route table entry. Exact path shape: the template's
+ * placeholders match one segment, and the path must end there
+ * (…/{id}/TriggerUpdateOnClient is not the LAPS resource).
+ */
+export function routeMatcher(route: SecretRoute): { method: string; pattern: RegExp } {
+  // Segment by segment, not a regex over the template: a "{placeholder}"
+  // segment matches any one segment, every other segment literally (CodeQL:
+  // a placeholder regex backtracks polynomially on input like "\\{\\{\\{…").
+  const segments = route.path.split("/").map((segment) =>
+    segment.startsWith("{") && segment.endsWith("}") && segment.length > 2 ? "[^/]+" : escape(segment));
+  return {
+    method: route.method,
+    pattern: new RegExp("(?:^|/)" + escape(route.domain) + segments.join("/") + "/?$", "i"),
+  };
+}
+
+const MATCHERS = SECRET_ROUTES.map(routeMatcher);
 
 /** Refusal raised before a secret-bearing request is sent. */
 export class SecretRouteBlockedError extends Error {
@@ -86,7 +95,7 @@ function withoutPathParameter(s: string): string {
   return at < 0 ? s : s.slice(0, at);
 }
 
-function canonicalPathOf(url: string): string {
+export function canonicalPathOf(url: string): string {
   // URL parsers drop tab, LF and CR anywhere in a path before sending it.
   let path = pathOf(url).replace(/[\t\n\r]/g, "");
   for (let round = 0; round < 3; round++) {

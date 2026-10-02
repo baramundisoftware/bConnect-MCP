@@ -714,8 +714,9 @@ function auditProblems(session: StdioSession): string[] {
   if (session.requests.length === 0) problems.push('no request reached the bConnect stand-in, so nothing could be audited');
   // Audit lines name the path below the base URL (http://127.0.0.1:<port>/bconnect).
   const probe = session.requests[0]?.split(' ')[1]?.split('?')[0]?.replace(/^\/bconnect(?=\/)/, '');
-  if (probe && !session.stderr.split('\n').some((line) => line.includes('[AUDIT]') && line.includes(probe))) {
-    problems.push(`stderr has no [AUDIT] line for ${probe}`);
+  // A security-relevant route (e.g. servermanagement's SecurityGroups probe) is tagged [SECURITY AUDIT].
+  if (probe && !session.stderr.split('\n').some((line) => /\[(SECURITY )?AUDIT\]/.test(line) && line.includes(probe))) {
+    problems.push(`stderr has no [AUDIT] or [SECURITY AUDIT] line for ${probe}`);
   }
   return problems;
 }
@@ -743,7 +744,7 @@ describe('audit output in stdio mode', () => {
     }, 30_000);
 
     it('reports a request whose audit line is missing', () => {
-      expect(auditProblems({ stdout: '', stderr: 'started\n', requests: ['GET /bconnect/x/v2.0/Y?PageSize=1'], tools: 1 })).toEqual(['stderr has no [AUDIT] line for /x/v2.0/Y']);
+      expect(auditProblems({ stdout: '', stderr: 'started\n', requests: ['GET /bconnect/x/v2.0/Y?PageSize=1'], tools: 1 })).toEqual(['stderr has no [AUDIT] or [SECURITY AUDIT] line for /x/v2.0/Y']);
     });
   });
 });
