@@ -4,8 +4,11 @@
  *
  * The rule, checked against both specs by __tests__/security-routes.guard.test.ts:
  * every operation tagged ApiKeys, LocalAdministrativeAccounts, Objects,
- * SecurityGroups or SecurityProfiles, plus every operation whose answer carries
- * a credential (BitLocker, LAPS, enrollment tokens). A new such operation in a future spec fails the
+ * SecurityGroups or SecurityProfiles; every write tagged ManagementServer,
+ * Microservices, VariableDefinitions or VariableInstances; every operation
+ * whose answer or request body carries a credential (BitLocker, LAPS,
+ * enrollment, endpoint passwords). Every other tag is classified there as not
+ * security-relevant, with a reason. A new such operation in a future spec fails the
  * guard until it's listed here. Written as OpenAPI path templates.
  */
 import { type SecretRoute, canonicalPathOf, routeMatcher } from "./secret-routes.js";
@@ -22,6 +25,11 @@ export const SECURITY_ROUTES: readonly SecretRoute[] = Object.freeze([
   { method: "POST", domain: "endpoints", path: "/v2.0/AndroidEndpoints/{id}/StartEnrollment" },
   { method: "POST", domain: "endpoints", path: "/v2.0/IosEndpoints/{id}/StartEnrollment" },
   { method: "POST", domain: "endpoints", path: "/v2.0/MacEndpoints/{id}/StartEnrollment" },
+  { method: "POST", domain: "endpoints", path: "/v2.0/WindowsEndpoints/{id}/StartEnrollment" },
+  // Endpoints created with credentials in the request body
+  { method: "POST", domain: "endpoints", path: "/v2.0/LinuxEndpoints" },
+  { method: "POST", domain: "endpoints", path: "/v2.0/NetworkEndpoints" },
+  { method: "POST", domain: "endpoints", path: "/v2.0/IndustrialEndpoints" },
   // API keys (26R1)
   { method: "GET", domain: "servermanagement", path: "/v2.0/ApiKeys" },
   // Object rights
@@ -39,6 +47,17 @@ export const SECURITY_ROUTES: readonly SecretRoute[] = Object.freeze([
   { method: "GET", domain: "servermanagement", path: "/v2.0/SecurityProfiles/{id}" },
   { method: "PATCH", domain: "servermanagement", path: "/v2.0/SecurityProfiles/{id}" },
   { method: "DELETE", domain: "servermanagement", path: "/v2.0/SecurityProfiles/{id}" },
+  // Server availability: restart, microservices
+  { method: "POST", domain: "servermanagement", path: "/v2.0/Restart" },
+  { method: "POST", domain: "servermanagement", path: "/v2.0/CancelScheduledRestart" },
+  { method: "POST", domain: "servermanagement", path: "/v2.0/Microservices/{id}/Start" },
+  { method: "POST", domain: "servermanagement", path: "/v2.0/Microservices/{id}/Stop" },
+  { method: "POST", domain: "servermanagement", path: "/v2.0/Microservices/{id}/Restart" },
+  // Variable writes (a variable can be of type Password)
+  { method: "POST", domain: "variables", path: "/v2.0/VariableDefinitions" },
+  { method: "PATCH", domain: "variables", path: "/v2.0/VariableDefinitions/{id}" },
+  { method: "DELETE", domain: "variables", path: "/v2.0/VariableDefinitions/{id}" },
+  { method: "PATCH", domain: "variables", path: "/v2.0/VariableInstances/{id}" },
 ]);
 
 const MATCHERS = SECURITY_ROUTES.map(routeMatcher);
