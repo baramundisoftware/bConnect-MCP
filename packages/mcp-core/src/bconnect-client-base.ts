@@ -9,6 +9,8 @@ import axios, { AxiosInstance, AxiosError, CreateAxiosDefaults, InternalAxiosReq
 import axiosRetry from "axios-retry";
 import https from "https";
 import tls, { PeerCertificate } from "node:tls";
+import { BConnectApiError, BConnectConnectionError, BConnectRedirectError } from "./api-errors.js";
+import { cleanModelText } from "./model-text.js";
 
 /**
  * Build the default CA trust list when no explicit CA is configured.
@@ -171,6 +173,87 @@ function redirectOrigin(error: AxiosError): string {
   } catch {
     return "an unknown address";
   }
+}
+
+/** `value` without trailing slashes (a scan, not a regex: linear on any input). */
+function trimTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") {end--;}
+  return value.slice(0, end);
+}
+
+/**
+ * Request path relative to the base URL, without query string or fragment. An
+ * absolute URL loses the base URL's origin and path prefix; one outside the base
+ * URL gives a placeholder instead of naming it.
+ */
+function relativeRequestPath(url: string | undefined, baseUrl: string): string {
+  const raw = url ?? "";
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) {return raw.split("?")[0].split("#")[0];}
+  try {
+    const target = new URL(raw);
+    const base = new URL(baseUrl);
+    const prefix = trimTrailingSlashes(base.pathname);
+    if (target.origin === base.origin && (target.pathname === prefix || target.pathname.startsWith(prefix + "/"))) {
+      return target.pathname.slice(prefix.length);
+    }
+  } catch {
+    // Unparsable: fall through to the placeholder.
+  }
+  return "(an address outside BCONNECT_BASE_URL)";
+}
+
+/** `text` with every occurrence of `needle` (any case) replaced by `replacement`. */
+function replaceAllIgnoreCase(text: string, needle: string, replacement: string): string {
+  if (needle === "") {return text;}
+  const lower = text.toLowerCase();
+  const target = needle.toLowerCase();
+  let out = "";
+  let from = 0;
+  for (let at = lower.indexOf(target); at !== -1; at = lower.indexOf(target, from)) {
+    out += text.slice(from, at) + replacement;
+    from = at + target.length;
+  }
+  return out + text.slice(from);
+}
+
+/**
+ * bConnect's problem text (RFC 7807 title, detail and up to five validation
+ * errors), cleaned for the model, with the configured host removed (best
+ * effort: a bare single-label host name and percent-encoded forms stay). `type` and
+ * `instance` are left out: they can carry URLs. Anything that isn't a problem
+ * object (an HTML page from a proxy, plain text, an array) gives undefined.
+ */
+function problemText(data: unknown, baseUrl: string): string | undefined {
+  if (!data || typeof data !== "object" || Array.isArray(data)) {return undefined;}
+  const title = Reflect.get(data, "title");
+  const detail = Reflect.get(data, "detail");
+  const errors: unknown = Reflect.get(data, "errors");
+  const parts: string[] = [];
+  const cleanTitle = typeof title === "string" ? title.trim() : "";
+  const cleanDetail = typeof detail === "string" ? detail.trim() : "";
+  if (cleanTitle) {parts.push(cleanTitle);}
+  if (cleanDetail && cleanDetail !== cleanTitle) {parts.push(cleanDetail);}
+  if (errors && typeof errors === "object" && !Array.isArray(errors)) {
+    const fields = Object.entries(errors).slice(0, 5).map(([field, messages]) => {
+      const list: unknown[] = Array.isArray(messages) ? messages : [messages];
+      return `${field}: ${list.filter((m) => typeof m === "string").join(" ")}`;
+    });
+    if (fields.length > 0) {parts.push(fields.join("; "));}
+  }
+  if (parts.length === 0) {return undefined;}
+  // Clean first (without shortening), so a host split by an invisible character
+  // is whole again when it is removed; shorten last.
+  let text = cleanModelText(parts.join(": "), Number.POSITIVE_INFINITY);
+  try {
+    const url = new URL(baseUrl);
+    for (const needle of [trimTrailingSlashes(baseUrl), url.origin, url.host, url.hostname.includes(".") ? url.hostname : ""]) {
+      text = replaceAllIgnoreCase(text, needle, "[bConnect host]");
+    }
+  } catch {
+    // No parsable base URL: nothing to remove.
+  }
+  return cleanModelText(text);
 }
 
 export class BConnectClientBase {
@@ -529,40 +612,48 @@ export class BConnectClientBase {
       const status = error.response.status;
 
       if (status >= 300 && status < 400) {
-        throw new Error(
+        throw new BConnectRedirectError(
           `bConnect answered with a redirect to ${redirectOrigin(error)}. ` +
           "Set BCONNECT_BASE_URL to the final address; redirects are not followed, " +
           "so credentials are only ever sent to the configured host."
         );
       }
 
+      const details = {
+        status,
+        method: (error.config?.method ?? "GET").toUpperCase(),
+        path: relativeRequestPath(error.config?.url, this.config.baseUrl),
+        problemText: problemText(error.response.data, this.config.baseUrl),
+      };
+      // The message is the short operator text (audit log, startup probe);
+      // toolErrorResult() builds the model's text from the details.
       switch (status) {
         case 401:
-          throw new Error(
-            "Authentication failed. Check your credentials (username/password or API key)."
+          throw new BConnectApiError(
+            "Authentication failed. Check your credentials (username/password or API key).", details
           );
         case 403:
-          throw new Error(
-            "Access denied. Insufficient permissions for this operation."
+          throw new BConnectApiError(
+            "Access denied. Insufficient permissions for this operation.", details
           );
         case 404:
-          throw new Error("Resource not found.");
+          throw new BConnectApiError("Resource not found.", details);
         case 429:
-          throw new Error("Rate limit exceeded. Please try again later.");
+          throw new BConnectApiError("Rate limit exceeded. Please try again later.", details);
         case 500:
-          throw new Error("bConnect API returned an internal server error.");
+          throw new BConnectApiError("bConnect API returned an internal server error.", details);
         default:
-          throw new Error(`bConnect API error (HTTP ${status}).`);
+          throw new BConnectApiError(`bConnect API error (HTTP ${status}).`, details);
       }
     } else if (error instanceof AxiosError && error.request) {
       // Request made but no response received. A TLS trust failure lands here —
       // give an actionable message before the generic connectivity one (issue #59).
       const certHint = tlsUntrustedCertHint(error);
       if (certHint) {
-        throw new Error(certHint);
+        throw new BConnectConnectionError(certHint);
       }
       // do not expose internal hostname
-      throw new Error(
+      throw new BConnectConnectionError(
         "Cannot connect to the bConnect API. " +
         "Check network connectivity and BCONNECT_BASE_URL configuration."
       );

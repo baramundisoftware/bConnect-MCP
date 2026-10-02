@@ -10,3 +10,7 @@ export * from "./request-path.js";
 export * from "./client-config.js";
 export * from "./tool-arguments.js";
 export * from "./unverified-writes.js";
+export * from "./api-errors.js";
+export * from "./model-text.js";
+export * from "./error-meanings.js";
+export * from "./tool-errors.js";
