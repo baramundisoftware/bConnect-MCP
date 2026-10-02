@@ -5,7 +5,7 @@
  * structured log format, and support for external logging systems.
  */
 
-import { isSecretRoute } from './secret-routes.js';
+import { isSecurityRoute } from './security-routes.js';
 
 export type AuditLevel = 'all' | 'write' | 'security' | 'none';
 export type LogLevel = 'info' | 'warn' | 'error';
@@ -64,7 +64,6 @@ export interface AuditLoggerConfig {
  */
 export class AuditLogger {
   private readonly config: Required<AuditLoggerConfig>;
-  private readonly securitySensitivePaths: RegExp[];
 
   constructor(config: AuditLoggerConfig) {
     this.config = {
@@ -73,16 +72,6 @@ export class AuditLogger {
       logHandler: config.logHandler || this.defaultLogHandler.bind(this),
       includeParameters: config.includeParameters || false,
     };
-
-    // Define security-sensitive API paths
-    this.securitySensitivePaths = [
-      /\/BitLockerSecrets/i,
-      /\/TpmOwnerPasswords/i,
-      /\/BitLockerPINs/i,
-      /\/Secrets/i,
-      /\/Password/i,
-      /\/Credential/i,
-    ];
   }
 
   /**
@@ -109,12 +98,12 @@ export class AuditLogger {
   }
 
   /**
-   * Check if a request is security-sensitive: a path pattern above, or a route
-   * whose answer or body carries live credentials (the core secret-route table,
-   * e.g. a LAPS password read).
+   * Check if a request is security-sensitive: a route in the core's
+   * SECURITY_ROUTES table (credentials, API keys, object rights, security
+   * groups and profiles), derived from the specs (#168).
    */
   isSecuritySensitive(path: string, method = 'GET'): boolean {
-    return this.securitySensitivePaths.some(pattern => pattern.test(path)) || isSecretRoute(method, path);
+    return isSecurityRoute(method, path);
   }
 
   /**
