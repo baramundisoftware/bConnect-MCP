@@ -33,7 +33,16 @@ const FALLBACK = {
   includeSubFolders: "If true, items in sub-folders are also returned (default false).",
 };
 
-const clean = (s) => String(s ?? "").replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+/** Spec text as plain text: line breaks become spaces, tags are removed until none is left, stray angle brackets go. */
+function clean(s) {
+  let text = String(s ?? "").replace(/<br\s*\/?>/gi, " ");
+  let before;
+  do {
+    before = text;
+    text = text.replace(/<[^<>]*>/g, "");
+  } while (text !== before);
+  return text.replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
+}
 
 /** operationId → [{ domain, method, path, params, spec }] per release */
 function loadSpecs(release) {
@@ -128,7 +137,8 @@ const stale = [];
 for (const server of servers) {
   const file = join(ROOT, server, "src", "query-params.ts");
   const text = toolTable(server, specs);
-  const current = existsSync(file) ? readFileSync(file, "utf8") : "";
+  // Compare without line-ending differences: a Windows checkout has CRLF.
+  const current = existsSync(file) ? readFileSync(file, "utf8").replace(/\r\n/g, "\n") : "";
   if (current === text) {continue;}
   stale.push(server);
   if (!CHECK) {writeFileSync(file, text);}
