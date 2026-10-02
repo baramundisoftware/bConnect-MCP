@@ -12,7 +12,6 @@ type GetVariableDefinitionsParams = operations['GetVariableDefinitions']['parame
 type GetVariableInstancesParams = operations['GetVariableInstances']['parameters']['query'];
 
 // Write operation types
-type VariableDefinitionForCreation = operations['CreateVariableDefinition']['requestBody']['content']['application/json'];
 type VariableDefinitionUpdate = operations['UpdateVariableDefinition']['requestBody']['content']['application/json-patch+json'];
 type VariableInstanceUpdate = operations['UpdateVariableInstance']['requestBody']['content']['application/json-patch+json'];
 
@@ -35,7 +34,7 @@ export class VariablesModule {
     return response.data;
   }
 
-  async createVariableDefinition(body: VariableDefinitionForCreation): Promise<VariableDefinition> {
+  async createVariableDefinition(body: Record<string, unknown>): Promise<VariableDefinition> {
     const response = await this.httpClient.post(`${this.basePath}/VariableDefinitions`, body);
     return response.data;
   }

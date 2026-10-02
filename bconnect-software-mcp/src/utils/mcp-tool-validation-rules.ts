@@ -72,7 +72,8 @@ export const SoftwareRules = {
       maxLength: 255,
       message: 'name is required (string, 1-255 chars)'
     },
-    CommonRules.guidOptional('folderId')
+    CommonRules.guidOptional('folderId'),
+    { name: 'type', required: false, type: 'string', enum: ['Install', 'Uninstall'], message: 'type must be Install or Uninstall' }
   ],
 
   deleteSoftwareBundle: (): ValidationRule[] => [
@@ -89,14 +90,7 @@ export const SoftwareRules = {
 
   addApplicationToBundle: (): ValidationRule[] => [
     CommonRules.guid('bundleId'),
-    CommonRules.guid('applicationId'),
-    {
-      name: 'order',
-      required: false,
-      type: 'number',
-      min: 0,
-      message: 'order must be a non-negative integer'
-    }
+    CommonRules.guid('applicationId')
   ],
 
   deleteBundleApplication: (): ValidationRule[] => [

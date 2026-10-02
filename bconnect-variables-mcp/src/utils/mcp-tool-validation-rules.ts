@@ -33,33 +33,12 @@ export const VariablesRules = {
   ],
 
   createVariableDefinition: (): ValidationRule[] => [
-    {
-      name: 'name',
-      required: true,
-      type: 'string',
-      minLength: 1,
-      maxLength: 255,
-      message: 'name is required (string, 1-255 chars)'
-    },
-    {
-      name: 'dataType',
-      required: true,
-      type: 'string',
-      minLength: 1,
-      maxLength: 50,
-      message: 'dataType is required (string, e.g. "String", "Integer", "Boolean")'
-    },
-    {
-      name: 'defaultValue',
-      required: false,
-      type: 'string'
-    },
-    {
-      name: 'description',
-      required: false,
-      type: 'string',
-      maxLength: 4000
-    }
+    { name: 'name', required: true, type: 'string', minLength: 1, maxLength: 255, message: 'name is required (string, 1-255 chars)' },
+    { name: 'category', required: true, type: 'string', minLength: 1, message: 'category is required (string)' },
+    { name: 'scopes', required: true, type: 'array', message: 'scopes is required: a list of ADObject, AndroidEndpoint, Endpoint, Deprecated_IndustrialEndpoint, IosEndpoint, LogicalGroup, NetworkEndpoint, WindowsApplication, WindowsJobDefinition, LinuxEndpoint' },
+    { name: 'type', required: false, type: 'string', enum: ['String', 'Integer', 'Password', 'Date', 'DropDownList', 'DropDownEditableList', 'Checkbox', 'FileLink', 'Folder'], message: 'type must be one of String, Integer, Password, Date, DropDownList, DropDownEditableList, Checkbox, FileLink, Folder' },
+    { name: 'defaultValue', required: false, type: 'string', message: 'defaultValue must be a string' },
+    { name: 'comment', required: false, type: 'string', message: 'comment must be a string' },
   ],
 
   updateVariableDefinition: (): ValidationRule[] => [

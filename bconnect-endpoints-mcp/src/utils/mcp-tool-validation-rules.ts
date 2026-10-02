@@ -7,6 +7,7 @@
 
 import { ValidationRule, CommonRules } from "@bconnect/mcp-core";
 import { updateRules } from "../update-fields.js";
+import { createRules } from "../create-fields.js";
 
 /**
  * Common pagination parameters used across many tools
@@ -799,15 +800,15 @@ export const DocumentationSearchRules = {
  */
 export const TOOL_RULES: Record<string, () => ValidationRule[]> = {
   create_android_endpoint: () => [CommonRules.guidOptional('logicalGroupId')],
-  create_industrial_endpoint: EndpointsRules.createSpecializedEndpoint,
+  create_industrial_endpoint: () => createRules("create_industrial_endpoint"),
   create_ios_endpoint: () => [CommonRules.guidOptional('logicalGroupId')],
-  create_linux_endpoint: () => [CommonRules.guidOptional('logicalGroupId')],
+  create_linux_endpoint: () => createRules("create_linux_endpoint"),
   create_logical_group: () => [CommonRules.guidOptional('parentId')],
   create_mac_endpoint: () => [CommonRules.guidOptional('logicalGroupId')],
-  create_maintenance_window_for_endpoint: EndpointsRules.createMaintenanceWindowForEndpoint,
-  create_maintenance_window_for_logical_group: EndpointsRules.createMaintenanceWindowForLogicalGroup,
-  create_network_endpoint: EndpointsRules.createSpecializedEndpoint,
-  create_windows_endpoint: () => [CommonRules.guidOptional('logicalGroupId')],
+  create_maintenance_window_for_endpoint: () => createRules("create_maintenance_window_for_endpoint"),
+  create_maintenance_window_for_logical_group: () => createRules("create_maintenance_window_for_logical_group"),
+  create_network_endpoint: () => createRules("create_network_endpoint"),
+  create_windows_endpoint: () => createRules("create_windows_endpoint"),
   delete_android_endpoint: EndpointsRules.deleteEndpoint,
   delete_endpoint: EndpointsRules.deleteEndpoint,
   delete_industrial_endpoint: EndpointsRules.deleteEndpoint,
@@ -850,8 +851,8 @@ export const TOOL_RULES: Record<string, () => ValidationRule[]> = {
   search_endpoints: () => [],
   start_android_enrollment: EndpointsRules.startAndroidEnrollment,
   start_ios_enrollment: EndpointsRules.startIosEnrollment,
-  start_mac_enrollment: EndpointsRules.getPlatformEndpoint,
-  start_windows_enrollment: EndpointsRules.getPlatformEndpoint,
+  start_mac_enrollment: () => createRules("start_mac_enrollment"),
+  start_windows_enrollment: () => createRules("start_windows_enrollment"),
   trigger_intune_installation: EndpointsRules.getPlatformEndpoint,
   unlink_entra_id_data: () => [CommonRules.guid('endpointId')],
   update_android_endpoint: () => [CommonRules.guid('id'), CommonRules.guidOptional('logicalGroupId')],

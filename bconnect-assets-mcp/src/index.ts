@@ -22,13 +22,17 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker, pickArguments } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { AssetsRules } from "./utils/mcp-tool-validation-rules.js";
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
 export type { BConnectCredentials } from "@bconnect/mcp-core";
+
+/** AssetForCreation properties the create_asset tool offers; nothing else goes into the body (#189). */
+const ASSET_FIELDS = ["assetTypeId", "ownerId", "ownerType", "name", "comments", "contact", "inventoryNumber", "url",
+  "costCenter", "purchaseDate", "purchasePrice", "operatingCost", "energyOff", "energyOn", "additionalProperties"];
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
   dotenv.config();
@@ -147,7 +151,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           properties: {
             assetTypeId: { type: "string", description: "GUID of the asset type for this asset." },
             ownerId: { type: "string", description: "GUID of the owner (e.g. endpoint, user, or asset stock)." },
-            ownerType: { type: "string", description: "Type of the owner. E.g. 'WindowsEndpoint', 'ADObject', 'AssetStock'." },
+            ownerType: { type: "string", enum: ["Undefined", "LogicalGroup", "Machine", "AssetStock", "ADObject", "OrgUnit"], description: "Kind of owner: Machine (an endpoint), AssetStock, ADObject, LogicalGroup or OrgUnit." },
             name: { type: "string", description: "Name of the asset." },
             comments: { type: "string", description: "Optional comments or notes about the asset." },
             contact: { type: "string", description: "Contact person for this asset." },
@@ -657,7 +661,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_asset": {
-          const result = await assets.createAsset(args as never);
+          const result = await assets.createAsset(pickArguments(args ?? {}, ASSET_FIELDS));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

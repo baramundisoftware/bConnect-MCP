@@ -43,12 +43,10 @@ type IosEnrollmentRequest = paths["/v2.0/IosEndpoints/{id}/StartEnrollment"]["po
 type IosEnrollmentResponse = paths["/v2.0/IosEndpoints/{id}/StartEnrollment"]["post"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for Windows Endpoint WRITE operations
-type WindowsEndpointForCreation = paths["/v2.0/WindowsEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type WindowsEndpointCreated = paths["/v2.0/WindowsEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
 type WindowsEndpointUpdated = paths["/v2.0/WindowsEndpoints/{id}"]["patch"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for Linux Endpoint WRITE operations
-type LinuxEndpointForCreation = paths["/v2.0/LinuxEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type LinuxEndpointCreated = paths["/v2.0/LinuxEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
 type LinuxEndpointUpdated = paths["/v2.0/LinuxEndpoints/{id}"]["patch"]["responses"]["200"]["content"]["application/json"];
 
@@ -63,7 +61,6 @@ type LogicalGroupCreated = paths["/v2.0/LogicalGroups"]["post"]["responses"]["20
 type LogicalGroupUpdated = paths["/v2.0/LogicalGroups/{id}"]["patch"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for Maintenance Window operations - Phase 3
-type MaintenanceWindowData = paths["/v2.0/Endpoints/{id}/MaintenanceWindow"]["post"]["requestBody"]["content"]["application/json"];
 type MaintenanceWindow = paths["/v2.0/Endpoints/{id}/MaintenanceWindow"]["post"]["responses"]["201"]["content"]["application/json"];
 type MaintenanceWindowGet = paths["/v2.0/Endpoints/{id}/MaintenanceWindow"]["get"]["responses"]["200"]["content"]["application/json"];
 type MaintenanceWindowForGroupGet = paths["/v2.0/LogicalGroups/{id}/MaintenanceWindow"]["get"]["responses"]["200"]["content"]["application/json"];
@@ -83,11 +80,9 @@ type NetworkEndpointsList = paths["/v2.0/NetworkEndpoints"]["get"]["responses"][
 // Type aliases for Industrial Endpoint operations
 type IndustrialEndpointsList = paths["/v2.0/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type IndustrialEndpointGet = paths["/v2.0/IndustrialEndpoints/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
-type IndustrialEndpointForCreation = paths["/v2.0/IndustrialEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type IndustrialEndpoint = paths["/v2.0/IndustrialEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
 
 // Type aliases for Network Endpoint WRITE operations - Phase 3
-type NetworkEndpointForCreation = paths["/v2.0/NetworkEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type NetworkEndpoint = paths["/v2.0/NetworkEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
 
 export interface EndpointsQueryParams {
@@ -390,7 +385,7 @@ export class EndpointsModule {
   /**
    * Create a new Windows endpoint
    */
-  async createWindowsEndpoint(endpointData: WindowsEndpointForCreation): Promise<WindowsEndpointCreated> {
+  async createWindowsEndpoint(endpointData: Record<string, unknown>): Promise<WindowsEndpointCreated> {
     const response = await this.client.post<WindowsEndpointCreated>(
       `${this.basePath}/WindowsEndpoints`,
       endpointData
@@ -446,7 +441,7 @@ export class EndpointsModule {
   /**
    * Create a new Linux endpoint
    */
-  async createLinuxEndpoint(endpointData: LinuxEndpointForCreation): Promise<LinuxEndpointCreated> {
+  async createLinuxEndpoint(endpointData: Record<string, unknown>): Promise<LinuxEndpointCreated> {
     const response = await this.client.post<LinuxEndpointCreated>(
       `${this.basePath}/LinuxEndpoints`,
       endpointData
@@ -562,7 +557,7 @@ export class EndpointsModule {
   /**
    * Create a maintenance window for an endpoint
    */
-  async createMaintenanceWindowForEndpoint(id: string, maintenanceWindowData: MaintenanceWindowData): Promise<MaintenanceWindow> {
+  async createMaintenanceWindowForEndpoint(id: string, maintenanceWindowData: Record<string, unknown>): Promise<MaintenanceWindow> {
     const response = await this.client.post<MaintenanceWindow>(
       `${this.basePath}/Endpoints/${id}/MaintenanceWindow`,
       maintenanceWindowData
@@ -593,7 +588,7 @@ export class EndpointsModule {
   /**
    * Create a maintenance window for a logical group
    */
-  async createMaintenanceWindowForLogicalGroup(id: string, maintenanceWindowData: MaintenanceWindowData): Promise<MaintenanceWindow> {
+  async createMaintenanceWindowForLogicalGroup(id: string, maintenanceWindowData: Record<string, unknown>): Promise<MaintenanceWindow> {
     const response = await this.client.post<MaintenanceWindow>(
       `${this.basePath}/LogicalGroups/${id}/MaintenanceWindow`,
       maintenanceWindowData
@@ -649,7 +644,7 @@ export class EndpointsModule {
   /**
    * Create a new industrial endpoint
    */
-  async createIndustrialEndpoint(endpointData: IndustrialEndpointForCreation): Promise<IndustrialEndpoint> {
+  async createIndustrialEndpoint(endpointData: Record<string, unknown>): Promise<IndustrialEndpoint> {
     const response = await this.client.post<IndustrialEndpoint>(
       `${this.basePath}/IndustrialEndpoints`,
       endpointData
@@ -684,7 +679,7 @@ export class EndpointsModule {
   /**
    * Create a new network endpoint
    */
-  async createNetworkEndpoint(endpointData: NetworkEndpointForCreation): Promise<NetworkEndpoint> {
+  async createNetworkEndpoint(endpointData: Record<string, unknown>): Promise<NetworkEndpoint> {
     const response = await this.client.post<NetworkEndpoint>(
       `${this.basePath}/NetworkEndpoints`,
       endpointData

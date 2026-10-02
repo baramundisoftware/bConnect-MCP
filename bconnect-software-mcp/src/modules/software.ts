@@ -5,10 +5,8 @@ import type { components, operations } from '../generated/software-types.js';
 type InstalledWindowsSoftwarePagedList = components['schemas']['InstalledWindowsSoftwarePagedList'];
 type SoftwareBundlePagedList = components['schemas']['SoftwareBundlePagedList'];
 type SoftwareBundle = components['schemas']['SoftwareBundle'];
-type SoftwareBundleForCreation = components['schemas']['SoftwareBundleForCreation'];
 type SoftwareBundleApplicationPagedList = components['schemas']['SoftwareBundleApplicationPagedList'];
 type SoftwareBundleApplication = components['schemas']['SoftwareBundleApplication'];
-type AddApplicationRequest = components['schemas']['AddApplicationRequest'];
 type JsonPatchDocument = components['schemas']['JsonPatchDocument'];
 type BundleFolderPagedList = components['schemas']['BundleFolderPagedList'];
 type BundleFolder = components['schemas']['BundleFolder'];
@@ -90,7 +88,7 @@ export class SoftwareModule {
     return response.data;
   }
 
-  async createSoftwareBundle(body: SoftwareBundleForCreation): Promise<SoftwareBundle> {
+  async createSoftwareBundle(body: Record<string, unknown>): Promise<SoftwareBundle> {
     const response = await this.httpClient.post(
       `${this.basePath}/Bundles`,
       body
@@ -127,7 +125,7 @@ export class SoftwareModule {
 
   async addApplicationToBundle(
     bundleId: string,
-    body: AddApplicationRequest
+    body: Record<string, unknown>
   ): Promise<SoftwareBundleApplication> {
     const response = await this.httpClient.post(
       `${this.basePath}/Bundles/${bundleId}/BundleApplications`,

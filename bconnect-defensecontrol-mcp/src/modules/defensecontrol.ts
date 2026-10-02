@@ -67,7 +67,7 @@ export class DefenseControlModule {
   async triggerUpdateOnClient(id: string, timeout?: number): Promise<boolean> {
     const response = await this.httpClient.post<boolean>(
       `${this.basePath}/LocalAdministrativeAccounts/WindowsEndpoints/${id}/TriggerUpdateOnClient`,
-      null,
+      undefined,
       { params: timeout !== undefined ? { timeout } : {} }
     );
     return response.data;

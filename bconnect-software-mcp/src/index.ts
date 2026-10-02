@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker, pickArguments } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { SoftwareRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -164,7 +164,10 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               name: { type: "string", description: "Display name for the new software bundle." },
-              folderId: { type: "string", description: "Optional GUID of the folder to place the bundle in." }
+              folderId: { type: "string", description: "Optional GUID of the folder to place the bundle in." },
+              type: { type: "string", enum: ["Install", "Uninstall"], description: "Install (default) or Uninstall bundle." },
+              ignoreDependencies: { type: "boolean", description: "Ignore application dependencies (always true for Uninstall bundles)." },
+              comment: { type: "string", description: "Optional comment." }
             },
             required: ["name"]
           }
@@ -218,8 +221,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               bundleId: { type: "string", description: "GUID of the software bundle to add the application to." },
-              applicationId: { type: "string", description: "GUID of the application to assign to the bundle." },
-              order: { type: "number", description: "Optional installation order within the bundle." }
+              applicationId: { type: "string", description: "GUID of the application to assign to the bundle." }
             },
             required: ["bundleId", "applicationId"]
           }
@@ -475,9 +477,10 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "create_software_bundle": {
           requires26R1();
-          const body: Record<string, unknown> = { name: args!.name };
-          if (typeof args!.folderId === "string") {body.folderId = args!.folderId;}
-          const result = await sw.createSoftwareBundle(body as never);
+          // The API calls the folder parentId.
+          const result = await sw.createSoftwareBundle(
+            pickArguments(args!, ["name", "folderId", "type", "ignoreDependencies", "comment"], { folderId: "parentId" })
+          );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -503,9 +506,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "add_application_to_bundle": {
           requires26R1();
-          const body: Record<string, unknown> = { applicationId: args!.applicationId };
-          if (typeof args!.order === "number") {body.order = args!.order;}
-          const result = await sw.addApplicationToBundle(args!.bundleId as string, body as never);
+          const result = await sw.addApplicationToBundle(args!.bundleId as string, pickArguments(args!, ["applicationId"]));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

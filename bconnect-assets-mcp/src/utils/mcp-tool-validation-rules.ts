@@ -81,9 +81,8 @@ export const AssetsRules = {
       name: 'ownerType',
       required: true,
       type: 'string',
-      minLength: 1,
-      maxLength: 64,
-      message: 'ownerType is required (e.g. "WindowsEndpoint", "ADObject", "AssetStock")'
+      enum: ['Undefined', 'LogicalGroup', 'Machine', 'AssetStock', 'ADObject', 'OrgUnit'],
+      message: 'ownerType must be one of Undefined, LogicalGroup, Machine, AssetStock, ADObject, OrgUnit'
     },
     {
       name: 'name',

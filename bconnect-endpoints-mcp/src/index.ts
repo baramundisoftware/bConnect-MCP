@@ -22,8 +22,9 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, objectArgument, ClientConfigError, withUnverifiedWriteMarker, type JsonPatchOperation } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker, type JsonPatchOperation } from "@bconnect/mcp-core";
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
+import { createBody, createInputSchema } from "./create-fields.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 
@@ -605,17 +606,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         {
           name: "create_windows_endpoint",
           description: "Create a new Windows endpoint. WARNING: Creates a new endpoint in the system.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              displayName: { type: "string", description: "Display name" },
-              logicalGroupId: { type: "string", description: "Logical group ID (GUID)" },
-              comment: { type: "string", description: "Comment" },
-              hostName: { type: "string", description: "Host name" },
-              primaryMAC: { type: "string", description: "Primary MAC address" }
-            },
-            required: ["displayName"]
-          }
+          inputSchema: createInputSchema("create_windows_endpoint")
         },
         {
           name: "update_windows_endpoint",
@@ -636,14 +627,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         {
           name: "start_windows_enrollment",
           description: "Start Windows endpoint enrollment. Sets endpoint to Internet mode and generates enrollment data.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "Endpoint ID (GUID)" },
-              emailRecipient: { type: "string", description: "Email recipient for enrollment instructions (optional)" }
-            },
-            required: ["id"]
-          }
+          inputSchema: createInputSchema("start_windows_enrollment")
         },
         {
           name: "trigger_intune_installation",
@@ -660,15 +644,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         {
           name: "create_linux_endpoint",
           description: "Create a new Linux endpoint. WARNING: Creates a new endpoint.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              displayName: { type: "string", description: "Display name" },
-              logicalGroupId: { type: "string", description: "Logical group ID (GUID)" },
-              comment: { type: "string", description: "Comment" }
-            },
-            required: ["displayName"]
-          }
+          inputSchema: createInputSchema("create_linux_endpoint")
         },
         {
           name: "update_linux_endpoint",
@@ -719,14 +695,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         {
           name: "start_mac_enrollment",
           description: "Start Mac endpoint enrollment.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "Endpoint ID (GUID)" },
-              emailRecipient: { type: "string", description: "Email recipient for enrollment instructions (optional)" }
-            },
-            required: ["id"]
-          }
+          inputSchema: createInputSchema("start_mac_enrollment")
         },
         // Logical groups CRUD
         {
@@ -760,22 +729,22 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         },
         // Maintenance windows (Phase 24: added GET)
         { name: "get_maintenance_window_for_endpoint", description: "Get the maintenance window configuration for a specific endpoint.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Endpoint ID (GUID)" } }, required: ["id"] } },
-        { name: "create_maintenance_window_for_endpoint", description: "Create a maintenance window for an endpoint. WARNING: Creates new maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" }, maintenanceWindowData: { type: "object" } }, required: ["id", "maintenanceWindowData"] } },
+        { name: "create_maintenance_window_for_endpoint", description: "Create a maintenance window for an endpoint. WARNING: Creates new maintenance window.", inputSchema: createInputSchema("create_maintenance_window_for_endpoint") },
         { name: "update_maintenance_window_for_endpoint", description: "Update a maintenance window for an endpoint. WARNING: Modifies existing maintenance window.", inputSchema: updateInputSchema("update_maintenance_window_for_endpoint", "Endpoint ID (GUID)") },
         { name: "delete_maintenance_window_for_endpoint", description: "Delete a maintenance window for an endpoint. WARNING: Permanently deletes maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         { name: "get_maintenance_window_for_logical_group", description: "Get the maintenance window configuration for a specific logical group.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Logical group ID (GUID)" } }, required: ["id"] } },
-        { name: "create_maintenance_window_for_logical_group", description: "Create a maintenance window for a logical group. WARNING: Creates new maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" }, maintenanceWindowData: { type: "object" } }, required: ["id", "maintenanceWindowData"] } },
+        { name: "create_maintenance_window_for_logical_group", description: "Create a maintenance window for a logical group. WARNING: Creates new maintenance window.", inputSchema: createInputSchema("create_maintenance_window_for_logical_group") },
         { name: "update_maintenance_window_for_logical_group", description: "Update a maintenance window for a logical group. WARNING: Modifies existing maintenance window.", inputSchema: updateInputSchema("update_maintenance_window_for_logical_group", "Logical group ID (GUID)") },
         { name: "delete_maintenance_window_for_logical_group", description: "Delete a maintenance window for a logical group. WARNING: Permanently deletes maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         // Industrial & network endpoints (Phase 24: added GET for network)
         { name: "list_industrial_endpoints", description: "List all industrial endpoints (PLCs, SCADA systems, etc.) managed by baramundi. Returns a paged list.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: { type: "number" }, PageSize: { type: "number" }, OrderBy: { type: "string" } } } },
         { name: "get_industrial_endpoint", description: "Get details of a specific industrial endpoint by its GUID.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Industrial endpoint ID (GUID)" } }, required: ["id"] } },
-        { name: "create_industrial_endpoint", description: "Create a new industrial endpoint (PLC, SCADA, etc.). WARNING: Creates a new endpoint.", inputSchema: { type: "object", properties: { endpointData: { type: "object" } }, required: ["endpointData"] } },
+        { name: "create_industrial_endpoint", description: "Create a new industrial endpoint (PLC, SCADA, etc.). WARNING: Creates a new endpoint.", inputSchema: createInputSchema("create_industrial_endpoint") },
         { name: "update_industrial_endpoint", description: "Update an existing industrial endpoint. WARNING: Modifies endpoint properties.", inputSchema: updateInputSchema("update_industrial_endpoint", "Industrial endpoint ID (GUID)") },
         { name: "delete_industrial_endpoint", description: "Delete an industrial endpoint. WARNING: Permanently deletes the endpoint.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         { name: "list_network_endpoints", description: "List all network endpoints (switches, routers, printers, etc.) managed by baramundi.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: { type: "number" }, PageSize: { type: "number" }, OrderBy: { type: "string" } } } },
         { name: "get_network_endpoint", description: "Get details of a specific network endpoint by its GUID.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Network endpoint ID (GUID)" } }, required: ["id"] } },
-        { name: "create_network_endpoint", description: "Create a new network endpoint (switch, router, printer, etc.). WARNING: Creates a new endpoint.", inputSchema: { type: "object", properties: { endpointData: { type: "object" } }, required: ["endpointData"] } },
+        { name: "create_network_endpoint", description: "Create a new network endpoint (switch, router, printer, etc.). WARNING: Creates a new endpoint.", inputSchema: createInputSchema("create_network_endpoint") },
         { name: "update_network_endpoint", description: "Update an existing network endpoint. WARNING: Modifies endpoint properties.", inputSchema: updateInputSchema("update_network_endpoint", "Network endpoint ID (GUID)") },
         { name: "delete_network_endpoint", description: "Delete a network endpoint. WARNING: Permanently deletes the endpoint.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         // Generic delete
@@ -1022,7 +991,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_windows_endpoint": {
-          const result = await bconnect.endpoints.createWindowsEndpoint(args! as never);
+          const result = await bconnect.endpoints.createWindowsEndpoint(createBody("create_windows_endpoint", args!));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1037,8 +1006,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "start_windows_enrollment": {
-          const { id: _endpointId, ...windowsEnrollment } = objectArgument(args, "arguments");
-          const result = await bconnect.endpoints.startWindowsEndpointEnrollment(args!.id as string, windowsEnrollment);
+          const result = await bconnect.endpoints.startWindowsEndpointEnrollment(args!.id as string, createBody("start_windows_enrollment", args!));
           return { content: [{ type: "text", text: `Windows endpoint ${args!.id} enrollment started:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
@@ -1053,7 +1021,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_linux_endpoint": {
-          const result = await bconnect.endpoints.createLinuxEndpoint(args! as never);
+          const result = await bconnect.endpoints.createLinuxEndpoint(createBody("create_linux_endpoint", args!));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1083,8 +1051,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "start_mac_enrollment": {
-          const { id: _endpointId, ...macEnrollment } = objectArgument(args, "arguments");
-          const result = await bconnect.endpoints.startMacEndpointEnrollment(args!.id as string, macEnrollment);
+          const result = await bconnect.endpoints.startMacEndpointEnrollment(args!.id as string, createBody("start_mac_enrollment", args!));
           return { content: [{ type: "text", text: `Mac endpoint ${args!.id} enrollment started:\n${JSON.stringify(withoutQrImage(result), null, 2)}` }] };
         }
 
@@ -1104,7 +1071,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_maintenance_window_for_endpoint": {
-          const result = await bconnect.endpoints.createMaintenanceWindowForEndpoint(args!.id as string, args!.maintenanceWindowData as never);
+          const result = await bconnect.endpoints.createMaintenanceWindowForEndpoint(args!.id as string, createBody("create_maintenance_window_for_endpoint", args!));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1119,7 +1086,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_maintenance_window_for_logical_group": {
-          const result = await bconnect.endpoints.createMaintenanceWindowForLogicalGroup(args!.id as string, args!.maintenanceWindowData as never);
+          const result = await bconnect.endpoints.createMaintenanceWindowForLogicalGroup(args!.id as string, createBody("create_maintenance_window_for_logical_group", args!));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1145,7 +1112,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_industrial_endpoint": {
-          const result = await bconnect.endpoints.createIndustrialEndpoint(args!.endpointData as never);
+          const result = await bconnect.endpoints.createIndustrialEndpoint(createBody("create_industrial_endpoint", args!));
           return { content: [{ type: "text", text: `Industrial endpoint created successfully. ID: ${result.id}` }] };
         }
 
@@ -1160,7 +1127,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_network_endpoint": {
-          const result = await bconnect.endpoints.createNetworkEndpoint(args!.endpointData as never);
+          const result = await bconnect.endpoints.createNetworkEndpoint(createBody("create_network_endpoint", args!));
           return { content: [{ type: "text", text: `Network endpoint created successfully. ID: ${result.id}` }] };
         }
 
