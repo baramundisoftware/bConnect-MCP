@@ -169,7 +169,7 @@ describe('missing credentials are a tool result', () => {
     expect(sent).toEqual([]);
     expect(result.code).toBeUndefined();
     expect(result.isError).toBe(true);
-    expect(contentText(result)).toMatch(/credentials/i);
+    expect(contentText(result)).toMatch(/BCONNECT_API_KEY.*BCONNECT_USERNAME/s);
   });
 });
 

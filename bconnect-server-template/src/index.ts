@@ -30,7 +30,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { DomainRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -128,14 +128,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     // without real credentials.
     const getBconnect = (): BConnectClient => {
       dotenv.config();
-      try {
-        return new BConnectClient(clientConfigFromEnv(process.env, credentials));
-      } catch (error) {
-        if (error instanceof ClientConfigError) {
-          throw new McpError(ErrorCode.InternalError, error.message);
-        }
-        throw error;
-      }
+      // A ClientConfigError (e.g. missing credentials) reaches the catch below
+      // and becomes a tool result (REQ-XC-001).
+      return new BConnectClient(clientConfigFromEnv(process.env, credentials));
     };
 
     // 4. Dispatch — arguments already validated by validateToolArguments above.
@@ -159,11 +154,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error) {
-      if (error instanceof McpError) throw error;
-      throw new McpError(
-        ErrorCode.InternalError,
-        `bConnect API error: ${error instanceof Error ? error.message : String(error)}`
-      );
+      // API errors, gate refusals and configuration errors are tool results the
+      // model can read; only McpErrors stay protocol errors (REQ-XC-001).
+      return toolErrorResult(error, process.env.BCONNECT_RELEASE ?? "26R1");
     }
   });
 

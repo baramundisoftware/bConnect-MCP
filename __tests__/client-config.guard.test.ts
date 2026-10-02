@@ -25,7 +25,6 @@ import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import type { BConnectConfig } from '@bconnect/mcp-core';
-import { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import { ROOT, SERVERS, connect, createRecorder, guardEnv, requiredArguments, type ToolResult } from './lib/exerciser.js';
 import { clientConstructions, envReads, functionCalls, helperCalls, helperProvenance } from './lib/env-reads.js';
 
@@ -577,15 +576,13 @@ describe.each(SERVERS)('%s: the client a tool call builds', (server) => {
     expect(config.apiKey).toBe('request-key');
   });
 
-  it('refuses a tool call without credentials with the shared message and an internal error', async () => {
+  it('refuses a tool call without credentials with the shared message, as a tool result', async () => {
     const result = await firstReadToolResult(server, { BCONNECT_USERNAME: '', BCONNECT_PASSWORD: '' });
+    // REQ-XC-001: a configuration error is a tool result the model can read,
+    // not a protocol error; exactly the helper's message, no server wrapper.
     expect(result.isError).toBe(true);
-    expect(result.code).toBe(ErrorCode.InternalError);
-    // Exactly the helper's message: only the SDK's "MCP error <code>: " prefix (server and
-    // client each add one), no server-specific wrapper ("bConnect API error: …").
-    const prefix = `MCP error ${ErrorCode.InternalError}: `;
-    expect(result.text.replaceAll(prefix, '')).toBe(MISSING_CREDENTIALS);
-    expect(result.text.startsWith(prefix)).toBe(true);
+    expect(result.code).toBeUndefined();
+    expect(JSON.parse(result.text)).toEqual([{ type: 'text', text: MISSING_CREDENTIALS }]);
   });
 });
 

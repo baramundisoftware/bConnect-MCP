@@ -87,10 +87,17 @@ describe('bconnect-universaldynamicgroups-mcp (26R1 mode)', () => {
   });
 
   it('returns MethodNotFound for unknown tool', async () => {
-    const { client } = await startServer('26R1');
+    // With credentials, so the call gets as far as the tool name; without them
+    // the missing-credentials tool result comes first (REQ-XC-001).
+    process.env.BCONNECT_RELEASE = '26R1';
+    const { server } = createServer({ baseUrl: 'https://bms.test.local/bconnect', apiKey: 'test-key' });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    await server.connect(serverTransport);
+    const client = new Client({ name: 'test-client', version: '1.0.0' }, { capabilities: {} });
+    await client.connect(clientTransport);
     await expect(
       client.callTool({ name: 'nonexistent_tool', arguments: {} })
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: -32601 }); // MethodNotFound, a protocol error
   });
 
   // Validator-migration regression tests (centralised validateOrThrow)
