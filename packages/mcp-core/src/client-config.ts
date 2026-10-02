@@ -47,14 +47,15 @@ const AUDIT_LEVELS: readonly AuditLevel[] = ["none", "security", "write", "all"]
  * "none". Any other value stops the server: a typo must not switch auditing off.
  */
 function auditLevelOf(value: string | undefined): AuditLevel {
-  const normalised = (value ?? "").trim().toLowerCase();
+  const raw = value ?? "";
+  const normalised = raw.trim().toLowerCase();
   if (normalised === "") {
     return "none";
   }
   const level = AUDIT_LEVELS.find((candidate) => candidate === normalised);
   if (!level) {
     // Quoted with escapes and shortened, so a newline or terminal escape in the value can't forge log lines.
-    const shown = JSON.stringify(value.length > 64 ? `${value.slice(0, 64)}…` : value);
+    const shown = JSON.stringify(raw.length > 64 ? `${raw.slice(0, 64)}…` : raw);
     throw new ClientConfigError(`BCONNECT_AUDIT_LEVEL ${shown} isn't valid. Use one of: ${AUDIT_LEVELS.join(", ")}.`);
   }
   return level;
