@@ -35,6 +35,9 @@ const SECRET_PATHS = [
   'bconnect-jobs-mcp/.env',
   'bconnect-jobs-mcp/.env.local',
   'bconnect-mcp-gateway/.env.gateway',
+  // An exported bMS CA (BCONNECT_CA_CERT_PATH) or a TLS key.
+  'bms-ca.pem',
+  'bconnect-jobs-mcp/certs/bms-ca.pem',
 ];
 
 const ignored = (paths: string[]): string[] =>
@@ -54,7 +57,7 @@ describe.skipIf(!hasGit)('local secrets are ignored by git', () => {
   it('tracks no file that would hold a secret', () => {
     const tracked = (git(['ls-files']) ?? '').split('\n').filter(Boolean);
     const secretLike = tracked.filter((f) =>
-      (/(^|\/)\.env(\.[^/]*)?$/.test(f) && !f.endsWith('.example')) || /(^|\/)secrets\//.test(f));
+      (/(^|\/)\.env(\.[^/]*)?$/.test(f) && !f.endsWith('.example')) || /(^|\/)secrets\//.test(f) || /\.pem$/i.test(f));
     expect(secretLike).toEqual([]);
   });
 });

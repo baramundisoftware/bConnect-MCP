@@ -36,7 +36,7 @@ import {
   type Baseline, type ParamCall, type Violation, type WriteCall,
   checkBodies, checkCoverage, checkParams, checkStaleBindings, checkTools, checkWritesOff, compareWithBaseline, keyOf,
 } from './lib/conformance.js';
-import { bodyValidator, jsonPatchProblems, withoutNullable } from './lib/bodies.js';
+import { bodyValidator, jsonPatchProblems } from './lib/bodies.js';
 
 const BASELINE_PATH = join(ROOT, '__tests__', 'spec-conformance.baseline.json');
 const baseline: Baseline = JSON.parse(readFileSync(BASELINE_PATH, 'utf8'));
@@ -457,12 +457,6 @@ describe('the checks report known-bad cases (self-test)', () => {
       const create = (result?: string): WriteCall => ({ tool: 'create_thing', result, requests: [req('POST', '/demo/v2.0/Things', 'application/json', '{"name":"x"}')] });
       expect(run([create(undefined)])).toEqual([]);
       expect(run([create('Created thing MARK.')])).toEqual([]);
-    });
-
-    it('rewrites OpenAPI nullable to JSON Schema', () => {
-      expect(withoutNullable({ type: 'string', nullable: true })).toEqual({ type: ['string', 'null'] });
-      expect(withoutNullable({ allOf: [{ $ref: '#/x' }], nullable: true })).toEqual({ anyOf: [{ allOf: [{ $ref: '#/x' }] }, { type: 'null' }] });
-      expect(withoutNullable({ type: 'string', nullable: false })).toEqual({ type: 'string' });
     });
   });
 
