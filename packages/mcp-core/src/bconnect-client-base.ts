@@ -10,7 +10,7 @@ import axiosRetry from "axios-retry";
 import https from "https";
 import tls, { PeerCertificate } from "node:tls";
 import { BConnectApiError, BConnectConnectionError, BConnectRedirectError } from "./api-errors.js";
-import { cleanModelText } from "./model-text.js";
+import { cleanModelData, cleanModelText } from "./model-text.js";
 
 /**
  * Build the default CA trust list when no explicit CA is configured.
@@ -453,6 +453,10 @@ export class BConnectClientBase {
     // Setup error handling and rate limit headers interceptor for V2.0 client
     this.client.interceptors.response.use(
       (response) => {
+        // Hidden characters in bMS data never reach the cache, the audit step or
+        // the model (REQ-XC-006 AC 2, ADR-0009). Binary bodies are left alone.
+        response.data = cleanModelData(response.data);
+
         // Check if response was cached (from request interceptor)
         if (this.responseCache && response.config) {
           const cachedResponse = (response.config as BConnectRequestConfig).__cachedResponse;

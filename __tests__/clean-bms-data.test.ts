@@ -12,17 +12,12 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
-import * as core from '../packages/mcp-core/src/index.js';
+import { HIDDEN_CHARACTERS_MARKER, cleanModelData } from '../packages/mcp-core/src/model-text.js';
 import { BConnectClientBase, type BConnectConfig } from '../packages/mcp-core/src/bconnect-client-base.js';
 
 const MARKER = '[hidden characters removed]';
 
-// Looked up at run time so each test fails on its own until the cleaner exists.
-const cleanModelData = <T>(value: T): T => {
-  const cleaner: unknown = Reflect.get(core, 'cleanModelData');
-  if (typeof cleaner !== 'function') {throw new Error('@bconnect/mcp-core exports no cleanModelData');}
-  return (cleaner as (v: T) => T)(value);
-};
+it('exports the marker the tests expect', () => expect(HIDDEN_CHARACTERS_MARKER).toBe(MARKER));
 
 /** The class, defined from Unicode properties: format characters and the tag block, minus ZWNJ/ZWJ. */
 const inClass = (cp: number): boolean =>
