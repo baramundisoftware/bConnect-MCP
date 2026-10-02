@@ -123,6 +123,24 @@ const intOr = (value: string | undefined, fallback: number): number => {
 };
 
 /**
+ * Basic credentials go out as Latin-1 (ISO-8859-1): bConnect decodes them that
+ * way and announces no charset (#228). A character above U+00FF can't be sent,
+ * so it is refused, naming where it came from, never the value.
+ */
+export function assertLatin1Credential(source: string, value: string | undefined): void {
+  if (value === undefined) {return;}
+  for (const ch of value) {
+    if ((ch.codePointAt(0) ?? 0) > 0xff) {
+      throw new ClientConfigError(
+        `${source} contains a character Basic authentication can't carry: bConnect reads Basic ` +
+        "credentials as Latin-1, which goes up to U+00FF (umlauts and the section sign are fine, the euro sign isn't). " +
+        "Use an API key (BCONNECT_API_KEY) instead, or choose a password without such characters."
+      );
+    }
+  }
+}
+
+/**
  * The BConnectClient config every server uses, for tool calls and the startup
  * probe alike. Reads only `env` (servers load their .env file before calling)
  * and never writes to stdout, which carries JSON-RPC in stdio mode. The result
@@ -144,6 +162,10 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
     throw new MissingCredentialsError();
   }
   assertSecureBaseUrl(baseUrl, env);
+  if (!apiKey) {
+    assertLatin1Credential(credentials?.username !== undefined ? "The request's username" : "BCONNECT_USERNAME", username);
+    assertLatin1Credential(credentials?.password !== undefined ? "The request's password" : "BCONNECT_PASSWORD", password);
+  }
 
   const caCertPath = env.BCONNECT_CA_CERT_PATH;
   let ca: string | undefined;
