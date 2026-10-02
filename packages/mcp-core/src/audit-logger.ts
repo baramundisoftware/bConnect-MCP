@@ -192,6 +192,27 @@ export class AuditLogger {
   }
 
   /**
+   * Log a request the client refused before sending it (secret-route gate,
+   * canonical-path check). A refusal is a security event, so it is recorded at
+   * every level except 'none'.
+   */
+  logRefusal(method: string, path: string, reason: string): void {
+    if (this.config.level === 'none') {
+      return;
+    }
+    this.config.logHandler({
+      timestamp: new Date().toISOString(),
+      level: 'warn',
+      operation: `${method.toUpperCase()} ${path}`,
+      user: this.config.username,
+      method: method.toUpperCase(),
+      path,
+      error: `Refused: ${reason}`,
+      securitySensitive: true,
+    });
+  }
+
+  /**
    * Default log handler - writes each entry as one line to stderr (parameters, when
    * enabled, follow as a pretty-printed block). stdout is the
    * JSON-RPC channel in stdio mode, so an audit line there breaks the connection.
@@ -203,9 +224,14 @@ export class AuditLogger {
     const user = entry.user;
     const status = entry.statusCode ? ` - ${entry.statusCode}` : '';
     const duration = entry.duration ? ` (${entry.duration}ms)` : '';
-    const error = entry.error ? ` - ERROR: ${entry.error}` : '';
+    const error = !entry.error ? ''
+      : entry.error.startsWith('Refused: ') ? ` - REFUSED: ${entry.error.slice('Refused: '.length)}`
+      : ` - ERROR: ${entry.error}`;
 
-    const message = `${prefix} ${timestamp} ${user} ${operation}${status}${duration}${error}`;
+    // Control characters (a newline in a refused path, a terminal escape) are
+    // escaped, so an entry stays one line and can't forge another.
+    const message = `${prefix} ${timestamp} ${user} ${operation}${status}${duration}${error}`
+      .replace(/[\u0000-\u001f\u007f]/g, (c) => JSON.stringify(c).slice(1, -1));
 
     process.stderr.write(`${message}\n`);
 

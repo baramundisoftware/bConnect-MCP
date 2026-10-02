@@ -63,12 +63,15 @@ function pathOf(url: string): string {
 function canonicalPathOf(url: string): string {
   let path = pathOf(url);
   for (let round = 0; round < 3; round++) {
-    let decoded: string;
-    try {
-      decoded = decodeURIComponent(path);
-    } catch {
-      break; // malformed escape: match on what we have
-    }
+    // Escape by escape, so a malformed one elsewhere doesn't stop the rest from
+    // being decoded (fail closed); an escape that can't be decoded stays as is.
+    const decoded = path.replace(/%[0-9a-f]{2}/gi, (escape) => {
+      try {
+        return decodeURIComponent(escape);
+      } catch {
+        return escape;
+      }
+    });
     if (decoded === path) {
       break;
     }
@@ -79,7 +82,9 @@ function canonicalPathOf(url: string): string {
     if (segment === "..") {
       segments.pop();
     } else if (segment !== ".") {
-      segments.push(segment);
+      // A path parameter (";x") or trailing dots and spaces may be ignored by the
+      // web server, so the segment is matched without them.
+      segments.push(segment.replace(/;.*$/, "").replace(/[.\s]+$/, ""));
     }
   }
   return "/" + segments.filter((s, i) => s !== "" || i === segments.length - 1).join("/");
