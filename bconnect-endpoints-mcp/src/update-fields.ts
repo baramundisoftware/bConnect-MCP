@@ -40,10 +40,10 @@ export const MAINTENANCE_INTERVAL = {
 
 export const maintenanceWindowFields: Record<string, Field> = {
   maintenanceWindowDefinitionType: choice("/maintenancewindowdefinitiontype",
-    "Window type: Anytime (no restriction), Everyday (same slot every day), WorkdayWeekend, IndividualWeekday, or Never",
-    ["Everyday", "WorkdayWeekend", "IndividualWeekday", "Anytime", "Never"]),
+    "Window type: Anytime (no restriction, the default), Everyday (same slot every day), WorkdayWeekend, IndividualWeekday, or Never. Anytime and Never take no intervals; the others need at least one.",
+    ["Anytime", "Never", "Everyday", "WorkdayWeekend", "IndividualWeekday"]), // Anytime first: the default (spec)
   intervals: { path: "/intervals", type: "array", items: MAINTENANCE_INTERVAL,
-    description: "The periods in which jobs may run, e.g. [{\"maintenancePeriod\":\"Everyday\",\"start\":{\"hour\":22,\"minute\":0},\"end\":{\"hour\":6,\"minute\":0}}]" },
+    description: "The periods in which jobs may run, e.g. [{\"maintenancePeriod\":\"Everyday\",\"start\":{\"hour\":22,\"minute\":0},\"end\":{\"hour\":6,\"minute\":0}}]. Required, at least one, for Everyday, WorkdayWeekend and IndividualWeekday; leave out for Anytime and Never." },
 };
 
 export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {

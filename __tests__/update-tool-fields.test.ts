@@ -70,7 +70,8 @@ describe.each([
     [replace('/maintenancewindowdefinitiontype', 'Everyday'), replace('/intervals', [{ maintenancePeriod: 'Everyday', start: { hour: 22, minute: 0 }, end: { hour: 6, minute: 0 } }])]],
   ['update_maintenance_window_for_logical_group', `/endpoints/v2.0/LogicalGroups/${ID}/MaintenanceWindow`,
     { maintenanceWindowDefinitionType: 'Never' },
-    [replace('/maintenancewindowdefinitiontype', 'Never')]],
+    // An interval-free type removes the old intervals (#237).
+    [replace('/maintenancewindowdefinitiontype', 'Never'), { op: 'remove', path: '/intervals' }]],
 ])('%s', (name, path, args, expectedPatch) => {
   it('sends a JSON Patch built from the given fields, with the spec path spelling', async () => {
     const r = await call(name, { id: ID, ...args });

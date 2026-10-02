@@ -24,6 +24,7 @@ import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
 import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, pageSizeProperty, declaredArgumentsOnly, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
+import { INTERVAL_RULE, checkIntervalRule, withIntervalRemoval } from "./maintenance-window.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
 const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
@@ -650,12 +651,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         },
         // Maintenance windows (Phase 24: added GET)
         { name: "get_maintenance_window_for_endpoint", description: "Get the maintenance window configuration for a specific endpoint.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Endpoint ID (GUID)" } }, required: ["id"] } },
-        { name: "create_maintenance_window_for_endpoint", description: "Create a maintenance window for an endpoint. WARNING: Creates new maintenance window.", inputSchema: createInputSchema("create_maintenance_window_for_endpoint") },
-        { name: "update_maintenance_window_for_endpoint", description: "Update a maintenance window for an endpoint. WARNING: Modifies existing maintenance window.", inputSchema: updateInputSchema("update_maintenance_window_for_endpoint", "Endpoint ID (GUID)") },
+        { name: "create_maintenance_window_for_endpoint", description: `Create a maintenance window for an endpoint. ${INTERVAL_RULE} WARNING: Creates new maintenance window.`, inputSchema: createInputSchema("create_maintenance_window_for_endpoint") },
+        { name: "update_maintenance_window_for_endpoint", description: `Update a maintenance window for an endpoint. ${INTERVAL_RULE} Changing the type to Anytime or Never removes the existing intervals. WARNING: Modifies existing maintenance window.`, inputSchema: updateInputSchema("update_maintenance_window_for_endpoint", "Endpoint ID (GUID)") },
         { name: "delete_maintenance_window_for_endpoint", description: "Delete a maintenance window for an endpoint. WARNING: Permanently deletes maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         { name: "get_maintenance_window_for_logical_group", description: "Get the maintenance window configuration for a specific logical group.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Logical group ID (GUID)" } }, required: ["id"] } },
-        { name: "create_maintenance_window_for_logical_group", description: "Create a maintenance window for a logical group. WARNING: Creates new maintenance window.", inputSchema: createInputSchema("create_maintenance_window_for_logical_group") },
-        { name: "update_maintenance_window_for_logical_group", description: "Update a maintenance window for a logical group. WARNING: Modifies existing maintenance window.", inputSchema: updateInputSchema("update_maintenance_window_for_logical_group", "Logical group ID (GUID)") },
+        { name: "create_maintenance_window_for_logical_group", description: `Create a maintenance window for a logical group. ${INTERVAL_RULE} WARNING: Creates new maintenance window.`, inputSchema: createInputSchema("create_maintenance_window_for_logical_group") },
+        { name: "update_maintenance_window_for_logical_group", description: `Update a maintenance window for a logical group. ${INTERVAL_RULE} Changing the type to Anytime or Never removes the existing intervals. WARNING: Modifies existing maintenance window.`, inputSchema: updateInputSchema("update_maintenance_window_for_logical_group", "Logical group ID (GUID)") },
         { name: "delete_maintenance_window_for_logical_group", description: "Delete a maintenance window for a logical group. WARNING: Permanently deletes maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         // Industrial & network endpoints (Phase 24: added GET for network)
         { name: "list_industrial_endpoints", description: "List all industrial endpoints (PLCs, SCADA systems, etc.) managed by baramundi. Returns a paged list.", inputSchema: { type: "object", properties: {} } },
@@ -995,12 +996,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_maintenance_window_for_endpoint": {
+          checkIntervalRule(args!);
           const result = await bconnect.endpoints.createMaintenanceWindowForEndpoint(args!.id as string, createBody("create_maintenance_window_for_endpoint", args!));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "update_maintenance_window_for_endpoint": {
-          const patch = changes("update_maintenance_window_for_endpoint", args!); // checks the arguments before the client is built
+          checkIntervalRule(args!);
+          const patch = withIntervalRemoval(args!, changes("update_maintenance_window_for_endpoint", args!)); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateMaintenanceWindowForEndpoint(args!.id as string, patch);
           return { content: [{ type: "text", text: `Maintenance window for endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
@@ -1011,12 +1014,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_maintenance_window_for_logical_group": {
+          checkIntervalRule(args!);
           const result = await bconnect.endpoints.createMaintenanceWindowForLogicalGroup(args!.id as string, createBody("create_maintenance_window_for_logical_group", args!));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "update_maintenance_window_for_logical_group": {
-          const patch = changes("update_maintenance_window_for_logical_group", args!); // checks the arguments before the client is built
+          checkIntervalRule(args!);
+          const patch = withIntervalRemoval(args!, changes("update_maintenance_window_for_logical_group", args!)); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateMaintenanceWindowForLogicalGroup(args!.id as string, patch);
           return { content: [{ type: "text", text: `Maintenance window for logical group ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
