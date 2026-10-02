@@ -45,6 +45,11 @@ describe('sanitised summary', () => {
     expect(summary).toMatch(/TLS.*not verified/i);
   });
 
+  it('says when the run had no TLS at all', () => {
+    const plain = sanitisedSummary({ release: '26R1', tlsVerified: false, plainHttp: true, caFile: false, startups: { ok: 13, total: 13 }, runs: [] });
+    expect(plain).toMatch(/TLS: none \(plain HTTP/);
+  });
+
   it('holds no host, credentials, object IDs or answer text', () => {
     for (const leak of [HOST, ...SECRETS, GUID, 'WIN-FINANCE-07', 'Admin', 'https://']) expect(summary, leak).not.toContain(leak);
   });

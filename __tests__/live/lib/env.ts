@@ -70,8 +70,10 @@ export interface LiveConfig {
   env: Record<string, string>;
   baseUrl: URL;
   release: Release;
-  /** Certificates are checked (NODE_TLS_REJECT_UNAUTHORIZED is not 0 in the effective env). */
+  /** HTTPS with certificates checked (NODE_TLS_REJECT_UNAUTHORIZED is not 0 in the effective env). */
   tlsVerified: boolean;
+  /** The base URL is http: no TLS at all (the servers refuse it unless BCONNECT_ALLOW_INSECURE_HTTP is set). */
+  plainHttp: boolean;
   /** BCONNECT_CA_CERT_PATH is set. */
   caFile: boolean;
   /** What the operator declares about the bMS; the API can't tell (lib/profile.ts). */
@@ -114,7 +116,8 @@ export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS
     env,
     baseUrl: new URL(env.BCONNECT_BASE_URL),
     release,
-    tlsVerified: env.NODE_TLS_REJECT_UNAUTHORIZED !== '0',
+    tlsVerified: new URL(env.BCONNECT_BASE_URL).protocol === 'https:' && env.NODE_TLS_REJECT_UNAUTHORIZED !== '0',
+    plainHttp: new URL(env.BCONNECT_BASE_URL).protocol === 'http:',
     caFile: env.BCONNECT_CA_CERT_PATH !== '',
     declared: { mdm: declared(values.BCONNECT_LIVE_MDM), entraId: declared(values.BCONNECT_LIVE_ENTRA_ID) },
     secrets,
@@ -135,7 +138,7 @@ export function checkReachable(config: LiveConfig): Promise<{ status: number; bm
   else if (env.BCONNECT_USERNAME) headers.Authorization = `Basic ${Buffer.from(`${env.BCONNECT_USERNAME}:${env.BCONNECT_PASSWORD}`).toString('base64')}`;
   const options: https.RequestOptions = {
     method: 'GET', headers, timeout: 15_000,
-    rejectUnauthorized: config.tlsVerified,
+    rejectUnauthorized: env.NODE_TLS_REJECT_UNAUTHORIZED !== '0',
     ...(config.caFile && { ca: readFileSync(env.BCONNECT_CA_CERT_PATH) }),
   };
   return new Promise((resolve, reject) => {

@@ -45,6 +45,7 @@ export interface SummaryInput {
   release: string;
   bmsVersion?: string;
   tlsVerified: boolean;
+  plainHttp?: boolean;
   caFile: boolean;
   startups: { ok: number; total: number };
   runs: ToolRun[];
@@ -66,7 +67,8 @@ export function sanitisedSummary(input: SummaryInput): string {
     '## Live bMS run',
     '',
     `- bMS release ${input.release}${input.bmsVersion ? ` (version ${input.bmsVersion})` : ''}`,
-    `- TLS: ${input.tlsVerified ? `certificates verified${input.caFile ? ' (CA file set)' : ''}` : 'NOT verified (NODE_TLS_REJECT_UNAUTHORIZED=0)'}`,
+    `- TLS: ${input.plainHttp ? 'none (plain HTTP; credentials travel unencrypted)'
+      : input.tlsVerified ? `certificates verified${input.caFile ? ' (CA file set)' : ''}` : 'NOT verified (NODE_TLS_REJECT_UNAUTHORIZED=0)'}`,
     `- Startup: ${input.startups.ok}/${input.startups.total} servers started with the startup check and sent nothing else`,
     `- Read tools: ${by('ok').length} ok, ${by('expected').length} expected, ${by('failed').length} failed, ${by('not verified live').length} not verified live, ${by('skipped').length} skipped`,
   ];

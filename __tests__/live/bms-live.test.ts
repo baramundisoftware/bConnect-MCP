@@ -289,11 +289,11 @@ function writeReport(): void {
   };
   const classified = classifyByProfile(runs, profile);
   const summary = sanitisedSummary({
-    release: RELEASE, bmsVersion, tlsVerified: config.tlsVerified, caFile: config.caFile,
+    release: RELEASE, bmsVersion, tlsVerified: config.tlsVerified, plainHttp: config.plainHttp, caFile: config.caFile,
     startups: { ok: started, total: SERVERS.length }, runs: classified, profile,
   });
   writeFileSync(join(dir, 'live-bms.json'), JSON.stringify({
-    bms: config.baseUrl.href, release: RELEASE, bmsVersion, tlsVerified: config.tlsVerified, caFile: config.caFile,
+    bms: config.baseUrl.href, release: RELEASE, bmsVersion, tlsVerified: config.tlsVerified, plainHttp: config.plainHttp, caFile: config.caFile,
     at: new Date().toISOString(), node: process.version, platform: process.platform, profile, runs: classified,
   }, null, 2));
   writeFileSync(join(dir, 'live-bms-summary.md'), summary);

@@ -93,6 +93,12 @@ describe('live env: isolated', () => {
     expect(on.caFile).toBe(true);
   });
 
+  it('reports no TLS for a plain-HTTP base URL, whatever NODE_TLS_REJECT_UNAUTHORIZED says', () => {
+    const plain = loadLiveConfig({ root: ROOT, file: envFile('http.env', ['BCONNECT_BASE_URL=http://bms.selftest.invalid/bconnect']), shell: {} });
+    expect(plain.tlsVerified).toBe(false);
+    expect(plain.plainHttp).toBe(true);
+  });
+
   it('refuses NODE_EXTRA_CA_CERTS from the shell, which the test process cannot drop', () => {
     expect(() => loadLiveConfig({ root: ROOT, file: envFile('extra.env', [BASE]), shell: { NODE_EXTRA_CA_CERTS: 'C:/ca.pem' } }))
       .toThrow(/NODE_EXTRA_CA_CERTS/);
