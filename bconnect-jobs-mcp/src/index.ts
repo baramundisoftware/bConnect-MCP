@@ -21,7 +21,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 import type { paths as JobsPaths } from "./generated/jobs-types.js";
@@ -70,7 +70,26 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
+  // Write tools: gated by ALLOW_WRITE_OPERATIONS, and marked unverified in tools/list
+  // until their live check is recorded (REQ-XC-003 AC 5).
+  const WRITE_TOOLS = new Set<string>([
+  "create_job_instance",
+  "start_job_instance",
+  "stop_job_instance",
+  "resume_job_instance",
+  "delete_job_instance",
+  "create_job_folder",
+  "update_job_folder",
+  "delete_job_folder",
+  "assign_job_to_logical_group",
+  "assign_job_to_static_group",
+  "assign_job_to_dynamic_group",
+  "assign_job_to_universal_dynamic_group",
+  "create_kiosk_release",
+  "withdraw_kiosk_release",
+  ]);
+
+  server.setRequestHandler(ListToolsRequestSchema, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     return {
       tools: [
         // ── Jobs API ──────────────────────────────────────────────────────
@@ -507,7 +526,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
       ]
     };
-  });
+  }));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -526,22 +545,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     validateToolArguments(name, args);
 
     // ── Write-operation gate (REQ-SRV-012) ───────────────────────────────────
-    const WRITE_TOOLS = new Set<string>([
-    "create_job_instance",
-    "start_job_instance",
-    "stop_job_instance",
-    "resume_job_instance",
-    "delete_job_instance",
-    "create_job_folder",
-    "update_job_folder",
-    "delete_job_folder",
-    "assign_job_to_logical_group",
-    "assign_job_to_static_group",
-    "assign_job_to_dynamic_group",
-    "assign_job_to_universal_dynamic_group",
-    "create_kiosk_release",
-    "withdraw_kiosk_release",
-    ]);
     if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
       return {
         content: [{

@@ -18,27 +18,25 @@ export const LIVE_VERIFIED_WRITE_TOOLS: ReadonlyMap<string, string> = new Map<st
   // e.g. ["update_windows_endpoint", "2026-10-05, bMS 26.1.161, test bMS"],
 ]);
 
-interface ListedTool {
-  name: string;
-  description?: string;
+/** The tool with UNVERIFIED_WRITE_NOTE appended if it's a write tool without a recorded live check. */
+function markIfUnverified<Tool extends object>(tool: Tool, writeTools: ReadonlySet<string>): Tool {
+  if (!("name" in tool) || typeof tool.name !== "string" || !writeTools.has(tool.name) || LIVE_VERIFIED_WRITE_TOOLS.has(tool.name)) {
+    return tool;
+  }
+  const description = "description" in tool && typeof tool.description === "string" ? tool.description : "";
+  return { ...tool, description: `${description} ${UNVERIFIED_WRITE_NOTE}`.trim() };
 }
 
 /**
  * Wraps a server's tools/list handler: each tool in `writeTools` that has no
  * recorded live check gets UNVERIFIED_WRITE_NOTE at the end of its description.
  */
-export function withUnverifiedWriteMarker<T extends { tools: ListedTool[] }>(
+export function withUnverifiedWriteMarker<Result extends { tools: object[] }>(
   writeTools: ReadonlySet<string>,
-  handler: () => T | Promise<T>,
-): () => Promise<T> {
+  handler: () => Result | Promise<Result>,
+): () => Promise<Result> {
   return async () => {
     const result = await handler();
-    return {
-      ...result,
-      tools: result.tools.map((tool) =>
-        writeTools.has(tool.name) && !LIVE_VERIFIED_WRITE_TOOLS.has(tool.name)
-          ? { ...tool, description: `${tool.description ?? ""} ${UNVERIFIED_WRITE_NOTE}`.trim() }
-          : tool),
-    };
+    return { ...result, tools: result.tools.map((tool) => markIfUnverified(tool, writeTools)) };
   };
 }

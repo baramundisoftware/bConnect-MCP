@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { VariablesRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -46,7 +46,16 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
+  // Write tools: gated by ALLOW_WRITE_OPERATIONS, and marked unverified in tools/list
+  // until their live check is recorded (REQ-XC-003 AC 5).
+  const WRITE_TOOLS = new Set<string>([
+  "create_variable_definition",
+  "update_variable_definition",
+  "delete_variable_definition",
+  "update_variable_instance",
+  ]);
+
+  server.setRequestHandler(ListToolsRequestSchema, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
 
       // ── Variable Definitions ─────────────────────────────────────────
@@ -235,7 +244,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     ];
 
     return { tools };
-  });
+  }));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -292,12 +301,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     validateToolArguments(name, args);
 
     // 2. Write-operation gate (REQ-SRV-012).
-    const WRITE_TOOLS = new Set<string>([
-    "create_variable_definition",
-    "update_variable_definition",
-    "delete_variable_definition",
-    "update_variable_instance",
-    ]);
     if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
       return {
         content: [{

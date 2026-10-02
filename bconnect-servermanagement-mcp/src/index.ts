@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, jsonPatchArgument } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, jsonPatchArgument, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { ServerManagementRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -49,7 +49,26 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
+  // Write tools: gated by ALLOW_WRITE_OPERATIONS, and marked unverified in tools/list
+  // until their live check is recorded (REQ-XC-003 AC 5).
+  const WRITE_TOOLS = new Set<string>([
+  "start_microservice",
+  "stop_microservice",
+  "restart_microservice",
+  "create_security_group",
+  "update_security_group",
+  "delete_security_group",
+  "create_security_profile",
+  "update_security_profile",
+  "delete_security_profile",
+  "update_object_permission",
+  "restart_management_server",
+  "cancel_scheduled_restart",
+  "simulate_msw_cleanup",
+  "msw_cleanup",
+  ]);
+
+  server.setRequestHandler(ListToolsRequestSchema, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools = [
 
       // ── Server Information ────────────────────────────────────────────────
@@ -346,7 +365,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
 
     return { tools };
-  });
+  }));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -432,22 +451,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     validateToolArguments(name, args);
 
     // 2. Write-operation gate (REQ-SRV-012).
-    const WRITE_TOOLS = new Set<string>([
-    "start_microservice",
-    "stop_microservice",
-    "restart_microservice",
-    "create_security_group",
-    "update_security_group",
-    "delete_security_group",
-    "create_security_profile",
-    "update_security_profile",
-    "delete_security_profile",
-    "update_object_permission",
-    "restart_management_server",
-    "cancel_scheduled_restart",
-    "simulate_msw_cleanup",
-    "msw_cleanup",
-    ]);
     if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
       return {
         content: [{
