@@ -88,6 +88,16 @@ Write/mutating tools are **disabled by default**. A server exposes them only whe
 
 A tool whose response contains live credentials is **disabled by default**, whatever its HTTP method: `get_bitlocker_secrets`, `update_bitlocker_pin`, `get_local_admin_accounts` and `patch_local_admin_user_credentials`. It runs only when `ALLOW_SECRET_READ=true` is set in the server's environment; the write tools among them need `ALLOW_WRITE_OPERATIONS=true` as well. The gate is enforced twice: by tool name in the server, and by route in the shared HTTP client, which refuses these bConnect operations before any request is sent.
 
+### Hidden characters in bMS data
+
+Text from bMS (endpoint, job and software names, client error messages, directory descriptions) is
+often not written by the administrator. Before it reaches the model, the shared client removes
+characters that are invisible to people but read by a model: Unicode format characters (zero-width
+characters, direction controls) and tag characters (U+E0000–U+E007F). Each removed run is shown as
+`[hidden characters removed]`. ZWJ and ZWNJ, which several scripts and emoji need, are kept. Error
+text from bConnect is cleaned the same way and quoted as data. Visible text that tries to instruct
+the model can't be filtered reliably; keep write tools disabled unless you need them.
+
 ### Rate Limiting
 
 Each server's bConnect client has a token-bucket rate limiter, set via `BCONNECT_RATE_LIMIT_ENABLED`, `BCONNECT_RATE_LIMIT_MAX_REQUESTS` and `BCONNECT_RATE_LIMIT_WINDOW_MS`. Each tool call still creates a new client, so the limit applies only within one tool call and does not yet protect the bConnect API across calls (#160).
