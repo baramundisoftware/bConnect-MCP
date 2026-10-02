@@ -211,6 +211,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Maintenance windows can be changed to Anytime or Never** (#237). The update tools now also
+  remove the old intervals, which bMS requires for these types (before, bMS answered 400). The create
+  and update tools refuse, before sending, a window that breaks the rule: Anytime and Never take no
+  intervals, Everyday, WorkdayWeekend and IndividualWeekday need at least one.
 - **Basic authentication works with passwords containing `§`, umlauts or `ß`** (#228). The
   credentials were sent as UTF-8, but bConnect reads Basic credentials as Latin-1, so such a
   password was a different password to bMS and every call got 401. They are now sent as Latin-1;
