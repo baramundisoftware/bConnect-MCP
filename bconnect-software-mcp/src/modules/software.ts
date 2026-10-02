@@ -147,8 +147,7 @@ export class SoftwareModule {
   ): Promise<SoftwareBundleApplication> {
     const response = await this.httpClient.patch(
       `${this.basePath}/Bundles/${bundleId}/BundleApplications/${id}`,
-      patchDoc,
-      { headers: { 'Content-Type': 'application/json-patch+json' } }
+      patchDoc
     );
     return response.data;
   }
@@ -201,8 +200,7 @@ export class SoftwareModule {
   ): Promise<BundleFolder> {
     const response = await this.httpClient.patch(
       `${this.basePath}/Bundle/Folders/${id}`,
-      patchDoc,
-      { headers: { 'Content-Type': 'application/json-patch+json' } }
+      patchDoc
     );
     return response.data;
   }

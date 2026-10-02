@@ -37,8 +37,7 @@ export class UpdateManagementModule {
   ): Promise<WindowsEndpoint> {
     const response = await this.httpClient.patch(
       `${this.basePath}/WindowsEndpoints/${id}`,
-      patchDoc,
-      { headers: { 'Content-Type': 'application/json-patch+json' } }
+      patchDoc
     );
     return response.data;
   }

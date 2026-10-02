@@ -423,6 +423,15 @@ export class BConnectClientBase {
         return this.handleError(error);
       }
     );
+    // Every PATCH operation in the bConnect specs declares only
+    // application/json-patch+json (#188), so every PATCH is sent with it.
+    this.client.interceptors.request.use((requestConfig: InternalAxiosRequestConfig) => {
+      if ((requestConfig.method ?? "").toLowerCase() === "patch") {
+        requestConfig.headers.set("Content-Type", "application/json-patch+json");
+      }
+      return requestConfig;
+    });
+
     // Canonical-path check (REQ-SRV-018). Runs right after the secret-route gate
     // below (axios runs request interceptors in reverse order), so a secret route
     // is still refused by that gate, and before cache, rate limiter or audit.
