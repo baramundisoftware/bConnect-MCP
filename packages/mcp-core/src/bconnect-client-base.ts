@@ -176,6 +176,20 @@ function redirectOrigin(error: AxiosError): string {
   }
 }
 
+/** A method that changes data: anything but GET, HEAD and OPTIONS (#254). */
+export function isWriteMethod(method: string | undefined): boolean {
+  return !["GET", "HEAD", "OPTIONS"].includes((method ?? "GET").toUpperCase());
+}
+
+/** The error for a write whose outcome the client can't know (REQ-XC-003 AC 6, #254). */
+function outcomeUnknown(method: string | undefined, reason: string): BConnectConnectionError {
+  return new BConnectConnectionError(
+    `bConnect didn't answer the ${(method ?? "").toUpperCase()} request (${reason}), ` +
+    "so it's unknown whether bMS made the change; it may still carry it out. " +
+    "Check the current state (read the object back) before repeating this call."
+  );
+}
+
 /** `value` without trailing slashes (a scan, not a regex: linear on any input). */
 function trimTrailingSlashes(value: string): string {
   let end = value.length;
@@ -620,6 +634,13 @@ export class BConnectClientBase {
     }
 
     if (error instanceof AxiosError && error.response) {
+      // A write whose success answer was cut off mid-body (axios: ERR_BAD_RESPONSE
+      // with a 2xx status, "stream has been aborted") probably succeeded; its
+      // outcome is unknown (#254). axios also uses ERR_BAD_RESPONSE for every 5xx,
+      // so the status decides.
+      if (error.code === "ERR_BAD_RESPONSE" && error.response.status < 300 && isWriteMethod(error.config?.method)) {
+        throw outcomeUnknown(error.config?.method, "the answer was cut off");
+      }
       // Server responded with error status
       const status = error.response.status;
 
@@ -667,8 +688,23 @@ export class BConnectClientBase {
       // axios's own timeout ("timeout of N ms exceeded") isn't a connection failure:
       // the request went out but no answer came in time (#203). A TCP connect
       // timeout from the operating system (also ETIMEDOUT) stays "Cannot connect".
-      if ((error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") && /^timeout of \d+ms exceeded/.test(error.message)) {
-        const seconds = (error.config?.timeout ?? this.config.timeout ?? 30000) / 1000;
+      const timedOut = (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") && /^timeout of \d+ms exceeded/.test(error.message);
+      // The request went out, then the connection closed or the answer couldn't be
+      // read (#254). A reset while connecting or during the TLS handshake happened
+      // before anything was sent and stays "Cannot connect".
+      const cause: unknown = error.cause;
+      const beforeSending = (cause instanceof Error && Reflect.get(cause, "syscall") === "connect") ||
+        /^connect /.test(error.message) || /before secure TLS connection/i.test(error.message);
+      const closedAfterSending = !beforeSending && (error.code === "ECONNRESET" || error.code === "EPIPE" ||
+        /^HPE_/.test(error.code ?? "") || /socket hang up/i.test(error.message));
+      const seconds = (error.config?.timeout ?? this.config.timeout ?? 30000) / 1000;
+      // A write that was sent but got no answer may still be carried out by bMS:
+      // say so instead of suggesting a retry (REQ-XC-003 AC 6, #254).
+      if (isWriteMethod(error.config?.method) && (timedOut || closedAfterSending)) {
+        throw outcomeUnknown(error.config?.method,
+          timedOut ? `no answer within ${seconds} s, BCONNECT_TIMEOUT_MS` : "the connection was closed or the answer was unreadable");
+      }
+      if (timedOut) {
         throw new BConnectConnectionError(
           `The bConnect API didn't answer within ${seconds} s (BCONNECT_TIMEOUT_MS). ` +
           "The bMS may be busy; try a smaller page size or raise the timeout."
