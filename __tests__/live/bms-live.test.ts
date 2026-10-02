@@ -35,8 +35,8 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { brotliDecompressSync, gunzipSync, inflateSync } from 'node:zlib';
 import { ROOT, SERVERS, connect, domainOf, type ConnectedServer, type JsonSchema } from '../lib/exerciser.js';
-import { RELEASES, findOperation, loadOperations, type ApiOperation, type Release } from '../lib/spec.js';
-import { operationIn } from '../lib/conformance.js';
+import { RELEASES, findOperation, type ApiOperation, type Release } from '../lib/spec.js';
+import { readOperations } from './lib/select.js';
 import { specValidator, type SchemaFinding, type SpecValidator } from '../lib/spec-validator.js';
 import { checkReachable, childEnv, loadLiveConfig } from './lib/env.js';
 import { assertExercised, sanitise, sanitisedSummary, type ToolRun } from './lib/report.js';
@@ -166,19 +166,6 @@ const routeKey = (op: ApiOperation, path = op.path): string => `${op.domain} ${p
 /** `/v2.0/Endpoints/{id}/Software` → `/v2.0/Endpoints`; undefined when the route has no parameter. */
 const parentRoute = (path: string): string | undefined => (path.includes('{') ? path.slice(0, path.indexOf('/{')) : undefined);
 
-/** The operations a tool declares, or why it is not exercised here. */
-function readOperations(server: string, table: Readonly<Record<string, readonly string[]>>, tool: string): ApiOperation[] | string {
-  const ids = table[tool];
-  if (!ids?.length) return 'no operation declared';
-  // In the server's own spec, as the conformance guard does: operationIds such as GetFolder recur across specs.
-  const ops = ids.map((id) => operationIn(loadOperations(RELEASE), domainOf(server), id))
-    .filter((op): op is ApiOperation => op !== undefined);
-  if (ops.length !== ids.length) return `operation not in the ${RELEASE} spec`;
-  if (ops.some((op) => op.method !== 'GET')) return 'write tool';
-  if (ops.some((op) => op.secretFields.length > 0)) return 'returns credentials (secret gate)';
-  return ops;
-}
-
 /** Arguments for a tool, or why none can be built: required args must be one ID fed from its parent list. */
 function argumentsFor(tool: { inputSchema: JsonSchema }, op: ApiOperation): Record<string, unknown> | string {
   const props: Record<string, JsonSchema> = tool.inputSchema.properties ?? {};
@@ -259,7 +246,7 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
       for (const tool of conn.tools) {
         const needsId = (tool.inputSchema.required ?? []).length > 0;
         if ((pass === 'lists') === needsId) continue;
-        const ops = readOperations(server, tables.get(server)!, tool.name);
+        const ops = readOperations(RELEASE, server, tables.get(server)!, tool.name);
         if (typeof ops === 'string') { runs.push({ server, tool: tool.name, outcome: 'skipped', detail: ops }); continue; }
         const args = argumentsFor(tool, ops[0]);
         if (typeof args === 'string') { runs.push({ server, tool: tool.name, outcome: 'skipped', detail: args, route: routeKey(ops[0]) }); continue; }
