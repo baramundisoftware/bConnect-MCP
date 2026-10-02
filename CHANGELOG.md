@@ -240,13 +240,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   remove the old intervals, which bMS requires for these types (before, bMS answered 400). The create
   and update tools refuse, before sending, a window that breaks the rule: Anytime and Never take no
   intervals, Everyday, WorkdayWeekend and IndividualWeekday need at least one.
-- **Basic authentication works with passwords containing `§`, umlauts or `ß`** (#228). The
-  credentials were sent as UTF-8, but bConnect reads Basic credentials as Latin-1, so such a
-  password was a different password to bMS and every call got 401. They are now sent as Latin-1;
-  ASCII credentials are unchanged. A username or password with a character Latin-1 doesn't have
-  (such as `€`) is refused at startup (in the gateway: on every tool call) with a message that names
-  the variable and suggests an API key. A password pasted in decomposed form (e.g. from macOS) is
-  sent in its composed form.
+- **Basic credentials are sent as bConnect reads them, and a password bConnect can't accept is
+  refused before signing in** (#228, #265). The credentials were sent as UTF-8, but bConnect reads
+  Basic credentials as Latin-1, so a username with an umlaut reached bMS as a different name. They
+  are now sent as Latin-1; ASCII credentials are unchanged. A **password** with any non-ASCII
+  character (`§`, an umlaut, `ß`, ...) still can't work: bConnect's API rejects it with 401 although
+  Windows accepts it. Such a password is now refused at startup (in the gateway: on every tool call)
+  with a message that names the variable and points to an ASCII-only password or an API key, so no
+  attempt counts toward the account lockout. A username with a character Latin-1 doesn't have (such
+  as `€`) is refused the same way.
 - **LAPS and job-folder tools describe what they do.** `patch_local_admin_user_credentials` no longer
   claims to change the password or user name: it sets the requested expiration date, and a past date
   makes the client generate new credentials. `list_job_folders` returns folders at every level, not
