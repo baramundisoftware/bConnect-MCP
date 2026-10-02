@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
-import { declaredArgumentsOnly, withQueryProperties } from '../packages/mcp-core/src/tool-arguments.js';
+import { declaredArgumentsOnly, queryParameters, withQueryProperties } from '../packages/mcp-core/src/tool-arguments.js';
 
 const tools = declaredArgumentsOnly(async () => ({
   tools: [
@@ -81,5 +81,12 @@ describe('withQueryProperties (#179)', () => {
     const r25 = await withQueryProperties(table, () => '25R2', list)();
     expect((r25.tools[0].inputSchema as { properties: Record<string, { description?: string }> }).properties).toEqual({ groupId: { type: 'string' }, SearchQuery: { type: 'string', description: 'old' } });
     expect(r25.tools[1]).toEqual((await list()).tools[1]);
+  });
+
+  it('keeps the other release\'s parameters for a tool whose route only that release has', async () => {
+    const only25 = { '25R2': { list_old: { Page: { type: 'integer', description: 'p' } } }, '26R1': {} };
+    const r = await withQueryProperties(only25, () => '26R1', async () => ({ tools: [{ name: 'list_old', inputSchema: { type: 'object', properties: {} } }] }))();
+    expect(Object.keys((r.tools[0].inputSchema as { properties: object }).properties)).toEqual(['Page']);
+    expect(queryParameters(only25, '26R1', 'list_old')).toEqual(['Page']);
   });
 });

@@ -22,11 +22,29 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, PAGE_PROPERTY, pageSizeProperty, PAGE_SIZE_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly, queryParameters } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, pageSizeProperty, declaredArgumentsOnly, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
 const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
+
+/** search_endpoints takes the search text and page size as `query` and `pageSize`; the table's names aren't offered twice (#179). */
+const SEARCH_ALIASES = new Set(["SearchQuery", "PageSize"]);
+function withSearchAliases<Result extends { tools: object[] }>(handler: () => Promise<Result>): () => Promise<Result> {
+  return async () => {
+    const result = await handler();
+    return {
+      ...result,
+      tools: result.tools.map((tool) => {
+        if (!("name" in tool) || tool.name !== "search_endpoints" || !("inputSchema" in tool)) {return tool;}
+        const schema = tool.inputSchema;
+        if (typeof schema !== "object" || schema === null || !("properties" in schema) || typeof schema.properties !== "object" || schema.properties === null) {return tool;}
+        const properties = Object.fromEntries(Object.entries(schema.properties).filter(([name]) => !SEARCH_ALIASES.has(name)));
+        return { ...tool, inputSchema: { ...schema, properties } };
+      }),
+    };
+  };
+}
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
 import { createBody, createInputSchema } from "./create-fields.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
@@ -118,7 +136,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "unlink_entra_id_data",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withSearchAliases(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
         // ── Endpoints API ─────────────────────────────────────────────────
         {
@@ -126,22 +144,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all endpoints (devices) managed by baramundi. Supports filtering, searching, and pagination.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Search across DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber, and Comment"
-              },
-              DisplayName: {
-                type: "string",
-                description: "Filter by exact DisplayName match"
-              },
-              PageSize: PAGE_SIZE_PROPERTY,
-              Page: PAGE_PROPERTY,
-              OrderBy: {
-                type: "string",
-                description: "Sort by: DisplayName, HostName, OperatingSystem, or LastSeen (e.g., 'DisplayName asc')"
-              }
-            },
+            properties: {},
             required: []
           }
         },
@@ -179,13 +182,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all Windows endpoints specifically",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Search query"
-              },
-              PageSize: PAGE_SIZE_PROPERTY
-            },
+            properties: {},
             required: []
           }
         },
@@ -208,15 +205,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List the logical groups in baramundi, one page at a time. Filter by name, distribution point (Dip) or domain.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: { type: "string", description: "Filter by name or comment" },
-              Name: { type: "string", description: "Group name" },
-              Dip: { type: "string", description: "Distribution point (DIP)" },
-              Domain: { type: "string", description: "Default domain" },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-              OrderBy: { type: "string", description: "Sort order (e.g., 'Name asc')" }
-            },
+            properties: {},
             required: []
           }
         },
@@ -243,9 +232,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               logicalGroupId: {
                 type: "string",
                 description: "Logical group ID"
-              },
-              PageSize: PAGE_SIZE_PROPERTY,
-              includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY
+              }
             },
             required: ["logicalGroupId"]
           }
@@ -255,13 +242,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all Linux endpoints",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Search query"
-              },
-              PageSize: PAGE_SIZE_PROPERTY
-            },
+            properties: {},
             required: []
           }
         },
@@ -270,13 +251,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all Mac endpoints",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Search query"
-              },
-              PageSize: PAGE_SIZE_PROPERTY
-            },
+            properties: {},
             required: []
           }
         },
@@ -317,18 +292,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               logicalGroupId: {
                 type: "string",
                 description: "Logical group ID (GUID)"
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by display name, hostname, IP, serial number, or comment"
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-              OrderBy: {
-                type: "string",
-                description: "Sort order (e.g., 'DisplayName asc', 'LastSeen desc')"
-              },
-              includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY
+              }
             },
             required: ["logicalGroupId"]
           }
@@ -342,18 +306,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               logicalGroupId: {
                 type: "string",
                 description: "Logical group ID (GUID)"
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter by display name, hostname, IP, serial number, or comment"
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-              OrderBy: {
-                type: "string",
-                description: "Sort order"
-              },
-              includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY
+              }
             },
             required: ["logicalGroupId"]
           }
@@ -364,12 +317,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all Android endpoints managed by baramundi. Returns a paged list of Android mobile devices. Use for Android fleet inventory queries.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: { type: "string", description: "Search query to filter results" },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-              OrderBy: { type: "string", description: "Sort field" }
-            }
+            properties: {}
           }
         },
         {
@@ -389,12 +337,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all iOS/iPadOS endpoints managed by baramundi. Returns a paged list of Apple mobile devices. Use for iOS fleet inventory queries.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: { type: "string", description: "Search query to filter results" },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-              OrderBy: { type: "string", description: "Sort field" }
-            }
+            properties: {}
           }
         },
         {
@@ -715,12 +658,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         { name: "update_maintenance_window_for_logical_group", description: "Update a maintenance window for a logical group. WARNING: Modifies existing maintenance window.", inputSchema: updateInputSchema("update_maintenance_window_for_logical_group", "Logical group ID (GUID)") },
         { name: "delete_maintenance_window_for_logical_group", description: "Delete a maintenance window for a logical group. WARNING: Permanently deletes maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         // Industrial & network endpoints (Phase 24: added GET for network)
-        { name: "list_industrial_endpoints", description: "List all industrial endpoints (PLCs, SCADA systems, etc.) managed by baramundi. Returns a paged list.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY, OrderBy: { type: "string" } } } },
+        { name: "list_industrial_endpoints", description: "List all industrial endpoints (PLCs, SCADA systems, etc.) managed by baramundi. Returns a paged list.", inputSchema: { type: "object", properties: {} } },
         { name: "get_industrial_endpoint", description: "Get details of a specific industrial endpoint by its GUID.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Industrial endpoint ID (GUID)" } }, required: ["id"] } },
         { name: "create_industrial_endpoint", description: "Create a new industrial endpoint (PLC, SCADA, etc.). WARNING: Creates a new endpoint.", inputSchema: createInputSchema("create_industrial_endpoint") },
         { name: "update_industrial_endpoint", description: "Update an existing industrial endpoint. WARNING: Modifies endpoint properties.", inputSchema: updateInputSchema("update_industrial_endpoint", "Industrial endpoint ID (GUID)") },
         { name: "delete_industrial_endpoint", description: "Delete an industrial endpoint. WARNING: Permanently deletes the endpoint.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
-        { name: "list_network_endpoints", description: "List all network endpoints (switches, routers, printers, etc.) managed by baramundi.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY, OrderBy: { type: "string" } } } },
+        { name: "list_network_endpoints", description: "List all network endpoints (switches, routers, printers, etc.) managed by baramundi.", inputSchema: { type: "object", properties: {} } },
         { name: "get_network_endpoint", description: "Get details of a specific network endpoint by its GUID.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Network endpoint ID (GUID)" } }, required: ["id"] } },
         { name: "create_network_endpoint", description: "Create a new network endpoint (switch, router, printer, etc.). WARNING: Creates a new endpoint.", inputSchema: createInputSchema("create_network_endpoint") },
         { name: "update_network_endpoint", description: "Update an existing network endpoint. WARNING: Modifies endpoint properties.", inputSchema: updateInputSchema("update_network_endpoint", "Network endpoint ID (GUID)") },
@@ -742,7 +685,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       }
 
       return { tools };
-  }));
+  }))));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -789,7 +732,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       switch (name) {
         // ── Endpoints ───────────────────────────────────────────────────
         case "list_endpoints": {
-          const result = await bconnect.endpoints.getEndpoints(args || {});
+          const result = await bconnect.endpoints.getEndpoints(pickArguments(args ?? {}, sends("list_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -801,13 +744,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "search_endpoints": {
           const result = await bconnect.endpoints.searchEndpoints(
             args!.query as string,
-            args!.pageSize as number | undefined
+            args!.pageSize as number | undefined,
+            pickArguments(args ?? {}, sends("search_endpoints").filter((name) => !SEARCH_ALIASES.has(name)))
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_windows_endpoints": {
-          const result = await bconnect.endpoints.getWindowsEndpoints(args || {});
+          const result = await bconnect.endpoints.getWindowsEndpoints(pickArguments(args ?? {}, sends("list_windows_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -835,12 +779,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_linux_endpoints": {
-          const result = await bconnect.endpoints.getLinuxEndpoints(args || {});
+          const result = await bconnect.endpoints.getLinuxEndpoints(pickArguments(args ?? {}, sends("list_linux_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_mac_endpoints": {
-          const result = await bconnect.endpoints.getMacEndpoints(args || {});
+          const result = await bconnect.endpoints.getMacEndpoints(pickArguments(args ?? {}, sends("list_mac_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -871,7 +815,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_android_endpoints": {
-          const result = await bconnect.endpoints.listAndroidEndpoints(args || {});
+          const result = await bconnect.endpoints.listAndroidEndpoints(pickArguments(args ?? {}, sends("list_android_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -881,7 +825,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_ios_endpoints": {
-          const result = await bconnect.endpoints.listIosEndpoints(args || {});
+          const result = await bconnect.endpoints.listIosEndpoints(pickArguments(args ?? {}, sends("list_ios_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1083,7 +1027,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_industrial_endpoints": {
-          const result = await bconnect.endpoints.listIndustrialEndpoints(args || {});
+          const result = await bconnect.endpoints.listIndustrialEndpoints(pickArguments(args ?? {}, sends("list_industrial_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1132,7 +1076,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // Phase 24: Network READ
         case "list_network_endpoints": {
-          const result = await bconnect.endpoints.listNetworkEndpoints(args || {});
+          const result = await bconnect.endpoints.listNetworkEndpoints(pickArguments(args ?? {}, sends("list_network_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

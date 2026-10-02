@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, pickArguments, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly, queryParameters } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
@@ -47,15 +47,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
   );
 
-  // ── Pagination input schema (shared) ────────────────────────────────────────
-
-  const paginationProperties = {
-    SearchQuery: { type: "string", description: "Filter results by name or description" },
-    Page: PAGE_PROPERTY,
-    PageSize: PAGE_SIZE_PROPERTY,
-    OrderBy:     { type: "string", description: "Sort order (e.g., 'Name asc')" },
-  };
-
   const logicalGroupIdProp  = { logicalGroupId:          { type: "string", description: "GUID of the logical group"           } };
   const staticGroupIdProp   = { staticGroupId:            { type: "string", description: "GUID of the static group"            } };
   const dynamicGroupIdProp  = { dynamicGroupId:           { type: "string", description: "GUID of the dynamic group"           } };
@@ -63,185 +54,185 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ─────────────────────────────────────────
 
-  const toolCatalog = declaredArgumentsOnly(async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async () => {
     return {
       tools: [
         // ── Logical Group (9) ──────────────────────────────────────────────
         {
           name: "list_endpoints_by_logical_group",
           description: "List all endpoints (any OS type) belonging to a logical group. Returns paginated endpoint list with GUIDs and properties.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp }, required: ["logicalGroupId"] }
         },
         {
           name: "list_android_endpoints_by_logical_group",
           description: "List Android endpoints belonging to a logical group. Returns paginated Android endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp }, required: ["logicalGroupId"] }
         },
         {
           name: "list_ios_endpoints_by_logical_group",
           description: "List iOS endpoints belonging to a logical group. Returns paginated iOS endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp }, required: ["logicalGroupId"] }
         },
         {
           name: "list_linux_endpoints_by_logical_group",
           description: "List Linux endpoints belonging to a logical group. Returns paginated Linux endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp }, required: ["logicalGroupId"] }
         },
         {
           name: "list_mac_endpoints_by_logical_group",
           description: "List macOS endpoints belonging to a logical group. Returns paginated Mac endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp }, required: ["logicalGroupId"] }
         },
         {
           name: "list_network_endpoints_by_logical_group",
           description: "List network endpoints belonging to a logical group. Returns paginated network endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp }, required: ["logicalGroupId"] }
         },
         {
           name: "list_windows_endpoints_by_logical_group",
           description: "List Windows endpoints belonging to a logical group. Returns paginated Windows endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp }, required: ["logicalGroupId"] }
         },
         {
           name: "list_industrial_endpoints_by_logical_group",
           description: "List industrial endpoints belonging to a logical group. Returns paginated industrial endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp }, required: ["logicalGroupId"] }
         },
         {
           name: "list_logical_groups_by_logical_group",
           description: "List child logical groups belonging to a parent logical group. Returns paginated logical group list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp }, required: ["logicalGroupId"] }
         },
 
         // ── Static Group (8) ──────────────────────────────────────────────
         {
           name: "list_endpoints_by_static_group",
           description: "List all endpoints (any OS type) belonging to a static group. Returns paginated endpoint list.",
-          inputSchema: { type: "object", properties: { ...staticGroupIdProp, ...paginationProperties }, required: ["staticGroupId"] }
+          inputSchema: { type: "object", properties: { ...staticGroupIdProp }, required: ["staticGroupId"] }
         },
         {
           name: "list_android_endpoints_by_static_group",
           description: "List Android endpoints belonging to a static group. Returns paginated Android endpoint list.",
-          inputSchema: { type: "object", properties: { ...staticGroupIdProp, ...paginationProperties }, required: ["staticGroupId"] }
+          inputSchema: { type: "object", properties: { ...staticGroupIdProp }, required: ["staticGroupId"] }
         },
         {
           name: "list_ios_endpoints_by_static_group",
           description: "List iOS endpoints belonging to a static group. Returns paginated iOS endpoint list.",
-          inputSchema: { type: "object", properties: { ...staticGroupIdProp, ...paginationProperties }, required: ["staticGroupId"] }
+          inputSchema: { type: "object", properties: { ...staticGroupIdProp }, required: ["staticGroupId"] }
         },
         {
           name: "list_linux_endpoints_by_static_group",
           description: "List Linux endpoints belonging to a static group. Returns paginated Linux endpoint list.",
-          inputSchema: { type: "object", properties: { ...staticGroupIdProp, ...paginationProperties }, required: ["staticGroupId"] }
+          inputSchema: { type: "object", properties: { ...staticGroupIdProp }, required: ["staticGroupId"] }
         },
         {
           name: "list_mac_endpoints_by_static_group",
           description: "List macOS endpoints belonging to a static group. Returns paginated Mac endpoint list.",
-          inputSchema: { type: "object", properties: { ...staticGroupIdProp, ...paginationProperties }, required: ["staticGroupId"] }
+          inputSchema: { type: "object", properties: { ...staticGroupIdProp }, required: ["staticGroupId"] }
         },
         {
           name: "list_network_endpoints_by_static_group",
           description: "List network endpoints belonging to a static group. Returns paginated network endpoint list.",
-          inputSchema: { type: "object", properties: { ...staticGroupIdProp, ...paginationProperties }, required: ["staticGroupId"] }
+          inputSchema: { type: "object", properties: { ...staticGroupIdProp }, required: ["staticGroupId"] }
         },
         {
           name: "list_windows_endpoints_by_static_group",
           description: "List Windows endpoints belonging to a static group. Returns paginated Windows endpoint list.",
-          inputSchema: { type: "object", properties: { ...staticGroupIdProp, ...paginationProperties }, required: ["staticGroupId"] }
+          inputSchema: { type: "object", properties: { ...staticGroupIdProp }, required: ["staticGroupId"] }
         },
         {
           name: "list_industrial_endpoints_by_static_group",
           description: "List industrial endpoints belonging to a static group. Returns paginated industrial endpoint list.",
-          inputSchema: { type: "object", properties: { ...staticGroupIdProp, ...paginationProperties }, required: ["staticGroupId"] }
+          inputSchema: { type: "object", properties: { ...staticGroupIdProp }, required: ["staticGroupId"] }
         },
 
         // ── Dynamic Group (2) ─────────────────────────────────────────────
         {
           name: "list_endpoints_by_dynamic_group",
           description: "List all endpoints (any OS type) belonging to a dynamic group. Returns paginated endpoint list.",
-          inputSchema: { type: "object", properties: { ...dynamicGroupIdProp, ...paginationProperties }, required: ["dynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...dynamicGroupIdProp }, required: ["dynamicGroupId"] }
         },
         {
           name: "list_windows_endpoints_by_dynamic_group",
           description: "List Windows endpoints belonging to a dynamic group. Returns paginated Windows endpoint list.",
-          inputSchema: { type: "object", properties: { ...dynamicGroupIdProp, ...paginationProperties }, required: ["dynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...dynamicGroupIdProp }, required: ["dynamicGroupId"] }
         },
 
         // ── Universal Dynamic Group (8) ───────────────────────────────────
         {
           name: "list_endpoints_by_universal_dynamic_group",
           description: "List all endpoints (any OS type) belonging to a universal dynamic group. Returns paginated endpoint list.",
-          inputSchema: { type: "object", properties: { ...udgIdProp, ...paginationProperties }, required: ["universalDynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...udgIdProp }, required: ["universalDynamicGroupId"] }
         },
         {
           name: "list_android_endpoints_by_universal_dynamic_group",
           description: "List Android endpoints belonging to a universal dynamic group. Returns paginated Android endpoint list.",
-          inputSchema: { type: "object", properties: { ...udgIdProp, ...paginationProperties }, required: ["universalDynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...udgIdProp }, required: ["universalDynamicGroupId"] }
         },
         {
           name: "list_ios_endpoints_by_universal_dynamic_group",
           description: "List iOS endpoints belonging to a universal dynamic group. Returns paginated iOS endpoint list.",
-          inputSchema: { type: "object", properties: { ...udgIdProp, ...paginationProperties }, required: ["universalDynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...udgIdProp }, required: ["universalDynamicGroupId"] }
         },
         {
           name: "list_linux_endpoints_by_universal_dynamic_group",
           description: "List Linux endpoints belonging to a universal dynamic group. Returns paginated Linux endpoint list.",
-          inputSchema: { type: "object", properties: { ...udgIdProp, ...paginationProperties }, required: ["universalDynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...udgIdProp }, required: ["universalDynamicGroupId"] }
         },
         {
           name: "list_mac_endpoints_by_universal_dynamic_group",
           description: "List macOS endpoints belonging to a universal dynamic group. Returns paginated Mac endpoint list.",
-          inputSchema: { type: "object", properties: { ...udgIdProp, ...paginationProperties }, required: ["universalDynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...udgIdProp }, required: ["universalDynamicGroupId"] }
         },
         {
           name: "list_network_endpoints_by_universal_dynamic_group",
           description: "List network endpoints belonging to a universal dynamic group. Returns paginated network endpoint list.",
-          inputSchema: { type: "object", properties: { ...udgIdProp, ...paginationProperties }, required: ["universalDynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...udgIdProp }, required: ["universalDynamicGroupId"] }
         },
         {
           name: "list_windows_endpoints_by_universal_dynamic_group",
           description: "List Windows endpoints belonging to a universal dynamic group. Returns paginated Windows endpoint list.",
-          inputSchema: { type: "object", properties: { ...udgIdProp, ...paginationProperties }, required: ["universalDynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...udgIdProp }, required: ["universalDynamicGroupId"] }
         },
         {
           name: "list_industrial_endpoints_by_universal_dynamic_group",
           description: "List industrial endpoints belonging to a universal dynamic group. Returns paginated industrial endpoint list.",
-          inputSchema: { type: "object", properties: { ...udgIdProp, ...paginationProperties }, required: ["universalDynamicGroupId"] }
+          inputSchema: { type: "object", properties: { ...udgIdProp }, required: ["universalDynamicGroupId"] }
         },
         // ── AD User (6) ────────────────────────────────────────────────────
         {
           name: "list_endpoints_by_ad_user",
           description: "List all endpoints associated with a specific AD user. Returns paginated list of endpoints the user is related to.",
-          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" } }, required: ["adUserId"] }
         },
         {
           name: "list_android_endpoints_by_ad_user",
           description: "List Android endpoints associated with a specific AD user. Returns paginated list of Android devices.",
-          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" } }, required: ["adUserId"] }
         },
         {
           name: "list_ios_endpoints_by_ad_user",
           description: "List iOS endpoints associated with a specific AD user. Returns paginated list of iOS devices.",
-          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" } }, required: ["adUserId"] }
         },
         {
           name: "list_linux_endpoints_by_ad_user",
           description: "List Linux endpoints associated with a specific AD user. Returns paginated list of Linux devices.",
-          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" } }, required: ["adUserId"] }
         },
         {
           name: "list_mac_endpoints_by_ad_user",
           description: "List macOS endpoints associated with a specific AD user. Returns paginated list of Mac devices.",
-          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" } }, required: ["adUserId"] }
         },
         {
           name: "list_windows_endpoints_by_ad_user",
           description: "List Windows endpoints associated with a specific AD user. Returns paginated list of Windows devices.",
-          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" }, ...paginationProperties }, required: ["adUserId"] }
+          inputSchema: { type: "object", properties: { adUserId: { type: "string", description: "AD user ID (GUID)" } }, required: ["adUserId"] }
         },
       ]
     };
-  });
+  }));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── Argument-validation pre-pass (runs before getBconnect) ─────────────────
@@ -272,12 +263,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const a = args as Record<string, any>;
-    const params = {
-      SearchQuery: a?.SearchQuery,
-      Page:        a?.Page,
-      PageSize:    a?.PageSize,
-      OrderBy:     a?.OrderBy,
-    };
 
     try {
       switch (name) {
@@ -331,133 +316,133 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Static Group ──────────────────────────────────────────────────
         case "list_endpoints_by_static_group": {
           const client = getClient();
-          const data = await client.groups.getEndpointsByStaticGroup(a.staticGroupId, params);
+          const data = await client.groups.getEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_endpoints_by_static_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_android_endpoints_by_static_group": {
           const client = getClient();
-          const data = await client.groups.getAndroidEndpointsByStaticGroup(a.staticGroupId, params);
+          const data = await client.groups.getAndroidEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_android_endpoints_by_static_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_ios_endpoints_by_static_group": {
           const client = getClient();
-          const data = await client.groups.getIosEndpointsByStaticGroup(a.staticGroupId, params);
+          const data = await client.groups.getIosEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_ios_endpoints_by_static_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_linux_endpoints_by_static_group": {
           const client = getClient();
-          const data = await client.groups.getLinuxEndpointsByStaticGroup(a.staticGroupId, params);
+          const data = await client.groups.getLinuxEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_linux_endpoints_by_static_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_mac_endpoints_by_static_group": {
           const client = getClient();
-          const data = await client.groups.getMacEndpointsByStaticGroup(a.staticGroupId, params);
+          const data = await client.groups.getMacEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_mac_endpoints_by_static_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_network_endpoints_by_static_group": {
           const client = getClient();
-          const data = await client.groups.getNetworkEndpointsByStaticGroup(a.staticGroupId, params);
+          const data = await client.groups.getNetworkEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_network_endpoints_by_static_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_windows_endpoints_by_static_group": {
           const client = getClient();
-          const data = await client.groups.getWindowsEndpointsByStaticGroup(a.staticGroupId, params);
+          const data = await client.groups.getWindowsEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_static_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_industrial_endpoints_by_static_group": {
           const client = getClient();
-          const data = await client.groups.getIndustrialEndpointsByStaticGroup(a.staticGroupId, params);
+          const data = await client.groups.getIndustrialEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_industrial_endpoints_by_static_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 
         // ── Dynamic Group ─────────────────────────────────────────────────
         case "list_endpoints_by_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getEndpointsByDynamicGroup(a.dynamicGroupId, params);
+          const data = await client.groups.getEndpointsByDynamicGroup(a.dynamicGroupId, pickArguments(a ?? {}, sends("list_endpoints_by_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_windows_endpoints_by_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getWindowsEndpointsByDynamicGroup(a.dynamicGroupId, params);
+          const data = await client.groups.getWindowsEndpointsByDynamicGroup(a.dynamicGroupId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 
         // ── Universal Dynamic Group ───────────────────────────────────────
         case "list_endpoints_by_universal_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getEndpointsByUDG(a.universalDynamicGroupId, params);
+          const data = await client.groups.getEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_endpoints_by_universal_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_android_endpoints_by_universal_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getAndroidEndpointsByUDG(a.universalDynamicGroupId, params);
+          const data = await client.groups.getAndroidEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_android_endpoints_by_universal_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_ios_endpoints_by_universal_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getIosEndpointsByUDG(a.universalDynamicGroupId, params);
+          const data = await client.groups.getIosEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_ios_endpoints_by_universal_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_linux_endpoints_by_universal_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getLinuxEndpointsByUDG(a.universalDynamicGroupId, params);
+          const data = await client.groups.getLinuxEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_linux_endpoints_by_universal_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_mac_endpoints_by_universal_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getMacEndpointsByUDG(a.universalDynamicGroupId, params);
+          const data = await client.groups.getMacEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_mac_endpoints_by_universal_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_network_endpoints_by_universal_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getNetworkEndpointsByUDG(a.universalDynamicGroupId, params);
+          const data = await client.groups.getNetworkEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_network_endpoints_by_universal_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_windows_endpoints_by_universal_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getWindowsEndpointsByUDG(a.universalDynamicGroupId, params);
+          const data = await client.groups.getWindowsEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_universal_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_industrial_endpoints_by_universal_dynamic_group": {
           const client = getClient();
-          const data = await client.groups.getIndustrialEndpointsByUDG(a.universalDynamicGroupId, params);
+          const data = await client.groups.getIndustrialEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_industrial_endpoints_by_universal_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 
         // ── AD User ──────────────────────────────────────────────────────────
         case "list_endpoints_by_ad_user": {
           const client = getClient();
-          const data = await client.groups.getEndpointsByADUser(a.adUserId, params);
+          const data = await client.groups.getEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_endpoints_by_ad_user")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 
         case "list_android_endpoints_by_ad_user": {
           const client = getClient();
-          const data = await client.groups.getAndroidEndpointsByADUser(a.adUserId, params);
+          const data = await client.groups.getAndroidEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_android_endpoints_by_ad_user")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 
         case "list_ios_endpoints_by_ad_user": {
           const client = getClient();
-          const data = await client.groups.getIosEndpointsByADUser(a.adUserId, params);
+          const data = await client.groups.getIosEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_ios_endpoints_by_ad_user")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 
         case "list_linux_endpoints_by_ad_user": {
           const client = getClient();
-          const data = await client.groups.getLinuxEndpointsByADUser(a.adUserId, params);
+          const data = await client.groups.getLinuxEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_linux_endpoints_by_ad_user")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 
         case "list_mac_endpoints_by_ad_user": {
           const client = getClient();
-          const data = await client.groups.getMacEndpointsByADUser(a.adUserId, params);
+          const data = await client.groups.getMacEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_mac_endpoints_by_ad_user")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 
         case "list_windows_endpoints_by_ad_user": {
           const client = getClient();
-          const data = await client.groups.getWindowsEndpointsByADUser(a.adUserId, params);
+          const data = await client.groups.getWindowsEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_ad_user")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 

@@ -123,8 +123,9 @@ export class EndpointsModule {
    * Search endpoints by query string
    * Searches across DisplayName, HostName, PrimaryIP, OSVersionString, SerialNumber, and Comment
    */
-  async searchEndpoints(query: string, pageSize?: number): Promise<EndpointsList> {
+  async searchEndpoints(query: string, pageSize?: number, filters: Record<string, unknown> = {}): Promise<EndpointsList> {
     return this.getEndpoints({
+      ...filters,
       SearchQuery: query,
       PageSize: pageSize || 50
     });
