@@ -176,6 +176,11 @@ function redirectOrigin(error: AxiosError): string {
   }
 }
 
+/** A method that changes data: anything but GET, HEAD and OPTIONS (#254). */
+export function isWriteMethod(method: string | undefined): boolean {
+  return !["GET", "HEAD", "OPTIONS"].includes((method ?? "GET").toUpperCase());
+}
+
 /** `value` without trailing slashes (a scan, not a regex: linear on any input). */
 function trimTrailingSlashes(value: string): string {
   let end = value.length;
@@ -667,8 +672,21 @@ export class BConnectClientBase {
       // axios's own timeout ("timeout of N ms exceeded") isn't a connection failure:
       // the request went out but no answer came in time (#203). A TCP connect
       // timeout from the operating system (also ETIMEDOUT) stays "Cannot connect".
-      if ((error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") && /^timeout of \d+ms exceeded/.test(error.message)) {
-        const seconds = (error.config?.timeout ?? this.config.timeout ?? 30000) / 1000;
+      const timedOut = (error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") && /^timeout of \d+ms exceeded/.test(error.message);
+      // The connection closed after the request went out (#254).
+      const closedAfterSending = error.code === "ECONNRESET" || error.code === "EPIPE" || /socket hang up/i.test(error.message);
+      const seconds = (error.config?.timeout ?? this.config.timeout ?? 30000) / 1000;
+      // A write that was sent but got no answer may still be carried out by bMS:
+      // say so instead of suggesting a retry (REQ-XC-003 AC 6, #254).
+      if (isWriteMethod(error.config?.method) && (timedOut || closedAfterSending)) {
+        const method = (error.config?.method ?? "").toUpperCase();
+        throw new BConnectConnectionError(
+          `bConnect didn't answer the ${method} request (${timedOut ? `no answer within ${seconds} s` : "the connection was closed"}), ` +
+          "so it's unknown whether bMS made the change; it may still carry it out. " +
+          "Check the current state (read the object back) before repeating this call."
+        );
+      }
+      if (timedOut) {
         throw new BConnectConnectionError(
           `The bConnect API didn't answer within ${seconds} s (BCONNECT_TIMEOUT_MS). ` +
           "The bMS may be busy; try a smaller page size or raise the timeout."
