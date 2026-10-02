@@ -220,6 +220,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Job assign tools say how to check their reach** (#178). `assign_job_to_logical_group` points to
+  `list_endpoints_by_logical_group` with `includeSubfolders: true` and `PageSize: 1`, whose `totalItems`
+  is the number of endpoints the assignment reaches at all sub-group levels (a plain member list shows
+  only direct members); the other assign tools name their group's member tool. All four say the answer
+  lists the assignments that failed.
 - **Maintenance windows can be changed to Anytime or Never** (#237). The update tools now also
   remove the old intervals, which bMS requires for these types (before, bMS answered 400). The create
   and update tools refuse, before sending, a window that breaks the rule: Anytime and Never take no
