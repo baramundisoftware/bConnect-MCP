@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Credentials are only sent to the configured bConnect host.** The client no longer follows
+  HTTP redirects. Before, a redirect could carry an API key (`X-Api-Key`) to another host. A
+  redirect now stops with a message naming the target address and asking to set
+  `BCONNECT_BASE_URL` to it. **Behaviour change:** a bMS behind a front end that redirects (for
+  example from `http://` to `https://`) needs its final address in `BCONNECT_BASE_URL`.
 - **Four write tools are now refused while write operations are disabled.**
   `withdraw_kiosk_release`, `link_entra_id_data`, `unlink_entra_id_data` and
   `replace_application_in_bundle` were missing from their server's write gate and sent

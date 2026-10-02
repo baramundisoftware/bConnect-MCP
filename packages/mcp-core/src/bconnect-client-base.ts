@@ -155,6 +155,24 @@ export interface BConnectConfig {
   disableHttpsAgent?: boolean;  // Disable HTTPS agent (for MSW testing)
 }
 
+/**
+ * Origin (scheme + host + port) a redirect points to, resolved against the
+ * request URL. Path and query are left out: they could carry data, and the
+ * operator only needs the address to put into BCONNECT_BASE_URL.
+ */
+function redirectOrigin(error: AxiosError): string {
+  const location = error.response?.headers?.location;
+  if (typeof location !== "string" || location === "") {
+    return "an unknown address";
+  }
+  try {
+    const base = new URL(error.config?.url ?? "", error.config?.baseURL ?? undefined);
+    return new URL(location, base).origin;
+  } catch {
+    return "an unknown address";
+  }
+}
+
 export class BConnectClientBase {
   protected client: AxiosInstance;
   // List route of the server's own domain probed by testConnection(), e.g.
@@ -201,6 +219,10 @@ export class BConnectClientBase {
     const axiosConfig: CreateAxiosDefaults = {
       baseURL: config.baseUrl,
       timeout: config.timeout || 30000,
+      // bConnect declares no redirects, and a followed redirect would carry the
+      // X-Api-Key header to whatever host it names (REQ-SRV-021). A 3xx becomes
+      // an error that tells the operator to fix BCONNECT_BASE_URL instead.
+      maxRedirects: 0,
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json"
@@ -470,6 +492,14 @@ export class BConnectClientBase {
     if (error instanceof AxiosError && error.response) {
       // Server responded with error status
       const status = error.response.status;
+
+      if (status >= 300 && status < 400) {
+        throw new Error(
+          `bConnect answered with a redirect to ${redirectOrigin(error)}. ` +
+          "Set BCONNECT_BASE_URL to the final address; redirects are not followed, " +
+          "so credentials are only ever sent to the configured host."
+        );
+      }
 
       switch (status) {
         case 401:
