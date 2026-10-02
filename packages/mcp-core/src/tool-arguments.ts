@@ -69,3 +69,61 @@ export function patchFromArguments(args: Record<string, unknown>, paths: Record<
 export function pickArguments(args: Record<string, unknown>, names: readonly string[], rename: Record<string, string> = {}): Record<string, unknown> {
   return Object.fromEntries(names.filter((name) => args[name] !== undefined).map((name) => [rename[name] ?? name, args[name]]));
 }
+
+interface DeclaredTool {
+  name: string;
+  inputSchema: Record<string, unknown>;
+}
+
+const isDeclaredTool = (tool: object): tool is DeclaredTool =>
+  "name" in tool && typeof tool.name === "string" && "inputSchema" in tool && isRecord(tool.inputSchema);
+
+const declaredNames = (tool: DeclaredTool): string[] =>
+  isRecord(tool.inputSchema.properties) ? Object.keys(tool.inputSchema.properties) : [];
+
+/** The message for a call with arguments the tool doesn't declare. */
+function undeclaredMessage(tool: string, unknown: string[], accepted: string[]): string {
+  const head = `Unknown argument${unknown.length > 1 ? "s" : ""} for ${tool}: ${unknown.join(", ")}.`;
+  return `${head} ${accepted.length > 0 ? `This tool accepts: ${accepted.join(", ")}.` : "This tool takes no arguments."}`;
+}
+
+export interface DeclaredArgumentsOnly<Result> {
+  /** The tool list, each input schema with `additionalProperties: false`. */
+  list: () => Promise<Result>;
+  /** Throws InvalidParams when `args` holds an argument the tool's schema doesn't declare. */
+  refuseUndeclared: (name: string, args: Record<string, unknown> | undefined) => Promise<void>;
+}
+
+/**
+ * Tools accept only the arguments they declare (REQ-SRV-022, #163).
+ *
+ * Wraps a server's list-tools function. `list` advertises closed input
+ * schemas; `refuseUndeclared` checks a call against the same list, so no tool
+ * needs its own list of names. An unknown tool name is left to the server.
+ */
+export function declaredArgumentsOnly<Result extends { tools: object[] }>(
+  listTools: () => Result | Promise<Result>,
+): DeclaredArgumentsOnly<Result> {
+  return {
+    list: async () => {
+      const result = await listTools();
+      return {
+        ...result,
+        tools: result.tools.map((tool) => isDeclaredTool(tool)
+          ? { ...tool, inputSchema: { ...tool.inputSchema, additionalProperties: false } }
+          : tool),
+      };
+    },
+    refuseUndeclared: async (name, args) => {
+      const tool = (await listTools()).tools.filter(isDeclaredTool).find((t) => t.name === name);
+      if (!tool || !args) {
+        return;
+      }
+      const accepted = declaredNames(tool);
+      const unknown = Object.keys(args).filter((arg) => !accepted.includes(arg));
+      if (unknown.length > 0) {
+        throw new McpError(ErrorCode.InvalidParams, undeclaredMessage(name, unknown, accepted));
+      }
+    },
+  };
+}

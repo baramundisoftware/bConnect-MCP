@@ -71,14 +71,15 @@ export function requiredArguments(inputSchema: JsonSchema): Record<string, unkno
   return args;
 }
 
-/** The value of the undeclared argument added by `allArguments`; it must never reach the wire. */
+/** An undeclared argument the guards add to a call; it must be refused and never reach the wire (#163). */
 export const UNKNOWN_NAME = 'zzGuardUnknown';
 export const UNKNOWN_VALUE = 'zz-guard-unknown-argument';
 
 /**
  * Sample values for every documented argument, a distinct GUID for each ID-like
- * argument (so a path slot can be traced back to its argument), and one
- * undeclared argument.
+ * argument (so a path slot can be traced back to its argument). Declared
+ * arguments only: an undeclared one is refused (#163), so the guards send it
+ * in a call of its own.
  */
 export function allArguments(inputSchema: JsonSchema): { args: Record<string, unknown>; idsByArg: Record<string, string> } {
   const args: Record<string, unknown> = {};
@@ -92,7 +93,6 @@ export function allArguments(inputSchema: JsonSchema): { args: Record<string, un
       args[name] = sample(name, schema);
     }
   }
-  args[UNKNOWN_NAME] = UNKNOWN_VALUE;
   return { args, idsByArg };
 }
 
