@@ -29,7 +29,7 @@ beforeAll(async () => {
   client = createClient();
 });
 
-describe('Compliance — list MobileDeviceRules', () => {
+describe('Compliance — list mobile device rules (/v2.0/Rules)', () => {
   it('returns paged data with totalItems', async () => {
     if (!available) {return;}
     const result = await client.compliance.getAllMobileDeviceRules({ PageSize: 10 } as never);
@@ -44,7 +44,7 @@ describe('Compliance — get MobileDeviceRule by id', () => {
     if (!available) {return;}
     const list = await client.compliance.getAllMobileDeviceRules({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
-    if (!id) {throw new Error('mock returned empty MobileDeviceRules list');}
+    if (!id) {throw new Error('mock returned an empty rules list');}
     const item = await client.compliance.getMobileDeviceRule(id);
     expect(item.id).toBe(id);
   });

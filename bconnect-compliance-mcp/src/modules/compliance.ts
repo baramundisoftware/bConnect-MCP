@@ -43,12 +43,12 @@ export class ComplianceModule {
   }
 
   async getAllMobileDeviceRules(params: GetAllMobileDeviceRulesParams = {}): Promise<RulePagedList> {
-    const response = await this.httpClient.get(`${this.basePath}/MobileDeviceRules`, { params });
+    const response = await this.httpClient.get(`${this.basePath}/Rules`, { params });
     return response.data;
   }
 
   async getMobileDeviceRule(ruleId: string): Promise<Rule> {
-    const response = await this.httpClient.get(`${this.basePath}/MobileDeviceRules/${ruleId}`);
+    const response = await this.httpClient.get(`${this.basePath}/Rules/${ruleId}`);
     return response.data;
   }
 
