@@ -3,6 +3,9 @@
 # publish-image.sh — Build and push the multi-arch bConnect MCP **gateway** image
 # to GHCR from a local machine, without GitHub Actions.
 #
+# Releases are published by .github/workflows/image.yml when a vX.Y.Z tag is
+# pushed. Use this script only when Actions is unavailable.
+#
 # Per ADR-003 only the gateway is distributed as a container (the 13 domain
 # servers run over stdio). Builds linux/amd64 + linux/arm64 (one native, the
 # other via QEMU emulation) into a single manifest list and pushes it to the
