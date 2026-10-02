@@ -17,7 +17,9 @@ first safety net. The locks in the tier (below) come second.
 
 With TLS verification off (`NODE_TLS_REJECT_UNAUTHORIZED=0`), the credentials go to
 a server whose certificate nobody checked. Use it only on a network you control, and
-only until the CA file is in place.
+only until the CA file is in place. An `http://` base URL has no TLS at all: the
+servers refuse it unless `BCONNECT_ALLOW_INSECURE_HTTP=true`, and the report then says
+"TLS: none".
 
 ## Setup on Windows
 
@@ -77,8 +79,9 @@ only until the CA file is in place.
 
 Every variable a server or the shared core reads (connection, credentials, TLS,
 audit, rate limit, transport, gates), plus the proxy variables, is set from the env
-file or set empty. The list comes from the source, not from a hand-kept list.
-Nothing comes in from the repo `.env` or the shell.
+file or set empty. The list comes from the source, read with the same parser as the
+README and client-config guards (`__tests__/lib/env-reads.ts`), not from a hand-kept
+list. Nothing comes in from the repo `.env` or the shell.
 
 The run fails before any test when:
 - the env file doesn't exist;
@@ -103,7 +106,10 @@ It also fails after the tests when no server started or no read tool was called.
    reason. One example is 409 "no maintenance window". Any other failure fails the
    run.
 4. **Response schemas.** 2xx answers are checked against the spec's response
-   schemas. Differences are reported, not failed.
+   schemas with the shared spec validator (`__tests__/lib/spec-validator.ts`), the
+   one the spec-conformance guard uses. Differences are reported, not failed. Each
+   one is a spec defect, a validator artefact (fixed in the shared validator, with a
+   fixture test) or an MCP defect, and goes into an issue.
 
 ## Read-only locks
 
