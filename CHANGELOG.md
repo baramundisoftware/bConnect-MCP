@@ -24,8 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   file, an insecure base URL) now all stop the server with a clear message.
 - **Credentials are only sent to the configured bConnect host.** The client no longer follows
   HTTP redirects. Before, a redirect could carry an API key (`X-Api-Key`) to another host. A
-  redirect now stops with a message naming the target address and asking to set
-  `BCONNECT_BASE_URL` to it. **Behaviour change:** a bMS behind a front end that redirects (for
+  redirect now stops the call: the operator's log names the target address, the model is only
+  told that `BCONNECT_BASE_URL` needs the final address. **Behaviour change:** a bMS behind a front end that redirects (for
   example from `http://` to `https://`) needs its final address in `BCONNECT_BASE_URL`.
 - **Local secret files are ignored by git.** `.gitignore` now covers every `.env` and `.env.*`
   copy in any directory (for example the `.env.gateway` the gateway setup asks for) and a

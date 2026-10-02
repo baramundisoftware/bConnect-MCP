@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments } from "@bconnect/mcp-core";
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
 import { createBody, createInputSchema } from "./create-fields.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
@@ -803,7 +803,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     };
 
     try {
-      const bconnect = getBconnect();
+      const bconnect = lazyClient(getBconnect);
 
       switch (name) {
         // ── Endpoints ───────────────────────────────────────────────────
@@ -991,7 +991,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_windows_endpoint": {
-          const result = await bconnect.endpoints.updateWindowsEndpoint(args!.id as string, changes("update_windows_endpoint", args!));
+          const patch = changes("update_windows_endpoint", args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateWindowsEndpoint(args!.id as string, patch);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1021,7 +1022,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_linux_endpoint": {
-          const result = await bconnect.endpoints.updateLinuxEndpoint(args!.id as string, changes("update_linux_endpoint", args!));
+          const patch = changes("update_linux_endpoint", args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateLinuxEndpoint(args!.id as string, patch);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1036,7 +1038,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_mac_endpoint": {
-          const result = await bconnect.endpoints.updateMacEndpoint(args!.id as string, changes("update_mac_endpoint", args!));
+          const patch = changes("update_mac_endpoint", args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateMacEndpoint(args!.id as string, patch);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1056,7 +1059,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_logical_group": {
-          const result = await bconnect.endpoints.updateLogicalGroup(args!.id as string, changes("update_logical_group", args!));
+          const patch = changes("update_logical_group", args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateLogicalGroup(args!.id as string, patch);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -1071,7 +1075,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_maintenance_window_for_endpoint": {
-          const result = await bconnect.endpoints.updateMaintenanceWindowForEndpoint(args!.id as string, changes("update_maintenance_window_for_endpoint", args!));
+          const patch = changes("update_maintenance_window_for_endpoint", args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateMaintenanceWindowForEndpoint(args!.id as string, patch);
           return { content: [{ type: "text", text: `Maintenance window for endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
@@ -1086,7 +1091,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_maintenance_window_for_logical_group": {
-          const result = await bconnect.endpoints.updateMaintenanceWindowForLogicalGroup(args!.id as string, changes("update_maintenance_window_for_logical_group", args!));
+          const patch = changes("update_maintenance_window_for_logical_group", args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateMaintenanceWindowForLogicalGroup(args!.id as string, patch);
           return { content: [{ type: "text", text: `Maintenance window for logical group ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
@@ -1112,7 +1118,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_industrial_endpoint": {
-          const result = await bconnect.endpoints.updateIndustrialEndpoint(args!.id as string, changes("update_industrial_endpoint", args!));
+          const patch = changes("update_industrial_endpoint", args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateIndustrialEndpoint(args!.id as string, patch);
           return { content: [{ type: "text", text: `Industrial endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
@@ -1127,7 +1134,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_network_endpoint": {
-          const result = await bconnect.endpoints.updateNetworkEndpoint(args!.id as string, changes("update_network_endpoint", args!));
+          const patch = changes("update_network_endpoint", args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateNetworkEndpoint(args!.id as string, patch);
           return { content: [{ type: "text", text: `Network endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
         }
 

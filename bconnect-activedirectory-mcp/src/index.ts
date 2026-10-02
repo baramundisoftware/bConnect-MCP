@@ -20,7 +20,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { ActiveDirectoryRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -515,8 +515,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     };
 
     try {
-      const bconnect = getBconnect();
-      const ad = bconnect.activeDirectory;
+      const bconnect = lazyClient(getBconnect);
+      const ad = lazyClient(() => bconnect.activeDirectory);
 
       // Dispatch — arguments already validated by validateToolArguments above.
       switch (name) {

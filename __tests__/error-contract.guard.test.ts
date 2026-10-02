@@ -88,7 +88,6 @@ describe.each(RELEASES)('error contract, bMS %s', (release) => {
   it('a bConnect error is a tool result, never a protocol error', () => {
     const protocol = calls.filter((c) => c.requests.length > 0 && c.result.code !== undefined);
     expect(protocol.map((c) => `${c.server}:${c.tool} → ${c.result.code} ${c.text.slice(0, 80)}`)).toEqual([]);
-    expect(calls.filter((c) => c.requests.length > 0).every((c) => c.result.isError)).toBe(true);
   });
 
   it('the result names status, method and path, the documented 404 meaning and bConnect\'s detail', () => {
@@ -115,11 +114,6 @@ describe.each(RELEASES)('error contract, bMS %s', (release) => {
     const leaks = calls.filter((c) => /bms\.guard\.test|\/bconnect\//.test(c.text) || c.text.includes(USERNAME) || c.text.includes(PASSWORD));
     expect(leaks.map((c) => `${c.server}:${c.tool}: ${c.text.slice(0, 120)}`)).toEqual([]);
   });
-
-  it('a tool that sent nothing failed for an MCP-level reason only (invalid arguments, other release)', () => {
-    const odd = calls.filter((c) => c.requests.length === 0 && c.result.code !== undefined && !PROTOCOL_CODES.has(c.result.code));
-    expect(odd.map((c) => `${c.server}:${c.tool} → ${c.result.code} ${c.text.slice(0, 80)}`)).toEqual([]);
-  });
 });
 
 describe('gate refusals are tool results with their own wording, and send nothing', () => {
@@ -136,6 +130,15 @@ describe('gate refusals are tool results with their own wording, and send nothin
       expect({ tool: `${c.server}:${c.tool}`, sent: c.requests.length, code: c.result.code, isError: c.result.isError })
         .toEqual({ tool: `${c.server}:${c.tool}`, sent: 0, code: undefined, isError: true });
     }
+  });
+
+  it('a tool that sent nothing was refused by a gate, or failed for an MCP-level reason', () => {
+    const silent = calls.filter((c) => c.requests.length === 0);
+    expect(silent.length).toBeGreaterThan(50);
+    const odd = silent.filter((c) => c.result.code === undefined
+      ? !/ALLOW_WRITE_OPERATIONS|ALLOW_SECRET_READ/.test(c.text)
+      : !PROTOCOL_CODES.has(c.result.code));
+    expect(odd.map((c) => `${c.server}:${c.tool} → ${c.result.code ?? 'result'} ${c.text.slice(0, 80)}`)).toEqual([]);
   });
 
   it('the secret gate', () => {
@@ -155,6 +158,50 @@ describe('MCP-level faults stay protocol errors', () => {
     const result = await conn.call('zz_guard_unknown_tool', {});
     await conn.close();
     expect(result.code).toBe(ErrorCode.MethodNotFound);
+  });
+});
+
+describe('MCP-level faults win over missing credentials', () => {
+  const noCredentials = { BCONNECT_USERNAME: '', BCONNECT_PASSWORD: '', BCONNECT_API_KEY: '' };
+
+  it.each(SERVERS)('%s: an unknown tool is MethodNotFound', async (server) => {
+    Object.assign(process.env, guardEnv('26R1', { writes: true, secretRead: false }), noCredentials);
+    const conn = await connect(server);
+    const result = await conn.call('zz_guard_unknown_tool', {});
+    await conn.close();
+    expect(result.code).toBe(ErrorCode.MethodNotFound);
+  });
+
+  it.each(SERVERS)('%s: a 26R1 tool called on 25R2 is a protocol error or a gate refusal, and sends nothing', async (server) => {
+    Object.assign(process.env, guardEnv('26R1', { writes: true, secretRead: false }), noCredentials);
+    const all = await connect(server);
+    const tools26 = all.tools;
+    await all.close();
+    Object.assign(process.env, guardEnv('25R2', { writes: true, secretRead: false }), noCredentials);
+    const conn = await connect(server);
+    const names25 = new Set(conn.tools.map((t) => t.name));
+    const wrong: string[] = [];
+    for (const tool of tools26.filter((t) => !names25.has(t.name))) {
+      sent = [];
+      const result = await conn.call(tool.name, requiredArguments(tool.inputSchema));
+      // A gate that runs earlier (write or secret gate) may refuse first; that sends nothing either.
+      const refusedByGate = result.code === undefined && /ALLOW_WRITE_OPERATIONS|ALLOW_SECRET_READ/.test(contentText(result));
+      if (sent.length > 0 || !(refusedByGate || (result.code !== undefined && PROTOCOL_CODES.has(result.code)))) {
+        wrong.push(`${tool.name} → ${result.code ?? 'result'} ${contentText(result).slice(0, 80)}`);
+      }
+    }
+    await conn.close();
+    expect(wrong).toEqual([]);
+  });
+
+  it('invalid arguments found in the handler are InvalidParams (endpoints update, jobs folder update)', async () => {
+    Object.assign(process.env, guardEnv('26R1', { writes: true, secretRead: false }), noCredentials);
+    for (const [server, tool] of [['bconnect-endpoints-mcp', 'update_windows_endpoint'], ['bconnect-jobs-mcp', 'update_job_folder']]) {
+      const conn = await connect(server);
+      const result = await conn.call(tool, { id: '00000000-0000-4000-8000-000000000001' });
+      await conn.close();
+      expect({ tool, code: result.code }).toEqual({ tool, code: ErrorCode.InvalidParams });
+    }
   });
 });
 

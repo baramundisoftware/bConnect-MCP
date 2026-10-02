@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, withUnverifiedWriteMarker, pickArguments } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { SoftwareRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -420,8 +420,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     };
 
     try {
-      const bconnect = getBconnect();
-      const sw = bconnect.software;
+      const bconnect = lazyClient(getBconnect);
+      const sw = lazyClient(() => bconnect.software);
 
       // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
       const requires26R1 = (): void => {
