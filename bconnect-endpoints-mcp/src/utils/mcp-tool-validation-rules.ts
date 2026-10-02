@@ -42,6 +42,9 @@ export const EndpointsRules = {
     CommonRules.guid('id')
   ],
 
+  // GET /UnmanagedEndpoints (the route takes no query parameters)
+  listUnmanagedEndpoints: (): ValidationRule[] => [],
+
   // GET /IndustrialEndpoints
   listIndustrialEndpoints: (): ValidationRule[] => paginationRules(),
 
@@ -59,7 +62,7 @@ export const EndpointsRules = {
   ],
 
   // GET /LogicalGroups
-  listLogicalGroups: (): ValidationRule[] => [],
+  listLogicalGroups: (): ValidationRule[] => paginationRules(),
 
   // GET /LogicalGroups/{id}
   getLogicalGroup: (): ValidationRule[] => [
@@ -845,7 +848,7 @@ export const TOOL_RULES: Record<string, () => ValidationRule[]> = {
   list_logical_groups: EndpointsRules.listLogicalGroups,
   list_mac_endpoints: () => [CommonRules.searchQuery(), CommonRules.pageSize()],
   list_network_endpoints: EndpointsRules.listNetworkEndpoints,
-  list_unmanaged_endpoints: EndpointsRules.listPlatformEndpoints,
+  list_unmanaged_endpoints: EndpointsRules.listUnmanagedEndpoints,
   list_windows_endpoints: () => [CommonRules.searchQuery(), CommonRules.pageSize()],
   list_windows_endpoints_by_logical_group: EndpointsRules.listWindowsEndpointsByLogicalGroup,
   search_endpoints: () => [],

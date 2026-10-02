@@ -23,6 +23,7 @@ import {
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
 import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { QUERY_PARAMS } from "./query-params.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { AssetsRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -645,7 +646,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // ── Assets ─────────────────────────────────────────────────────────
         case "list_assets": {
-          const result = await assets.getAssets((args ?? {}) as never);
+          const result = await assets.getAssets(pickArguments(args ?? {}, QUERY_PARAMS.list_assets));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -670,35 +671,35 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_assets_in_asset_stock": {
-          const result = await assets.getAssetsAssetStock((args ?? {}) as never);
+          const result = await assets.getAssetsAssetStock(pickArguments(args ?? {}, QUERY_PARAMS.list_assets_in_asset_stock));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_assets_by_logical_group": {
-          const result = await assets.getAssetsByLogicalGroup(args!.logicalGroupId as string, (args ?? {}) as never);
+          const result = await assets.getAssetsByLogicalGroup(args!.logicalGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_assets_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_assets_by_windows_endpoint": {
-          const result = await assets.getAssetsByWindowsEndpoint(args!.endpointId as string, (args ?? {}) as never);
+          const result = await assets.getAssetsByWindowsEndpoint(args!.endpointId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_assets_by_windows_endpoint));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_assets_by_org_unit": {
           requires26R1();
-          const result = await assets.getAssetsByOrgUnit(args!.orgUnitId as string, (args ?? {}) as never);
+          const result = await assets.getAssetsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_assets_by_org_unit));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_assets_by_ad_object": {
           requires26R1();
-          const result = await assets.getAssetsByADObject(args!.adObjectId as string, (args ?? {}) as never);
+          const result = await assets.getAssetsByADObject(args!.adObjectId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_assets_by_ad_object));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // ── Asset Stock Folders ────────────────────────────────────────────
         case "list_asset_stock_folders": {
-          const result = await assets.getAssetStockFolders((args ?? {}) as never);
+          const result = await assets.getAssetStockFolders(pickArguments(args ?? {}, QUERY_PARAMS.list_asset_stock_folders));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -723,13 +724,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_asset_stock_subfolders": {
-          const result = await assets.getAssetStockFoldersByParent(args!.folderId as string, (args ?? {}) as never);
+          const result = await assets.getAssetStockFoldersByParent(args!.folderId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_asset_stock_subfolders));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // ── Asset Type Folders ─────────────────────────────────────────────
         case "list_asset_type_folders": {
-          const result = await assets.getAssetTypeFolders((args ?? {}) as never);
+          const result = await assets.getAssetTypeFolders(pickArguments(args ?? {}, QUERY_PARAMS.list_asset_type_folders));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -754,13 +755,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_asset_type_subfolders": {
-          const result = await assets.getAssetTypeFoldersByParent(args!.folderId as string, (args ?? {}) as never);
+          const result = await assets.getAssetTypeFoldersByParent(args!.folderId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_asset_type_subfolders));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // ── Asset Types ────────────────────────────────────────────────────
         case "list_asset_types": {
-          const result = await assets.getAssetTypes((args ?? {}) as never);
+          const result = await assets.getAssetTypes(pickArguments(args ?? {}, QUERY_PARAMS.list_asset_types));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

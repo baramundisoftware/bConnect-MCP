@@ -62,6 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **`list_windows_endpoints_by_logical_group` takes `includeSubfolders`** instead of `includeSubGroups`,
+  which bConnect never read (#170).
+- **`list_unmanaged_endpoints` takes no arguments**: its route declares no paging or filters (#186).
 - **bConnect errors are tool results the model can read** (#158, #195, #166). When bConnect
   refuses a call, the tool now answers with `isError: true` and a message that names the status,
   the method and the path, the meaning the bConnect API documentation gives that status for
@@ -145,6 +148,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **List tools send only the query parameters bConnect declares.** Active Directory, assets, jobs and
+  logical-group tools no longer repeat the path ID (e.g. `adGroupId`) or pass other arguments as query
+  parameters; each sends exactly what its route declares (#186).
+- **Logical-group tools can include sub-groups and page.** Tools that list a logical group's members
+  (endpoints, groups, jobs, Defender threats, installed software) offer `includeSubfolders`, so a parent
+  group whose members sit in sub-groups no longer looks empty. `list_logical_groups` offers paging and
+  the `Name`, `Dip`, `Domain`, `SearchQuery` and `OrderBy` filters instead of returning only the first
+  page (#170).
 - **`simulate_msw_cleanup` and `msw_cleanup` are refused on 25R2.** They were hidden from the tool
   list on 25R2 but still ran when called by name, against an operation 25R2 doesn't have. They now
   answer like the other 26R1-only tools.

@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { SoftwareRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -106,6 +106,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
             Page: PAGE_PROPERTY,
             PageSize: PAGE_SIZE_PROPERTY,
+            includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
           },
           required: ["logicalGroupId"]
         }
