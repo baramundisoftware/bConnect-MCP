@@ -156,6 +156,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **The software server starts on bMS 26R1 even when installed-software data is slow** (#202). Its
+  startup check asked for `InstalledWindowsSoftware`, which a real bMS answered only after 30 s, so
+  the check timed out and the server exited. With `BCONNECT_RELEASE=26R1` (the default) it now checks the light
+  `Bundles` list; with any other value it keeps `InstalledWindowsSoftware`, the only list route 25R2
+  has.
 - **List tools send only the query parameters bConnect declares.** Active Directory, assets, jobs and
   logical-group tools no longer repeat the path ID (e.g. `adGroupId`) or pass other arguments as query
   parameters; each sends exactly what its route declares (#186).

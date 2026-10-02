@@ -1,15 +1,17 @@
 /**
  * Startup-probe guard (REQ-SRV-013, defect #111).
  *
- * Every server's BConnectClient runs testConnection() against MSW; the one
- * request it sends must be a GET list route of the server's own domain that
- * exists in every bundled spec release carrying that domain, and it must ask
- * for a single item via PageSize (bConnect ignores $top).
+ * Every server's BConnectClient runs testConnection() against MSW, once per
+ * bundled spec release carrying its domain (BCONNECT_RELEASE set to it); the
+ * one request it sends must be a GET list route of the server's own domain in
+ * the spec of that release (#202: a server may probe a lighter route where the
+ * release has one), and it must ask for a single item via PageSize (bConnect
+ * ignores $top).
  *
  * The expected routes come from the specs, not a hand list, so a server that
  * drops its probe route or points it at a route bConnect doesn't have fails here.
  */
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -40,6 +42,7 @@ const msw = setupServer(
 );
 
 const savedSkip = process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK;
+const savedRelease = process.env.BCONNECT_RELEASE;
 
 beforeAll(() => {
   delete process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK;
@@ -49,6 +52,7 @@ afterEach(() => { recorded = []; });
 afterAll(() => {
   msw.close();
   if (savedSkip !== undefined) process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK = savedSkip;
+  if (savedRelease === undefined) delete process.env.BCONNECT_RELEASE; else process.env.BCONNECT_RELEASE = savedRelease;
 });
 
 async function probe(server: string, healthCheckPath?: string): Promise<{ ok: boolean; requests: URL[] }> {
@@ -69,15 +73,18 @@ it('finds all 13 servers', () => {
 describe.each(SERVERS)('%s startup probe', (server) => {
   const domain = domainOf(server);
   const releases = RELEASES.filter((r) => loadOperations(r).some((op) => op.domain === domain));
+  // The other cases don't depend on the release; pin it so they don't depend on test order.
+  beforeEach(() => { process.env.BCONNECT_RELEASE = releases[releases.length - 1]; });
 
-  it('sends exactly one GET to its own domain, a route in every spec release with that domain', async () => {
+  it('sends exactly one GET to its own domain, a list route in the spec of the release it runs against', async () => {
     expect(releases.length).toBeGreaterThan(0);
-    const { ok, requests } = await probe(server);
-    expect(ok).toBe(true);
-    expect(requests).toHaveLength(1);
-    const path = requests[0].pathname.slice(BASE_PATH.length);
-    expect(path.split('/')[1]).toBe(domain);
     for (const release of releases) {
+      process.env.BCONNECT_RELEASE = release;
+      const { ok, requests } = await probe(server);
+      expect(ok).toBe(true);
+      expect(requests).toHaveLength(1);
+      const path = requests[0].pathname.slice(BASE_PATH.length);
+      expect(path.split('/')[1]).toBe(domain);
       const op = findOperation(release, 'GET', path);
       expect(op, `${release}: GET ${path} is not in the spec`).toBeDefined();
       expect(op!.path, `${release}: probe must be a list route`).not.toMatch(/\{/);
