@@ -131,16 +131,21 @@ export function declaredArgumentsOnly<Result extends { tools: object[] }>(
 /** Per bMS release, per tool: the query parameters the tool offers and sends, as schema properties (#179). */
 export type QueryParameterTable = Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, object>>>>>>;
 
+/** 25R2 only when set so; unset or anything else is 26R1, as the servers treat it. */
+const releaseKey = (release: string | undefined): "25R2" | "26R1" => (release === "25R2" ? "25R2" : "26R1");
+
 /**
- * The table entry for the selected release: 25R2 only when set so; unset or anything else is 26R1,
- * as the servers treat it. Empty when only the other release's route has query parameters; an
- * error when no release lists the tool (the table wasn't regenerated).
+ * The table entry for the selected release. A tool whose route only the other release has (its
+ * tool is listed on both) keeps that release's parameters, as before the tables. An error when no
+ * release lists the tool (the table wasn't regenerated).
  */
 function queryEntry(table: QueryParameterTable, release: string | undefined, tool: string): Readonly<Record<string, object>> {
-  if (!Object.values(table).some((byTool) => byTool[tool])) {
+  const key = releaseKey(release);
+  const entry = table[key]?.[tool] ?? table[key === "25R2" ? "26R1" : "25R2"]?.[tool];
+  if (!entry) {
     throw new Error(`No query parameters for ${tool}; run node scripts/generate-query-parameters.mjs`);
   }
-  return table[release === "25R2" ? "25R2" : "26R1"]?.[tool] ?? {};
+  return entry;
 }
 
 /** The query parameters `tool` offers in `release`, as input-schema properties. */
@@ -159,8 +164,9 @@ const isSchemaTool = (tool: object): tool is { name: string; inputSchema: Record
 /**
  * Builds each listed tool's query parameters from the table (#179): the tool's
  * own properties (its path arguments) stay, every query parameter comes from
- * the table for the selected release, and one only the other release declares
- * is removed. A tool without a table entry is listed unchanged.
+ * the table for the selected release (or the other release's, when only that
+ * one has the tool's route), and one only the other release declares is
+ * removed. A tool without a table entry is listed unchanged.
  */
 export function withQueryProperties<Result extends { tools: object[] }>(
   table: QueryParameterTable,
@@ -179,7 +185,7 @@ export function withQueryProperties<Result extends { tools: object[] }>(
         const queryNames = new Set(Object.values(table).flatMap((byTool) => Object.keys(byTool[tool.name] ?? {})));
         const own = isRecord(tool.inputSchema.properties) ? tool.inputSchema.properties : {};
         const pathArguments = Object.fromEntries(Object.entries(own).filter(([name]) => !queryNames.has(name)));
-        const offered = table[selected === "25R2" ? "25R2" : "26R1"]?.[tool.name] ?? {};
+        const offered = queryEntry(table, selected, tool.name);
         return { ...tool, inputSchema: { ...tool.inputSchema, properties: { ...pathArguments, ...offered } } };
       }),
     };

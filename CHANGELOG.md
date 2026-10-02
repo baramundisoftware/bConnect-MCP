@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Endpoint and group list tools offer every filter bConnect supports** (#179). The endpoint lists,
+  `list_logical_groups`, `search_endpoints` and the group member tools now take the filters their API
+  route declares, among them `HostName`, `Domain`, `DisplayName`, `EntraIdDeviceId` (26R1 only), `Name`
+  and `Dip`, plus `OrderBy` and `Page` where they were missing. `search_endpoints` keeps `query` and
+  `pageSize`.
 - **Job tools offer every filter bConnect supports** (#179). `list_job_instances`, the job-instance
   tools per group, endpoint and job definition, `list_job_definitions`, `list_job_folders` and
   `list_job_subfolders` now take the filters their API route declares, among them `LastAction` (an
