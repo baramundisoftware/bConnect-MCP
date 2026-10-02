@@ -1,12 +1,7 @@
 {
-  "bconnect-activedirectory-mcp/src/index.ts": {
-    "no-restricted-syntax": {
-      "count": 12
-    }
-  },
   "bconnect-assets-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 17
+      "count": 6
     }
   },
   "bconnect-compliance-mcp/src/index.ts": {

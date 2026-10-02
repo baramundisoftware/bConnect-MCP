@@ -22,7 +22,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, PAGE_PROPERTY, pageSizeProperty, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, PAGE_PROPERTY, pageSizeProperty, PAGE_SIZE_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY } from "@bconnect/mcp-core";
+import { QUERY_PARAMS } from "./query-params.js";
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
 import { createBody, createInputSchema } from "./create-fields.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
@@ -201,10 +202,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         },
         {
           name: "list_logical_groups",
-          description: "List all logical groups in baramundi",
+          description: "List the logical groups in baramundi, one page at a time. Filter by name, distribution point (Dip) or domain.",
           inputSchema: {
             type: "object",
-            properties: {},
+            properties: {
+              SearchQuery: { type: "string", description: "Filter by name or comment" },
+              Name: { type: "string", description: "Group name" },
+              Dip: { type: "string", description: "Distribution point (DIP)" },
+              Domain: { type: "string", description: "Default domain" },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
+              OrderBy: { type: "string", description: "Sort order (e.g., 'Name asc')" }
+            },
             required: []
           }
         },
@@ -232,7 +241,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Logical group ID"
               },
-              PageSize: PAGE_SIZE_PROPERTY
+              PageSize: PAGE_SIZE_PROPERTY,
+              includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY
             },
             required: ["logicalGroupId"]
           }
@@ -314,7 +324,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               OrderBy: {
                 type: "string",
                 description: "Sort order (e.g., 'DisplayName asc', 'LastSeen desc')"
-              }
+              },
+              includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY
             },
             required: ["logicalGroupId"]
           }
@@ -339,10 +350,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort order"
               },
-              includeSubGroups: {
-                type: "boolean",
-                description: "If true, also includes endpoints from sub-groups (default: false)"
-              }
+              includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY
             },
             required: ["logicalGroupId"]
           }
@@ -721,7 +729,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // 26R1-only tools: Unmanaged Endpoints + EntraID
       if (is26R1) {
         tools.push(
-          { name: "list_unmanaged_endpoints", description: "[26R1] List all unmanaged endpoints detected by baramundi. Returns a paged list of devices that are not yet enrolled into management. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY, OrderBy: { type: "string" } } } },
+          { name: "list_unmanaged_endpoints", description: "[26R1] List all unmanaged endpoints detected by baramundi. Returns the devices that are not yet enrolled into management; the route takes no paging or filter arguments. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: {} } },
           { name: "get_unmanaged_endpoint", description: "[26R1] Get details of a specific unmanaged endpoint by its GUID. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
           { name: "delete_unmanaged_endpoint", description: "[26R1] Delete an unmanaged endpoint record. WARNING: Permanently removes the unmanaged device record. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
           { name: "get_entra_id_data", description: "[26R1] Get the Entra ID (formerly Azure AD) data bMS stores for a device, looked up by its Entra ID device ID (not the bMS endpoint ID). The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { deviceId: { type: "string", description: "Entra ID device ID (GUID), not the bMS endpoint ID" } }, required: ["deviceId"] } },
@@ -803,7 +811,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_logical_groups": {
-          const result = await bconnect.endpoints.getLogicalGroups();
+          const result = await bconnect.endpoints.getLogicalGroups(pickArguments(args ?? {}, QUERY_PARAMS.list_logical_groups));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -815,7 +823,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_group_endpoints": {
           const result = await bconnect.endpoints.getLogicalGroupEndpoints(
             args!.logicalGroupId as string,
-            args || {}
+            pickArguments(args ?? {}, QUERY_PARAMS.list_group_endpoints)
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -843,7 +851,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_endpoints_by_logical_group": {
           const result = await bconnect.endpoints.getEndpointsByLogicalGroup(
             args!.logicalGroupId as string,
-            args || {}
+            pickArguments(args ?? {}, QUERY_PARAMS.list_endpoints_by_logical_group)
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -851,7 +859,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_windows_endpoints_by_logical_group": {
           const result = await bconnect.endpoints.getWindowsEndpointsByLogicalGroup(
             args!.logicalGroupId as string,
-            args || {}
+            pickArguments(args ?? {}, QUERY_PARAMS.list_windows_endpoints_by_logical_group)
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -1141,7 +1149,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // Phase 24: 26R1-only tools
         case "list_unmanaged_endpoints": {
           if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "list_unmanaged_endpoints is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
-          const result = await bconnect.endpoints.listUnmanagedEndpoints(args || {});
+          const result = await bconnect.endpoints.listUnmanagedEndpoints();
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

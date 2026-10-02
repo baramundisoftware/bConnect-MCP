@@ -205,9 +205,10 @@ export class EndpointsModule {
   /**
    * Get all logical groups
    */
-  async getLogicalGroups(): Promise<LogicalGroupsList> {
+  async getLogicalGroups(params?: Record<string, unknown>): Promise<LogicalGroupsList> {
     const response = await this.client.get(
-      `${this.basePath}/LogicalGroups`
+      `${this.basePath}/LogicalGroups`,
+      { params }
     );
     return response.data;
   }
@@ -815,11 +816,8 @@ export class EndpointsModule {
   /**
    * Get all unmanaged endpoints (26R1 only)
    */
-  async listUnmanagedEndpoints(params?: EndpointsQueryParams): Promise<unknown> {
-    const response = await this.client.get(
-      `${this.basePath}/UnmanagedEndpoints`,
-      { params }
-    );
+  async listUnmanagedEndpoints(): Promise<unknown> {
+    const response = await this.client.get(`${this.basePath}/UnmanagedEndpoints`);
     return response.data;
   }
 

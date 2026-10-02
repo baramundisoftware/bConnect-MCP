@@ -63,7 +63,7 @@ describe('#186 the path id and undeclared arguments stay out of the query', () =
     ['activedirectory', 'list_ad_objects_by_group', { adGroupId: G, Page: 1, includeIndirect: true }, `/activedirectory/v2.0/ADGroups/${G}/ADObjects`, { Page: '1', includeIndirect: 'true' }],
     ['activedirectory', 'list_org_units_by_org_unit', { orgUnitId: G, Name: 'Sales' }, `/activedirectory/v2.0/OrgUnits/${G}/OrgUnits`, { Name: 'Sales' }],
     ['assets', 'list_assets_by_logical_group', { logicalGroupId: G, PageSize: 50 }, `/assets/v2.0/LogicalGroups/${G}/Assets`, { PageSize: '50' }],
-    ['assets', 'list_asset_type_subfolders', { folderId: G }, `/assets/v2.0/AssetTypeFolders/${G}/AssetTypeFolders`, {}],
+    ['assets', 'list_asset_type_subfolders', { folderId: G }, `/assets/v2.0/AssetTypes/Folders/${G}/Folders`, {}],
     ['jobs', 'list_job_instances_by_static_group', { staticGroupId: G, LastAction: 'Started' }, `/jobs/v2.0/StaticGroups/${G}/JobInstances`, { LastAction: 'Started' }],
     ['jobs', 'list_kiosk_releases_by_endpoint', { endpointId: G, Page: 0 }, `/jobs/v2.0/Endpoints/${G}/KioskReleases`, { Page: '0' }],
     ['endpoints', 'list_endpoints_by_logical_group', { logicalGroupId: G, HostName: 'pc01' }, `/endpoints/v2.0/LogicalGroups/${G}/Endpoints`, { HostName: 'pc01' }],
@@ -87,7 +87,7 @@ describe('#170 logical-group tools reach sub-groups', () => {
     ['groups', 'list_logical_groups_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/LogicalGroups`],
     ['defensecontrol', 'list_defender_threats_by_logical_group', `/defensecontrol/v2.0/MicrosoftDefender/LogicalGroups/${G}/Threats`],
     ['jobs', 'list_job_instances_by_logical_group', `/jobs/v2.0/LogicalGroups/${G}/JobInstances`],
-    ['software', 'list_installed_software_by_logical_group', `/software/v2.0/LogicalGroups/${G}/InstalledSoftware`],
+    ['software', 'list_installed_software_by_logical_group', `/software/v2.0/LogicalGroups/${G}/InstalledWindowsSoftware`],
   ])('%s %s offers and sends includeSubfolders', async (server, name, path) => {
     expect(await propsOf(server, name)).toContain('includeSubfolders');
     expect(await call(server, name, { logicalGroupId: G, includeSubfolders: true })).toEqual([{ path, query: { includeSubfolders: 'true' } }]);

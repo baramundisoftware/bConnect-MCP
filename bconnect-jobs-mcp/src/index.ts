@@ -21,7 +21,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, pickArguments, INCLUDE_SUBFOLDERS_PROPERTY } from "@bconnect/mcp-core";
+import { QUERY_PARAMS } from "./query-params.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 import type { paths as JobsPaths } from "./generated/jobs-types.js";
@@ -217,6 +218,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               },
               Page: PAGE_PROPERTY,
               PageSize: PAGE_SIZE_PROPERTY,
+              includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
               OrderBy: {
                 type: "string",
                 description: "Sort order (e.g., 'EndpointName asc', 'Start desc')"
@@ -535,7 +537,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       switch (name) {
         // ── Jobs ──────────────────────────────────────────────────────────
         case "list_job_definitions": {
-          const result = await bconnect.jobs.getJobDefinitions(args || {});
+          const result = await bconnect.jobs.getJobDefinitions(pickArguments(args ?? {}, QUERY_PARAMS.list_job_definitions));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -545,7 +547,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_job_instances": {
-          const result = await bconnect.jobs.getJobInstances(args || {});
+          const result = await bconnect.jobs.getJobInstances(pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -557,7 +559,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_endpoint_job_instances": {
           const result = await bconnect.jobs.getEndpointJobInstances(
             args!.endpointId as string,
-            args || {}
+            pickArguments(args ?? {}, QUERY_PARAMS.list_endpoint_job_instances)
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -565,7 +567,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_job_instances_by_definition": {
           const result = await bconnect.jobs.getJobInstancesByJobDefinition(
             args!.jobDefinitionId as string,
-            args || {}
+            pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_definition)
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -573,7 +575,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_job_instances_by_logical_group": {
           const result = await bconnect.jobs.getJobInstancesByLogicalGroup(
             args!.logicalGroupId as string,
-            args || {}
+            pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_logical_group)
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -581,7 +583,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_job_definitions_by_folder": {
           const result = await bconnect.jobs.getJobDefinitionsByFolder(
             args!.folderId as string,
-            args || {}
+            pickArguments(args ?? {}, QUERY_PARAMS.list_job_definitions_by_folder)
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -682,7 +684,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_kiosk_releases": {
-          const result = await bconnect.jobs.getKioskReleases(args || {});
+          const result = await bconnect.jobs.getKioskReleases(pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -693,7 +695,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // Phase 26: Folder navigation
         case "list_job_folders": {
-          const result = await bconnect.jobs.getJobFolders(args || {});
+          const result = await bconnect.jobs.getJobFolders(pickArguments(args ?? {}, QUERY_PARAMS.list_job_folders));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -703,44 +705,44 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_job_subfolders": {
-          const result = await bconnect.jobs.getJobSubfolders(args!.folderId as string, args || {});
+          const result = await bconnect.jobs.getJobSubfolders(args!.folderId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_job_subfolders));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // Phase 26: Kiosk releases by context
         case "list_kiosk_releases_by_job_definition": {
-          const result = await bconnect.jobs.getKioskReleasesByJobDefinition(args!.jobDefinitionId as string, args || {});
+          const result = await bconnect.jobs.getKioskReleasesByJobDefinition(args!.jobDefinitionId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases_by_job_definition));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_kiosk_releases_by_endpoint": {
-          const result = await bconnect.jobs.getKioskReleasesByEndpoint(args!.endpointId as string, args || {});
+          const result = await bconnect.jobs.getKioskReleasesByEndpoint(args!.endpointId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases_by_endpoint));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_kiosk_releases_by_ad_object": {
-          const result = await bconnect.jobs.getKioskReleasesByAdObject(args!.adObjectId as string, args || {});
+          const result = await bconnect.jobs.getKioskReleasesByAdObject(args!.adObjectId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases_by_ad_object));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_kiosk_releases_by_logical_group": {
-          const result = await bconnect.jobs.getKioskReleasesByLogicalGroup(args!.logicalGroupId as string, args || {});
+          const result = await bconnect.jobs.getKioskReleasesByLogicalGroup(args!.logicalGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // Phase 26: Job instances by group
         case "list_job_instances_by_static_group": {
-          const result = await bconnect.jobs.getJobInstancesByStaticGroup(args!.staticGroupId as string, args || {});
+          const result = await bconnect.jobs.getJobInstancesByStaticGroup(args!.staticGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_static_group));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_job_instances_by_dynamic_group": {
-          const result = await bconnect.jobs.getJobInstancesByDynamicGroup(args!.dynamicGroupId as string, args || {});
+          const result = await bconnect.jobs.getJobInstancesByDynamicGroup(args!.dynamicGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_dynamic_group));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_job_instances_by_universal_dynamic_group": {
-          const result = await bconnect.jobs.getJobInstancesByUniversalDynamicGroup(args!.universalDynamicGroupId as string, args || {});
+          const result = await bconnect.jobs.getJobInstancesByUniversalDynamicGroup(args!.universalDynamicGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_universal_dynamic_group));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

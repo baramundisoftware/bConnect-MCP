@@ -16,3 +16,4 @@ export * from "./error-meanings.js";
 export * from "./tool-errors.js";
 export * from "./lazy-client.js";
 export * from "./paging.js";
+export * from "./group-scope.js";

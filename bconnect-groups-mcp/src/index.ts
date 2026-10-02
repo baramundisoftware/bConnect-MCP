@@ -22,7 +22,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, pickArguments, INCLUDE_SUBFOLDERS_PROPERTY } from "@bconnect/mcp-core";
+import { QUERY_PARAMS } from "./query-params.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 
@@ -66,47 +67,47 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         {
           name: "list_endpoints_by_logical_group",
           description: "List all endpoints (any OS type) belonging to a logical group. Returns paginated endpoint list with GUIDs and properties.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
         },
         {
           name: "list_android_endpoints_by_logical_group",
           description: "List Android endpoints belonging to a logical group. Returns paginated Android endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
         },
         {
           name: "list_ios_endpoints_by_logical_group",
           description: "List iOS endpoints belonging to a logical group. Returns paginated iOS endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
         },
         {
           name: "list_linux_endpoints_by_logical_group",
           description: "List Linux endpoints belonging to a logical group. Returns paginated Linux endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
         },
         {
           name: "list_mac_endpoints_by_logical_group",
           description: "List macOS endpoints belonging to a logical group. Returns paginated Mac endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
         },
         {
           name: "list_network_endpoints_by_logical_group",
           description: "List network endpoints belonging to a logical group. Returns paginated network endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
         },
         {
           name: "list_windows_endpoints_by_logical_group",
           description: "List Windows endpoints belonging to a logical group. Returns paginated Windows endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
         },
         {
           name: "list_industrial_endpoints_by_logical_group",
           description: "List industrial endpoints belonging to a logical group. Returns paginated industrial endpoint list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
         },
         {
           name: "list_logical_groups_by_logical_group",
           description: "List child logical groups belonging to a parent logical group. Returns paginated logical group list.",
-          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties }, required: ["logicalGroupId"] }
+          inputSchema: { type: "object", properties: { ...logicalGroupIdProp, ...paginationProperties, includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY }, required: ["logicalGroupId"] }
         },
 
         // ── Static Group (8) ──────────────────────────────────────────────
@@ -277,47 +278,47 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Logical Group ─────────────────────────────────────────────────
         case "list_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getEndpointsByLogicalGroup(a.logicalGroupId, params);
+          const data = await client.groups.getEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_endpoints_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_android_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getAndroidEndpointsByLogicalGroup(a.logicalGroupId, params);
+          const data = await client.groups.getAndroidEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_android_endpoints_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_ios_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getIosEndpointsByLogicalGroup(a.logicalGroupId, params);
+          const data = await client.groups.getIosEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_ios_endpoints_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_linux_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getLinuxEndpointsByLogicalGroup(a.logicalGroupId, params);
+          const data = await client.groups.getLinuxEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_linux_endpoints_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_mac_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getMacEndpointsByLogicalGroup(a.logicalGroupId, params);
+          const data = await client.groups.getMacEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_mac_endpoints_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_network_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getNetworkEndpointsByLogicalGroup(a.logicalGroupId, params);
+          const data = await client.groups.getNetworkEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_network_endpoints_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_windows_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getWindowsEndpointsByLogicalGroup(a.logicalGroupId, params);
+          const data = await client.groups.getWindowsEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_windows_endpoints_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_industrial_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getIndustrialEndpointsByLogicalGroup(a.logicalGroupId, params);
+          const data = await client.groups.getIndustrialEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_industrial_endpoints_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_logical_groups_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getLogicalGroupsByLogicalGroup(a.logicalGroupId, params);
+          const data = await client.groups.getLogicalGroupsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_logical_groups_by_logical_group));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 
