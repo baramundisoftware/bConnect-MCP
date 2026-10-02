@@ -37,7 +37,9 @@ export type JsonSchema = Record<string, any>;
 export function sample(name: string, schema: JsonSchema): unknown {
   if (Array.isArray(schema.enum) && schema.enum.length) return schema.enum[0];
   switch (schema.type) {
-    case 'string': return /id$/i.test(name) ? ID : 'x';
+    case 'string':
+      if (schema.format === 'date-time') return '2026-01-01T00:00:00Z';
+      return /id$/i.test(name) ? ID : 'x';
     case 'integer':
     case 'number': return 1;
     case 'boolean': return false;

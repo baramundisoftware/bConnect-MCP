@@ -8,3 +8,4 @@ export * from "./bconnect-client-base.js";
 export * from "./secret-routes.js";
 export * from "./request-path.js";
 export * from "./client-config.js";
+export * from "./tool-arguments.js";

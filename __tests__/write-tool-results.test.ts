@@ -32,7 +32,7 @@ const answer = (path: string): [unknown, number] => {
   if (path.endsWith('/SimulateMSWCleanup')) return [{ simulationResult: 'ok', filesToDelete: ['a.cab', 'b.cab'] }, 200];
   if (path.includes('/SecurityGroups/')) return [{ id: ID, name: 'Helpdesk' }, 200];
   if (path.includes('/SecurityProfiles/')) return [{ id: ID, name: 'Read only' }, 200];
-  if (path.includes('/ObjectPermissions/')) return [{ id: ID, permissions: ['Read'] }, 200];
+  if (path.includes('/Objects/')) return [{ id: ID, permissions: ['Read'] }, 200];
   if (path.endsWith('/Restart')) return ['2026-10-02T22:00:00Z', 200];
   return [{}, 200];
 };
@@ -136,7 +136,8 @@ describe('restart_management_server (#185, #172)', () => {
 
   it('passes the schedule as the query parameter the API declares and reports the restart time', async () => {
     const r = await call('servermanagement', 'restart_management_server', { utcScheduleRestartTime: '2026-10-02T22:00:00Z' });
-    expect(sent).toEqual([{ method: 'POST', path: '/servermanagement/v2.0/Restart', query: '?utcScheduleRestartTime=2026-10-02T22%3A00%3A00Z' }]);
+    expect(sent.map((r) => [r.method, r.path])).toEqual([['POST', '/servermanagement/v2.0/Restart']]);
+    expect(new URLSearchParams(sent[0].query).get('utcScheduleRestartTime')).toBe('2026-10-02T22:00:00Z');
     expect(r.text).toContain('2026-10-02T22:00:00Z');
   });
 

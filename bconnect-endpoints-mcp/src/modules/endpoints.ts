@@ -46,7 +46,6 @@ type WindowsEndpointForCreation = paths["/v2.0/WindowsEndpoints"]["post"]["reque
 type WindowsEndpointCreated = paths["/v2.0/WindowsEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
 type WindowsEndpointUpdate = paths["/v2.0/WindowsEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 type WindowsEndpointUpdated = paths["/v2.0/WindowsEndpoints/{id}"]["patch"]["responses"]["200"]["content"]["application/json"];
-type WindowsEnrollmentRequest = paths["/v2.0/WindowsEndpoints/{id}/StartEnrollment"]["post"]["requestBody"]["content"]["application/json"];
 
 // Type aliases for Linux Endpoint WRITE operations
 type LinuxEndpointForCreation = paths["/v2.0/LinuxEndpoints"]["post"]["requestBody"]["content"]["application/json"];
@@ -59,7 +58,6 @@ type MacEndpointForCreation = paths["/v2.0/MacEndpoints"]["post"]["requestBody"]
 type MacEndpointCreated = paths["/v2.0/MacEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
 type MacEndpointUpdate = paths["/v2.0/MacEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 type MacEndpointUpdated = paths["/v2.0/MacEndpoints/{id}"]["patch"]["responses"]["200"]["content"]["application/json"];
-type MacEnrollmentRequest = paths["/v2.0/MacEndpoints/{id}/StartEnrollment"]["post"]["requestBody"]["content"]["application/json"];
 
 // Type aliases for LogicalGroup WRITE operations
 type LogicalGroupForCreation = paths["/v2.0/LogicalGroups"]["post"]["requestBody"]["content"]["application/json"];
@@ -90,12 +88,10 @@ type IndustrialEndpointsList = paths["/v2.0/IndustrialEndpoints"]["get"]["respon
 type IndustrialEndpointGet = paths["/v2.0/IndustrialEndpoints/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 type IndustrialEndpointForCreation = paths["/v2.0/IndustrialEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type IndustrialEndpoint = paths["/v2.0/IndustrialEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
-type IndustrialEndpointUpdate = paths["/v2.0/IndustrialEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 
 // Type aliases for Network Endpoint WRITE operations - Phase 3
 type NetworkEndpointForCreation = paths["/v2.0/NetworkEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type NetworkEndpoint = paths["/v2.0/NetworkEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
-type NetworkEndpointUpdate = paths["/v2.0/NetworkEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 
 export interface EndpointsQueryParams {
   OrderBy?: string;
@@ -314,11 +310,12 @@ export class EndpointsModule {
   /**
    * Update an existing Android endpoint
    */
-  async updateAndroidEndpoint(id: string, updateData: AndroidEndpointUpdate): Promise<void> {
-    await this.client.patch(
+  async updateAndroidEndpoint(id: string, updateData: AndroidEndpointUpdate): Promise<unknown> {
+    const response = await this.client.patch(
       `${this.basePath}/AndroidEndpoints/${id}`,
       updateData
     );
+    return response.data;
   }
 
   /**
@@ -359,11 +356,12 @@ export class EndpointsModule {
   /**
    * Update an existing iOS endpoint
    */
-  async updateIosEndpoint(id: string, updateData: IosEndpointUpdate): Promise<void> {
-    await this.client.patch(
+  async updateIosEndpoint(id: string, updateData: IosEndpointUpdate): Promise<unknown> {
+    const response = await this.client.patch(
       `${this.basePath}/IosEndpoints/${id}`,
       updateData
     );
+    return response.data;
   }
 
   /**
@@ -426,20 +424,22 @@ export class EndpointsModule {
   /**
    * Start enrollment for a Windows endpoint
    */
-  async startWindowsEndpointEnrollment(id: string, enrollmentData?: WindowsEnrollmentRequest): Promise<void> {
-    await this.client.post(
+  async startWindowsEndpointEnrollment(id: string, enrollmentData?: Record<string, unknown>): Promise<unknown> {
+    const response = await this.client.post(
       `${this.basePath}/WindowsEndpoints/${id}/StartEnrollment`,
       enrollmentData
     );
+    return response.data;
   }
 
   /**
    * Trigger installation and enrollment via Intune for a Windows endpoint
    */
-  async triggerInstallationViaIntune(id: string): Promise<void> {
-    await this.client.post(
+  async triggerInstallationViaIntune(id: string): Promise<unknown> {
+    const response = await this.client.post(
       `${this.basePath}/WindowsEndpoints/${id}/TriggerInstallationViaIntune`
     );
+    return response.data;
   }
 
   // ============================================================================
@@ -515,11 +515,12 @@ export class EndpointsModule {
   /**
    * Start enrollment for a Mac endpoint
    */
-  async startMacEndpointEnrollment(id: string, enrollmentData?: MacEnrollmentRequest): Promise<void> {
-    await this.client.post(
+  async startMacEndpointEnrollment(id: string, enrollmentData?: Record<string, unknown>): Promise<unknown> {
+    const response = await this.client.post(
       `${this.basePath}/MacEndpoints/${id}/StartEnrollment`,
       enrollmentData
     );
+    return response.data;
   }
 
   // ============================================================================
@@ -575,11 +576,12 @@ export class EndpointsModule {
   /**
    * Update a maintenance window for an endpoint
    */
-  async updateMaintenanceWindowForEndpoint(id: string, maintenanceWindowData: MaintenanceWindowData): Promise<void> {
-    await this.client.patch(
+  async updateMaintenanceWindowForEndpoint(id: string, maintenanceWindowData: Record<string, unknown>): Promise<unknown> {
+    const response = await this.client.patch(
       `${this.basePath}/Endpoints/${id}/MaintenanceWindow`,
       maintenanceWindowData
     );
+    return response.data;
   }
 
   /**
@@ -605,11 +607,12 @@ export class EndpointsModule {
   /**
    * Update a maintenance window for a logical group
    */
-  async updateMaintenanceWindowForLogicalGroup(id: string, maintenanceWindowData: MaintenanceWindowData): Promise<void> {
-    await this.client.patch(
+  async updateMaintenanceWindowForLogicalGroup(id: string, maintenanceWindowData: Record<string, unknown>): Promise<unknown> {
+    const response = await this.client.patch(
       `${this.basePath}/LogicalGroups/${id}/MaintenanceWindow`,
       maintenanceWindowData
     );
+    return response.data;
   }
 
   /**
@@ -660,7 +663,7 @@ export class EndpointsModule {
   /**
    * Update an existing industrial endpoint
    */
-  async updateIndustrialEndpoint(id: string, updateData: IndustrialEndpointUpdate): Promise<IndustrialEndpoint> {
+  async updateIndustrialEndpoint(id: string, updateData: Record<string, unknown>): Promise<IndustrialEndpoint> {
     const response = await this.client.patch<IndustrialEndpoint>(
       `${this.basePath}/IndustrialEndpoints/${id}`,
       updateData
@@ -695,7 +698,7 @@ export class EndpointsModule {
   /**
    * Update an existing network endpoint
    */
-  async updateNetworkEndpoint(id: string, updateData: NetworkEndpointUpdate): Promise<NetworkEndpoint> {
+  async updateNetworkEndpoint(id: string, updateData: Record<string, unknown>): Promise<NetworkEndpoint> {
     const response = await this.client.patch<NetworkEndpoint>(
       `${this.basePath}/NetworkEndpoints/${id}`,
       updateData
