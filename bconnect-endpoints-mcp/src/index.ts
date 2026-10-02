@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker, type JsonPatchOperation } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments } from "@bconnect/mcp-core";
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
 import { createBody, createInputSchema } from "./create-fields.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
@@ -1197,11 +1197,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "link_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           const result = await bconnect.endpoints.linkEntraIdData(
             args!.endpointId as string,
-            {
-              entraIdDeviceId: args!.entraIdDeviceId,
-              entraIdTenantId: args!.entraIdTenantId,
-              entraIdUserId: args!.entraIdUserId,
-            }
+            pickArguments(args!, ["entraIdDeviceId", "entraIdTenantId", "entraIdUserId"])
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
