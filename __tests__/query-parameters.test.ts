@@ -59,14 +59,16 @@ const propsOf = async (server: string, name: string) =>
   Object.keys((await clients[server].listTools()).tools.find((t) => t.name === name)!.inputSchema.properties ?? {});
 
 describe('#186 the path id and undeclared arguments stay out of the query', () => {
+  // Declared arguments only: undeclared ones are refused (#163). Spec filters the tools don't
+  // offer yet (includeIndirect, HostName, LastAction, Name) are #179.
   it.each([
-    ['activedirectory', 'list_ad_objects_by_group', { adGroupId: G, Page: 1, includeIndirect: true }, `/activedirectory/v2.0/ADGroups/${G}/ADObjects`, { Page: '1', includeIndirect: 'true' }],
-    ['activedirectory', 'list_org_units_by_org_unit', { orgUnitId: G, Name: 'Sales' }, `/activedirectory/v2.0/OrgUnits/${G}/OrgUnits`, { Name: 'Sales' }],
+    ['activedirectory', 'list_ad_objects_by_group', { adGroupId: G, Page: 1, SearchQuery: 'x' }, `/activedirectory/v2.0/ADGroups/${G}/ADObjects`, { Page: '1', SearchQuery: 'x' }],
+    ['activedirectory', 'list_org_units_by_org_unit', { orgUnitId: G, OrderBy: 'Name asc' }, `/activedirectory/v2.0/OrgUnits/${G}/OrgUnits`, { OrderBy: 'Name asc' }],
     ['assets', 'list_assets_by_logical_group', { logicalGroupId: G, PageSize: 50 }, `/assets/v2.0/LogicalGroups/${G}/Assets`, { PageSize: '50' }],
     ['assets', 'list_asset_type_subfolders', { folderId: G }, `/assets/v2.0/AssetTypes/Folders/${G}/Folders`, {}],
-    ['jobs', 'list_job_instances_by_static_group', { staticGroupId: G, LastAction: 'Started' }, `/jobs/v2.0/StaticGroups/${G}/JobInstances`, { LastAction: 'Started' }],
+    ['jobs', 'list_job_instances_by_static_group', { staticGroupId: G, PageSize: 5 }, `/jobs/v2.0/StaticGroups/${G}/JobInstances`, { PageSize: '5' }],
     ['jobs', 'list_kiosk_releases_by_endpoint', { endpointId: G, Page: 0 }, `/jobs/v2.0/Endpoints/${G}/KioskReleases`, { Page: '0' }],
-    ['endpoints', 'list_endpoints_by_logical_group', { logicalGroupId: G, HostName: 'pc01' }, `/endpoints/v2.0/LogicalGroups/${G}/Endpoints`, { HostName: 'pc01' }],
+    ['endpoints', 'list_endpoints_by_logical_group', { logicalGroupId: G, OrderBy: 'DisplayName asc' }, `/endpoints/v2.0/LogicalGroups/${G}/Endpoints`, { OrderBy: 'DisplayName asc' }],
   ])('%s %s', async (server, name, args, path, query) => {
     expect(await call(server, name, args)).toEqual([{ path, query }]);
   });

@@ -58,20 +58,6 @@ async function tableOf(server: string): Promise<Readonly<Record<string, readonly
   return mod.TOOL_OPERATIONS;
 }
 
-/** The JSON body without one top-level key; other bodies unchanged. */
-function withoutKey(body: string, key: string): string {
-  try {
-    const data = JSON.parse(body);
-    if (data && typeof data === 'object' && !Array.isArray(data) && key in data) {
-      delete data[key];
-      return JSON.stringify(data);
-    }
-  } catch {
-    // not JSON: validated as is
-  }
-  return body;
-}
-
 /** All violations for one release, plus the tools each server registers. */
 async function examine(release: Release): Promise<{ violations: Violation[]; registered: Map<string, Set<string>> }> {
   Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
@@ -94,19 +80,23 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
       // The sample GUID becomes {id}, so baseline keys read like routes.
       exercised.push({ tool: tool.name, requests: pass1.map((r) => ({ method: r.method, path: r.path.split(ID).join('{id}') })) });
       writeCalls.push({ tool: tool.name, result: text, requests: pass1.map((r) => ({ method: r.method, path: r.path, contentType: r.contentType, body: r.body })) });
-      // Pass 2, every documented argument plus an undeclared one: parameter checks.
+      // Pass 2, every documented argument: parameter checks.
       const { args, idsByArg } = allArguments(tool.inputSchema);
       const { isError } = await conn.call(tool.name, args);
       const pass2 = recorder.take();
+      // Pass 3, required arguments plus an undeclared one: it is refused (#163), so nothing may
+      // reach the wire; anything that does is checked by arg-leak with the pass-2 requests.
+      await conn.call(tool.name, { ...requiredArguments(tool.inputSchema), [UNKNOWN_NAME]: UNKNOWN_VALUE });
+      const pass3 = recorder.take();
       paramCalls.push({
         tool: tool.name, inputSchema: tool.inputSchema, idsByArg,
         unknownName: UNKNOWN_NAME, unknownValue: UNKNOWN_VALUE, failed: isError,
-        requests: pass2.map((r) => ({ method: r.method, path: r.path, query: r.query, body: r.body })),
+        requests: [...pass2, ...pass3].map((r) => ({ method: r.method, path: r.path, query: r.query, body: r.body })),
       });
-      // Bodies built from optional arguments too; the undeclared one is arg-leak's business.
+      // Bodies built from optional arguments too.
       writeCalls.push({
         tool: tool.name, sampleValues: true,
-        requests: pass2.map((r) => ({ method: r.method, path: r.path, contentType: r.contentType, body: withoutKey(r.body, UNKNOWN_NAME) })),
+        requests: pass2.map((r) => ({ method: r.method, path: r.path, contentType: r.contentType, body: r.body })),
       });
     }
     await conn.close();
