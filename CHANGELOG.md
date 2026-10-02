@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Credentials are only sent over HTTPS.** A `BCONNECT_BASE_URL` with `http://` is refused
+  unless the host is this machine (`localhost`, `127.x.x.x`, `[::1]`, e.g. the bundled mock) or
+  `BCONNECT_ALLOW_INSECURE_HTTP=true` is set, which logs a warning. Before, credentials went in
+  cleartext over any `http://` address. **Breaking for `http://` setups:** switch to `https://`
+  (recommended) or set the opt-in. Configuration errors (missing credentials, an unreadable CA
+  file, an insecure base URL) now all stop the server with a clear message.
 - **Credentials are only sent to the configured bConnect host.** The client no longer follows
   HTTP redirects. Before, a redirect could carry an API key (`X-Api-Key`) to another host. A
   redirect now stops with a message naming the target address and asking to set
