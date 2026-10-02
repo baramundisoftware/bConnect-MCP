@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Known issues
+- **Some reads are slow on a large or busy bMS.** On a test bMS 26R1 (26.1.161),
+  `list_detected_vulnerabilities` and `list_vulnerabilities` took about 30 s and
+  `list_installed_windows_software` about 50 s, so they can run into the default 30 s timeout. Set
+  `BCONNECT_TIMEOUT_MS=90000` for the servers you use them with (see `docs/TROUBLESHOOTING.md`).
+
 ### Added
 - **Every list tool offers the filters bConnect supports** (#179). Active Directory, assets,
   compliance, Defender/BitLocker, operating systems, server management, software, universal dynamic

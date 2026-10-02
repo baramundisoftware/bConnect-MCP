@@ -105,7 +105,7 @@ npm run build                          # then all servers (or -w bconnect-endpoi
 
 **Cause:** A long-running operation exceeded the request timeout.
 
-**Solution:** Each request uses a fixed **30-second** timeout (not configurable via an env var). For large datasets, page through results with a smaller `PageSize` so each call completes well within the timeout instead of requesting everything at once.
+**Solution:** Each request waits up to `BCONNECT_TIMEOUT_MS` (default 30000, i.e. 30 s). For large datasets, page through results with a smaller `PageSize` so each call completes well within the timeout, or raise `BCONNECT_TIMEOUT_MS` (see below).
 
 ---
 
@@ -138,12 +138,20 @@ Nothing is listening on the port in `BCONNECT_BASE_URL` (443 by default; some in
 Get-Service | Where-Object {$_.Name -like "*baramundi*"}
 ```
 
-### Error: "ETIMEDOUT" or "Request timeout"
+### Error: "The bConnect API didn't answer within 30 s (BCONNECT_TIMEOUT_MS)"
 
-Requests use a fixed 30-second timeout. If calls time out:
+Each request waits up to `BCONNECT_TIMEOUT_MS` (default 30000 ms, allowed 1000 to 600000). If calls time out:
 
+- **Some reads are slow on a large or busy bMS.** On a test bMS 26R1 (26.1.161),
+  `list_detected_vulnerabilities` and `list_vulnerabilities` took about 30 s and
+  `list_installed_windows_software` about 50 s, even for a small page. Set
+  `BCONNECT_TIMEOUT_MS=90000` for the compliance and software servers (or all of them). With
+  `BCONNECT_MAX_RETRIES`, a read can take up to (retries + 1) × the timeout, so keep the total below
+  your MCP client's own timeout.
 - Check network latency / reachability to the bMS server (the `curl` test above).
 - Reduce `PageSize` and page through large result sets so each call returns quickly.
+- **A write that times out** says that its outcome is unknown: bMS may still carry it out. Check
+  the object's current state before you repeat the call.
 
 ### Error: "SSL certificate verify failed", "UNABLE_TO_VERIFY_LEAF_SIGNATURE", "SELF_SIGNED_CERT_IN_CHAIN"
 
