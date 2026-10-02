@@ -206,3 +206,23 @@ describe('through the shared client at level security', () => {
     }
   });
 });
+
+describe('routeMatcher', () => {
+  // The construction before the CodeQL fix: escape the template, then replace "\{…\}".
+  const escapeRe = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const before = (r: Route): string =>
+    new RegExp('(?:^|/)' + escapeRe(r.domain) + escapeRe(r.path).replace(/\\\{[^}]+\\\}/g, '[^/]+') + '/?$', 'i').source;
+
+  it('builds the same pattern as before for every secret and security route', () => {
+    const routes = [...(Reflect.get(core, 'SECRET_ROUTES') as Route[]), ...table()];
+    const routeMatcher = Reflect.get(core, 'routeMatcher') as (r: Route) => { pattern: RegExp };
+    expect(routes.filter((r) => routeMatcher(r).pattern.source !== before(r)).map(key)).toEqual([]);
+  });
+
+  it('builds a matcher in linear time, whatever the template (CodeQL js/polynomial-redos)', () => {
+    const routeMatcher = Reflect.get(core, 'routeMatcher') as (r: Route) => { pattern: RegExp };
+    const started = Date.now();
+    routeMatcher({ method: 'GET', domain: 'x', path: '\\{'.repeat(50_000) });
+    expect(Date.now() - started).toBeLessThan(500);
+  });
+});

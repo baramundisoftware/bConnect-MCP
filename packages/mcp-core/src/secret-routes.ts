@@ -35,12 +35,14 @@ const escape = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
  * (…/{id}/TriggerUpdateOnClient is not the LAPS resource).
  */
 export function routeMatcher(route: SecretRoute): { method: string; pattern: RegExp } {
+  // Segment by segment, not a regex over the template: a "{placeholder}"
+  // segment matches any one segment, every other segment literally (CodeQL:
+  // a placeholder regex backtracks polynomially on input like "\\{\\{\\{…").
+  const segments = route.path.split("/").map((segment) =>
+    segment.startsWith("{") && segment.endsWith("}") && segment.length > 2 ? "[^/]+" : escape(segment));
   return {
     method: route.method,
-    pattern: new RegExp(
-      "(?:^|/)" + escape(route.domain) + escape(route.path).replace(/\\\{[^}]+\\\}/g, "[^/]+") + "/?$",
-      "i",
-    ),
+    pattern: new RegExp("(?:^|/)" + escape(route.domain) + segments.join("/") + "/?$", "i"),
   };
 }
 
