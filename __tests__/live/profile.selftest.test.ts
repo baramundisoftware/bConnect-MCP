@@ -2,7 +2,7 @@
  * Self-test of the environment profile and of "not verified live". Needs no bMS.
  */
 import { describe, expect, it } from 'vitest';
-import { classifyByProfile, endpointTypesFrom, type Profile } from './lib/profile.js';
+import { classifyByProfile, declared, endpointTypesFrom, type Profile } from './lib/profile.js';
 import { sanitisedSummary, type ToolRun } from './lib/report.js';
 
 const page = (total: number, data: object[] = []) => ({ currentPage: 0, pageSize: 5, totalItems: total, data });
@@ -50,6 +50,14 @@ describe('not verified live', () => {
     expect(entra.outcome).toBe('not verified live');
     const [declared] = classifyByProfile([run('list_mobile_device_rules', 'compliance /v2.0/Rules')], { ...profile, mdm: 'yes' });
     expect(declared.outcome).toBe('ok');
+  });
+
+  it('reads only yes or no from the env file; anything else is undeclared and counts as absent', () => {
+    expect(declared('yes')).toBe('yes');
+    expect(declared(' No ')).toBe('no');
+    for (const value of [undefined, '', 'maybe', 'true', '1']) expect(declared(value), String(value)).toBe('not declared');
+    const [rules] = classifyByProfile([run('list_mobile_device_rules', 'compliance /v2.0/Rules')], { ...profile, mdm: declared(undefined) });
+    expect(rules.outcome).toBe('not verified live');
   });
 
   it('keeps a failure a failure', () => {
