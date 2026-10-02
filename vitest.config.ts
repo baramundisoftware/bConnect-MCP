@@ -5,7 +5,9 @@ export default defineConfig({
     // Exclude mock-integration tier — those tests run against a live mock and
     // are invoked via the per-server `test:mock` script (vitest.mock.config.ts).
     // Each server has its own opt-in entry point; root `npm test` is unit-tier only.
-    exclude: ['**/node_modules/**', '**/build/**', '**/mock-integration/**'],
+    // The live tier talks to a real bMS: `npm run test:live` only. Its self-tests
+    // (__tests__/live/*.selftest.test.ts) need no bMS and run here.
+    exclude: ['**/node_modules/**', '**/build/**', '**/mock-integration/**', '__tests__/live/bms-live.test.ts'],
     // Note: MSW setup file DISABLED for E2E tests (they manage their own MSW lifecycle)
     // E2E tests in __tests__/e2e/ create their own MSW server instances
     // Integration tests should use setupFiles: ['./src/__tests__/setup/msw.ts']

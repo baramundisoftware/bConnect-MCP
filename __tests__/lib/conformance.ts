@@ -24,7 +24,7 @@ export interface ExercisedTool {
 }
 
 /** The operation with this id in the domain, for the release. */
-function operationIn(ops: ApiOperation[], domain: string, operationId: string): ApiOperation | undefined {
+export function operationIn(ops: ApiOperation[], domain: string, operationId: string): ApiOperation | undefined {
   return ops.find((op) => op.domain === domain && op.operationId === operationId);
 }
 
