@@ -76,6 +76,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   HTTP 502/503/504; a write is never sent twice, and 4xx, 429 and 500 aren't retried. A read can
   then take up to (retries + 1) × the timeout. An invalid value stops the server with a message
   naming the variable (in the gateway, every tool call reports it).
+- **Tools refuse arguments they don't declare (breaking).** A call with an argument that isn't in the
+  tool's input schema, such as a misspelt filter (`SearchQuer`), now gets an invalid-params error
+  naming the unknown argument and listing the accepted ones, and nothing is sent to bConnect. Before,
+  such an argument was ignored or passed on, and bConnect returned unfiltered data. Every advertised
+  input schema says `additionalProperties: false`. Integrations that send extra keys must drop them
+  (#163).
 - **`list_windows_endpoints_by_logical_group` takes `includeSubfolders`** instead of `includeSubGroups`,
   which bConnect never read (#170).
 - **`list_unmanaged_endpoints` takes no arguments**: its route declares no paging or filters (#186).
