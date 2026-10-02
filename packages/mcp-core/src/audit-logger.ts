@@ -5,6 +5,8 @@
  * structured log format, and support for external logging systems.
  */
 
+import { isSecretRoute } from './secret-routes.js';
+
 export type AuditLevel = 'all' | 'write' | 'security' | 'none';
 export type LogLevel = 'info' | 'warn' | 'error';
 
@@ -24,10 +26,10 @@ export interface AuditLogEntry {
 
 export interface AuditLoggerConfig {
   /**
-   * Audit logging level
+   * Audit logging level. Levels are cumulative: each one also logs what the one below logs.
    * - 'all': Log all API operations
-   * - 'write': Log only write operations (POST, PATCH, DELETE)
-   * - 'security': Log only security-sensitive operations (BitLocker secrets, etc.)
+   * - 'write': Log write operations (POST, PUT, PATCH, DELETE) and security-sensitive ones
+   * - 'security': Log only security-sensitive operations (BitLocker secrets, LAPS passwords, etc.)
    * - 'none': Disable audit logging
    * @default 'none'
    */
@@ -40,7 +42,7 @@ export interface AuditLoggerConfig {
 
   /**
    * Custom log handler (optional)
-   * If not provided, logs to console
+   * If not provided, logs to stderr (stdout carries JSON-RPC in stdio mode)
    */
   logHandler?: (entry: AuditLogEntry) => void;
 
@@ -95,22 +97,24 @@ export class AuditLogger {
       return true;
     }
 
-    if (this.config.level === 'write') {
-      return ['POST', 'PATCH', 'PUT', 'DELETE'].includes(method.toUpperCase());
+    if (this.isSecuritySensitive(path, method)) {
+      return true;
     }
 
-    if (this.config.level === 'security') {
-      return this.isSecuritySensitive(path);
+    if (this.config.level === 'write') {
+      return ['POST', 'PATCH', 'PUT', 'DELETE'].includes(method.toUpperCase());
     }
 
     return false;
   }
 
   /**
-   * Check if path is security-sensitive
+   * Check if a request is security-sensitive: a path pattern above, or a route
+   * whose answer or body carries live credentials (the core secret-route table,
+   * e.g. a LAPS password read).
    */
-  isSecuritySensitive(path: string): boolean {
-    return this.securitySensitivePaths.some(pattern => pattern.test(path));
+  isSecuritySensitive(path: string, method = 'GET'): boolean {
+    return this.securitySensitivePaths.some(pattern => pattern.test(path)) || isSecretRoute(method, path);
   }
 
   /**
@@ -129,7 +133,7 @@ export class AuditLogger {
       method: method.toUpperCase(),
       path,
       parameters: this.config.includeParameters ? parameters : undefined,
-      securitySensitive: this.isSecuritySensitive(path),
+      securitySensitive: this.isSecuritySensitive(path, method),
     };
 
     this.config.logHandler(entry);
@@ -156,7 +160,7 @@ export class AuditLogger {
       path,
       statusCode,
       duration,
-      securitySensitive: this.isSecuritySensitive(path),
+      securitySensitive: this.isSecuritySensitive(path, method),
     };
 
     this.config.logHandler(entry);
@@ -181,14 +185,15 @@ export class AuditLogger {
       path,
       duration,
       error: error.message,
-      securitySensitive: this.isSecuritySensitive(path),
+      securitySensitive: this.isSecuritySensitive(path, method),
     };
 
     this.config.logHandler(entry);
   }
 
   /**
-   * Default log handler - outputs to console
+   * Default log handler - writes each entry as one line to stderr. stdout is the
+   * JSON-RPC channel in stdio mode, so an audit line there breaks the connection.
    */
   private defaultLogHandler(entry: AuditLogEntry): void {
     const prefix = entry.securitySensitive ? '[SECURITY AUDIT]' : '[AUDIT]';
@@ -201,17 +206,11 @@ export class AuditLogger {
 
     const message = `${prefix} ${timestamp} ${user} ${operation}${status}${duration}${error}`;
 
-    if (entry.level === 'error') {
-      console.error(message);
-    } else if (entry.level === 'warn') {
-      console.warn(message);
-    } else {
-      console.info(message);
-    }
+    process.stderr.write(`${message}\n`);
 
     // Include parameters if configured (separate line for readability)
     if (entry.parameters && this.config.includeParameters) {
-      console.info(`${prefix} Parameters:`, JSON.stringify(entry.parameters, null, 2));
+      process.stderr.write(`${prefix} Parameters: ${JSON.stringify(entry.parameters, null, 2)}\n`);
     }
   }
 

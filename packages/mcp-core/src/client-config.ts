@@ -40,10 +40,23 @@ export class InsecureBaseUrlError extends ClientConfigError {
 const DEFAULT_BASE_URL = "https://bms.example.com:443/bconnect";
 const DEFAULT_RATE_LIMIT_MAX_REQUESTS = 100;
 const DEFAULT_RATE_LIMIT_WINDOW_MS = 60000;
-const AUDIT_LEVELS: readonly AuditLevel[] = ["all", "write", "security", "none"];
+const AUDIT_LEVELS: readonly AuditLevel[] = ["none", "security", "write", "all"];
 
-const isAuditLevel = (value: string | undefined): value is AuditLevel =>
-  AUDIT_LEVELS.some((level) => level === value);
+/**
+ * BCONNECT_AUDIT_LEVEL, ignoring case and surrounding spaces; unset or empty is
+ * "none". Any other value stops the server: a typo must not switch auditing off.
+ */
+function auditLevelOf(value: string | undefined): AuditLevel {
+  const normalised = (value ?? "").trim().toLowerCase();
+  if (normalised === "") {
+    return "none";
+  }
+  const level = AUDIT_LEVELS.find((candidate) => candidate === normalised);
+  if (!level) {
+    throw new ClientConfigError(`BCONNECT_AUDIT_LEVEL "${value}" isn't valid. Use one of: ${AUDIT_LEVELS.join(", ")}.`);
+  }
+  return level;
+}
 
 const isLoopback = (hostname: string): boolean =>
   hostname === "localhost" || hostname === "[::1]" || /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname);
@@ -123,7 +136,7 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
     // An empty CA would silently replace the default trust store with Node's bundled CAs only.
     throw new ClientConfigError(`BCONNECT_CA_CERT_PATH points to an empty file: ${caCertPath}`);
   }
-  const auditLevel = env.BCONNECT_AUDIT_LEVEL;
+  const auditLevel = auditLevelOf(env.BCONNECT_AUDIT_LEVEL);
 
   return Object.freeze({
     baseUrl,
@@ -139,6 +152,6 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
         windowMs: intOr(env.BCONNECT_RATE_LIMIT_WINDOW_MS, DEFAULT_RATE_LIMIT_WINDOW_MS),
       }),
     }),
-    auditLog: Object.freeze({ level: isAuditLevel(auditLevel) ? auditLevel : "none" }),
+    auditLog: Object.freeze({ level: auditLevel }),
   });
 }
