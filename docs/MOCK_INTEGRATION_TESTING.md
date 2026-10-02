@@ -27,6 +27,11 @@ Override the mock URL with `BCONNECT_MOCK_URL`:
 BCONNECT_MOCK_URL=http://other-host:13433 npm run test:mock
 ```
 
+Running a server itself against the mock (not this tier): bConnect-Mock serves 25R2 unless it is
+started for 26R1 (`BCONNECT_BMS_VERSION=26r1`). Set the server's `BCONNECT_RELEASE` to the same
+release. The software server's startup check probes `/software/v2.0/Bundles` for `26R1` (the
+default), which a 25R2 mock answers with 404, so the server would stop at startup.
+
 ## Layout
 
 Each server holds its own copy of the tier. Per-server files:

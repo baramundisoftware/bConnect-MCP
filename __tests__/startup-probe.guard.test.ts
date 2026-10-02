@@ -11,7 +11,7 @@
  * The expected routes come from the specs, not a hand list, so a server that
  * drops its probe route or points it at a route bConnect doesn't have fails here.
  */
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -73,6 +73,8 @@ it('finds all 13 servers', () => {
 describe.each(SERVERS)('%s startup probe', (server) => {
   const domain = domainOf(server);
   const releases = RELEASES.filter((r) => loadOperations(r).some((op) => op.domain === domain));
+  // The other cases don't depend on the release; pin it so they don't depend on test order.
+  beforeEach(() => { process.env.BCONNECT_RELEASE = releases[releases.length - 1]; });
 
   it('sends exactly one GET to its own domain, a list route in the spec of the release it runs against', async () => {
     expect(releases.length).toBeGreaterThan(0);
