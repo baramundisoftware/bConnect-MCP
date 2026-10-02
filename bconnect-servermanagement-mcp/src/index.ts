@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, jsonPatchArgument, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, jsonPatchArgument, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { ServerManagementRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -464,19 +464,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
     const getBconnect = (): BConnectClient => {
       dotenv.config();
-      try {
-        return new BConnectClient(clientConfigFromEnv(process.env, credentials));
-      } catch (error) {
-        if (error instanceof ClientConfigError) {
-          throw new McpError(ErrorCode.InternalError, error.message);
-        }
-        throw error;
-      }
+      // A ClientConfigError (e.g. missing credentials) reaches the catch below
+      // and becomes a tool result (REQ-XC-001).
+      return new BConnectClient(clientConfigFromEnv(process.env, credentials));
     };
 
     try {
-      const bconnect = getBconnect();
-      const sm = bconnect.serverManagement;
+      const bconnect = lazyClient(getBconnect);
+      const sm = lazyClient(() => bconnect.serverManagement);
 
       // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
       const requires26R1 = (): void => {
@@ -626,11 +621,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "simulate_msw_cleanup": {
+          requires26R1();
           const result = await sm.simulateMSWCleanup();
           return { content: [{ type: "text", text: `MSW cleanup simulation completed:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "msw_cleanup": {
+          requires26R1();
           const result = await sm.mswCleanup();
           return { content: [{ type: "text", text: `MSW cleanup executed:\n${JSON.stringify(result, null, 2)}` }] };
         }
@@ -651,11 +648,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error) {
-      if (error instanceof McpError) {throw error;}
-      throw new McpError(
-        ErrorCode.InternalError,
-        `bConnect API error: ${error instanceof Error ? error.message : String(error)}`
-      );
+      // API errors, gate refusals and configuration errors are tool results the
+      // model can read; only McpErrors stay protocol errors (REQ-XC-001).
+      return toolErrorResult(error, release);
     }
   });
 
