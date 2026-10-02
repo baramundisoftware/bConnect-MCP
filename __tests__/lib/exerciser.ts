@@ -51,8 +51,15 @@ export function sample(name: string, schema: JsonSchema): unknown {
 export function requiredArguments(inputSchema: JsonSchema): Record<string, unknown> {
   const required: string[] = inputSchema.required ?? [];
   const args: Record<string, unknown> = {};
-  for (const [name, schema] of Object.entries<JsonSchema>(inputSchema.properties ?? {})) {
+  const properties = Object.entries<JsonSchema>(inputSchema.properties ?? {});
+  for (const [name, schema] of properties) {
     if (required.includes(name)) args[name] = sample(name, schema);
+  }
+  // A tool that needs more than its required arguments (e.g. "id plus at least
+  // one field to change") says so with minProperties; fill up with optional ones.
+  for (const [name, schema] of properties) {
+    if (Object.keys(args).length >= (inputSchema.minProperties ?? 0)) break;
+    if (!(name in args)) args[name] = sample(name, schema);
   }
   return args;
 }
