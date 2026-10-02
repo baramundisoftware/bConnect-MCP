@@ -47,14 +47,15 @@ const tool = async (name: string) => (await client.listTools()).tools.find((t) =
 
 describe('get_entra_id_data', () => {
   it('reads by Entra ID device id from GET /EntraIdData/{deviceId}', async () => {
-    const r = await call('get_entra_id_data', { entraIdDeviceId: DEVICE });
+    const r = await call('get_entra_id_data', { deviceId: DEVICE });
     expect(r.isError).toBe(false);
     expect(sent.map((s) => [s.method, s.path])).toEqual([['GET', `/endpoints/v2.0/EntraIdData/${DEVICE}`]]);
   });
 
   it('asks for the Entra ID device id, not a bMS endpoint id', async () => {
     const t = await tool('get_entra_id_data');
-    expect(t.inputSchema.required).toEqual(['entraIdDeviceId']);
+    expect(t.inputSchema.required).toEqual(['deviceId']);
+    expect(JSON.stringify(t.inputSchema.properties)).toMatch(/Entra ID device ID/);
     expect(Object.keys(t.inputSchema.properties ?? {})).not.toContain('endpointId');
   });
 });
