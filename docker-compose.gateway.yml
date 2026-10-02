@@ -43,6 +43,8 @@ services:
       MCP_ALLOW_NO_AUTH: "true"
       # Single bConnect service credential (bMS RBAC governs it).
       BCONNECT_BASE_URL: ${BCONNECT_BASE_URL:-https://bms-server/bconnect}
+      # http:// to a host other than the container itself needs this opt-in (credentials unencrypted).
+      BCONNECT_ALLOW_INSECURE_HTTP: ${BCONNECT_ALLOW_INSECURE_HTTP:-false}
       BCONNECT_USERNAME: ${BCONNECT_USERNAME:-}
       BCONNECT_PASSWORD: ${BCONNECT_PASSWORD:-}
       BCONNECT_API_KEY: ${BCONNECT_API_KEY:-}
