@@ -9,3 +9,4 @@ export * from "./secret-routes.js";
 export * from "./request-path.js";
 export * from "./client-config.js";
 export * from "./tool-arguments.js";
+export * from "./unverified-writes.js";
