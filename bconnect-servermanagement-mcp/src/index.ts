@@ -621,11 +621,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "simulate_msw_cleanup": {
+          requires26R1();
           const result = await sm.simulateMSWCleanup();
           return { content: [{ type: "text", text: `MSW cleanup simulation completed:\n${JSON.stringify(result, null, 2)}` }] };
         }
 
         case "msw_cleanup": {
+          requires26R1();
           const result = await sm.mswCleanup();
           return { content: [{ type: "text", text: `MSW cleanup executed:\n${JSON.stringify(result, null, 2)}` }] };
         }
