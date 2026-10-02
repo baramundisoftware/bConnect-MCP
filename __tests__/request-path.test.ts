@@ -28,6 +28,9 @@ const REFUSED: Record<string, string> = {
   'double encoding': `/endpoints/v2.0/Endpoints/..%252F..%252F${OTHER}`,
   'query string': `/endpoints/v2.0/Endpoints/${ID}?PageSize=1000`,
   fragment: `/endpoints/v2.0/Endpoints/${ID}#x`,
+  'malformed escape': `/endpoints/v2.0/Endpoints/${ID}%ZZ`,
+  'truncated escape': `/endpoints/v2.0/Endpoints/${ID}%4`,
+  'escape at the end': `/endpoints/v2.0/Endpoints/${ID}%`,
 };
 
 const ALLOWED = [

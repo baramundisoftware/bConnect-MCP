@@ -52,6 +52,14 @@ describe('route classification', () => {
     ['backslashes', `/endpoints/v2.0/Endpoints/..\\..\\..\\${LAPS_REL.replace(/\//g, '\\')}`],
     ['a detour inside the domain', `/defensecontrol/v2.0/x/../LocalAdministrativeAccounts/WindowsEndpoints/${ID}`],
     ['encoded query marker', `/${LAPS_REL}%3Fx=1`],
+    // Fail closed: a part that can't be decoded must not stop the rest from being decoded.
+    ['a malformed escape before an encoded letter', `/defensecontrol/v2.0/BitLocker/WindowsEndpoints/${ID}%ZZ/Secret%73`],
+    ['a truncated escape before an encoded letter', `/defensecontrol/v2.0/BitLocker/WindowsEndpoints/${ID}%4/Secret%73`],
+    // Forms a web server may serve as the same route.
+    ['a trailing dot', `${BITLOCKER}.`],
+    ['a trailing encoded space', `${BITLOCKER}%20`],
+    ['a path parameter', `${BITLOCKER};x=1`],
+    ['a path parameter on the ID', `/defensecontrol/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/${ID};x`],
   ])('denies a secret route reached through %s', (_how, url) => {
     expect(isSecretRoute('GET', url)).toBe(true);
   });
