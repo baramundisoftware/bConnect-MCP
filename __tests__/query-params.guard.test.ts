@@ -43,7 +43,11 @@ describe.each(SERVERS)('%s', (server) => {
       const ops = loadOperations(release);
       const table: Record<string, Record<string, Schema>> = QUERY_PARAMETERS[release] ?? {};
       for (const [tool, ids] of Object.entries<string[]>(TOOL_OPERATIONS)) {
-        const gets = ops.filter((o) => ids.includes(o.operationId) && o.method === 'GET');
+        // An operationId can exist in several specs (GetFolders): the server's own domain, or any
+        // domain for a server without its own spec (groups uses endpoints).
+        const all = ops.filter((o) => ids.includes(o.operationId) && o.method === 'GET');
+        const own = all.filter((o) => o.domain === server.replace(/^bconnect-|-mcp$/g, ''));
+        const gets = own.length ? own : all;
         const params = new Map<string, Schema>();
         for (const o of gets) {
           for (const p of o.spec.paths[o.path].get.parameters ?? []) {

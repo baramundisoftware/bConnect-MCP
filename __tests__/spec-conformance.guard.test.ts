@@ -262,9 +262,11 @@ describe('the checks report known-bad cases (self-test)', () => {
       },
     };
     const G = '00000000-0000-4000-8000-000000000001';
+    /** Every query parameter `good` offers, as a tool that applies them sends them. */
+    const OFFERED: Array<[string, string]> = [['Page', '1'], ['PageSize', '20'], ['Name', 'x']];
     const call = (over: Partial<ParamCall>): ParamCall => ({
       tool: 'list_things_by_group', inputSchema: good, idsByArg: { groupId: G }, unknownName: 'zzUnknown', unknownValue: 'UNK', failed: false,
-      requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['Page', '1'], ['PageSize', '20'], ['Name', 'x']], body: '' }],
+      requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: OFFERED, body: '' }],
       ...over,
     });
     const run = (c: ParamCall, table: Record<string, string[]> = { list_things_by_group: ['GetThingsByGroup'], create_thing: ['CreateThing'] }) =>
@@ -276,20 +278,20 @@ describe('the checks report known-bad cases (self-test)', () => {
     });
 
     it('reports an undeclared argument that reaches the query or the body', () => {
-      expect(run(call({ requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['zz', 'UNK']], body: '' }] })))
+      expect(run(call({ requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [...OFFERED, ['zz', 'UNK']], body: '' }] })))
         .toEqual(['arg-leak list_things_by_group -']);
       expect(run(call({ tool: 'create_thing', inputSchema: { properties: {} }, idsByArg: {}, requests: [{ method: 'POST', path: '/demo/v2.0/Things', query: [], body: '{"zz":"UNK"}' }] })))
         .toEqual(['arg-leak create_thing -']);
     });
 
     it('reports a query parameter the operation does not declare (e.g. a path ID repeated in the query)', () => {
-      expect(run(call({ requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['groupId', G], ['includeSubGroups', 'true']], body: '' }] })))
+      expect(run(call({ requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [...OFFERED, ['groupId', G], ['includeSubGroups', 'true']], body: '' }] })))
         .toEqual(['query-undeclared list_things_by_group groupId', 'query-undeclared list_things_by_group includeSubGroups']);
     });
 
     it('reports a declared query parameter the tool does not offer', () => {
       const { Name: _dropped, ...props } = good.properties;
-      const sendsPageOnly = [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['Page', '1']] as Array<[string, string]>, body: '' }];
+      const sendsPageOnly = [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['Page', '1'], ['PageSize', '20']] as Array<[string, string]>, body: '' }];
       expect(run(call({ inputSchema: { properties: props }, requests: sendsPageOnly }))).toEqual(['query-not-offered list_things_by_group Name']);
       // Offered under the tool's own argument name: sent, so not reported.
       expect(run(call({ inputSchema: { properties: { ...props, name: { type: 'string' } } } }))).toEqual([]);
@@ -306,7 +308,7 @@ describe('the checks report known-bad cases (self-test)', () => {
     });
 
     it('reports an undeclared argument whose key reaches the wire with another value', () => {
-      expect(run(call({ requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['zzUnknown', 'other']], body: '' }] })))
+      expect(run(call({ requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [...OFFERED, ['zzUnknown', 'other']], body: '' }] })))
         .toEqual(['arg-leak list_things_by_group -', 'query-undeclared list_things_by_group zzUnknown']);
     });
 

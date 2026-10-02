@@ -21,8 +21,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, pickArguments, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
-import { QUERY_PARAMS } from "./query-params.js";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 import type { paths as JobsPaths } from "./generated/jobs-types.js";
@@ -90,7 +93,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "withdraw_kiosk_release",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     return {
       tools: [
         // ── Jobs API ──────────────────────────────────────────────────────
@@ -99,18 +102,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all job definitions in baramundi. Supports filtering, searching, and pagination. Returns job definitions with their GUIDs, names, and properties. Use this to find available software packages or scripts before deploying.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Search query to filter job definitions by name or description"
-              },
-              PageSize: PAGE_SIZE_PROPERTY,
-              Page: PAGE_PROPERTY,
-              OrderBy: {
-                type: "string",
-                description: "Sort order (e.g., 'Name asc')"
-              }
-            },
+            properties: {},
             required: []
           }
         },
@@ -133,18 +125,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all job instances (execution history) in baramundi. Supports filtering, searching, and pagination. Returns job instances with their status, endpoint, and timing information. Use this to monitor deployment progress across all endpoints.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Search query to filter job instances"
-              },
-              PageSize: PAGE_SIZE_PROPERTY,
-              Page: PAGE_PROPERTY,
-              OrderBy: {
-                type: "string",
-                description: "Sort order (e.g., 'Start desc')"
-              }
-            },
+            properties: {},
             required: []
           }
         },
@@ -171,9 +152,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               endpointId: {
                 type: "string",
                 description: "Endpoint ID (GUID)"
-              },
-              PageSize: PAGE_SIZE_PROPERTY,
-              Page: PAGE_PROPERTY
+              }
             },
             required: ["endpointId"]
           }
@@ -187,16 +166,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               jobDefinitionId: {
                 type: "string",
                 description: "Job definition ID (GUID)"
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter by job definition name, endpoint name, or state description"
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-              OrderBy: {
-                type: "string",
-                description: "Sort order (e.g., 'EndpointName asc', 'Start desc')"
               }
             },
             required: ["jobDefinitionId"]
@@ -211,17 +180,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               logicalGroupId: {
                 type: "string",
                 description: "Logical group ID (GUID)"
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter by job definition name, endpoint name, or state description"
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-              includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
-              OrderBy: {
-                type: "string",
-                description: "Sort order (e.g., 'EndpointName asc', 'Start desc')"
               }
             },
             required: ["logicalGroupId"]
@@ -236,20 +194,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               folderId: {
                 type: "string",
                 description: "Folder ID (GUID)"
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter by name, display name, category, description, or comment"
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-              OrderBy: {
-                type: "string",
-                description: "Sort order (e.g., 'DisplayName asc', 'Name asc')"
-              },
-              includeSubfolders: {
-                type: "boolean",
-                description: "If true, also includes job definitions from sub-folders (default: false)"
               }
             },
             required: ["folderId"]
@@ -456,12 +400,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all kiosk releases available in the baramundi Kiosk portal. Returns job definitions released for end-user self-service execution with their assignment targets. Use this to see what software users can install themselves.",
           inputSchema: {
             type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort order (e.g., 'assignmentTargetName asc')" },
-              SearchQuery: { type: "string", description: "Search query to filter kiosk releases" },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
-            },
+            properties: {},
             required: []
           }
         },
@@ -477,22 +416,22 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           }
         },
         // Phase 26: Folder navigation
-        { name: "list_job_folders", description: "List the job folders in baramundi at every level, not only the top level. Each folder's parentId gives the hierarchy; use list_job_subfolders for the folders below one folder. Returns a paged list.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY, OrderBy: { type: "string" } } } },
+        { name: "list_job_folders", description: "List the job folders in baramundi at every level, not only the top level. Each folder's parentId gives the hierarchy; use list_job_subfolders for the folders below one folder. Returns a paged list.", inputSchema: { type: "object", properties: {} } },
         { name: "get_job_folder", description: "Get details of a specific job folder by its GUID. Returns folder name, description, and parent folder information.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Folder ID (GUID)" } }, required: ["id"] } },
-        { name: "list_job_subfolders", description: "List all sub-folders within a specific job folder. Returns a paged list of child folders for the given parent folder GUID.", inputSchema: { type: "object", properties: { folderId: { type: "string", description: "Parent folder ID (GUID)" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY }, required: ["folderId"] } },
+        { name: "list_job_subfolders", description: "List all sub-folders within a specific job folder. Returns a paged list of child folders for the given parent folder GUID.", inputSchema: { type: "object", properties: { folderId: { type: "string", description: "Parent folder ID (GUID)" } }, required: ["folderId"] } },
         // Phase 26: Kiosk releases by context
-        { name: "list_kiosk_releases_by_job_definition", description: "List all kiosk releases for a specific job definition. Returns releases that expose this job definition in the baramundi Kiosk portal.", inputSchema: { type: "object", properties: { jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY }, required: ["jobDefinitionId"] } },
-        { name: "list_kiosk_releases_by_endpoint", description: "List all kiosk releases available to a specific endpoint. Returns releases the device can access via the baramundi Kiosk portal.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "Endpoint ID (GUID)" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY }, required: ["endpointId"] } },
-        { name: "list_kiosk_releases_by_ad_object", description: "List all kiosk releases available to a specific AD object (user or group). Returns releases the AD object can access via the Kiosk portal.", inputSchema: { type: "object", properties: { adObjectId: { type: "string", description: "AD object ID (GUID)" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY }, required: ["adObjectId"] } },
-        { name: "list_kiosk_releases_by_logical_group", description: "List all kiosk releases available to endpoints in a specific logical group. Returns releases accessible by group members via the baramundi Kiosk portal.", inputSchema: { type: "object", properties: { logicalGroupId: { type: "string", description: "Logical group ID (GUID)" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY }, required: ["logicalGroupId"] } },
+        { name: "list_kiosk_releases_by_job_definition", description: "List all kiosk releases for a specific job definition. Returns releases that expose this job definition in the baramundi Kiosk portal.", inputSchema: { type: "object", properties: { jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" } }, required: ["jobDefinitionId"] } },
+        { name: "list_kiosk_releases_by_endpoint", description: "List all kiosk releases available to a specific endpoint. Returns releases the device can access via the baramundi Kiosk portal.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "Endpoint ID (GUID)" } }, required: ["endpointId"] } },
+        { name: "list_kiosk_releases_by_ad_object", description: "List all kiosk releases available to a specific AD object (user or group). Returns releases the AD object can access via the Kiosk portal.", inputSchema: { type: "object", properties: { adObjectId: { type: "string", description: "AD object ID (GUID)" } }, required: ["adObjectId"] } },
+        { name: "list_kiosk_releases_by_logical_group", description: "List all kiosk releases available to endpoints in a specific logical group. Returns releases accessible by group members via the baramundi Kiosk portal.", inputSchema: { type: "object", properties: { logicalGroupId: { type: "string", description: "Logical group ID (GUID)" } }, required: ["logicalGroupId"] } },
         // Phase 26: Job instances by group
-        { name: "list_job_instances_by_static_group", description: "List all job instances for endpoints in a specific static group. Returns a paged list of job execution history for the group.", inputSchema: { type: "object", properties: { staticGroupId: { type: "string", description: "Static group ID (GUID)" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY }, required: ["staticGroupId"] } },
-        { name: "list_job_instances_by_dynamic_group", description: "List all job instances for endpoints in a specific dynamic group. Returns a paged list of job execution history for the group.", inputSchema: { type: "object", properties: { dynamicGroupId: { type: "string", description: "Dynamic group ID (GUID)" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY }, required: ["dynamicGroupId"] } },
-        { name: "list_job_instances_by_universal_dynamic_group", description: "List all job instances for endpoints in a specific universal dynamic group. Returns a paged list of job execution history for the group.", inputSchema: { type: "object", properties: { universalDynamicGroupId: { type: "string", description: "Universal dynamic group ID (GUID)" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY }, required: ["universalDynamicGroupId"] } },
+        { name: "list_job_instances_by_static_group", description: "List all job instances for endpoints in a specific static group. Returns a paged list of job execution history for the group.", inputSchema: { type: "object", properties: { staticGroupId: { type: "string", description: "Static group ID (GUID)" } }, required: ["staticGroupId"] } },
+        { name: "list_job_instances_by_dynamic_group", description: "List all job instances for endpoints in a specific dynamic group. Returns a paged list of job execution history for the group.", inputSchema: { type: "object", properties: { dynamicGroupId: { type: "string", description: "Dynamic group ID (GUID)" } }, required: ["dynamicGroupId"] } },
+        { name: "list_job_instances_by_universal_dynamic_group", description: "List all job instances for endpoints in a specific universal dynamic group. Returns a paged list of job execution history for the group.", inputSchema: { type: "object", properties: { universalDynamicGroupId: { type: "string", description: "Universal dynamic group ID (GUID)" } }, required: ["universalDynamicGroupId"] } },
 
       ]
     };
-  }));
+  })));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -540,7 +479,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       switch (name) {
         // ── Jobs ──────────────────────────────────────────────────────────
         case "list_job_definitions": {
-          const result = await bconnect.jobs.getJobDefinitions(pickArguments(args ?? {}, QUERY_PARAMS.list_job_definitions));
+          const result = await bconnect.jobs.getJobDefinitions(pickArguments(args ?? {}, sends("list_job_definitions")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -550,7 +489,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_job_instances": {
-          const result = await bconnect.jobs.getJobInstances(pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances));
+          const result = await bconnect.jobs.getJobInstances(pickArguments(args ?? {}, sends("list_job_instances")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -562,7 +501,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_endpoint_job_instances": {
           const result = await bconnect.jobs.getEndpointJobInstances(
             args!.endpointId as string,
-            pickArguments(args ?? {}, QUERY_PARAMS.list_endpoint_job_instances)
+            pickArguments(args ?? {}, sends("list_endpoint_job_instances"))
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -570,7 +509,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_job_instances_by_definition": {
           const result = await bconnect.jobs.getJobInstancesByJobDefinition(
             args!.jobDefinitionId as string,
-            pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_definition)
+            pickArguments(args ?? {}, sends("list_job_instances_by_definition"))
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -578,7 +517,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_job_instances_by_logical_group": {
           const result = await bconnect.jobs.getJobInstancesByLogicalGroup(
             args!.logicalGroupId as string,
-            pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_logical_group)
+            pickArguments(args ?? {}, sends("list_job_instances_by_logical_group"))
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -586,7 +525,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_job_definitions_by_folder": {
           const result = await bconnect.jobs.getJobDefinitionsByFolder(
             args!.folderId as string,
-            pickArguments(args ?? {}, QUERY_PARAMS.list_job_definitions_by_folder)
+            pickArguments(args ?? {}, sends("list_job_definitions_by_folder"))
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -687,7 +626,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_kiosk_releases": {
-          const result = await bconnect.jobs.getKioskReleases(pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases));
+          const result = await bconnect.jobs.getKioskReleases(pickArguments(args ?? {}, sends("list_kiosk_releases")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -698,7 +637,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // Phase 26: Folder navigation
         case "list_job_folders": {
-          const result = await bconnect.jobs.getJobFolders(pickArguments(args ?? {}, QUERY_PARAMS.list_job_folders));
+          const result = await bconnect.jobs.getJobFolders(pickArguments(args ?? {}, sends("list_job_folders")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -708,44 +647,44 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_job_subfolders": {
-          const result = await bconnect.jobs.getJobSubfolders(args!.folderId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_job_subfolders));
+          const result = await bconnect.jobs.getJobSubfolders(args!.folderId as string, pickArguments(args ?? {}, sends("list_job_subfolders")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // Phase 26: Kiosk releases by context
         case "list_kiosk_releases_by_job_definition": {
-          const result = await bconnect.jobs.getKioskReleasesByJobDefinition(args!.jobDefinitionId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases_by_job_definition));
+          const result = await bconnect.jobs.getKioskReleasesByJobDefinition(args!.jobDefinitionId as string, pickArguments(args ?? {}, sends("list_kiosk_releases_by_job_definition")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_kiosk_releases_by_endpoint": {
-          const result = await bconnect.jobs.getKioskReleasesByEndpoint(args!.endpointId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases_by_endpoint));
+          const result = await bconnect.jobs.getKioskReleasesByEndpoint(args!.endpointId as string, pickArguments(args ?? {}, sends("list_kiosk_releases_by_endpoint")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_kiosk_releases_by_ad_object": {
-          const result = await bconnect.jobs.getKioskReleasesByAdObject(args!.adObjectId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases_by_ad_object));
+          const result = await bconnect.jobs.getKioskReleasesByAdObject(args!.adObjectId as string, pickArguments(args ?? {}, sends("list_kiosk_releases_by_ad_object")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_kiosk_releases_by_logical_group": {
-          const result = await bconnect.jobs.getKioskReleasesByLogicalGroup(args!.logicalGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_kiosk_releases_by_logical_group));
+          const result = await bconnect.jobs.getKioskReleasesByLogicalGroup(args!.logicalGroupId as string, pickArguments(args ?? {}, sends("list_kiosk_releases_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // Phase 26: Job instances by group
         case "list_job_instances_by_static_group": {
-          const result = await bconnect.jobs.getJobInstancesByStaticGroup(args!.staticGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_static_group));
+          const result = await bconnect.jobs.getJobInstancesByStaticGroup(args!.staticGroupId as string, pickArguments(args ?? {}, sends("list_job_instances_by_static_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_job_instances_by_dynamic_group": {
-          const result = await bconnect.jobs.getJobInstancesByDynamicGroup(args!.dynamicGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_dynamic_group));
+          const result = await bconnect.jobs.getJobInstancesByDynamicGroup(args!.dynamicGroupId as string, pickArguments(args ?? {}, sends("list_job_instances_by_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_job_instances_by_universal_dynamic_group": {
-          const result = await bconnect.jobs.getJobInstancesByUniversalDynamicGroup(args!.universalDynamicGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_job_instances_by_universal_dynamic_group));
+          const result = await bconnect.jobs.getJobInstancesByUniversalDynamicGroup(args!.universalDynamicGroupId as string, pickArguments(args ?? {}, sends("list_job_instances_by_universal_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

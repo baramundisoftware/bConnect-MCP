@@ -20,8 +20,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, pickArguments, declaredArgumentsOnly } from "@bconnect/mcp-core";
-import { QUERY_PARAMS } from "./query-params.js";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, pickArguments, declaredArgumentsOnly, queryParameters } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { ActiveDirectoryRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -455,7 +458,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // ── AD Groups ─────────────────────────────────────────────────────
         case "list_ad_groups": {
-          const result = await ad.getADGroups(pickArguments(args ?? {}, QUERY_PARAMS.list_ad_groups));
+          const result = await ad.getADGroups(pickArguments(args ?? {}, sends("list_ad_groups")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -465,18 +468,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_ad_subgroups": {
-          const result = await ad.getADGroupsByAdGroup(args!.adGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_ad_subgroups));
+          const result = await ad.getADGroupsByAdGroup(args!.adGroupId as string, pickArguments(args ?? {}, sends("list_ad_subgroups")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_ad_groups_by_org_unit": {
-          const result = await ad.getADGroupsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_ad_groups_by_org_unit));
+          const result = await ad.getADGroupsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_ad_groups_by_org_unit")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // ── AD Objects ────────────────────────────────────────────────────
         case "list_ad_objects": {
-          const result = await ad.getADObjects(pickArguments(args ?? {}, QUERY_PARAMS.list_ad_objects));
+          const result = await ad.getADObjects(pickArguments(args ?? {}, sends("list_ad_objects")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -486,23 +489,23 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_ad_object_memberships": {
-          const result = await ad.getADObjectMemberships(args!.id as string, pickArguments(args ?? {}, QUERY_PARAMS.list_ad_object_memberships));
+          const result = await ad.getADObjectMemberships(args!.id as string, pickArguments(args ?? {}, sends("list_ad_object_memberships")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_ad_objects_by_group": {
-          const result = await ad.getADObjectsByAdGroup(args!.adGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_ad_objects_by_group));
+          const result = await ad.getADObjectsByAdGroup(args!.adGroupId as string, pickArguments(args ?? {}, sends("list_ad_objects_by_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_ad_objects_by_org_unit": {
-          const result = await ad.getADObjectsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_ad_objects_by_org_unit));
+          const result = await ad.getADObjectsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_ad_objects_by_org_unit")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // ── AD Users ──────────────────────────────────────────────────────
         case "list_ad_users": {
-          const result = await ad.getADUsers(pickArguments(args ?? {}, QUERY_PARAMS.list_ad_users));
+          const result = await ad.getADUsers(pickArguments(args ?? {}, sends("list_ad_users")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -512,18 +515,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_ad_users_by_group": {
-          const result = await ad.getADUsersByGroup(args!.adGroupId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_ad_users_by_group));
+          const result = await ad.getADUsersByGroup(args!.adGroupId as string, pickArguments(args ?? {}, sends("list_ad_users_by_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_ad_users_by_org_unit": {
-          const result = await ad.getADUsersByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_ad_users_by_org_unit));
+          const result = await ad.getADUsersByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_ad_users_by_org_unit")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // ── Org Units ─────────────────────────────────────────────────────
         case "list_org_units": {
-          const result = await ad.getOrgUnits(pickArguments(args ?? {}, QUERY_PARAMS.list_org_units));
+          const result = await ad.getOrgUnits(pickArguments(args ?? {}, sends("list_org_units")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -533,7 +536,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_org_units_by_org_unit": {
-          const result = await ad.getOrgUnitsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, QUERY_PARAMS.list_org_units_by_org_unit));
+          const result = await ad.getOrgUnitsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_org_units_by_org_unit")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

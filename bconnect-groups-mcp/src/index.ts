@@ -22,8 +22,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, pickArguments, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
-import { QUERY_PARAMS } from "./query-params.js";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, pickArguments, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly, queryParameters } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 
@@ -281,47 +284,47 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Logical Group ─────────────────────────────────────────────────
         case "list_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_endpoints_by_logical_group));
+          const data = await client.groups.getEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_endpoints_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_android_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getAndroidEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_android_endpoints_by_logical_group));
+          const data = await client.groups.getAndroidEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_android_endpoints_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_ios_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getIosEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_ios_endpoints_by_logical_group));
+          const data = await client.groups.getIosEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_ios_endpoints_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_linux_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getLinuxEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_linux_endpoints_by_logical_group));
+          const data = await client.groups.getLinuxEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_linux_endpoints_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_mac_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getMacEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_mac_endpoints_by_logical_group));
+          const data = await client.groups.getMacEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_mac_endpoints_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_network_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getNetworkEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_network_endpoints_by_logical_group));
+          const data = await client.groups.getNetworkEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_network_endpoints_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_windows_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getWindowsEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_windows_endpoints_by_logical_group));
+          const data = await client.groups.getWindowsEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_industrial_endpoints_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getIndustrialEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_industrial_endpoints_by_logical_group));
+          const data = await client.groups.getIndustrialEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_industrial_endpoints_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
         case "list_logical_groups_by_logical_group": {
           const client = getClient();
-          const data = await client.groups.getLogicalGroupsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, QUERY_PARAMS.list_logical_groups_by_logical_group));
+          const data = await client.groups.getLogicalGroupsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_logical_groups_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
         }
 

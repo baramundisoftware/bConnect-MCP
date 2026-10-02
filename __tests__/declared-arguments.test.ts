@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
-import { declaredArgumentsOnly } from '../packages/mcp-core/src/tool-arguments.js';
+import { declaredArgumentsOnly, withQueryProperties } from '../packages/mcp-core/src/tool-arguments.js';
 
 const tools = declaredArgumentsOnly(async () => ({
   tools: [
@@ -63,5 +63,23 @@ describe('refuseUndeclared', () => {
 
   it('does not treat Object.prototype names as declared', async () => {
     expect(await refusal('list_things', { constructor: 1 })).toBeInstanceOf(McpError);
+  });
+});
+
+describe('withQueryProperties (#179)', () => {
+  const table = {
+    '25R2': { list_things: { SearchQuery: { type: 'string', description: 'old' } } },
+    '26R1': { list_things: { SearchQuery: { type: 'string', description: 'new' }, EntraIdDeviceId: { type: 'string', description: 'x' } } },
+  };
+  const list = async () => ({ tools: [
+    { name: 'list_things', inputSchema: { type: 'object', properties: { groupId: { type: 'string' }, EntraIdDeviceId: { type: 'string' } }, required: ['groupId'] } },
+    { name: 'get_thing', inputSchema: { type: 'object', properties: { id: { type: 'string' } } } },
+  ] });
+  it('keeps path arguments and takes the query parameters of the selected release', async () => {
+    const r26 = await withQueryProperties(table, () => '26R1', list)();
+    expect(Object.keys((r26.tools[0].inputSchema as { properties: object }).properties)).toEqual(['groupId', 'SearchQuery', 'EntraIdDeviceId']);
+    const r25 = await withQueryProperties(table, () => '25R2', list)();
+    expect((r25.tools[0].inputSchema as { properties: Record<string, { description?: string }> }).properties).toEqual({ groupId: { type: 'string' }, SearchQuery: { type: 'string', description: 'old' } });
+    expect(r25.tools[1]).toEqual((await list()).tools[1]);
   });
 });

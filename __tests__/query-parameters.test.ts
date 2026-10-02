@@ -3,23 +3,16 @@
  * logical-group tools can reach sub-groups and page (#170).
  *
  * - The path id stays in the path; it isn't sent again as a query parameter.
- * - Each server's QUERY_PARAMS table (src/query-params.ts) equals the query
- *   parameters the bundled specs declare for the tool's operation (both
- *   releases), so the table can't silently drop a declared parameter.
+ * - The tables behind it are generated and checked by query-params.guard.test.ts.
  * - Logical-group member tools offer and send `includeSubfolders`.
  * - `list_logical_groups` offers paging and the declared filters.
  * - `list_unmanaged_endpoints` offers no paging: its route declares none.
  */
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { RELEASES, loadOperations } from './lib/spec.js';
-import { ROOT } from './lib/exerciser.js';
 
 const G = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const SERVERS = ['activedirectory', 'assets', 'defensecontrol', 'endpoints', 'groups', 'jobs', 'software'];
@@ -103,21 +96,5 @@ describe('#170 logical-group tools reach sub-groups', () => {
     expect(await propsOf('endpoints', 'list_logical_groups')).toEqual(expect.arrayContaining(['Page', 'PageSize', 'Name', 'Dip', 'Domain', 'OrderBy', 'SearchQuery']));
     expect(await call('endpoints', 'list_logical_groups', { Page: 2, PageSize: 100, Name: 'Berlin' }))
       .toEqual([{ path: '/endpoints/v2.0/LogicalGroups', query: { Page: '2', PageSize: '100', Name: 'Berlin' } }]);
-  });
-});
-
-describe('QUERY_PARAMS tables follow the spec', () => {
-  const declared = RELEASES.flatMap((r) => loadOperations(r));
-  it.each(['activedirectory', 'assets', 'endpoints', 'groups', 'jobs'])('%s', async (server) => {
-    const file = join(ROOT, `bconnect-${server}-mcp`, 'src', 'query-params.ts');
-    expect(existsSync(file), `${file} missing`).toBe(true);
-    const { QUERY_PARAMS } = await import(pathToFileURL(file).href);
-    const { TOOL_OPERATIONS } = await import(pathToFileURL(join(ROOT, `bconnect-${server}-mcp`, 'src', 'operations.ts')).href);
-    const wrong = Object.entries(QUERY_PARAMS as Record<string, readonly string[]>).filter(([tool, names]) => {
-      const ids: readonly string[] = TOOL_OPERATIONS[tool] ?? [];
-      const spec = new Set(declared.filter((o) => ids.includes(o.operationId)).flatMap((o) => o.queryParams));
-      return ids.length === 0 || names.length !== spec.size || names.some((n) => !spec.has(n));
-    }).map(([tool]) => tool);
-    expect(wrong).toEqual([]);
   });
 });
