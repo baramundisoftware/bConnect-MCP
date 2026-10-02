@@ -26,6 +26,10 @@ describe('sanitise', () => {
     const out = sanitise(`https://${HOST}:444/bconnect/x/${GUID} ${SECRETS[0]} ${SECRETS[1]}`, { hostname: HOST, secrets: SECRETS });
     expect(out).toBe('https://<bms>:444/bconnect/x/{id} *** ***');
   });
+
+  it('removes object IDs written in upper case', () => {
+    expect(sanitise('id ABCDEF12-3456-4789-8ABC-DEF012345678', { hostname: HOST, secrets: [] })).toBe('id {id}');
+  });
 });
 
 describe('sanitised summary', () => {

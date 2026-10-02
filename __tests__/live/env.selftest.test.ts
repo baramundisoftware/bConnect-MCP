@@ -93,6 +93,14 @@ describe('live env: isolated', () => {
     expect(on.caFile).toBe(true);
   });
 
+  it('treats the password, the API key and the Basic auth value as secrets', () => {
+    const basic = loadLiveConfig({ root: ROOT, file: envFile('basic-secret.env', [BASE, 'BCONNECT_USERNAME=reader', 'BCONNECT_PASSWORD=Pw-12345']), shell: {} });
+    expect(basic.secrets).toContain('Pw-12345');
+    expect(basic.secrets).toContain(Buffer.from('reader:Pw-12345').toString('base64'));
+    const key = loadLiveConfig({ root: ROOT, file: envFile('key-secret.env', [BASE, 'BCONNECT_API_KEY=key-abcdef']), shell: {} });
+    expect(key.secrets).toContain('key-abcdef');
+  });
+
   it('reports no TLS for a plain-HTTP base URL, whatever NODE_TLS_REJECT_UNAUTHORIZED says', () => {
     const plain = loadLiveConfig({ root: ROOT, file: envFile('http.env', ['BCONNECT_BASE_URL=http://bms.selftest.invalid/bconnect']), shell: {} });
     expect(plain.tlsVerified).toBe(false);
