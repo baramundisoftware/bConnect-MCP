@@ -42,6 +42,10 @@ const doc: Schema = {
       Level1: { type: 'object', properties: { a: { type: 'string' } }, additionalProperties: false },
       Level2: { allOf: [ref('Level1'), { type: 'object', properties: { b: { type: 'string' } }, additionalProperties: false }] },
       Level3: { allOf: [ref('Level2'), { type: 'object', properties: { c: { type: 'string' } }, additionalProperties: false }] },
+      Level2Alias: ref('Level2'),
+      Level3ViaAlias: { allOf: [ref('Level2Alias'), { type: 'object', properties: { c: { type: 'string' } }, additionalProperties: false }] },
+      Untagged: { type: 'object', properties: { kind: { type: 'string' } } },
+      MixedShape: { oneOf: [ref('Circle'), ref('Untagged')] },
     },
   },
 };
@@ -112,6 +116,22 @@ describe('spec validator normalisations (fixtures)', () => {
     ok('Level2', { a: 'x', b: 'y' });
     bad('Level3', { a: 'x', b: 'y', c: 'z', d: 1 });
     bad('Level2', { a: 'x', c: 'z' });
+    // through an alias schema (X: {$ref: Y}) as well
+    ok('Level3ViaAlias', { a: 'x', b: 'y', c: 'z' });
+    bad('Level3ViaAlias', { a: 'x', b: 'y', c: 'z', d: 1 });
+  });
+
+  it('a cyclic allOf or $ref throws a named error instead of overflowing the stack', () => {
+    const cyclic = (schemas: Schema) => ({ components: { schemas } });
+    const closed = { type: 'object', additionalProperties: false };
+    expect(() => toJsonSchema(cyclic({ A: { allOf: [ref('B'), closed] }, B: { allOf: [ref('A'), closed] } }))).toThrow(/cyclic allOf/);
+    expect(() => toJsonSchema(cyclic({ A: ref('B'), B: ref('A'), C: { allOf: [ref('A'), closed] } }))).toThrow(/cyclic \$ref/);
+  });
+
+  it('a oneOf with a branch that is not a discriminator subtype stays a plain oneOf', () => {
+    // { kind: 'Circle' } matches both branches, so a plain oneOf rejects it; a dispatch would accept it.
+    bad('MixedShape', { kind: 'Circle' });
+    ok('MixedShape', { kind: 'Other' });
   });
 
   it('a discriminator mapping makes a oneOf of subtypes match exactly one', () => {

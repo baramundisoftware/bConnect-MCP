@@ -71,7 +71,16 @@ function withPolymorphism(spec: Schema): Schema {
       tags.set(name, { property: propertyName, value });
     }
   }
-  const resolve = (s: Schema): Schema | undefined => (s?.$ref ? schemas[refName(s.$ref) ?? ''] : s);
+  /** Follows $ref (also alias chains such as `X: {$ref: Y}`) to the schema that defines something. */
+  const resolve = (s: Schema): Schema | undefined => {
+    const seen = new Set<Schema>();
+    while (s?.$ref) {
+      if (seen.has(s)) throw new Error(`cyclic $ref ${String(s.$ref)}`);
+      seen.add(s);
+      s = schemas[refName(s.$ref) ?? ''];
+    }
+    return s;
+  };
   const isClosed = (member: Schema, seen = new Set<Schema>()): boolean => {
     const s = resolve(member);
     if (!s || seen.has(s)) return false;
