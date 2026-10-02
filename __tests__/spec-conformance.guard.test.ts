@@ -264,7 +264,7 @@ describe('the checks report known-bad cases (self-test)', () => {
     const G = '00000000-0000-4000-8000-000000000001';
     const call = (over: Partial<ParamCall>): ParamCall => ({
       tool: 'list_things_by_group', inputSchema: good, idsByArg: { groupId: G }, unknownName: 'zzUnknown', unknownValue: 'UNK', failed: false,
-      requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['Page', '1'], ['Name', 'x']], body: '' }],
+      requests: [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['Page', '1'], ['PageSize', '20'], ['Name', 'x']], body: '' }],
       ...over,
     });
     const run = (c: ParamCall, table: Record<string, string[]> = { list_things_by_group: ['GetThingsByGroup'], create_thing: ['CreateThing'] }) =>
@@ -293,6 +293,11 @@ describe('the checks report known-bad cases (self-test)', () => {
       expect(run(call({ inputSchema: { properties: props }, requests: sendsPageOnly }))).toEqual(['query-not-offered list_things_by_group Name']);
       // Offered under the tool's own argument name: sent, so not reported.
       expect(run(call({ inputSchema: { properties: { ...props, name: { type: 'string' } } } }))).toEqual([]);
+    });
+
+    it('reports a declared query parameter the tool offers but does not send (#179)', () => {
+      const dropsName = [{ method: 'GET', path: `/demo/v2.0/Groups/${G}/Things`, query: [['Page', '1'], ['PageSize', '20']] as Array<[string, string]>, body: '' }];
+      expect(run(call({ requests: dropsName }))).toEqual(['query-dropped list_things_by_group Name']);
     });
 
     it('reports a path slot filled by an argument whose name does not fit it', () => {
