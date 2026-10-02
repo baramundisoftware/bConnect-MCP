@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@bconnect/mcp-core": "file:../packages/mcp-core",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "bconnect-activedirectory-mcp": "file:../bconnect-activedirectory-mcp",
     "bconnect-assets-mcp": "file:../bconnect-assets-mcp",
     "bconnect-compliance-mcp": "file:../bconnect-compliance-mcp",
