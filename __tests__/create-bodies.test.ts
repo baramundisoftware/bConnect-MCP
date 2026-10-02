@@ -103,9 +103,9 @@ describe('enums and removed arguments', () => {
   });
 });
 
-describe('trigger_update_on_client', () => {
+describe('refresh_local_admin_account_expiry', () => {
   it('sends no body to an operation that takes none', async () => {
-    await call('defensecontrol', 'trigger_update_on_client', { endpointId: ID });
+    await call('defensecontrol', 'refresh_local_admin_account_expiry', { endpointId: ID });
     expect(sent.map((s) => [s.method, s.body])).toEqual([['POST', '']]);
   });
 });

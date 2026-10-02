@@ -477,7 +477,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           }
         },
         // Phase 26: Folder navigation
-        { name: "list_job_folders", description: "List all top-level job folders in baramundi. Returns a paged list of root-level folders for organising job definitions.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY, OrderBy: { type: "string" } } } },
+        { name: "list_job_folders", description: "List the job folders in baramundi at every level, not only the top level. Each folder's parentId gives the hierarchy; use list_job_subfolders for the folders below one folder. Returns a paged list.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY, OrderBy: { type: "string" } } } },
         { name: "get_job_folder", description: "Get details of a specific job folder by its GUID. Returns folder name, description, and parent folder information.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Folder ID (GUID)" } }, required: ["id"] } },
         { name: "list_job_subfolders", description: "List all sub-folders within a specific job folder. Returns a paged list of child folders for the given parent folder GUID.", inputSchema: { type: "object", properties: { folderId: { type: "string", description: "Parent folder ID (GUID)" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY }, required: ["folderId"] } },
         // Phase 26: Kiosk releases by context

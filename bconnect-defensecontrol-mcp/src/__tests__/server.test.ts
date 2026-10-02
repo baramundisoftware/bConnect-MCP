@@ -20,7 +20,7 @@ const EXPECTED_TOOLS_25R2 = [
   // Local Admin
   'get_local_admin_accounts',
   'patch_local_admin_user_credentials',
-  'trigger_update_on_client',
+  'refresh_local_admin_account_expiry',
   // Microsoft Defender Threats
   'list_defender_threats',
   'get_defender_threat',
@@ -152,21 +152,21 @@ describe('bconnect-defensecontrol-mcp', () => {
       ).rejects.toThrow(/logicalGroupId is required/i);
     });
 
-    it('patch_local_admin_user_credentials: patchOperations not an array', async () => {
+    it('patch_local_admin_user_credentials: requestedExpirationDate not a date-time', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({
           name: 'patch_local_admin_user_credentials',
-          arguments: { endpointId: 'd0000001-0001-0001-0001-000000000001', patchOperations: 'oops' }
+          arguments: { endpointId: 'd0000001-0001-0001-0001-000000000001', requestedExpirationDate: 'oops' }
         })
-      ).rejects.toThrow(/patchOperations/i);
+      ).rejects.toThrow(/requestedExpirationDate/i);
     });
 
-    it('trigger_update_on_client: timeout not a number', async () => {
+    it('refresh_local_admin_account_expiry: timeout not a number', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({
-          name: 'trigger_update_on_client',
+          name: 'refresh_local_admin_account_expiry',
           arguments: { endpointId: 'd0000001-0001-0001-0001-000000000001', timeout: 'not-a-number' }
         })
       ).rejects.toThrow(/timeout/i);
@@ -217,8 +217,8 @@ describe('bconnect-defensecontrol-mcp', () => {
     const ENDPOINT = 'd0000001-0001-0001-0001-000000000001';
     const SECRET_WRITES = [
       ['update_bitlocker_pin', '26R1', { endpointId: ENDPOINT, patchOperations: [{ op: 'replace', path: '/startupPin', value: '123456' }] }],
-      ['patch_local_admin_user_credentials', '26R1', { endpointId: ENDPOINT, patchOperations: [{ op: 'replace', path: '/expirationDate', value: '2027-01-01T00:00:00Z' }] }],
-      ['patch_local_admin_user_credentials', '25R2', { endpointId: ENDPOINT, patchOperations: [{ op: 'replace', path: '/expirationDate', value: '2027-01-01T00:00:00Z' }] }],
+      ['patch_local_admin_user_credentials', '26R1', { endpointId: ENDPOINT, requestedExpirationDate: '2027-01-01T00:00:00Z' }],
+      ['patch_local_admin_user_credentials', '25R2', { endpointId: ENDPOINT, requestedExpirationDate: '2027-01-01T00:00:00Z' }],
     ] as const;
 
     it.each(SECRET_WRITES)('blocks %s (%s) with ALLOW_WRITE_OPERATIONS=true but no ALLOW_SECRET_READ', async (name, release, args) => {

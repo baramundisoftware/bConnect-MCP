@@ -68,7 +68,7 @@ node build/index.js
 | `withdraw_kiosk_release` | Withdraw an existing kiosk release |
 | `list_kiosk_releases` | List all kiosk releases in baramundi |
 | `get_kiosk_release` | Get details of a specific kiosk release |
-| `list_job_folders` | List all top-level job folders |
+| `list_job_folders` | List job folders at every level (`parentId` gives the hierarchy) |
 | `get_job_folder` | Get details of a specific job folder by GUID |
 | `list_job_subfolders` | List sub-folders within a specific job folder |
 | `list_kiosk_releases_by_job_definition` | List kiosk releases for a specific job definition |

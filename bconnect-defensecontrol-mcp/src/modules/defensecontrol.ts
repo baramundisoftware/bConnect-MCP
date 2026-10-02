@@ -1,5 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import type { components, operations } from '../generated/defensecontrol-types.js';
+import type { JsonPatchOperation } from '@bconnect/mcp-core';
 
 // Type aliases
 type BitLockerWindowsEndpointPagedList = components['schemas']['BitLockerWindowsEndpointPagedList'];
@@ -16,7 +17,6 @@ type GetMicrosoftDefenderThreatsParams = operations['GetMicrosoftDefenderThreats
 type GetMicrosoftDefenderStatesParams = operations['GetMicrosoftDefenderStates']['parameters']['query'];
 
 // Write operation types
-type LocalAdminCredentialsUpdate = operations['PatchLocalAdminUserCredentialsForWindowsEndpointId']['requestBody']['content']['application/json-patch+json'];
 type BitLockerPinUpdate = NonNullable<operations['UpdateBitLockerPinByWindowsEndpointId']['requestBody']>['content']['application/json-patch+json'];
 
 // 26R1 type aliases
@@ -76,10 +76,12 @@ export class DefenseControlModule {
   /**
    * Update local admin account expiration date for a Windows endpoint
    */
-  async patchLocalAdminUserCredentials(id: string, updateData: LocalAdminCredentialsUpdate): Promise<LocalAdminAccountWindowsEndpoint> {
+  /** Only the requested expiration date can be patched; the path is the spec example's (#177). */
+  async patchLocalAdminUserCredentials(id: string, requestedExpirationDate: string): Promise<LocalAdminAccountWindowsEndpoint> {
+    const patch: JsonPatchOperation[] = [{ op: "replace", path: "/LocalAdminAccount/RequestedExpirationDate", value: requestedExpirationDate }];
     const response = await this.httpClient.patch<LocalAdminAccountWindowsEndpoint>(
       `${this.basePath}/LocalAdministrativeAccounts/WindowsEndpoints/${id}`,
-      updateData
+      patch
     );
     return response.data;
   }

@@ -21,6 +21,8 @@ export interface ValidationRule {
   min?: number;
   /** Maximum value (for numbers) */
   max?: number;
+  /** The number must be a whole number (for numbers) */
+  integer?: boolean;
   /** Minimum length (for strings) */
   minLength?: number;
   /** Maximum length (for strings) */
@@ -62,7 +64,7 @@ const PATTERNS = {
  */
 function validateParameter(value: unknown, rule: ValidationRule): string[] {
   const errors: string[] = [];
-  const { name, required, type, min, max, minLength, maxLength, enum: enumValues, pattern, format } = rule;
+  const { name, required, type, min, max, integer, minLength, maxLength, enum: enumValues, pattern, format } = rule;
 
   // Check if required
   if (required && (value === undefined || value === null || value === '')) {
@@ -94,6 +96,8 @@ function validateParameter(value: unknown, rule: ValidationRule): string[] {
     }
     if (!Number.isFinite(value)) {
       errors.push(`${name} must be a finite number`);
+    } else if (integer && !Number.isInteger(value)) {
+      errors.push(`${name} must be a whole number`);
     }
   }
 

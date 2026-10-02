@@ -50,8 +50,8 @@ node build/index.js
 | `get_bitlocker_secrets` | **(26R1)** Get BitLocker recovery keys and startup PIN |
 | `update_bitlocker_pin` | **(26R1)** Update the BitLocker startup PIN for an endpoint |
 | `get_local_admin_accounts` | Get LAPS-managed local admin credentials for an endpoint |
-| `patch_local_admin_user_credentials` | Update local admin credentials via JSON Patch |
-| `trigger_update_on_client` | Force a baramundi client to refresh managed data |
+| `patch_local_admin_user_credentials` | Set the requested expiration date of the local admin account (a past date makes the client generate new credentials) |
+| `refresh_local_admin_account_expiry` | Ask an online client to apply the requested local admin expiration date now (was `trigger_update_on_client`) |
 | `list_defender_threats` | List all Defender threat detections across endpoints |
 | `get_defender_threat` | Get details of a specific Defender threat by GUID |
 | `list_defender_threats_by_endpoint` | List Defender threats for a specific endpoint |

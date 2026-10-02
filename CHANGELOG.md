@@ -70,6 +70,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **`trigger_update_on_client` is now `refresh_local_admin_account_expiry` (breaking).** The operation
+  asks an online client to apply its local administrator account's requested expiration date; it
+  doesn't refresh other client data. The old name answers with the new one. `timeout` is a whole
+  number from 0 to 60 seconds, as bConnect allows; other values are refused before any request (#177).
+- **`patch_local_admin_user_credentials` takes `requestedExpirationDate` (breaking)** instead of a raw
+  `patchOperations` array: the expiration date is the only thing bConnect lets it change (#177).
 - **New settings `BCONNECT_TIMEOUT_MS` and `BCONNECT_MAX_RETRIES`** (#162). The request timeout
   (default 30000 ms, 1000 to 600000) and retries (default 0, up to 5) can be set in every server
   and the gateway. Only read requests are retried, and only after a network error, a timeout or
@@ -168,6 +174,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **LAPS and job-folder tools describe what they do.** `patch_local_admin_user_credentials` no longer
+  claims to change the password or user name: it sets the requested expiration date, and a past date
+  makes the client generate new credentials. `list_job_folders` returns folders at every level, not
+  only the top level (#177).
 - **The software server starts on bMS 26R1 even when installed-software data is slow** (#202). Its
   startup check asked for `InstalledWindowsSoftware`, which a real bMS answered only after 30 s, so
   the check timed out and the server exited. With `BCONNECT_RELEASE=26R1` (the default) it now checks the light
