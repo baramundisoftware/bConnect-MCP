@@ -19,6 +19,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
 import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -655,7 +656,7 @@ function nonJsonRpcLines(stdout: string): string[] {
   });
 }
 
-interface StdioSession { stdout: string; stderr: string; requests: string[] }
+interface StdioSession { stdout: string; stderr: string; requests: string[]; tools: number }
 
 /**
  * Starts a built server over stdio against a local stand-in for bConnect (plain
@@ -689,18 +690,25 @@ async function stdioSession(server: string, env: Record<string, string>): Promis
       if (/"id":2[,}]/.test(stdout)) { clearTimeout(timer); resolve(); }
     });
     child.on('exit', (code) => { clearTimeout(timer); reject(new Error(`${server} exited with ${code}; stderr: ${stderr}`)); });
+    child.on('error', (error) => { clearTimeout(timer); reject(error); });
   });
   const send = (message: object) => child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', ...message })}\n`);
   send({ id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'guard', version: '1' } } });
   send({ method: 'notifications/initialized' });
   send({ id: 2, method: 'tools/list' });
+  const closed = once(child, 'close');
   try {
     await answered;
   } finally {
     child.kill();
+    // stderr is a separate pipe: wait until both pipes are drained before reading it.
+    await closed;
+    api.closeAllConnections();
     await new Promise<void>((resolve) => api.close(() => resolve()));
   }
-  return { stdout, stderr, requests };
+  const list = stdout.split(/\r?\n/).map((line) => { try { return JSON.parse(line) as { id?: number; result?: { tools?: unknown[] } }; } catch { return undefined; } })
+    .find((message) => message?.id === 2);
+  return { stdout, stderr, requests, tools: list?.result?.tools?.length ?? 0 };
 }
 
 /** What's missing for the session to prove the audit path ran and stayed off stdout. */
@@ -719,6 +727,7 @@ describe('audit output in stdio mode', () => {
   it.each(SERVERS)('%s at audit level all: stdout carries only JSON-RPC, the audit line goes to stderr', async (server) => {
     const session = await stdioSession(server, { BCONNECT_AUDIT_LEVEL: 'all' });
     expect(auditProblems(session)).toEqual([]);
+    expect(session.tools, 'tools/list must answer with the tool catalogue').toBeGreaterThan(0);
   }, 30_000);
 
   it('accepts the level in any case and with surrounding spaces', async () => {
@@ -737,7 +746,7 @@ describe('audit output in stdio mode', () => {
     }, 30_000);
 
     it('reports a request whose audit line is missing', () => {
-      expect(auditProblems({ stdout: '', stderr: 'started\n', requests: ['GET /bconnect/x/v2.0/Y?PageSize=1'] })).toEqual(['stderr has no [AUDIT] line for /x/v2.0/Y']);
+      expect(auditProblems({ stdout: '', stderr: 'started\n', requests: ['GET /bconnect/x/v2.0/Y?PageSize=1'], tools: 1 })).toEqual(['stderr has no [AUDIT] line for /x/v2.0/Y']);
     });
   });
 });

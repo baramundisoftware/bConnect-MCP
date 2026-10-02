@@ -192,7 +192,8 @@ export class AuditLogger {
   }
 
   /**
-   * Default log handler - writes each entry as one line to stderr. stdout is the
+   * Default log handler - writes each entry as one line to stderr (parameters, when
+   * enabled, follow as a pretty-printed block). stdout is the
    * JSON-RPC channel in stdio mode, so an audit line there breaks the connection.
    */
   private defaultLogHandler(entry: AuditLogEntry): void {

@@ -53,7 +53,9 @@ function auditLevelOf(value: string | undefined): AuditLevel {
   }
   const level = AUDIT_LEVELS.find((candidate) => candidate === normalised);
   if (!level) {
-    throw new ClientConfigError(`BCONNECT_AUDIT_LEVEL "${value}" isn't valid. Use one of: ${AUDIT_LEVELS.join(", ")}.`);
+    // Quoted with escapes and shortened, so a newline or terminal escape in the value can't forge log lines.
+    const shown = JSON.stringify(value.length > 64 ? `${value.slice(0, 64)}…` : value);
+    throw new ClientConfigError(`BCONNECT_AUDIT_LEVEL ${shown} isn't valid. Use one of: ${AUDIT_LEVELS.join(", ")}.`);
   }
   return level;
 }

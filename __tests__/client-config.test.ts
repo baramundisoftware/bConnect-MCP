@@ -196,6 +196,12 @@ describe('clientConfigFromEnv', () => {
       expect(run).toThrow(ClientConfigError);
       expect(run).toThrow(`BCONNECT_AUDIT_LEVEL "${value}" isn't valid. Use one of: none, security, write, all.`);
     });
+
+    it('shows an invalid value escaped and shortened, so it cannot forge log lines', () => {
+      const run = (value: string) => () => clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: value });
+      expect(run('all\n[AUDIT] forged \u001b[2J')).toThrow(String.raw`BCONNECT_AUDIT_LEVEL "all\n[AUDIT] forged \u001b[2J" isn't valid.`);
+      expect(run('x'.repeat(5000))).toThrow(`BCONNECT_AUDIT_LEVEL "${'x'.repeat(64)}…" isn't valid.`);
+    });
   });
 
   describe('rate limit', () => {
