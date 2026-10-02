@@ -31,6 +31,12 @@ const REFUSED: Record<string, string> = {
   'malformed escape': `/endpoints/v2.0/Endpoints/${ID}%ZZ`,
   'truncated escape': `/endpoints/v2.0/Endpoints/${ID}%4`,
   'escape at the end': `/endpoints/v2.0/Endpoints/${ID}%`,
+  tab: `/endpoints/v2.0/End\tpoints/${ID}`,
+  'line feed': `/endpoints/v2.0/Endpoints/${ID}\n`,
+  'carriage return': `/endpoints/v2.0/End\rpoints/${ID}`,
+  space: `/endpoints/v2.0/Endpoints/${ID} `,
+  'C1 control': `/endpoints/v2.0/Endpoints/${ID}\u0085`,
+  delete: `/endpoints/v2.0/Endpoints/${ID}\u007f`,
 };
 
 const ALLOWED = [

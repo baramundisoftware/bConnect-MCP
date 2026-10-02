@@ -463,11 +463,15 @@ export class BConnectClientBase {
    * These refusals happen before the audit step that records sent requests.
    */
   private auditRefusal(requestConfig: InternalAxiosRequestConfig, error: unknown): void {
-    this.auditLogger?.logRefusal(
-      requestConfig.method ?? "GET",
-      requestConfig.url ?? "",
-      error instanceof Error ? error.message : String(error),
-    );
+    try {
+      this.auditLogger?.logRefusal(
+        requestConfig.method ?? "GET",
+        requestConfig.url ?? "",
+        error instanceof Error ? error.message : String(error),
+      );
+    } catch {
+      // A failing custom log handler must not replace the refusal itself.
+    }
   }
 
   /**

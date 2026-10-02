@@ -60,16 +60,27 @@ function pathOf(url: string): string {
  * slashes, dot segments resolved. Matching the raw string would let an encoded
  * or relative form of a secret route through.
  */
+/** Decode one escape; one that isn't valid UTF-8 on its own stays as is. */
+function decodeEscape(escape: string): string {
+  try {
+    return decodeURIComponent(escape);
+  } catch {
+    return escape;
+  }
+}
+
 function canonicalPathOf(url: string): string {
-  let path = pathOf(url);
+  // URL parsers drop tab, LF and CR anywhere in a path before sending it.
+  let path = pathOf(url).replace(/[\t\n\r]/g, "");
   for (let round = 0; round < 3; round++) {
-    // Escape by escape, so a malformed one elsewhere doesn't stop the rest from
-    // being decoded (fail closed); an escape that can't be decoded stays as is.
-    const decoded = path.replace(/%[0-9a-f]{2}/gi, (escape) => {
+    // Run by run of escapes, so a malformed escape elsewhere doesn't stop the rest
+    // from being decoded (fail closed); a multi-byte character decodes as a whole,
+    // and a run that isn't valid UTF-8 falls back to escape by escape.
+    const decoded = path.replace(/(?:%[0-9a-f]{2})+/gi, (run) => {
       try {
-        return decodeURIComponent(escape);
+        return decodeURIComponent(run);
       } catch {
-        return escape;
+        return run.replace(/%[0-9a-f]{2}/gi, decodeEscape);
       }
     });
     if (decoded === path) {
@@ -78,13 +89,15 @@ function canonicalPathOf(url: string): string {
     path = decoded;
   }
   const segments: string[] = [];
-  for (const segment of path.replace(/\\/g, "/").split("/")) {
+  for (const raw of path.replace(/\\/g, "/").split("/")) {
+    // Control characters, a path parameter (";x") and trailing spaces may be
+    // dropped by the web server, so the segment is matched without them.
+    const segment = raw.replace(/[\u0000-\u001f\u007f-\u009f]/g, "").replace(/;.*$/, "").replace(/\s+$/, "");
     if (segment === "..") {
       segments.pop();
     } else if (segment !== ".") {
-      // A path parameter (";x") or trailing dots and spaces may be ignored by the
-      // web server, so the segment is matched without them.
-      segments.push(segment.replace(/;.*$/, "").replace(/[.\s]+$/, ""));
+      // Trailing dots too, once dot segments are resolved.
+      segments.push(segment.replace(/[.\s]+$/, ""));
     }
   }
   return "/" + segments.filter((s, i) => s !== "" || i === segments.length - 1).join("/");

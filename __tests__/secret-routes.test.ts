@@ -60,6 +60,17 @@ describe('route classification', () => {
     ['a trailing encoded space', `${BITLOCKER}%20`],
     ['a path parameter', `${BITLOCKER};x=1`],
     ['a path parameter on the ID', `/defensecontrol/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/${ID};x`],
+    // URL parsers drop tab, LF and CR anywhere in a path; the server then sees the plain route.
+    ['a tab inside a segment', BITLOCKER.replace('Secrets', 'Secr\tets')],
+    ['a line feed inside a segment', BITLOCKER.replace('BitLocker', 'Bit\nLocker')],
+    ['a carriage return inside a segment', LAPS.replace('LocalAdministrativeAccounts', 'Lo\rcalAdministrativeAccounts')],
+    ['a dot segment with a trailing space', `${BITLOCKER}/x/.. `],
+    ['a dot segment split by a tab', `${BITLOCKER}/x/.\t.`],
+    ['an encoded no-break space at the end', `${BITLOCKER}%C2%A0`],
+    ['an encoded control character inside a segment', BITLOCKER.replace('Secrets', 'Secr%00ets')],
+    // The gate on its own (the path check refuses both before sending anyway).
+    ['an escape split by a tab', BITLOCKER.replace('Secrets', 'Secr%\t65ts')],
+    ['an invalid UTF-8 escape in front of an encoded traversal', `${BITLOCKER.replace('/Secrets', '')}/x%FF%2F..%2FSecrets`],
   ])('denies a secret route reached through %s', (_how, url) => {
     expect(isSecretRoute('GET', url)).toBe(true);
   });

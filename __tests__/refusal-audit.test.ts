@@ -10,7 +10,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
-import type { AuditLevel, AuditLogEntry } from '../packages/mcp-core/src/audit-logger.js';
+import { AuditLogger, type AuditLevel, type AuditLogEntry } from '../packages/mcp-core/src/audit-logger.js';
 import { BConnectClientBase } from '../packages/mcp-core/src/bconnect-client-base.js';
 
 const ID = '00000000-0000-4000-8000-000000000001';
@@ -91,7 +91,32 @@ describe('a refused request is audited', () => {
     const lines = toStderr.mock.calls.map(([chunk]) => String(chunk));
     expect(lines).toHaveLength(1);
     expect(lines[0].match(/\n/g)).toHaveLength(1);
-    expect(lines[0]).toMatch(/^\[SECURITY AUDIT\] .* GET .*\\n\[SECURITY AUDIT\] forged \\u001b\[2J - REFUSED: /);
+    expect(lines[0]).toMatch(/^\[SECURITY AUDIT\] .* GET .*\\u000a\[SECURITY AUDIT\] forged \\u001b\[2J - REFUSED: /);
     expect(toStdout).not.toHaveBeenCalled();
+  });
+
+  it('escapes DEL, C1 controls and Unicode line separators in an audit line', () => {
+    const toStderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    new AuditLogger({ level: 'security', username: 'auditor' })
+      .logRefusal('GET', '/x\u007f\u0085\u009b\u2028\u2029y', 'test');
+    const line = String(toStderr.mock.calls[0][0]);
+    expect(line).toContain('/x\\u007f\\u0085\\u009b\\u2028\\u2029y');
+    expect(line.slice(0, -1)).not.toMatch(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/);
+  });
+
+  it('records no refusal at level none', () => {
+    const entries: AuditLogEntry[] = [];
+    new AuditLogger({ level: 'none', username: 'auditor', logHandler: (e) => entries.push(e) }).logRefusal('GET', BITLOCKER, 'test');
+    expect(entries).toEqual([]);
+  });
+
+  it('keeps the refusal when a custom audit handler throws', async () => {
+    process.env.ALLOW_SECRET_READ = '';
+    const raw = new BConnectClientBase({
+      baseUrl: 'http://bms.audit.test/bconnect', username: 'auditor', password: 'p',
+      auditLog: { level: 'security', logHandler: () => { throw new Error('log sink down'); } },
+    }) as unknown as Raw;
+    await expect(raw.client.get(BITLOCKER)).rejects.toThrow(/ALLOW_SECRET_READ=true/);
+    expect(sent).toEqual([]);
   });
 });

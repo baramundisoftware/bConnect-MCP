@@ -228,10 +228,11 @@ export class AuditLogger {
       : entry.error.startsWith('Refused: ') ? ` - REFUSED: ${entry.error.slice('Refused: '.length)}`
       : ` - ERROR: ${entry.error}`;
 
-    // Control characters (a newline in a refused path, a terminal escape) are
-    // escaped, so an entry stays one line and can't forge another.
+    // Control characters (a newline in a refused path, a terminal escape, C1
+    // controls, Unicode line separators) are escaped as \uXXXX, so an entry stays
+    // one line and can't forge another.
     const message = `${prefix} ${timestamp} ${user} ${operation}${status}${duration}${error}`
-      .replace(/[\u0000-\u001f\u007f]/g, (c) => JSON.stringify(c).slice(1, -1));
+      .replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`);
 
     process.stderr.write(`${message}\n`);
 
