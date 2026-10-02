@@ -107,13 +107,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
-- **A write whose outcome is unknown says so** (#254). A write tool whose request timed out, or whose
-  connection closed after the request was sent, or that got 502 or 504 from a gateway, used to get
-  the same message as a read ("raise the timeout", "Cannot connect", or only the status). On a real
+- **A write whose outcome is unknown says so** (#254). A write tool whose request timed out, whose
+  connection closed or whose answer was unreadable or cut off after the request was sent, or that
+  got 502 or 504 from a gateway, used to get the same message as a read ("raise the timeout",
+  "Cannot connect", or only the status). On a real
   bMS such writes were completed in the background, so repeating the call repeats the write. The
   result now says it's unknown whether bMS made the change, that it may still carry it out, and to
   check the current state before repeating the call. Reads, and writes answered 503, 4xx or 500,
-  keep their messages; the client still never retries a write.
+  keep their messages, and so do failures before anything was sent (refused, DNS, a reset while
+  connecting or during the TLS handshake); the client still never retries a write.
 - **`trigger_update_on_client` is now `refresh_local_admin_account_expiry` (breaking).** The operation
   asks an online client to apply its local administrator account's requested expiration date; it
   doesn't refresh other client data. The old name answers with the new one. `timeout` is a whole
