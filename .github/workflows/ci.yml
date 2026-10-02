@@ -105,7 +105,7 @@ jobs:
           # Two commits: the PR merge commit and its base, for the cast diff check.
           fetch-depth: 2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
           cache: npm
@@ -199,7 +199,7 @@ jobs:
     # annotation plus a job-summary line; a failed install or build still fails.
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22.15"
           cache: npm
@@ -275,7 +275,7 @@ jobs:
     # output when it warns; do not gate a merge on it.
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22.15"
           cache: npm
