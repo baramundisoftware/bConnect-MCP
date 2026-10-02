@@ -107,6 +107,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Update requests use the content type bConnect declares.** Every PATCH is now sent as
+  `application/json-patch+json`, as all PATCH operations in the 25R2 and 26R1 specs require. 22
+  update tools (endpoints, assets, OS, server management, variables, job folders, LAPS expiry)
+  sent `application/json` before.
 - **`restart_management_server` can schedule the restart** with `utcScheduleRestartTime`
   (ISO 8601, UTC). Without it the restart is immediate, as before; the description now says so.
 - **Write tools report what bMS returned.** Windows and Mac enrollment return the install
