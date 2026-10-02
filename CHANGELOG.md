@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   API specification (`scripts/generate-query-parameters.mjs`), per bMS release.
 
 ### Security
+- **MCP SDK 1.31.0 in every package** (was 1.29.0). Its HTTP transport, used by the gateway, now
+  reads request bodies with a size limit, caps the length of JSON-RPC batches and checks the
+  Content-Type properly; SSE keep-alive is fixed. All 16 manifests and both lockfiles move
+  together (replaces Dependabot #181, which updated only two of them and didn't install).
 - **Audit level `security` records every security-relevant call** (#168). At that level only
   BitLocker and LAPS credential routes were recorded. Now it also records: listing API keys,
   reading or changing object rights, every security-group and security-profile operation, LAPS
