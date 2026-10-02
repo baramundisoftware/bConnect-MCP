@@ -15,6 +15,7 @@ import { parse } from 'dotenv';
 import { RELEASES, type Release } from '../../lib/spec.js';
 import { envReads } from '../../lib/env-reads.js';
 import { declared, type Declared } from './profile.js';
+import { basicAuthHeader } from '../../../packages/mcp-core/src/client-config.js';
 
 /** Proxy variables axios honors; a shell proxy must not reroute the run. */
 const PROXY_KEYS = ['HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy'];
@@ -144,7 +145,8 @@ export function checkReachable(config: LiveConfig): Promise<{ status: number; bm
   const url = new URL(`${config.baseUrl.href.replace(/\/$/, '')}/info`);
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (env.BCONNECT_API_KEY) headers['X-Api-Key'] = env.BCONNECT_API_KEY;
-  else if (env.BCONNECT_USERNAME) headers.Authorization = `Basic ${Buffer.from(`${env.BCONNECT_USERNAME}:${env.BCONNECT_PASSWORD}`).toString('base64')}`;
+  // Latin-1, as bConnect reads Basic credentials (#228): the same helper the servers use.
+  else if (env.BCONNECT_USERNAME) headers.Authorization = basicAuthHeader(env.BCONNECT_USERNAME, env.BCONNECT_PASSWORD ?? '');
   const options: https.RequestOptions = {
     method: 'GET', headers, timeout: 15_000,
     rejectUnauthorized: env.NODE_TLS_REJECT_UNAUTHORIZED !== '0',

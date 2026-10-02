@@ -125,19 +125,34 @@ const intOr = (value: string | undefined, fallback: number): number => {
 /**
  * Basic credentials go out as Latin-1 (ISO-8859-1): bConnect decodes them that
  * way and announces no charset (#228). A character above U+00FF can't be sent,
- * so it is refused, naming where it came from, never the value.
+ * so it is refused, naming where it came from, never the value. Callers pass
+ * the NFC form (see basicAuthHeader), so a decomposed "a" + U+0308 counts as "ä".
  */
 export function assertLatin1Credential(source: string, value: string | undefined): void {
   if (value === undefined) {return;}
   for (const ch of value) {
-    if ((ch.codePointAt(0) ?? 0) > 0xff) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp > 0xff) {
+      const encoding = cp === 0xfffd ? " (U+FFFD usually means the file holding it isn't saved as UTF-8)" : "";
       throw new ClientConfigError(
-        `${source} contains a character Basic authentication can't carry: bConnect reads Basic ` +
+        `${source} contains a character Basic authentication can't carry${encoding}: bConnect reads Basic ` +
         "credentials as Latin-1, which goes up to U+00FF (umlauts and the section sign are fine, the euro sign isn't). " +
-        "Use an API key (BCONNECT_API_KEY) instead, or choose a password without such characters."
+        "Use an API key (BCONNECT_API_KEY) instead, or choose credentials without such characters."
       );
     }
   }
+}
+
+/**
+ * The Authorization header for Basic auth as bConnect reads it (#228): NFC,
+ * then Latin-1, then base64. Refuses what Latin-1 can't carry.
+ */
+export function basicAuthHeader(username: string, password: string): string {
+  const user = username.normalize("NFC");
+  const pass = password.normalize("NFC");
+  assertLatin1Credential("The username", user);
+  assertLatin1Credential("The password", pass);
+  return `Basic ${Buffer.from(`${user}:${pass}`, "latin1").toString("base64")}`;
 }
 
 /**
@@ -163,8 +178,8 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
   }
   assertSecureBaseUrl(baseUrl, env);
   if (!apiKey) {
-    assertLatin1Credential(credentials?.username !== undefined ? "The request's username" : "BCONNECT_USERNAME", username);
-    assertLatin1Credential(credentials?.password !== undefined ? "The request's password" : "BCONNECT_PASSWORD", password);
+    assertLatin1Credential(credentials?.username !== undefined ? "The request's username" : "BCONNECT_USERNAME", username?.normalize("NFC"));
+    assertLatin1Credential(credentials?.password !== undefined ? "The request's password" : "BCONNECT_PASSWORD", password?.normalize("NFC"));
   }
 
   const caCertPath = env.BCONNECT_CA_CERT_PATH;

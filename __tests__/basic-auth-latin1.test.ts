@@ -11,7 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import { BConnectClientBase } from '../packages/mcp-core/src/bconnect-client-base.js';
-import { ClientConfigError, clientConfigFromEnv } from '../packages/mcp-core/src/client-config.js';
+import { ClientConfigError, basicAuthHeader, clientConfigFromEnv } from '../packages/mcp-core/src/client-config.js';
 import { connect, guardEnv, requiredArguments } from './lib/exerciser.js';
 
 const BASE = 'https://bms.latin1.test/bconnect';
@@ -70,6 +70,19 @@ describe('characters Latin-1 cannot carry (#228 AC 3)', () => {
 
   it('Latin-1 characters are accepted', () => {
     expect(() => clientConfigFromEnv({ ...ENV, BCONNECT_USERNAME: 'J\u00F6rg', BCONNECT_PASSWORD: '\u00A7\u00E4\u00F6\u00FC\u00DF' })).not.toThrow();
+  });
+
+  it('a password pasted in decomposed form (a + U+0308) is sent composed, as Latin-1', () => {
+    expect(() => clientConfigFromEnv({ ...ENV, BCONNECT_USERNAME: 'admin', BCONNECT_PASSWORD: 'Pa\u0061\u0308ss' })).not.toThrow();
+    expect([...headerBytes('admin', 'Pa\u0061\u0308ss')]).toEqual([...Buffer.from('admin:Pa', 'ascii'), 0xe4, 0x73, 0x73]);
+  });
+
+  it('a U+FFFD (a file not saved as UTF-8) gets a hint about the encoding', () => {
+    expect(() => clientConfigFromEnv({ ...ENV, BCONNECT_USERNAME: 'admin', BCONNECT_PASSWORD: 'pa\uFFFDss' })).toThrow(/UTF-8/);
+  });
+
+  it('the live tier and the servers build the same header (one helper)', () => {
+    expect(basicAuthHeader('admin', 'Pa\u00A7')).toBe(`Basic ${Buffer.from([...Buffer.from('admin:Pa'), 0xa7]).toString('base64')}`);
   });
 
   it('a client built without the shared config refuses them as well', () => {
