@@ -38,10 +38,10 @@ export const ComplianceRules = {
     ...paginationRules()
   ],
 
-  // GET /v2.0/Compliance/MobileDeviceRules
+  // GET /v2.0/Compliance/Rules
   listMobileDeviceRules: (): ValidationRule[] => paginationRules(),
 
-  // GET /v2.0/Compliance/MobileDeviceRules/{ruleId}
+  // GET /v2.0/Compliance/Rules/{ruleId}
   getMobileDeviceRule: (): ValidationRule[] => [
     CommonRules.guid('ruleId')
   ],

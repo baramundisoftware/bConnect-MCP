@@ -96,6 +96,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **The mobile device rule tools return rules.** `list_mobile_device_rules` and
+  `get_mobile_device_rule` called `/MobileDeviceRules`, a route the API doesn't have, so they
+  always failed with 404 and never returned data. They now call `/v2.0/Rules` and
+  `/v2.0/Rules/{id}`, as the API declares (#176).
 - **groups tools now work against a bConnect server with an internal CA (#197).** The groups
   server's tool calls ignored `BCONNECT_CA_CERT_PATH` and `NODE_TLS_REJECT_UNAUTHORIZED`:
   the server started, and then every groups tool failed with a TLS error. Its tool calls now
