@@ -75,6 +75,14 @@ describe('route classification', () => {
     expect(isSecretRoute('GET', url)).toBe(true);
   });
 
+  it('stays linear on long runs of the characters it strips', () => {
+    const started = performance.now();
+    for (const run of [' '.repeat(50_000), ';'.repeat(50_000), '. '.repeat(25_000), `${' '.repeat(50_000)}x`]) {
+      expect(isSecretRoute('GET', `/endpoints/v2.0/Endpoints/${run}`)).toBe(false);
+    }
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
   it('refuses unless ALLOW_SECRET_READ=true', () => {
     expect(() => assertSecretRouteAllowed('GET', LAPS, {})).toThrow(SecretRouteBlockedError);
     expect(() => assertSecretRouteAllowed('GET', LAPS, { ALLOW_SECRET_READ: 'false' })).toThrow(/ALLOW_SECRET_READ=true/);

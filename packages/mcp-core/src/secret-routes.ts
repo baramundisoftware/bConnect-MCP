@@ -69,6 +69,23 @@ function decodeEscape(escape: string): string {
   }
 }
 
+const isSpace = (c: string): boolean => /\s/.test(c);
+
+/** `s` without its trailing characters that pass `test`; one scan from the end (no backtracking regex). */
+function trimEndWhere(s: string, test: (c: string) => boolean): string {
+  let end = s.length;
+  while (end > 0 && test(s[end - 1])) {
+    end--;
+  }
+  return s.slice(0, end);
+}
+
+/** `s` without a path parameter (";x" up to the end). */
+function withoutPathParameter(s: string): string {
+  const at = s.indexOf(";");
+  return at < 0 ? s : s.slice(0, at);
+}
+
 function canonicalPathOf(url: string): string {
   // URL parsers drop tab, LF and CR anywhere in a path before sending it.
   let path = pathOf(url).replace(/[\t\n\r]/g, "");
@@ -92,12 +109,12 @@ function canonicalPathOf(url: string): string {
   for (const raw of path.replace(/\\/g, "/").split("/")) {
     // Control characters, a path parameter (";x") and trailing spaces may be
     // dropped by the web server, so the segment is matched without them.
-    const segment = raw.replace(/[\u0000-\u001f\u007f-\u009f]/g, "").replace(/;.*$/, "").replace(/\s+$/, "");
+    const segment = trimEndWhere(withoutPathParameter(raw.replace(/[\u0000-\u001f\u007f-\u009f]/g, "")), isSpace);
     if (segment === "..") {
       segments.pop();
     } else if (segment !== ".") {
       // Trailing dots too, once dot segments are resolved.
-      segments.push(segment.replace(/[.\s]+$/, ""));
+      segments.push(trimEndWhere(segment, (c) => c === "." || isSpace(c)));
     }
   }
   return "/" + segments.filter((s, i) => s !== "" || i === segments.length - 1).join("/");
