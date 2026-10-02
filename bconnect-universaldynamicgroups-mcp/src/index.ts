@@ -23,7 +23,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { UdgRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -49,7 +53,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  const toolCatalog = declaredArgumentsOnly(async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async () => {
     if (!is26R1) {
       return { tools: [] };
     }
@@ -62,13 +66,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "[26R1] List all Universal Dynamic Groups defined in baramundi Management Suite. Returns a paged list with UDG id, name, comment, and folder assignment for each group. Universal Dynamic Groups are dynamic endpoint groups based on filter criteria. Available in bConnect 26R1 and later.",
           inputSchema: {
             type: "object",
-            properties: {
-              Name: { type: "string", description: "Filter results to match this exact Universal Dynamic Group name." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'Name asc'). Possible values: Name, Comment." },
-              SearchQuery: { type: "string", description: "Filter results by matching against searchable properties (Name, Comment)." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -90,11 +88,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               folderId: { type: "string", description: "GUID of the folder to list Universal Dynamic Groups from." },
-              Name: { type: "string", description: "Filter results to match this exact UDG name." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction." },
-              SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["folderId"]
           }
@@ -106,13 +99,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "[26R1] List all Universal Dynamic Groups folders in baramundi Management Suite. Returns a paged list with folder id, name, parent folder id, and comment for each folder in the UDG folder hierarchy. Available in bConnect 26R1 and later.",
           inputSchema: {
             type: "object",
-            properties: {
-              Name: { type: "string", description: "Filter results to match this exact folder name." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'Name asc')." },
-              SearchQuery: { type: "string", description: "Filter results by matching against folder name or comment." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -134,18 +121,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               folderId: { type: "string", description: "GUID of the parent UDG folder to list sub-folders for." },
-              Name: { type: "string", description: "Filter results to match this exact folder name." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction." },
-              SearchQuery: { type: "string", description: "Filter results by matching against folder name or comment." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["folderId"]
           }
         },
       ]
     };
-  });
+  }));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -205,7 +187,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       switch (name) {
 
         case "list_universal_dynamic_groups": {
-          const result = await udg.getUniversalDynamicGroups((args ?? {}) as never);
+          const result = await udg.getUniversalDynamicGroups(pickArguments(args ?? {}, sends("list_universal_dynamic_groups")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -216,12 +198,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_universal_dynamic_groups_by_folder": {
           const { folderId, ...params } = args as Record<string, unknown>;
-          const result = await udg.getUniversalDynamicGroupsByFolder(folderId as string, params as never);
+          const result = await udg.getUniversalDynamicGroupsByFolder(folderId as string, pickArguments(params, sends("list_universal_dynamic_groups_by_folder")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_udg_folders": {
-          const result = await udg.getFolders((args ?? {}) as never);
+          const result = await udg.getFolders(pickArguments(args ?? {}, sends("list_udg_folders")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -232,7 +214,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_udg_folders_by_folder": {
           const { folderId, ...params } = args as Record<string, unknown>;
-          const result = await udg.getFoldersByFolder(folderId as string, params as never);
+          const result = await udg.getFoldersByFolder(folderId as string, pickArguments(params, sends("list_udg_folders_by_folder")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

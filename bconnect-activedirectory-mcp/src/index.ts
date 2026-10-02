@@ -20,7 +20,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, pickArguments, declaredArgumentsOnly, queryParameters } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
@@ -47,7 +47,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  const toolCatalog = declaredArgumentsOnly(async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async () => {
     return {
       tools: [
 
@@ -57,18 +57,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all Active Directory groups synchronized into baramundi Management Suite. Returns a paged list of AD groups with their GUIDs, names, domains, SIDs, and types. Use this to browse all available AD groups before querying specific ones.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, SID, Domain, Comment, Type, or GUID."
-              },
-              OrderBy: {
-                type: "string",
-                description: "Sort results by property name and direction. Possible values: Name, SID, Domain, Type (e.g. 'Name asc')."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
-            },
+            properties: {},
             required: []
           }
         },
@@ -97,17 +86,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               adGroupId: {
                 type: "string",
                 description: "GUID of the parent AD group whose sub-groups to list."
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, SID, Domain, Comment, Type, or GUID."
-              },
-              OrderBy: {
-                type: "string",
-                description: "Sort results by property name and direction (e.g. 'Name asc')."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
+              }
             },
             required: ["adGroupId"]
           }
@@ -122,17 +101,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               orgUnitId: {
                 type: "string",
                 description: "GUID of the organizational unit whose AD groups to list."
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, SID, Domain, Comment, Type, or GUID."
-              },
-              OrderBy: {
-                type: "string",
-                description: "Sort results by property name and direction (e.g. 'Name asc')."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
+              }
             },
             required: ["orgUnitId"]
           }
@@ -144,18 +113,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all Active Directory objects (both users and groups) synchronized into baramundi. Returns a paged list of AD objects with their GUIDs, names, domains, and types. Use this when you need a combined view of AD users and groups.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, SID, Domain, Comment, Type, or GUID."
-              },
-              OrderBy: {
-                type: "string",
-                description: "Sort results by property name and direction (e.g. 'Name asc')."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
-            },
+            properties: {},
             required: []
           }
         },
@@ -184,9 +142,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               id: {
                 type: "string",
                 description: "GUID of the AD object whose group memberships to retrieve."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
+              }
             },
             required: ["id"]
           }
@@ -201,13 +157,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               adGroupId: {
                 type: "string",
                 description: "GUID of the AD group whose member objects to list."
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, SID, Domain, Comment, Type, or GUID."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
+              }
             },
             required: ["adGroupId"]
           }
@@ -222,13 +172,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               orgUnitId: {
                 type: "string",
                 description: "GUID of the organizational unit whose AD objects to list."
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, SID, Domain, Comment, Type, or GUID."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
+              }
             },
             required: ["orgUnitId"]
           }
@@ -240,18 +184,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all Active Directory users synchronized into baramundi Management Suite. Returns a paged list of AD users with their GUIDs, names, domains, SIDs, and logon names. Use this to browse available AD users before querying specific ones.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, SID, Domain, Comment, LogonName, or GUID in Active Directory."
-              },
-              OrderBy: {
-                type: "string",
-                description: "Sort results by property name and direction. Possible values: Name, SID, Domain, LogonName (e.g. 'Name asc')."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
-            },
+            properties: {},
             required: []
           }
         },
@@ -280,17 +213,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               adGroupId: {
                 type: "string",
                 description: "GUID of the AD group whose member users to list."
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, SID, Domain, Comment, LogonName, or GUID."
-              },
-              OrderBy: {
-                type: "string",
-                description: "Sort results by property name and direction (e.g. 'Name asc')."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
+              }
             },
             required: ["adGroupId"]
           }
@@ -305,17 +228,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               orgUnitId: {
                 type: "string",
                 description: "GUID of the organizational unit whose AD users to list."
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, SID, Domain, Comment, LogonName, or GUID."
-              },
-              OrderBy: {
-                type: "string",
-                description: "Sort results by property name and direction (e.g. 'Name asc')."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
+              }
             },
             required: ["orgUnitId"]
           }
@@ -327,18 +240,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all Active Directory organizational units (OUs) synchronized into baramundi Management Suite. Returns a paged list of OUs with their GUIDs, names, distinguished names, and domains. Use this to browse the AD OU hierarchy.",
           inputSchema: {
             type: "object",
-            properties: {
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, Domain, DistinguishedName, or GUID."
-              },
-              OrderBy: {
-                type: "string",
-                description: "Sort results by property name and direction (e.g. 'Name asc')."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
-            },
+            properties: {},
             required: []
           }
         },
@@ -367,17 +269,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               orgUnitId: {
                 type: "string",
                 description: "GUID of the parent organizational unit whose child OUs to list."
-              },
-              SearchQuery: {
-                type: "string",
-                description: "Filter results by matching against Name, Domain, DistinguishedName, or GUID."
-              },
-              OrderBy: {
-                type: "string",
-                description: "Sort results by property name and direction (e.g. 'Name asc')."
-              },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY
+              }
             },
             required: ["orgUnitId"]
           }
@@ -385,7 +277,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
       ]
     };
-  });
+  }));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────

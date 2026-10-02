@@ -23,7 +23,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { VariablesRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -55,7 +59,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "update_variable_instance",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
 
       // ── Variable Definitions ─────────────────────────────────────────
@@ -64,12 +68,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all variable definitions configured in baramundi Management Suite. Returns a paged list with variable id, name, data type, default value, and description for each defined variable available for assignment to endpoints and other objects.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'Name asc')." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable variable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-          },
+          properties: {},
           required: []
         }
       },
@@ -133,12 +132,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all variable instances across all objects in baramundi Management Suite. Returns a paged list with variable instance id, associated object, variable definition name, and current value for each assigned variable instance.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-          },
+          properties: {},
           required: []
         }
       },
@@ -160,10 +154,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             endpointId: { type: "string", description: "GUID of the endpoint to retrieve variable instances for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["endpointId"]
         }
@@ -175,10 +165,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             logicalGroupId: { type: "string", description: "GUID of the logical group to retrieve variable instances for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["logicalGroupId"]
         }
@@ -190,10 +176,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             adObjectId: { type: "string", description: "GUID of the Active Directory object to retrieve variable instances for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["adObjectId"]
         }
@@ -205,10 +187,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             windowsJobDefinitionId: { type: "string", description: "GUID of the Windows job definition to retrieve variable instances for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["windowsJobDefinitionId"]
         }
@@ -220,10 +198,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             windowsApplicationId: { type: "string", description: "GUID of the Windows application to retrieve variable instances for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["windowsApplicationId"]
         }
@@ -246,7 +220,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     ];
 
     return { tools };
-  }));
+  })));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -332,7 +306,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       switch (name) {
 
         case "list_variable_definitions": {
-          const result = await vars.getVariableDefinitions((args ?? {}) as never);
+          const result = await vars.getVariableDefinitions(pickArguments(args ?? {}, sends("list_variable_definitions")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -357,7 +331,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_variable_instances": {
-          const result = await vars.getVariableInstances((args ?? {}) as never);
+          const result = await vars.getVariableInstances(pickArguments(args ?? {}, sends("list_variable_instances")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -368,31 +342,31 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_variable_instances_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await vars.getVariableInstancesByEndpoint(endpointId as string, params as never);
+          const result = await vars.getVariableInstancesByEndpoint(endpointId as string, pickArguments(params, sends("list_variable_instances_by_endpoint")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_variable_instances_by_logical_group": {
           const { logicalGroupId, ...params } = args as Record<string, unknown>;
-          const result = await vars.getVariableInstancesByLogicalGroup(logicalGroupId as string, params as never);
+          const result = await vars.getVariableInstancesByLogicalGroup(logicalGroupId as string, pickArguments(params, sends("list_variable_instances_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_variable_instances_by_ad_object": {
           const { adObjectId, ...params } = args as Record<string, unknown>;
-          const result = await vars.getVariableInstancesByADObject(adObjectId as string, params as never);
+          const result = await vars.getVariableInstancesByADObject(adObjectId as string, pickArguments(params, sends("list_variable_instances_by_ad_object")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_variable_instances_by_job_definition": {
           const { windowsJobDefinitionId, ...params } = args as Record<string, unknown>;
-          const result = await vars.getVariableInstancesByWindowsJobDefinition(windowsJobDefinitionId as string, params as never);
+          const result = await vars.getVariableInstancesByWindowsJobDefinition(windowsJobDefinitionId as string, pickArguments(params, sends("list_variable_instances_by_job_definition")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_variable_instances_by_application": {
           const { windowsApplicationId, ...params } = args as Record<string, unknown>;
-          const result = await vars.getVariableInstancesByWindowsApplication(windowsApplicationId as string, params as never);
+          const result = await vars.getVariableInstancesByWindowsApplication(windowsApplicationId as string, pickArguments(params, sends("list_variable_instances_by_application")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
