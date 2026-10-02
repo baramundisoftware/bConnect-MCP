@@ -96,6 +96,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Gateway settings in `.env.gateway` now take effect** (#98, reported by @AndreasHanikel).
+  `docker-compose.gateway.yml` passes `LOG_LEVEL`, `LOG_FORMAT`, the inbound rate limit
+  (`MCP_GATEWAY_RATE_LIMIT_*`), `MCP_GATEWAY_MAX_BODY`, `BCONNECT_RELEASE` and the outbound rate
+  limit (`BCONNECT_RATE_LIMIT_*`) to the container; before, they were silently ignored.
+  `.env.gateway.example` documents `BCONNECT_AUDIT_LEVEL` and the other forwarded settings.
 - **The mobile device rule tools return rules.** `list_mobile_device_rules` and
   `get_mobile_device_rule` called `/MobileDeviceRules`, a route the API doesn't have, so they
   always failed with 404 and never returned data. They now call `/v2.0/Rules` and
