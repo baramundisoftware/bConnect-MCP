@@ -113,6 +113,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **19 write tools verified on a live bMS no longer say "Not yet verified against a live bMS."**
+  Checked on a test bMS 26R1 (26.1.161): the Windows, Mac and logical-group create, update and delete
+  tools, the logical-group maintenance-window tools, the job-folder tools, `create_kiosk_release`,
+  `withdraw_kiosk_release`, `assign_job_to_logical_group` and `delete_job_instance`. All other write
+  tools keep the note until they are checked.
 - **A write whose outcome is unknown says so** (#254). A write tool whose request timed out, whose
   connection closed or whose answer was unreadable or cut off after the request was sent, or that
   got 502 or 504 from a gateway, used to get the same message as a read ("raise the timeout",
