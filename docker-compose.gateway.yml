@@ -50,6 +50,20 @@ services:
       BCONNECT_SKIP_CONNECTIVITY_CHECK: ${BCONNECT_SKIP_CONNECTIVITY_CHECK:-false}
       NODE_TLS_REJECT_UNAUTHORIZED: ${NODE_TLS_REJECT_UNAUTHORIZED:-1}
       BCONNECT_CA_CERT_PATH: ${BCONNECT_CA_CERT_PATH:-}
+      # bMS release whose tools are registered: 26R1 (default) or 25R2.
+      BCONNECT_RELEASE: ${BCONNECT_RELEASE:-26R1}
+      # Outbound rate limit towards bConnect (off by default).
+      BCONNECT_RATE_LIMIT_ENABLED: ${BCONNECT_RATE_LIMIT_ENABLED:-false}
+      BCONNECT_RATE_LIMIT_MAX_REQUESTS: ${BCONNECT_RATE_LIMIT_MAX_REQUESTS:-100}
+      BCONNECT_RATE_LIMIT_WINDOW_MS: ${BCONNECT_RATE_LIMIT_WINDOW_MS:-60000}
+      # Inbound rate limit per client IP and request body cap (#98).
+      MCP_GATEWAY_RATE_LIMIT_ENABLED: ${MCP_GATEWAY_RATE_LIMIT_ENABLED:-true}
+      MCP_GATEWAY_RATE_LIMIT_MAX: ${MCP_GATEWAY_RATE_LIMIT_MAX:-300}
+      MCP_GATEWAY_RATE_LIMIT_WINDOW_MS: ${MCP_GATEWAY_RATE_LIMIT_WINDOW_MS:-60000}
+      MCP_GATEWAY_MAX_BODY: ${MCP_GATEWAY_MAX_BODY:-1mb}
+      # Logging (#98).
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      LOG_FORMAT: ${LOG_FORMAT:-text}
     volumes:
       # CA certificate for self-signed bMS certificates (optional).
       - ${BCONNECT_CA_CERT_PATH:-/dev/null}:${BCONNECT_CA_CERT_PATH:-/dev/null}:ro
