@@ -106,3 +106,16 @@ it('the root declares no runtime dependency that nothing in the repository impor
   }
   expect(Object.keys(read('.').dependencies ?? {}).filter((n) => !used.has(n)).sort()).toEqual([]);
 });
+
+describe('root workspaces', () => {
+  const workspaces: string[] = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).workspaces ?? [];
+
+  it('use no wildcard inside a name (Dependabot expands only a trailing "/*" and drops such workspaces from the lockfile: #181, #240, #260)', () => {
+    expect(workspaces.filter((w) => w.includes('*') && !/^[^*]+\/\*$/.test(w))).toEqual([]);
+  });
+
+  it('list exactly the domain servers and the template, plus packages/*', () => {
+    const servers = readdirSync(ROOT).filter((d) => /^bconnect-.+-mcp$/.test(d) && d !== 'bconnect-mcp-gateway').sort();
+    expect([...workspaces].sort()).toEqual(['bconnect-server-template', 'packages/*', ...servers].sort());
+  });
+});
