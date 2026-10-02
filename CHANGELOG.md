@@ -62,6 +62,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **Renamed or replaced arguments on create tools** (the old forms never produced a valid request):
+  enrollment takes `enrollmentMailAddress` (was `emailRecipient`); `create_variable_definition` takes
+  `category`, `scopes`, `type` and `comment` (was `dataType`, `description`); `create_network_endpoint`,
+  `create_industrial_endpoint` and the maintenance-window creates take named fields instead of
+  `endpointData` / `maintenanceWindowData`; `add_application_to_bundle` no longer offers `order`.
 - **Write tools say they're unverified.** Until a write tool has been checked against a live
   bMS, its description ends with "Not yet verified against a live bMS.", so an AI assistant can
   tell you before it changes anything. The note disappears tool by tool as live checks are
@@ -114,6 +119,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Create and enrollment tools send what bConnect accepts.** Windows, Linux, network and industrial
+  endpoint creates, maintenance-window creates, Windows/Mac enrollment, `create_asset`,
+  `create_variable_definition`, `create_software_bundle` and `add_application_to_bundle` declare the
+  fields bConnect requires (e.g. `hostName`, `category` and `scopes`) and send only those.
+  `trigger_update_on_client` no longer sends a body.
 - **Endpoint and logical-group updates work.** The Windows, Linux, Mac, network and industrial
   endpoint updates, `update_logical_group` and both maintenance-window updates now offer the
   fields bConnect lets you change (display name, logical group, comment, host name, IP and MAC,
