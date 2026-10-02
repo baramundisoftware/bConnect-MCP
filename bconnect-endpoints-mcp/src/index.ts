@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, PAGE_PROPERTY, pageSizeProperty, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
 import { createBody, createInputSchema } from "./create-fields.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
@@ -131,14 +131,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Filter by exact DisplayName match"
               },
-              PageSize: {
-                type: "number",
-                description: "Number of results per page (max 1000, default 20)"
-              },
-              Page: {
-                type: "number",
-                description: "Page number (zero-indexed)"
-              },
+              PageSize: PAGE_SIZE_PROPERTY,
+              Page: PAGE_PROPERTY,
               OrderBy: {
                 type: "string",
                 description: "Sort by: DisplayName, HostName, OperatingSystem, or LastSeen (e.g., 'DisplayName asc')"
@@ -171,10 +165,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Search query string"
               },
-              pageSize: {
-                type: "number",
-                description: "Maximum number of results to return (default: 50)"
-              }
+              pageSize: pageSizeProperty(50)
             },
             required: ["query"]
           }
@@ -189,10 +180,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Search query"
               },
-              PageSize: {
-                type: "number",
-                description: "Number of results per page"
-              }
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: []
           }
@@ -244,10 +232,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Logical group ID"
               },
-              PageSize: {
-                type: "number",
-                description: "Number of results per page"
-              }
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: ["logicalGroupId"]
           }
@@ -262,10 +247,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Search query"
               },
-              PageSize: {
-                type: "number",
-                description: "Number of results per page"
-              }
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: []
           }
@@ -280,10 +262,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Search query"
               },
-              PageSize: {
-                type: "number",
-                description: "Number of results per page"
-              }
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: []
           }
@@ -330,14 +309,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Filter results by display name, hostname, IP, serial number, or comment"
               },
-              Page: {
-                type: "number",
-                description: "Page number (zero-indexed)"
-              },
-              PageSize: {
-                type: "number",
-                description: "Number of results per page (max 1000, default 20)"
-              },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
               OrderBy: {
                 type: "string",
                 description: "Sort order (e.g., 'DisplayName asc', 'LastSeen desc')"
@@ -360,14 +333,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Filter by display name, hostname, IP, serial number, or comment"
               },
-              Page: {
-                type: "number",
-                description: "Page number (zero-indexed)"
-              },
-              PageSize: {
-                type: "number",
-                description: "Number of results per page (max 1000, default 20)"
-              },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
               OrderBy: {
                 type: "string",
                 description: "Sort order"
@@ -388,8 +355,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               SearchQuery: { type: "string", description: "Search query to filter results" },
-              Page: { type: "number", description: "Page number (1-based)" },
-              PageSize: { type: "number", description: "Number of results per page" },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
               OrderBy: { type: "string", description: "Sort field" }
             }
           }
@@ -413,8 +380,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               SearchQuery: { type: "string", description: "Search query to filter results" },
-              Page: { type: "number", description: "Page number (1-based)" },
-              PageSize: { type: "number", description: "Number of results per page" },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
               OrderBy: { type: "string", description: "Sort field" }
             }
           }
@@ -737,12 +704,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         { name: "update_maintenance_window_for_logical_group", description: "Update a maintenance window for a logical group. WARNING: Modifies existing maintenance window.", inputSchema: updateInputSchema("update_maintenance_window_for_logical_group", "Logical group ID (GUID)") },
         { name: "delete_maintenance_window_for_logical_group", description: "Delete a maintenance window for a logical group. WARNING: Permanently deletes maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         // Industrial & network endpoints (Phase 24: added GET for network)
-        { name: "list_industrial_endpoints", description: "List all industrial endpoints (PLCs, SCADA systems, etc.) managed by baramundi. Returns a paged list.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: { type: "number" }, PageSize: { type: "number" }, OrderBy: { type: "string" } } } },
+        { name: "list_industrial_endpoints", description: "List all industrial endpoints (PLCs, SCADA systems, etc.) managed by baramundi. Returns a paged list.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY, OrderBy: { type: "string" } } } },
         { name: "get_industrial_endpoint", description: "Get details of a specific industrial endpoint by its GUID.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Industrial endpoint ID (GUID)" } }, required: ["id"] } },
         { name: "create_industrial_endpoint", description: "Create a new industrial endpoint (PLC, SCADA, etc.). WARNING: Creates a new endpoint.", inputSchema: createInputSchema("create_industrial_endpoint") },
         { name: "update_industrial_endpoint", description: "Update an existing industrial endpoint. WARNING: Modifies endpoint properties.", inputSchema: updateInputSchema("update_industrial_endpoint", "Industrial endpoint ID (GUID)") },
         { name: "delete_industrial_endpoint", description: "Delete an industrial endpoint. WARNING: Permanently deletes the endpoint.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
-        { name: "list_network_endpoints", description: "List all network endpoints (switches, routers, printers, etc.) managed by baramundi.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: { type: "number" }, PageSize: { type: "number" }, OrderBy: { type: "string" } } } },
+        { name: "list_network_endpoints", description: "List all network endpoints (switches, routers, printers, etc.) managed by baramundi.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY, OrderBy: { type: "string" } } } },
         { name: "get_network_endpoint", description: "Get details of a specific network endpoint by its GUID.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Network endpoint ID (GUID)" } }, required: ["id"] } },
         { name: "create_network_endpoint", description: "Create a new network endpoint (switch, router, printer, etc.). WARNING: Creates a new endpoint.", inputSchema: createInputSchema("create_network_endpoint") },
         { name: "update_network_endpoint", description: "Update an existing network endpoint. WARNING: Modifies endpoint properties.", inputSchema: updateInputSchema("update_network_endpoint", "Network endpoint ID (GUID)") },
@@ -754,7 +721,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // 26R1-only tools: Unmanaged Endpoints + EntraID
       if (is26R1) {
         tools.push(
-          { name: "list_unmanaged_endpoints", description: "[26R1] List all unmanaged endpoints detected by baramundi. Returns a paged list of devices that are not yet enrolled into management. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: { type: "number" }, PageSize: { type: "number" }, OrderBy: { type: "string" } } } },
+          { name: "list_unmanaged_endpoints", description: "[26R1] List all unmanaged endpoints detected by baramundi. Returns a paged list of devices that are not yet enrolled into management. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: PAGE_PROPERTY, PageSize: PAGE_SIZE_PROPERTY, OrderBy: { type: "string" } } } },
           { name: "get_unmanaged_endpoint", description: "[26R1] Get details of a specific unmanaged endpoint by its GUID. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
           { name: "delete_unmanaged_endpoint", description: "[26R1] Delete an unmanaged endpoint record. WARNING: Permanently removes the unmanaged device record. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
           { name: "get_entra_id_data", description: "[26R1] Get the Entra ID (formerly Azure AD) data bMS stores for a device, looked up by its Entra ID device ID (not the bMS endpoint ID). The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { deviceId: { type: "string", description: "Entra ID device ID (GUID), not the bMS endpoint ID" } }, required: ["deviceId"] } },

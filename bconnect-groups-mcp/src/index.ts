@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 
@@ -47,8 +47,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   const paginationProperties = {
     SearchQuery: { type: "string", description: "Filter results by name or description" },
-    Page:        { type: "number", description: "Page number (zero-indexed, default 0)" },
-    PageSize:    { type: "number", description: "Results per page (1–1000, default 20)" },
+    Page: PAGE_PROPERTY,
+    PageSize: PAGE_SIZE_PROPERTY,
     OrderBy:     { type: "string", description: "Sort order (e.g., 'Name asc')" },
   };
 

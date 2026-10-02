@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { UdgRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -66,8 +66,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               Name: { type: "string", description: "Filter results to match this exact Universal Dynamic Group name." },
               OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'Name asc'). Possible values: Name, Comment." },
               SearchQuery: { type: "string", description: "Filter results by matching against searchable properties (Name, Comment)." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: []
           }
@@ -93,8 +93,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               Name: { type: "string", description: "Filter results to match this exact UDG name." },
               OrderBy: { type: "string", description: "Sort results by property name and direction." },
               SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["folderId"]
           }
@@ -110,8 +110,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               Name: { type: "string", description: "Filter results to match this exact folder name." },
               OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'Name asc')." },
               SearchQuery: { type: "string", description: "Filter results by matching against folder name or comment." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: []
           }
@@ -137,8 +137,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               Name: { type: "string", description: "Filter results to match this exact folder name." },
               OrderBy: { type: "string", description: "Sort results by property name and direction." },
               SearchQuery: { type: "string", description: "Filter results by matching against folder name or comment." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["folderId"]
           }
