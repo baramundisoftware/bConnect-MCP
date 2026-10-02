@@ -31,7 +31,7 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 
 - Port **443** (HTTPS) must be open between the machine running the MCP server and your bMS server
   - 443 is the default. Some installations expose bConnect on a different port (e.g. **444** in older/test setups) — check the bConnect port in your baramundi Management Center and adjust the port in `BCONNECT_BASE_URL` accordingly.
-- Test connectivity: `curl -k https://bms.company.com:443/bconnect/info/v2.0/Info`
+- Test connectivity: `curl -sS -o /dev/null -w '%{http_code}\n' https://bms.company.com:443/bconnect/info/v2.0/Info` (add `--cacert <your-ca.pem>` for an internal CA; don't use `-k`, it hides exactly the certificate problem the servers would hit)
 
 ---
 
@@ -59,9 +59,11 @@ npm run build -w @bconnect/mcp-core   # build the shared core first
 npm run build                          # then all servers
 ```
 
-> **On Windows:** run these from **Git Bash**, not PowerShell or cmd. `npm run build` loops over the
-> server directories using shell syntax that `cmd.exe` cannot parse, so PowerShell and cmd fail with
-> `d was unexpected at this time`. Git Bash ships with [Git for Windows](https://gitforwindows.org/).
+> **On Windows:** `npm run build` loops over the server directories using bash syntax that `cmd.exe`
+> cannot parse (`d was unexpected at this time`). npm runs scripts with `cmd.exe` whichever shell you
+> type in, so make Git Bash npm's script shell once (it applies to all your npm projects):
+> `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
+> Git Bash ships with [Git for Windows](https://gitforwindows.org/).
 
 > Only need one server? After the `npm ci` + core build above, build just that one:
 > `npm run build -w bconnect-endpoints-mcp`.
@@ -90,9 +92,6 @@ BCONNECT_API_KEY=your-api-key-here
 
 # Your bMS version: 26R1 or 25R2
 BCONNECT_RELEASE=26R1
-
-# For self-signed certificates (development only!)
-# NODE_TLS_REJECT_UNAUTHORIZED=0
 ```
 
 ### Step 4: Start the Server
@@ -246,15 +245,15 @@ The variables most deployments set. Each server's README lists exactly the varia
 
 If your bMS server uses a self-signed or internal CA certificate:
 
-**Recommended**: Provide the CA certificate:
-```env
-BCONNECT_CA_CERT_PATH=/path/to/your-ca-cert.pem
-```
+- On **Node.js ≥ 22.15** the servers also trust the machine's OS certificate store, so a CA
+  the machine already trusts needs no setting.
+- Otherwise provide the CA certificate:
+  ```env
+  BCONNECT_CA_CERT_PATH=/path/to/your-ca-cert.pem
+  ```
+  or Node's own `NODE_EXTRA_CA_CERTS=/path/to/your-ca-cert.pem`.
 
-**Development only** (not for production!):
-```env
-NODE_TLS_REJECT_UNAUTHORIZED=0
-```
+Don't set `NODE_TLS_REJECT_UNAUTHORIZED=0`, not even for a test: it turns off certificate checks for every TLS connection of the process, so anyone in the network path can pose as the bMS, receive the credentials and send the model forged data.
 
 ---
 
@@ -395,9 +394,9 @@ npm run build -w @bconnect/mcp-core   # shared core first
 npm run build                          # all servers
 ```
 
-> **On Windows:** run these from **Git Bash** — `npm run build` uses shell syntax `cmd.exe` cannot
-> parse, so PowerShell and cmd fail with `d was unexpected at this time`. Same applies to
-> `npm run audit` and `npm run sbom`.
+> **On Windows:** `npm run build`, `npm run audit` and `npm run sbom` use bash syntax that `cmd.exe`
+> cannot parse (`d was unexpected at this time`). Set Git Bash as npm's script shell once, as
+> described in [Getting Started](#getting-started-step-by-step).
 
 ## Testing
 
@@ -418,7 +417,7 @@ done
 | Problem | Solution |
 |---------|----------|
 | **Connection refused** | Check `BCONNECT_BASE_URL` includes `/bconnect`. Verify port 443 is open and the bConnect service is running on your bMS server. |
-| **SSL/TLS certificate errors** | Set `BCONNECT_CA_CERT_PATH` to your CA certificate. Only use `NODE_TLS_REJECT_UNAUTHORIZED=0` for development. |
+| **SSL/TLS certificate errors** | Run on Node.js ≥ 22.15 (OS trust store), or set `BCONNECT_CA_CERT_PATH` or `NODE_EXTRA_CA_CERTS` to your CA certificate. Don't turn verification off. |
 | **401 Unauthorized** | Verify your credentials. If using an API key, check it hasn't expired. If using Basic Auth, confirm the user has bConnect API access in the bMS console. |
 | **A tool answers with an error from bConnect** | The answer names the status, the call, what the bConnect API documentation says the status means for that call, and bConnect's own message. A 404 can mean a wrong id, missing read rights or, on some calls, "no data"; the documented meaning says which apply. |
 | **"The bConnect API didn't answer within 30 s" on vulnerability or installed-software lists** | These lists are slow on a large or busy bMS (30 to 50 s on a test bMS 26R1). Set `BCONNECT_TIMEOUT_MS=90000`; see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). |

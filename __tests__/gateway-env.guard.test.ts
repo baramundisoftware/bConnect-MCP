@@ -33,7 +33,7 @@ const NOT_FORWARDED: Record<string, string> = {
   MCP_TRANSPORT: "a standalone server's own transport switch; not used when the gateway hosts the servers",
   VITEST: 'set by the test runner and the gateway preload so a server main() does not run on import',
   ...Object.fromEntries(SECRET_ENV_KEYS.map((key) => [`${key}_FILE`,
-    'Docker-secret file for the credential; needs a secrets mount in the compose file (follow-up), so not offered yet'])),
+    'Docker-secret file for the credential; the shipped compose file mounts no secrets (docs/DOCKER.md shows an override file), so .env.gateway does not offer it'])),
 };
 
 /** secrets.ts reads `<KEY>_FILE` for each credential key through a computed name; this is that name. */

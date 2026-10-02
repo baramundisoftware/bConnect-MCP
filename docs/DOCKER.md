@@ -49,15 +49,22 @@ curl http://localhost:3001/health
 # → {"status":"ok","servers":[…],"count":13}
 ```
 
+The compose file **builds the image from your checkout** (the first start takes a few
+minutes). To run the published image instead, replace its `build:` block and `image:` line
+with `image: ghcr.io/baramundisoftware/bconnect-mcp-gateway:<version>`.
+
 ---
 
 ## Manual `docker run`
 
 ```bash
-# Bind loopback and front it with your proxy. Publishing a non-loopback port
-# requires MCP_ALLOW_NO_AUTH=true (your assertion that a proxy handles auth).
+# Inside the container the gateway binds 0.0.0.0 (the image sets
+# MCP_GATEWAY_BIND), so it only starts with MCP_ALLOW_NO_AUTH=true: your
+# assertion that a proxy in front handles authentication. Publish the port on
+# 127.0.0.1 so that only the host and your proxy can reach it.
 docker run -d \
   -p 127.0.0.1:3001:3001 \
+  -e MCP_ALLOW_NO_AUTH=true \
   -e BCONNECT_BASE_URL=https://bms.company.com/bconnect \
   -e BCONNECT_API_KEY=your-service-key \
   ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
@@ -89,21 +96,29 @@ infrastructure: the operator owns the perimeter.
 
 The proxy in front of the gateway must:
 
-- **Terminate TLS** — credentials and data travel in HTTP headers; never expose
-  the gateway over plaintext beyond localhost.
+- **Terminate TLS** — the callers' tokens or cookies and all tool data travel over
+  this connection; never expose the gateway over plaintext beyond localhost.
 - **Authenticate the caller** — via your IdP (OIDC/SAML) or the mechanism your
   organisation already runs.
 - **Reach the gateway only over a private/loopback network** — publish the
   proxy, not the gateway. As a fail-closed default the gateway refuses to start
   on a non-loopback bind without auth unless `MCP_ALLOW_NO_AUTH=true` is set
   explicitly.
+- **Check `Host` and `Origin`** — accept only the host names you serve the gateway
+  under, and reject browser requests from origins you don't expect. The gateway
+  checks neither itself. That also means a gateway on loopback **without** a proxy
+  can be reached by a web page open in a browser on the same host: don't browse the
+  web on a machine that runs the gateway without a proxy in front.
 - **Strip any client-supplied identity headers** before injecting its own.
 
 Clients then connect to `https://<host>/<domain>/mcp` through the proxy, which
 supplies whatever credential/session it requires.
 
 > Per-IP rate limiting is enforced in the gateway itself as a coarse backstop
-> (`MCP_GATEWAY_RATE_LIMIT_*`); add richer edge/flood/per-identity limiting at your proxy.
+> (`MCP_GATEWAY_RATE_LIMIT_*`). Behind a proxy, the gateway sees every request as coming
+> from the proxy's address (it doesn't read `X-Forwarded-For`), so all callers share one
+> limit and the access log shows the proxy's address. Do per-caller limiting and logging
+> at your proxy.
 
 ### Resource limits
 
@@ -114,28 +129,44 @@ request rate. Tune via `.env.gateway`: `MCP_GATEWAY_MEM_LIMIT` (default `512m`) 
 ### Reproducible base image
 
 The gateway Dockerfile pins `node:22-alpine` to a SHA256 **digest** (audit M3), so image
-builds are reproducible and don't silently absorb upstream base-image changes. Dependabot
-bumps the digest like any other dependency.
+builds are reproducible and don't silently absorb upstream base-image changes. Nothing
+updates the digest automatically yet (Dependabot covers npm and GitHub Actions only), so
+bump it by hand to pick up Node.js and Alpine security fixes.
 
 ---
 
 ## Environment Variables
 
 The gateway uses one bConnect **service credential** (`BCONNECT_API_KEY`, or
-`BCONNECT_USERNAME` + `BCONNECT_PASSWORD`) for all downstream calls.
+`BCONNECT_USERNAME` + `BCONNECT_PASSWORD`) for all downstream calls. With Compose, set these
+in `.env.gateway`; `docker-compose.gateway.yml` passes on the variables below. The defaults
+are the code's; where Compose or the image sets another, the table says so.
+
+> **Keep write tools and secret reads off in the gateway.** The gateway has no authentication of
+> its own, so whoever reaches it could use them. `docker-compose.gateway.yml` keeps
+> `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ` out of the container, so with it every write
+> tool and every tool that returns credentials (BitLocker keys and PIN, LAPS passwords) is
+> refused, whatever `.env.gateway` says. The gateway itself doesn't filter them: if you start it
+> another way (`docker run`, Node.js, Kubernetes), leave both unset, also in any `.env` file in
+> the directory you start it from.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `BCONNECT_BASE_URL` | bConnect V2.0 API base URL | `https://bms-server/bconnect` |
+| `BCONNECT_BASE_URL` | bConnect V2.0 API base URL; must be `https://` | none useful: set it (Compose: `https://bms-server/bconnect`) |
+| `BCONNECT_ALLOW_INSECURE_HTTP` | `true` allows an `http://` base URL to another host (credentials unencrypted) | `false` |
 | `BCONNECT_API_KEY` | API key (or use username/password below) | *(one credential required)* |
 | `BCONNECT_USERNAME` / `BCONNECT_PASSWORD` | API username + password (alternative to the key); the password must be ASCII-only (bConnect rejects `§`, umlauts, `ß`) | — |
 | `BCONNECT_RELEASE` | API release: `25R2` or `26R1` | `26R1` |
 | `BCONNECT_AUDIT_LEVEL` | `none`, `security`, `write`, `all` | `none` |
-| `NODE_TLS_REJECT_UNAUTHORIZED` | Set to `0` for self-signed certs (dev only) | `1` |
+| `NODE_TLS_REJECT_UNAUTHORIZED` | Leave unset: `0` turns off certificate checks for every bMS call. For an internal CA, use `BCONNECT_CA_CERT_PATH` | — |
 | `BCONNECT_CA_CERT_PATH` | Path to a CA certificate inside the container | — |
+| `BCONNECT_TIMEOUT_MS` | Wait per bMS request, 1000–600000 ms; slow reads on a busy bMS may need `90000` | `30000` |
+| `BCONNECT_MAX_RETRIES` | Retries for reads after a network error, timeout or 502/503/504 (0–5); writes are never retried | `0` |
+| `BCONNECT_SKIP_CONNECTIVITY_CHECK` | Accepted for compatibility; the gateway makes no startup call to bConnect | `false` |
+| `BCONNECT_RATE_LIMIT_ENABLED` / `_MAX_REQUESTS` / `_WINDOW_MS` | Outbound limit towards bMS, per tool call for now (#160) | `false` / `100` / `60000` |
 | `MCP_ALLOW_NO_AUTH` | Allow a non-loopback gateway bind (asserts a proxy is in front) | `false` |
 | `MCP_GATEWAY_PORT` | Gateway listen port | `3001` |
-| `MCP_GATEWAY_BIND` | Gateway bind address | `127.0.0.1` |
+| `MCP_GATEWAY_BIND` | Gateway bind address | `127.0.0.1` (the image and Compose: `0.0.0.0`, see [Manual `docker run`](#manual-docker-run)) |
 | `MCP_GATEWAY_RATE_LIMIT_ENABLED` | Per-client-IP inbound rate limiting | `true` |
 | `MCP_GATEWAY_RATE_LIMIT_MAX` | Max requests per window, per client IP | `300` |
 | `MCP_GATEWAY_RATE_LIMIT_WINDOW_MS` | Rate-limit window (ms) | `60000` |
@@ -144,8 +175,8 @@ The gateway uses one bConnect **service credential** (`BCONNECT_API_KEY`, or
 | `LOG_FORMAT` | Gateway log format: `text` or `json` (use `json` for ELK/Loki) | `text` |
 
 > The gateway writes a structured **access log** (method, path, status, duration, and the
-> caller's **client IP** — real identity lives at the fronting reverse proxy) for every
-> request. Set `LOG_FORMAT=json` for machine-ingestible logs.
+> client address — behind a proxy that is the proxy's address; real identity lives at the
+> proxy) for every request. Set `LOG_FORMAT=json` for machine-ingestible logs.
 
 ---
 
@@ -157,6 +188,7 @@ If your bMS uses a custom CA, mount the PEM into the container and point
 ```bash
 docker run -d \
   -p 127.0.0.1:3001:3001 \
+  -e MCP_ALLOW_NO_AUTH=true \
   -v /path/to/your-ca.pem:/certs/ca.pem:ro \
   -e BCONNECT_CA_CERT_PATH=/certs/ca.pem \
   -e BCONNECT_BASE_URL=https://bms.company.com/bconnect \
@@ -164,14 +196,20 @@ docker run -d \
   ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
 ```
 
-On Node.js ≥ 22.15 the image also honors the OS trust store automatically; see
-[INSTALLATION.md → TLS / SSL Configuration](INSTALLATION.md#tls--ssl-configuration).
+Inside the container, the "OS trust store" is the image's own (Alpine's public CAs), not your
+host's, so an internal CA always needs `BCONNECT_CA_CERT_PATH`. With Compose, set
+`BCONNECT_CA_CERT_PATH` in `.env.gateway` to the file on the host, as an **absolute path in
+`/…` form** (e.g. `/etc/ssl/certs/bms-ca.pem`): the compose file mounts it at the same path
+inside the container, so a relative or Windows path doesn't work there. See
+[INSTALLATION.md → TLS / SSL Configuration](INSTALLATION.md#tls--ssl-configuration) for how to
+export the CA.
 
 ---
 
 ## Server Compatibility
 
-The gateway serves all 13 servers on 26R1. On 25R2, two servers don't work:
+The gateway serves all 13 servers on 26R1 (276 tools). On 25R2 it lists 240 tools, and two
+servers don't work (compliance's 8 tools are among the 240 but fail):
 
 | Server | Requires 26R1 |
 |--------|--------------|
@@ -190,8 +228,13 @@ The gateway serves all 13 servers on 26R1. On 25R2, two servers don't work:
   and point `<VAR>_FILE` at it instead of putting the value in the environment (where
   `docker inspect` would expose it). An explicit env var still wins if both are set.
 
+  The shipped `docker-compose.gateway.yml` doesn't mount any secrets yet. Add them
+  with a second compose file, e.g. `docker-compose.secrets.yml`, and start with
+  `docker compose -f docker-compose.gateway.yml -f docker-compose.secrets.yml --env-file .env.gateway up -d`.
+  Leave the credential itself empty in `.env.gateway`:
+
   ```yaml
-  # docker-compose.gateway.yml (excerpt)
+  # docker-compose.secrets.yml (your own file, not shipped)
   services:
     mcp-gateway:
       environment:

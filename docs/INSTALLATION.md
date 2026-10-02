@@ -6,16 +6,23 @@ This guide covers installing and configuring the bConnect MCP Suite (13 servers 
 
 - **baramundi Management Suite** 25R2 or 26R1 with bConnect API enabled
 - **bConnect API URL** — typically `https://your-bms-server:443/bconnect`
-- **API credentials** — a bMS user account with API access
+- **API credentials** — an API key (recommended) or a bMS user account with API access
 - **Claude Desktop** or **Claude Code** (CLI)
 
 ---
 
 ## Installation Options
 
-### Option A — Linux (Node.js)
+### Option A — Node.js (Linux, macOS, Windows)
 
-**Requirements:** Node.js 20+ (Node.js **22.15+ recommended** — honors the OS/Windows CA trust store; see TLS / SSL Configuration)
+**Requirements:** Node.js **22.15 or 24**, the versions CI tests. 22.15 and later also honor the
+OS/Windows CA trust store (see [TLS / SSL Configuration](#tls--ssl-configuration)). The
+packages still allow Node 20, but nobody tests it.
+
+> **On Windows:** the build scripts are bash. Install [Git for Windows](https://gitforwindows.org/)
+> and make Git Bash npm's script shell once, because npm runs scripts with `cmd.exe` otherwise,
+> whichever shell you type in (the setting applies to all your npm projects):
+> `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`
 
 ```bash
 # 1. Clone or extract the suite
@@ -32,9 +39,10 @@ npm run build                            # all servers (or -w bconnect-endpoints
 # 3. Configure credentials (see Configuration section below)
 ```
 
-### Option B — Docker
+### Option B — Docker (gateway only)
 
-See [DOCKER.md](DOCKER.md) for Docker Compose and individual container setup.
+Only the HTTP gateway (Option C) ships as a container image; the 13 servers run as local
+processes over stdio. See [DOCKER.md](DOCKER.md).
 
 ### Option C — Gateway (HTTP, multi-user)
 
@@ -49,17 +57,19 @@ for teams and n8n.
 
 #### Step 1 — Build the gateway
 
-The gateway depends on the shared `@bconnect/mcp-core` package, so build the core
-from the repo **root** first, then the gateway:
+The gateway loads the shared `@bconnect/mcp-core` package and the built output of
+all 13 servers. Install once from the repo **root**, build the core, then the
+servers, then the gateway:
 
 ```bash
-# from the repo root — build the shared core first
+# from the repo root
 npm ci
-npm run build -w @bconnect/mcp-core
+npm run build -w @bconnect/mcp-core   # the shared core first
+npm run build                         # all 13 servers
 
-# then build the gateway
+# then the gateway: build only, no `npm ci` / `npm install` here. The gateway
+# isn't a workspace member; its dependencies come from the root install.
 cd bconnect-mcp-gateway
-npm ci
 npm run build
 cd ..
 ```
@@ -104,6 +114,18 @@ curl http://localhost:3001/health
 | `MCP_GATEWAY_RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window in ms |
 | `MCP_GATEWAY_MAX_BODY` | `1mb` | Max accepted request body size |
 
+The servers the gateway hosts run in its process and read the same environment: the shared
+settings (release, CA file, timeouts, audit level, rate limits) apply to all of them; see
+[DOCKER.md → Environment Variables](DOCKER.md#environment-variables).
+
+> **Keep write tools and secret reads off in the gateway.** The gateway has no authentication of
+> its own, so whoever reaches it could use them. `docker-compose.gateway.yml` keeps
+> `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ` out of the container, so with it every write
+> tool and every tool that returns credentials (BitLocker keys and PIN, LAPS passwords) is
+> refused, whatever `.env.gateway` says. The gateway itself doesn't filter them: if you start it
+> another way (`docker run`, Node.js, Kubernetes), leave both unset, also in any `.env` file in
+> the directory you start it from.
+
 > **Security:** front the gateway with an authenticating, TLS-terminating reverse proxy
 > before exposing it (see [DOCKER.md](DOCKER.md)). The gateway refuses a non-loopback
 > bind unless `MCP_ALLOW_NO_AUTH=true`.
@@ -112,20 +134,34 @@ curl http://localhost:3001/health
 
 ## Configuration
 
-Each server is configured via environment variables. Create a `.env` file in each server directory (or set environment variables directly):
+Each server is configured via environment variables. When you start a server yourself from its
+own directory, it also reads a `.env` file there: dotenv looks in the **current working
+directory**, not in the server's directory. Claude Desktop and Claude Code start servers from
+elsewhere, so for them set the variables in the client configuration's `env` block (see
+[Claude Configuration](#claude-configuration)).
 
 ```bash
+cd bconnect-<domain>-mcp
 cp .env.example .env
 ```
 
 ### Required Variables
 
 ```env
-BCONNECT_BASE_URL=https://your-bms-server:443/bconnect
-BCONNECT_USERNAME=your-username
-BCONNECT_PASSWORD=your-password
-BCONNECT_RELEASE=26R1          # or 25R2
+BCONNECT_BASE_URL=https://your-bms-server:443/bconnect   # must be https:// (see below)
+
+# One credential: an API key (recommended) …
+BCONNECT_API_KEY=your-api-key
+# … or a username and password
+# BCONNECT_USERNAME=your-username
+# BCONNECT_PASSWORD=your-password
+
+BCONNECT_RELEASE=26R1          # optional: 26R1 (default) or 25R2, the release of your bMS
 ```
+
+The password must be **ASCII only**: bConnect rejects `§`, umlauts or `ß` (HTTP 401), so the
+servers refuse such a password before signing in, and no attempt counts toward the account
+lockout. A username may contain Latin-1 characters such as `ö`.
 
 > **These credentials are stored in plaintext** (in `.env` or the Claude Desktop
 > config). Restrict the file to the running user (`chmod 600 .env`, or an NTFS ACL on
@@ -146,7 +182,18 @@ ALLOW_SECRET_READ=false              # Enable secret-returning reads (default: o
 BCONNECT_RATE_LIMIT_ENABLED=false    # Enable the client-side rate limiter
 BCONNECT_RATE_LIMIT_MAX_REQUESTS=100 # Max requests per window (default: 100)
 BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min)
+
+BCONNECT_TIMEOUT_MS=30000            # Wait per request, 1000–600000 ms (default: 30000)
+BCONNECT_MAX_RETRIES=0               # Retries for reads after a network error, timeout or 502/503/504 (0–5); writes are never retried
+BCONNECT_CA_CERT_PATH=               # PEM file with the bMS CA (see TLS / SSL Configuration)
+BCONNECT_ALLOW_INSECURE_HTTP=false   # http:// is refused except for localhost; true allows it (credentials unencrypted)
+BCONNECT_SKIP_CONNECTIVITY_CHECK=false  # true skips the startup check against bConnect
 ```
+
+An invalid value for `BCONNECT_TIMEOUT_MS`, `BCONNECT_MAX_RETRIES` or `BCONNECT_AUDIT_LEVEL`, or
+a CA file that can't be read, stops the server at startup with a message naming the setting.
+Each server's README lists every variable it reads (checked by a test), including the HTTP
+transport settings `MCP_TRANSPORT`, `MCP_PORT` and `MCP_BIND`.
 
 > **`ALLOW_SECRET_READ`** gates the DefenseControl tools whose response contains
 > **live credentials**: `get_bitlocker_secrets` and `update_bitlocker_pin` (BitLocker
@@ -226,7 +273,7 @@ Docker / Kubernetes — mount the PEM as a secret:
 BCONNECT_CA_CERT_PATH=/run/secrets/bms-ca.pem
 ```
 
-> **Never use `NODE_TLS_REJECT_UNAUTHORIZED=0` in production.** It disables all certificate validation and exposes every connection to man-in-the-middle attacks.
+> **Never use `NODE_TLS_REJECT_UNAUTHORIZED=0`** (see below). It disables all certificate validation and exposes every connection to man-in-the-middle attacks.
 
 `BCONNECT_CA_CERT_PATH` is an **override**: when set, the server trusts exactly that CA.
 Use it when you want an explicit, pinned trust anchor regardless of what the host trusts —
@@ -245,13 +292,13 @@ NODE_EXTRA_CA_CERTS=/etc/ssl/certs/bms-ca.pem
 This still requires exporting the CA to a file (like `BCONNECT_CA_CERT_PATH`); the
 zero-export path is running on Node ≥ 22.15 so the OS trust store is honored directly.
 
-### Development Only: Disable TLS Verification
+### Don't disable TLS verification
 
-```env
-NODE_TLS_REJECT_UNAUTHORIZED=0
-```
-
-Use only in isolated development or lab environments.
+Don't set `NODE_TLS_REJECT_UNAUTHORIZED=0`, not even for a test: it turns off certificate
+checks for every TLS connection of the process, so anyone in the network path can pose as the
+bMS, receive the credentials and send the model forged data. If the certificate isn't trusted,
+use one of the options above; for a lab bMS with a self-signed certificate, export that
+certificate and point `BCONNECT_CA_CERT_PATH` at it.
 
 ---
 
@@ -293,22 +340,29 @@ $pem | Set-Content -Encoding ascii "C:\certs\bms-ca.pem"
 
 #### On Linux / macOS
 
-**Method A — openssl s_client (recommended)**
+**Method A — openssl s_client**
+
+`BCONNECT_CA_CERT_PATH` needs the certificate of the **CA that signed** the bMS certificate,
+not the bMS certificate itself (except for a self-signed bMS certificate, which is its own CA).
+First see what the server sends:
 
 ```bash
 openssl s_client -showcerts -connect your-bms-server:443 </dev/null 2>/dev/null \
-  | openssl x509 -outform PEM > /etc/ssl/certs/bms-ca.pem
-
-# Verify
-openssl x509 -in /etc/ssl/certs/bms-ca.pem -noout -subject -issuer -dates
+  | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' > bms-chain.pem
+openssl crl2pkcs7 -nocrl -certfile bms-chain.pem | openssl pkcs7 -print_certs -noout
 ```
 
-If the server uses an intermediate CA, capture the full chain:
+- **One certificate whose subject equals its issuer:** self-signed. Use `bms-chain.pem` as the CA file.
+- **Otherwise:** servers usually don't send their root CA. Get the root (and any intermediate)
+  CA certificate from your PKI team or a machine that trusts it (on Windows: Method A above),
+  and save them in one PEM file.
+
+Check your CA file (e.g. `/etc/ssl/certs/bms-ca.pem`) before you use it. `OK` means the
+certificate chain and the host name check out, as the servers will check them:
 
 ```bash
-openssl s_client -showcerts -connect your-bms-server:443 </dev/null 2>/dev/null \
-  | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
-  > /etc/ssl/certs/bms-ca-chain.pem
+openssl verify -CAfile /etc/ssl/certs/bms-ca.pem -untrusted bms-chain.pem \
+  -verify_hostname your-bms-server bms-chain.pem
 ```
 
 ---
@@ -318,19 +372,20 @@ openssl s_client -showcerts -connect your-bms-server:443 </dev/null 2>/dev/null 
 **Test with curl before starting the server:**
 
 ```bash
-curl --cacert /etc/ssl/certs/bms-ca.pem \
-     -u "username:password" \
-     https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1
+curl --cacert /etc/ssl/certs/bms-ca.pem -u "username" -w '\nHTTP %{http_code}\n' \
+  "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
 ```
 
-A `200` response confirms the CA cert is correct and `BCONNECT_CA_CERT_PATH` will work.
+curl asks for the password, so it doesn't end up in your shell history. `HTTP 200` confirms the CA cert is correct and `BCONNECT_CA_CERT_PATH` will work.
 
 **Common TLS errors:**
 
 | Error code | Cause | Fix |
 |------------|-------|-----|
-| `ENOENT` | `BCONNECT_CA_CERT_PATH` file not found | Check the path |
+| `BCONNECT_CA_CERT_PATH can't be read: <path> (ENOENT)` | File not found; the server stops at startup (an empty file is refused too) | Check the path |
 | `SELF_SIGNED_CERT_IN_CHAIN` | CA cert not trusted | Export the correct issuing CA |
+| `UNABLE_TO_GET_ISSUER_CERT_LOCALLY` | The CA that signed the bMS certificate isn't trusted | Provide that CA (most common case with an internal CA) |
+| `DEPTH_ZERO_SELF_SIGNED_CERT` | Self-signed bMS certificate | Use that certificate as the CA file |
 | `UNABLE_TO_VERIFY_LEAF_SIGNATURE` | Cert chain incomplete | Export the full chain |
 | `ERR_TLS_CERT_ALTNAME_INVALID` | Hostname mismatch | Use the hostname in the cert CN/SAN |
 
@@ -340,16 +395,24 @@ A `200` response confirms the CA cert is correct and `BCONNECT_CA_CERT_PATH` wil
 
 Add each server you want to use to your Claude MCP configuration.
 
-### Claude Code (`~/.claude/mcp_settings.json` or via `claude mcp add`)
+### Claude Code (`claude mcp add`)
+
+Options come before the server name, and `--` separates them from the command.
+Use an **absolute** path to `build/index.js`:
 
 ```bash
 claude mcp add bconnect-endpoints \
-  node /path/to/bconnect-endpoints-mcp/build/index.js \
-  -e BCONNECT_BASE_URL=https://your-bms-server:443/bconnect \
-  -e BCONNECT_USERNAME=your-username \
-  -e BCONNECT_PASSWORD=your-password \
-  -e BCONNECT_RELEASE=26R1
+  --scope user \
+  --env BCONNECT_BASE_URL=https://your-bms-server:443/bconnect \
+  --env BCONNECT_API_KEY=your-api-key \
+  --env BCONNECT_RELEASE=26R1 \
+  -- node /path/to/bconnect-endpoints-mcp/build/index.js
 ```
+
+`--scope user` makes the server available in every project; the default `local`
+scope loads it only in the directory you ran the command from, and `project` writes
+it to `.mcp.json` for the whole team. With Basic authentication, use
+`--env BCONNECT_USERNAME=… --env BCONNECT_PASSWORD=…` instead of the API key.
 
 ### Claude Desktop (`claude_desktop_config.json`)
 
@@ -391,23 +454,24 @@ claude mcp add bconnect-endpoints \
 
 Add one entry per server. You do not need to load all 13 — load only the domains you need.
 
-### Gateway (Claude Desktop or Claude Code, HTTP)
+### Gateway (HTTP)
 
-When using the gateway, point each server at `/<domain>/mcp` **through your
-authenticating proxy** (which supplies whatever credential/session it requires):
+With the gateway, each domain is an MCP server at `/<domain>/mcp`, reached **through your
+authenticating proxy** (which supplies whatever credential/session it requires). It speaks
+MCP's HTTP Streamable transport.
 
-```json
-{
-  "mcpServers": {
-    "bconnect-endpoints": {
-      "url": "https://mcp-gateway.company.com/endpoints/mcp"
-    },
-    "bconnect-assets": {
-      "url": "https://mcp-gateway.company.com/assets/mcp"
-    }
-  }
-}
+**Claude Code:**
+
+```bash
+claude mcp add --transport http bconnect-endpoints https://mcp-gateway.company.com/endpoints/mcp
+claude mcp add --transport http bconnect-assets    https://mcp-gateway.company.com/assets/mcp
 ```
+
+Add `--header "Authorization: Bearer …"` if your proxy expects a token.
+
+**Claude Desktop:** `claude_desktop_config.json` starts local (stdio) servers. To reach the
+gateway from there, run a local stdio-to-HTTP bridge as the `command`, or use the servers
+directly over stdio as shown above.
 
 Available gateway domains: `activedirectory`, `assets`, `compliance`,
 `defensecontrol`, `endpoints`, `groups`, `jobs`, `operatingsystems`,
@@ -420,18 +484,31 @@ Available gateway domains: `activedirectory`, `assets`, `compliance`,
 
 Start a server and confirm it responds:
 
+With a `.env` in the server directory (see [Configuration](#configuration)):
+
 ```bash
 cd bconnect-endpoints-mcp
 node build/index.js
-# Expected: bconnect-endpoints-mcp started on stdio
+# Expected on stderr:
+#   bconnect-endpoints-mcp: verifying bConnect API connectivity...
+#   bconnect-endpoints-mcp: API connectivity verified.
+#   bconnect-endpoints-mcp started on stdio
 ```
+
+The server then waits for an MCP client on stdin; stop it with Ctrl+C. If it exits instead, the
+message says why; see [TROUBLESHOOTING.md](TROUBLESHOOTING.md#server-exits-at-startup).
 
 Test API connectivity:
 
 ```bash
-curl -k -u "username:password" \
+curl --cacert /path/to/bms-ca.pem -u "username" -w '\nHTTP %{http_code}\n' \
   "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
 ```
+
+curl asks for the password, so it doesn't end up in your shell history. With an API key,
+use `-H "X-Api-Key: <key>"` instead of `-u`. Leave out `--cacert` if your system already
+trusts the bMS certificate. Don't add `-k`: it skips the certificate check, so curl would
+succeed where the MCP servers fail.
 
 ---
 
@@ -443,4 +520,4 @@ curl -k -u "username:password" \
 
 ---
 
-*bConnect MCP Suite v26.1.7 — 13 servers, 276 tools, bMS 26R1 / 25R2*
+*bConnect MCP Suite — 13 servers; 276 tools on bMS 26R1, 240 on 25R2*

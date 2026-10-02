@@ -15,11 +15,12 @@ it never passes by skipping.
 Run the tier with a **dedicated bMS account that has a read-only role**. That is the
 first safety net. The locks in the tier (below) come second.
 
-With TLS verification off (`NODE_TLS_REJECT_UNAUTHORIZED=0`), the credentials go to
-a server whose certificate nobody checked. Use it only on a network you control, and
-only until the CA file is in place. An `http://` base URL has no TLS at all: the
-servers refuse it unless `BCONNECT_ALLOW_INSECURE_HTTP=true`, and the report then says
-"TLS: none".
+Put the bMS CA in place first (`BCONNECT_CA_CERT_PATH`, see
+[INSTALLATION.md](INSTALLATION.md#tls--ssl-configuration)). Don't set
+`NODE_TLS_REJECT_UNAUTHORIZED=0`: the credentials would go to a server whose certificate
+nobody checked. If it is set anyway, the report says "TLS: NOT verified". An `http://` base
+URL has no TLS at all: the servers refuse it for any host other than this machine unless
+`BCONNECT_ALLOW_INSECURE_HTTP=true`, and the report then says "TLS: none".
 
 ## Setup on Windows
 
@@ -28,7 +29,7 @@ servers refuse it unless `BCONNECT_ALLOW_INSECURE_HTTP=true`, and the report the
 
    ```bash
    npm config get script-shell        # expect ...\Git\bin\bash.exe
-   npm config set script-shell "C:\\Program Files\\Git\\bin\\bash.exe"
+   npm config set script-shell "C:\Program Files\Git\bin\bash.exe"
    ```
 
 3. **Build** from the repo root, in Git Bash:
@@ -92,6 +93,10 @@ The run fails before any test when:
 - the env file doesn't exist;
 - it sets no `BCONNECT_BASE_URL`, or not an http(s) URL;
 - `BCONNECT_CA_CERT_PATH` names a missing file;
+- it sets `ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`, `BCONNECT_SKIP_CONNECTIVITY_CHECK`
+  or `MCP_TRANSPORT`;
+- one of the refused shell variables from step 5 is set;
+- `BCONNECT_RELEASE` isn't `26R1` or `25R2`;
 - the bMS can't be reached (one GET of `/info` with the run's TLS settings).
 
 It also fails after the tests when no server started or no read tool was called.
@@ -168,6 +173,19 @@ A failure stays a failure. A supported release with no test installation, e.g.
 | `reports/live-bms.json` | everything, including the host, arguments, requests and tool errors | no: stays on the machine (git-ignored) |
 
 Publish only `reports/live-bms-summary.md`. Don't paste console output.
+
+## Before a release
+
+Run the tier against each bMS release the version supports that you have a test
+installation for, and put `reports/live-bms-summary.md` into the release PR or the
+release notes. A release with no test installation is listed as "not verified live".
+A failing run blocks the release unless the decision to ship anyway is written down
+there, with the reason.
+
+The tier only reads. Write tools are verified by hand on a test bMS; the ones that
+were are listed in `packages/mcp-core/src/unverified-writes.ts`
+(`LIVE_VERIFIED_WRITE_TOOLS`), and every other write tool says in its description
+that it hasn't been verified against a live bMS yet.
 
 ## Self-tests
 
