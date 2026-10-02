@@ -14,7 +14,10 @@ import type { AddressInfo } from 'node:net';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { setupServer } from 'msw/node';
 import { delay, http as mswHttp, HttpResponse } from 'msw';
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { BConnectClientBase, type BConnectConfig } from '../packages/mcp-core/src/bconnect-client-base.js';
+import { BConnectApiError, BConnectConnectionError } from '../packages/mcp-core/src/api-errors.js';
+import type { AuditLogEntry } from '../packages/mcp-core/src/audit-logger.js';
 import { ClientConfigError, clientConfigFromEnv } from '../packages/mcp-core/src/client-config.js';
 
 const HOST = 'bms.timeouts.test';
@@ -77,6 +80,15 @@ describe('failure messages', () => {
     expect(error?.message).not.toContain(HOST);
   });
 
+  it('a TCP connect timeout from the operating system is a connection failure, not "didn\'t answer"', () => {
+    const config = { url: '/endpoints/v2.0/Endpoints', method: 'get', headers: {} } as InternalAxiosRequestConfig;
+    const tcp = new AxiosError('connect ETIMEDOUT 10.0.0.1:443', 'ETIMEDOUT', config, {});
+    const mapper = client() as unknown as { handleError: (e: unknown) => never };
+    let error: unknown;
+    try { mapper.handleError(tcp); } catch (e) { error = e; }
+    expect((error as Error).message).toMatch(/Cannot connect to the bConnect API/);
+  });
+
   it('a refused connection still says "Cannot connect"', async () => {
     const server = http.createServer();
     const port = await new Promise<number>((r) => server.listen(0, '127.0.0.1', () => r((server.address() as AddressInfo).port)));
@@ -103,7 +115,7 @@ describe('failure messages', () => {
   });
 
   describe('retries (BCONNECT_MAX_RETRIES=2)', () => {
-    const retrying = () => client({ maxRetries: 2, retryDelay: 1, timeout: 300 });
+    const retrying = (extra: Partial<BConnectConfig> = {}) => client({ maxRetries: 2, retryDelay: 1, timeout: 800, ...extra });
     const status = (code: number) => () => new HttpResponse(null, { status: code });
 
     it.each([502, 503, 504])('a GET answered %i is retried and then succeeds', async (code) => {
@@ -128,6 +140,31 @@ describe('failure messages', () => {
       replies = [status(code), status(code), status(code)];
       expect(await outcome(retrying().client.request({ method: 'GET', url: '/endpoints/v2.0/Endpoints' }))).not.toBeNull();
       expect(sent).toBe(1);
+    });
+
+    it('keeps the typed API error when the retries run out (status, message, no "Request error")', async () => {
+      replies = [status(503), status(503), status(503)];
+      const error = await outcome(retrying().client.request({ method: 'GET', url: '/endpoints/v2.0/Endpoints' }));
+      expect(sent).toBe(3);
+      expect(error).toBeInstanceOf(BConnectApiError);
+      expect((error as BConnectApiError).status).toBe(503);
+      expect(error?.message).toBe('bConnect API error (HTTP 503).');
+    });
+
+    it('keeps the named timeout when every try times out', async () => {
+      replies = [1, 2, 3].map(() => async () => { await delay('infinite'); return HttpResponse.json({}); });
+      const error = await outcome(retrying().client.request({ method: 'GET', url: '/endpoints/v2.0/Endpoints' }));
+      expect(error).toBeInstanceOf(BConnectConnectionError);
+      expect(error?.message).toMatch(/^The bConnect API didn't answer within 0\.8 s/);
+    }, 10_000);
+
+    it('a success after retries is processed once: one audit response entry', async () => {
+      const entries: AuditLogEntry[] = [];
+      replies = [status(503), status(503)];
+      const audited = retrying({ auditLog: { level: 'all', logHandler: (entry) => entries.push(entry) } });
+      expect(await outcome(audited.client.request({ method: 'GET', url: '/endpoints/v2.0/Endpoints' }))).toBeNull();
+      expect(sent).toBe(3);
+      expect(entries.filter((e) => e.statusCode === 200)).toHaveLength(1);
     });
 
     it.each(['POST', 'PATCH', 'PUT', 'DELETE'])('a %s is sent exactly once, on 503 and on a network error', async (method) => {

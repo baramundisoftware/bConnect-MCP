@@ -73,8 +73,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New settings `BCONNECT_TIMEOUT_MS` and `BCONNECT_MAX_RETRIES`** (#162). The request timeout
   (default 30000 ms, 1000 to 600000) and retries (default 0, up to 5) can be set in every server
   and the gateway. Only read requests are retried, and only after a network error, a timeout or
-  HTTP 502/503/504; a write is never sent twice, and 4xx, 429 and 500 aren't retried. An invalid
-  value stops the server with a message naming the variable.
+  HTTP 502/503/504; a write is never sent twice, and 4xx, 429 and 500 aren't retried. A read can
+  then take up to (retries + 1) × the timeout. An invalid value stops the server with a message
+  naming the variable (in the gateway, every tool call reports it).
 - **`list_windows_endpoints_by_logical_group` takes `includeSubfolders`** instead of `includeSubGroups`,
   which bConnect never read (#170).
 - **`list_unmanaged_endpoints` takes no arguments**: its route declares no paging or filters (#186).
