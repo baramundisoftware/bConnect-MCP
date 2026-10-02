@@ -62,6 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **`get_entra_id_data` takes the Entra ID device ID** (`deviceId`) instead of the bMS endpoint ID;
+  `link_entra_id_data` takes `entraIdDeviceId`, `entraIdTenantId` and `entraIdUserId` instead of
+  `deviceId`. The old forms never reached a working bConnect operation.
 - **Renamed or replaced arguments on create tools** (the old forms never produced a valid request):
   enrollment takes `enrollmentMailAddress` (was `emailRecipient`); `create_variable_definition` takes
   `category`, `scopes`, `type` and `comment` (was `dataType`, `description`); `create_network_endpoint`,
@@ -119,6 +122,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Entra ID tools work.** `get_entra_id_data` reads by Entra ID device ID from the route bConnect
+  provides, and `link_entra_id_data` sends the device, tenant and user IDs bConnect expects. The
+  descriptions say bConnect marks these operations as temporary and meant for mobile devices.
 - **Create and enrollment tools send what bConnect accepts.** Windows, Linux, network and industrial
   endpoint creates, maintenance-window creates, Windows/Mac enrollment, `create_asset`,
   `create_variable_definition`, `create_software_bundle` and `add_application_to_bundle` declare the
