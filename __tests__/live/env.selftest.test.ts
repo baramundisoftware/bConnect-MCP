@@ -112,6 +112,16 @@ describe('live env: isolated', () => {
       expect(() => loadLiveConfig({ root: ROOT, file: envFile('shell-tls.env', [BASE]), shell: { [key]: '1' } })).toThrow(new RegExp(key));
     });
 
+  it('points to the CA file only for the variables that set certificates', () => {
+    const message = (key: string): string => {
+      try { loadLiveConfig({ root: ROOT, file: envFile('msg.env', [BASE]), shell: { [key]: '1' } }); return ''; } catch (e) { return String(e); }
+    };
+    expect(message('SSL_CERT_FILE')).toMatch(/BCONNECT_CA_CERT_PATH/);
+    expect(message('NODE_EXTRA_CA_CERTS')).toMatch(/BCONNECT_CA_CERT_PATH/);
+    expect(message('NODE_USE_ENV_PROXY')).not.toMatch(/BCONNECT_CA_CERT_PATH/);
+    expect(message('NODE_OPTIONS')).not.toMatch(/BCONNECT_CA_CERT_PATH/);
+  });
+
   it('gives spawned servers the forced values and none of the trust or proxy variables from the shell', () => {
     const config = loadLiveConfig({ root: ROOT, file: envFile('child.env', [BASE]), shell: {} });
     const dirty = {

@@ -104,7 +104,8 @@ export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS
   }
   for (const key of SHELL_REFUSED) {
     if (shell[key]) {
-      throw new LiveConfigError(`${key} is set in the shell; it can change the trust store or the proxy while the report says "verified", and this process can't drop it. Unset it; put the CA in BCONNECT_CA_CERT_PATH in the env file`);
+      const hint = /CERT/.test(key) ? '; to trust an internal CA, set BCONNECT_CA_CERT_PATH in the env file' : '';
+      throw new LiveConfigError(`${key} is set in the shell. Node reads it at startup, so this process can't drop it, and it can change the trust store or the proxy while the report says "verified". Unset it for the live run${hint}`);
     }
   }
   const env: Record<string, string> = {};

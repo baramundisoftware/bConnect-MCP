@@ -70,8 +70,13 @@ servers refuse it unless `BCONNECT_ALLOW_INSECURE_HTTP=true`, and the report the
 
    The host name must match the certificate. The file must not set
    `ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`, `BCONNECT_SKIP_CONNECTIVITY_CHECK` or
-   `MCP_TRANSPORT`; the run refuses it. Unset `NODE_EXTRA_CA_CERTS` in the shell;
-   the run refuses that too, because the test process can't drop it.
+   `MCP_TRANSPORT`; the run refuses it.
+
+   Unset these in the shell: `NODE_EXTRA_CA_CERTS`, `NODE_OPTIONS`, `SSL_CERT_FILE`,
+   `SSL_CERT_DIR` and `NODE_USE_ENV_PROXY`. They can change Node's trust store or
+   proxy, and Node reads them at startup, so the test process can't drop them; the
+   run refuses to start while one is set. A debug terminal (e.g. in VS Code) often
+   sets `NODE_OPTIONS`: run the tier from a plain Git Bash.
 
 6. **Run** in Git Bash: `npm run test:live`.
 
