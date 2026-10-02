@@ -31,4 +31,4 @@ const guard = createGuard({
     if (response.status >= 300 && response.status < 400) write(request, `redirect (${response.status})`);
   },
 });
-guard.server.listen({ onUnhandledRequest: 'error' });
+guard.start();

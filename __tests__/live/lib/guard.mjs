@@ -7,6 +7,7 @@
  * shared core, the same list the client's own gate uses) and every redirect is
  * refused and recorded.
  */
+import { syncBuiltinESMExports } from 'node:module';
 import { isSecretRoute } from '@bconnect/mcp-core';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse, passthrough } from 'msw';
@@ -50,5 +51,21 @@ export function createGuard({ origin, onRequest, onResponse }) {
     }
     onResponse?.(request, response);
   });
-  return { server, refused };
+  return {
+    server,
+    refused,
+    /**
+     * Install the guard. MSW patches the CommonJS `http`/`https` modules; named ESM
+     * imports (`import { request } from 'node:http'`) keep the original functions
+     * until the builtin ESM exports are resynced.
+     */
+    start() {
+      server.listen({ onUnhandledRequest: 'error' });
+      syncBuiltinESMExports();
+    },
+    stop() {
+      server.close();
+      syncBuiltinESMExports();
+    },
+  };
 }

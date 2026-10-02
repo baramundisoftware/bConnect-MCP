@@ -223,7 +223,7 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
   beforeAll(async () => {
     expect(RELEASES).toContain(RELEASE);
     Object.assign(process.env, config.env);
-    guard.server.listen({ onUnhandledRequest: 'error' });
+    guard.start();
     for (const server of SERVERS) {
       const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
       tables.set(server, mod.TOOL_OPERATIONS);
@@ -233,7 +233,7 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
 
   afterAll(async () => {
     for (const conn of conns.values()) await conn.close();
-    guard.server.close();
+    guard.stop();
     process.env = saved;
     writeReport();
   });

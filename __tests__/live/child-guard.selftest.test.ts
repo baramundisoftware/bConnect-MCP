@@ -76,6 +76,19 @@ describe('guard in a spawned process', () => {
     ]);
   });
 
+  it('refuses and logs a request sent through a named ESM import of node:http', async () => {
+    const log = await underGuard('named-import', [
+      "import { request } from 'node:http';",
+      'await new Promise((resolve) => {',
+      `  const req = request('${base}/endpoints/v2.0/Endpoints', { method: 'DELETE' }, (res) => { res.resume(); resolve(); });`,
+      "  req.on('error', resolve);",
+      '  req.end();',
+      '});',
+    ]);
+    expect(hits).toEqual([]);
+    expect(log).toEqual([{ method: 'DELETE', path: '/bconnect/endpoints/v2.0/Endpoints', query: '', refused: 'method DELETE' }]);
+  });
+
   it('passes a GET, refuses a POST, and logs both', async () => {
     const log = await underGuard('get-post', [
       `await axios.get('${base}/endpoints/v2.0/Endpoints', { params: { PageSize: 1 } });`,

@@ -3,7 +3,7 @@
  * Requests go through axios, as the servers' do (including its redirect handling).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { createServer, type Server } from 'node:http';
+import { createServer, request as namedRequest, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import axios from 'axios';
 import { createGuard } from './lib/guard.mjs';
@@ -33,9 +33,9 @@ describe('live request guard', () => {
   let guard: ReturnType<typeof createGuard>;
   beforeAll(() => {
     guard = createGuard({ origin });
-    guard.server.listen({ onUnhandledRequest: 'error' });
+    guard.start();
   });
-  afterAll(() => guard.server.close());
+  afterAll(() => guard.stop());
   beforeEach(() => {
     guard.refused.length = 0;
     hits.length = 0;
@@ -52,6 +52,21 @@ describe('live request guard', () => {
     await expect(axios.request({ method, url: `${origin}/bconnect/endpoints/v2.0/Endpoints`, data: {} })).rejects.toThrow();
     expect(hits).toEqual([]);
     expect(guard.refused).toEqual([{ method, path: '/bconnect/endpoints/v2.0/Endpoints', reason: `method ${method}` }]);
+  });
+
+  it('refuses a request sent through a named ESM import of node:http', async () => {
+    // A binding imported before the guard started; MSW patches only the CommonJS module.
+    const outcome = await new Promise<string>((resolve) => {
+      const req = namedRequest(`${origin}/bconnect/endpoints/v2.0/Endpoints`, { method: 'DELETE' }, (res) => {
+        res.resume();
+        resolve(`answered ${res.statusCode}`);
+      });
+      req.on('error', () => resolve('refused'));
+      req.end();
+    });
+    expect(outcome).toBe('refused');
+    expect(hits).toEqual([]);
+    expect(guard.refused).toEqual([{ method: 'DELETE', path: '/bconnect/endpoints/v2.0/Endpoints', reason: 'method DELETE' }]);
   });
 
   it('refuses another origin', async () => {
