@@ -6,7 +6,7 @@
  * output carries no credentials, host or object IDs. The published summary
  * carries only counts, tool names, statuses and finding classes.
  */
-import type { SchemaFinding } from '../../lib/response-schema.js';
+import type { SchemaFinding } from '../../lib/spec-validator.js';
 import { LiveConfigError } from './env.js';
 import type { Profile } from './profile.js';
 

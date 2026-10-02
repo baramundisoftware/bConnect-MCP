@@ -37,7 +37,7 @@ import { brotliDecompressSync, gunzipSync, inflateSync } from 'node:zlib';
 import { ROOT, SERVERS, connect, domainOf, type ConnectedServer, type JsonSchema } from '../lib/exerciser.js';
 import { RELEASES, findOperation, loadOperations, type ApiOperation, type Release } from '../lib/spec.js';
 import { operationIn } from '../lib/conformance.js';
-import { createResponseValidator, type SchemaFinding } from '../lib/response-schema.js';
+import { specValidator, type SchemaFinding, type SpecValidator } from '../lib/spec-validator.js';
 import { checkReachable, childEnv, loadLiveConfig } from './lib/env.js';
 import { assertExercised, sanitise, sanitisedSummary, type ToolRun } from './lib/report.js';
 import { createGuard } from './lib/guard.mjs';
@@ -194,7 +194,7 @@ function argumentsFor(tool: { inputSchema: JsonSchema }, op: ApiOperation): Reco
 }
 
 async function exercise(server: string, conn: ConnectedServer, tool: ConnectedServer['tools'][number],
-  ops: ApiOperation[], args: Record<string, unknown>, validator: ReturnType<typeof createResponseValidator>): Promise<ToolRun> {
+  ops: ApiOperation[], args: Record<string, unknown>, validator: SpecValidator): Promise<ToolRun> {
   let result: Awaited<ReturnType<ConnectedServer['call']>>;
   let started = Date.now();
   // A throttled call (429) is retried after a pause, not counted as a failure.
@@ -212,7 +212,8 @@ async function exercise(server: string, conn: ConnectedServer, tool: ConnectedSe
   const schema: SchemaFinding[] = [];
   for (const e of exchanges) {
     if (!e.op || e.status < 200 || e.status > 299) continue;
-    schema.push(...validator.check(e.op, e.body));
+    // The shared validator throws for an operation without a 2xx JSON schema; those have nothing to check.
+    if (e.op.okStatus) schema.push(...validator.response(e.op, e.body));
     const ids = itemsOf(e.body).map((i) => (i as Record<string, unknown>)?.id).filter((id): id is string => typeof id === 'string');
     if (ids.length) idsByRoute.set(routeKey(e.op), ids);
     answers.push({ domain: e.op.domain, path: e.op.path, body: e.body });
@@ -230,7 +231,7 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
   const saved = { ...process.env };
   const conns = new Map<string, ConnectedServer>();
   const tables = new Map<string, Readonly<Record<string, readonly string[]>>>();
-  const validator = createResponseValidator();
+  const validator = specValidator(RELEASE);
 
   beforeAll(async () => {
     expect(RELEASES).toContain(RELEASE);
