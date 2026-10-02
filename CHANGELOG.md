@@ -62,6 +62,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **Write tools say they're unverified.** Until a write tool has been checked against a live
+  bMS, its description ends with "Not yet verified against a live bMS.", so an AI assistant can
+  tell you before it changes anything. The note disappears tool by tool as live checks are
+  recorded.
 - **`update_network_endpoint`, `update_industrial_endpoint` and the maintenance-window updates
   take named fields** instead of an untyped `updateData` / `maintenanceWindowData` object, which
   was never sent in a form bConnect accepts.
