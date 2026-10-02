@@ -14,7 +14,7 @@
  */
 import { STATUS_CODES } from "node:http";
 import { McpError } from "@modelcontextprotocol/sdk/types.js";
-import { BConnectApiError } from "./api-errors.js";
+import { BConnectApiError, BConnectRedirectError } from "./api-errors.js";
 import { DOCUMENTED_ROUTES, ERROR_MEANINGS, type DocumentedRoute } from "./error-meanings.js";
 
 export interface ToolErrorResult {
@@ -57,9 +57,9 @@ for (const entry of ERROR_MEANINGS) {
  * one by one, a `{placeholder}` matches any segment, and the template with the
  * most literal segments wins (/AssetTypes/Folders over /AssetTypes/{id}).
  */
-function documentedRoute(release: string, method: string, path: string): DocumentedRoute | undefined {
+export function documentedRoute(release: string, method: string, path: string): DocumentedRoute | undefined {
   const [domain = "", ...segments] = path.split("?")[0].split("/").filter(Boolean);
-  const candidates = ROUTES.get(`${release} ${method.toUpperCase()} ${domain.toLowerCase()} ${segments.length}`) ?? [];
+  const candidates = ROUTES.get(`${release.toUpperCase()} ${method.toUpperCase()} ${domain.toLowerCase()} ${segments.length}`) ?? [];
   let best: { route: DocumentedRoute; literals: number } | undefined;
   for (const route of candidates) {
     let literals = 0;
@@ -76,7 +76,7 @@ function documentedRoute(release: string, method: string, path: string): Documen
 /** The meaning the spec of `release` documents for `status` on the operation `path` went to. */
 export function documentedErrorMeaning(release: string, method: string, path: string, status: number): string | undefined {
   const route = documentedRoute(release, method, path);
-  return route && MEANINGS.get(`${release} ${route.method} ${route.domain}${route.path} ${status}`);
+  return route && MEANINGS.get(`${release.toUpperCase()} ${route.method} ${route.domain}${route.path} ${status}`);
 }
 
 function apiErrorText(error: BConnectApiError, release: string): string {
@@ -105,6 +105,9 @@ export function toolErrorResult(error: unknown, release: string): ToolErrorResul
   let text: string;
   if (error instanceof BConnectApiError) {
     text = apiErrorText(error, release);
+  } else if (error instanceof BConnectRedirectError) {
+    text = "bConnect answered with a redirect to another address. Redirects are not followed, so credentials " +
+      "only go to the configured host; the operator needs to set BCONNECT_BASE_URL to the final address.";
   } else if (error instanceof Error) {
     text = error.message;
   } else {

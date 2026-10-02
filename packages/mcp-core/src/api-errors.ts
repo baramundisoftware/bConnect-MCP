@@ -37,3 +37,14 @@ export class BConnectConnectionError extends Error {
     this.name = "BConnectConnectionError";
   }
 }
+
+/**
+ * bConnect answered with a redirect, which the client never follows. `message`
+ * names the target's origin for the operator; the model gets a text without it.
+ */
+export class BConnectRedirectError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "BConnectRedirectError";
+  }
+}

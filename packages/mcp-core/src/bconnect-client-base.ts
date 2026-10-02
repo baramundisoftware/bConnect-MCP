@@ -9,7 +9,7 @@ import axios, { AxiosInstance, AxiosError, CreateAxiosDefaults, InternalAxiosReq
 import axiosRetry from "axios-retry";
 import https from "https";
 import tls, { PeerCertificate } from "node:tls";
-import { BConnectApiError, BConnectConnectionError } from "./api-errors.js";
+import { BConnectApiError, BConnectConnectionError, BConnectRedirectError } from "./api-errors.js";
 import { cleanModelText } from "./model-text.js";
 
 /**
@@ -175,17 +175,25 @@ function redirectOrigin(error: AxiosError): string {
   }
 }
 
-/** Request path relative to the base URL, without the query string. */
-function relativeRequestPath(url: string | undefined): string {
+/**
+ * Request path relative to the base URL, without query string or fragment. An
+ * absolute URL loses the base URL's origin and path prefix; one outside the base
+ * URL gives a placeholder instead of naming it.
+ */
+function relativeRequestPath(url: string | undefined, baseUrl: string): string {
   const raw = url ?? "";
-  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) {
-    try {
-      return new URL(raw).pathname;
-    } catch {
-      return "";
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) {return raw.split("?")[0].split("#")[0];}
+  try {
+    const target = new URL(raw);
+    const base = new URL(baseUrl);
+    const prefix = base.pathname.replace(/\/+$/, "");
+    if (target.origin === base.origin && (target.pathname === prefix || target.pathname.startsWith(prefix + "/"))) {
+      return target.pathname.slice(prefix.length);
     }
+  } catch {
+    // Unparsable: fall through to the placeholder.
   }
-  return raw.split("?")[0].split("#")[0];
+  return "(an address outside BCONNECT_BASE_URL)";
 }
 
 /** `text` with every occurrence of `needle` (any case) replaced by `replacement`. */
@@ -204,7 +212,8 @@ function replaceAllIgnoreCase(text: string, needle: string, replacement: string)
 
 /**
  * bConnect's problem text (RFC 7807 title, detail and up to five validation
- * errors), cleaned for the model, with the configured host removed. `type` and
+ * errors), cleaned for the model, with the configured host removed (best
+ * effort: a bare single-label host name and percent-encoded forms stay). `type` and
  * `instance` are left out: they can carry URLs. Anything that isn't a problem
  * object (an HTML page from a proxy, plain text, an array) gives undefined.
  */
@@ -214,8 +223,10 @@ function problemText(data: unknown, baseUrl: string): string | undefined {
   const detail = Reflect.get(data, "detail");
   const errors: unknown = Reflect.get(data, "errors");
   const parts: string[] = [];
-  if (typeof title === "string" && title.trim()) {parts.push(title.trim());}
-  if (typeof detail === "string" && detail.trim() && detail.trim() !== title) {parts.push(detail.trim());}
+  const cleanTitle = typeof title === "string" ? title.trim() : "";
+  const cleanDetail = typeof detail === "string" ? detail.trim() : "";
+  if (cleanTitle) {parts.push(cleanTitle);}
+  if (cleanDetail && cleanDetail !== cleanTitle) {parts.push(cleanDetail);}
   if (errors && typeof errors === "object" && !Array.isArray(errors)) {
     const fields = Object.entries(errors).slice(0, 5).map(([field, messages]) => {
       const list: unknown[] = Array.isArray(messages) ? messages : [messages];
@@ -224,7 +235,9 @@ function problemText(data: unknown, baseUrl: string): string | undefined {
     if (fields.length > 0) {parts.push(fields.join("; "));}
   }
   if (parts.length === 0) {return undefined;}
-  let text = parts.join(": ");
+  // Clean first (without shortening), so a host split by an invisible character
+  // is whole again when it is removed; shorten last.
+  let text = cleanModelText(parts.join(": "), Number.POSITIVE_INFINITY);
   try {
     const url = new URL(baseUrl);
     for (const needle of [baseUrl.replace(/\/+$/, ""), url.origin, url.host, url.hostname.includes(".") ? url.hostname : ""]) {
@@ -592,7 +605,7 @@ export class BConnectClientBase {
       const status = error.response.status;
 
       if (status >= 300 && status < 400) {
-        throw new Error(
+        throw new BConnectRedirectError(
           `bConnect answered with a redirect to ${redirectOrigin(error)}. ` +
           "Set BCONNECT_BASE_URL to the final address; redirects are not followed, " +
           "so credentials are only ever sent to the configured host."
@@ -602,7 +615,7 @@ export class BConnectClientBase {
       const details = {
         status,
         method: (error.config?.method ?? "GET").toUpperCase(),
-        path: relativeRequestPath(error.config?.url),
+        path: relativeRequestPath(error.config?.url, this.config.baseUrl),
         problemText: problemText(error.response.data, this.config.baseUrl),
       };
       // The message is the short operator text (audit log, startup probe);

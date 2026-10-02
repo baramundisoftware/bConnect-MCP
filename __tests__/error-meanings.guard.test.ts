@@ -14,6 +14,7 @@
 import { STATUS_CODES } from 'node:http';
 import { describe, expect, it } from 'vitest';
 import { DOCUMENTED_ROUTES, ERROR_MEANINGS } from '../packages/mcp-core/src/error-meanings.js';
+import { documentedRoute } from '../packages/mcp-core/src/tool-errors.js';
 import { RELEASES, loadOperations, type Schema } from './lib/spec.js';
 
 const REGENERATE = 'run `node scripts/generate-error-meanings.mjs` and commit packages/mcp-core/src/error-meanings.ts';
@@ -67,6 +68,20 @@ describe('error meanings come from the specs', () => {
       .sort();
     const expected = RELEASES.flatMap((release) => loadOperations(release).map((op) => `${release} ${op.method} /${op.domain}${op.path}`)).sort();
     expect(actual).toEqual(expected);
+  });
+
+  it('a request to each operation resolves to that operation, not to a look-alike route', () => {
+    const wrong: string[] = [];
+    for (const release of RELEASES) {
+      for (const op of loadOperations(release)) {
+        const concrete = `/${op.domain}${op.path.replace(/\{[^}]+\}/g, '00000000-0000-4000-8000-000000000001')}`;
+        const route = documentedRoute(release, op.method, concrete);
+        if (route?.domain !== op.domain || route.path !== op.path) {
+          wrong.push(`${release} ${op.method} ${concrete} -> ${route ? `/${route.domain}${route.path}` : 'none'}`);
+        }
+      }
+    }
+    expect(wrong).toEqual([]);
   });
 
   it('each entry is one clean line, keyed by an upper-case method and a spec path template', () => {

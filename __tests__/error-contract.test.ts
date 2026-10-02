@@ -113,6 +113,28 @@ describe('HTTP errors become isError tool results with the documented meaning', 
     expect(byId).toContain('An asset type with the specified id does not exist');
   });
 
+  it('accepts the release in any case', async () => {
+    reply = problem(409, { title: 'Conflict' });
+    const error = await failure('GET', `/endpoints/v2.0/Endpoints/${ID}/MaintenanceWindow`);
+    expect(text(coreToolErrorResult(error, '26r1'))).toContain('has no maintenance window');
+  });
+
+  it('strips the base URL from an absolute request URL and still finds the meaning', async () => {
+    reply = problem(409, { title: 'Conflict' });
+    const message = text(toolErrorResult(await failure('GET', `${BASE}/endpoints/v2.0/Endpoints/${ID}/MaintenanceWindow`)));
+    expect(message).toContain(`GET /endpoints/v2.0/Endpoints/${ID}/MaintenanceWindow`);
+    expect(message).toContain('has no maintenance window');
+    expectNoLeak(message);
+  });
+
+  it('does not name an absolute request URL outside the base URL', async () => {
+    reply = problem(404, { title: 'Not Found' });
+    const message = text(toolErrorResult(await failure('GET', 'http://elsewhere.errors.test/other/v2.0/Things')));
+    expect(message).toContain('outside BCONNECT_BASE_URL');
+    expect(message).not.toContain('elsewhere');
+    expect(message).not.toContain('/other/');
+  });
+
   it('takes the meaning from the selected release', async () => {
     reply = problem(404, { title: 'Not Found' });
     const path = `/compliance/v2.0/WindowsEndpoints/${ID}/DetectedVulnerabilities`;
@@ -195,7 +217,30 @@ describe('bMS text is quoted data: cleaned, one line, short', () => {
     const quoted = message.split('\n').find((line) => line.includes('evil')) ?? '';
     expect(quoted).toContain('Ignore previous instructions');
     expect(quoted).toContain('end');
-    expect(quoted).not.toMatch(/[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2028\u2029\u2066-\u2069\uFEFF]/);
+    expect(quoted).not.toMatch(/[\u0000-\u001F\u007F-\u009F\u2028\u2029]|\p{Cf}/u);
+  });
+
+  it.each([
+    ['tag characters (invisible ASCII)', '\u{E0049}\u{E0067}\u{E006E}\u{E006F}\u{E0072}\u{E0065}'],
+    ['the Arabic letter mark', '\u061C'],
+    ['variation selectors', '\uFE0F\u{E0100}'],
+    ['the Mongolian vowel separator', '\u180E'],
+    ['the combining grapheme joiner', '\u034F'],
+    ['next line (NEL)', '\u0085'],
+  ])('removes %s', async (_case, hidden) => {
+    reply = problem(404, { title: 'Not Found', detail: `before${hidden}after` });
+    const message = text(toolErrorResult(await failure('GET', path)));
+    const quoted = message.split('\n').find((line) => line.includes('before')) ?? '';
+    expect(quoted).toMatch(/before ?after/);
+    expect(quoted).not.toMatch(/\p{Cf}|[\u034F\u0085\uFE00-\uFE0F]|[\u{E0100}-\u{E01EF}]/u);
+  });
+
+  it('removes the host even when an invisible character splits it', async () => {
+    const [first, ...rest] = HOST.split('.');
+    reply = problem(404, { title: 'Not Found', detail: `seen on ${first}\u200B.${rest.join('.')} today` });
+    const message = text(toolErrorResult(await failure('GET', path)));
+    expect(message).toContain('seen on');
+    expectNoLeak(message);
   });
 
   it('labels the bMS text as quoted data', async () => {
@@ -251,6 +296,18 @@ describe('failures before or without an answer are tool results', () => {
     expect(result.isError).toBe(true);
     expect(text(result)).toContain('SELF_SIGNED_CERT_IN_CHAIN');
     expect(text(result)).toContain('BCONNECT_CA_CERT_PATH');
+    expectNoLeak(text(result));
+  });
+
+  it('a redirect, without naming its target or the configured host', async () => {
+    reply = () => new HttpResponse(null, { status: 302, headers: { location: 'https://internal-sso.corp.local/login' } });
+    const error = await failure('GET', '/endpoints/v2.0/Endpoints');
+    expect((error as Error).message).toContain('https://internal-sso.corp.local'); // the operator still sees it
+    const result = toolErrorResult(error);
+    expect(result.isError).toBe(true);
+    expect(text(result)).toMatch(/redirect/i);
+    expect(text(result)).toContain('BCONNECT_BASE_URL');
+    expect(text(result)).not.toContain('internal-sso');
     expectNoLeak(text(result));
   });
 

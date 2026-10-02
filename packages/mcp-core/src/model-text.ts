@@ -8,21 +8,26 @@
 
 const DEFAULT_MAX_LENGTH = 300;
 
-/** True for a code point that is removed outright. */
-function isHidden(cp: number): boolean {
+const FORMAT_CHARACTER = /\p{Cf}/u;
+
+/**
+ * True for a code point that is removed outright: every Unicode format character
+ * (soft hyphen, zero-width characters, bidi marks, embeddings, overrides and
+ * isolates, Arabic letter mark, BOM, tag characters U+E0000-E007F), the
+ * combining grapheme joiner and the variation selectors.
+ */
+function isHidden(ch: string, cp: number): boolean {
   return (
-    cp === 0x00ad ||                       // soft hyphen
-    (cp >= 0x200b && cp <= 0x200f) ||      // zero-width space/joiners, LRM, RLM
-    (cp >= 0x202a && cp <= 0x202e) ||      // bidi embeddings and overrides
-    (cp >= 0x2060 && cp <= 0x2064) ||      // word joiner, invisible operators
-    (cp >= 0x2066 && cp <= 0x2069) ||      // bidi isolates
-    cp === 0xfeff                          // zero-width no-break space / BOM
+    FORMAT_CHARACTER.test(ch) ||
+    cp === 0x034f ||                       // combining grapheme joiner
+    (cp >= 0xfe00 && cp <= 0xfe0f) ||      // variation selectors
+    (cp >= 0xe0100 && cp <= 0xe01ef)       // variation selectors supplement
   );
 }
 
 /** True for a code point that becomes a space (C0/C1 controls, line and paragraph separators). */
 function isBreaking(cp: number): boolean {
-  return cp <= 0x1f || (cp >= 0x7f && cp <= 0x9f) || cp === 0x2028 || cp === 0x2029;
+  return cp <= 0x1f || (cp >= 0x7f && cp <= 0x9f) || cp === 0x2028 || cp === 0x2029; // C1 includes NEL U+0085
 }
 
 /**
@@ -30,11 +35,11 @@ function isBreaking(cp: number): boolean {
  * line breaks turned into spaces, whitespace collapsed, at most `maxLength`
  * characters (the last one an ellipsis when shortened).
  */
-export function cleanModelText(text: string, maxLength = DEFAULT_MAX_LENGTH): string {
+export function cleanModelText(text: string, maxLength: number = DEFAULT_MAX_LENGTH): string {
   let out = "";
   for (const ch of text) {
     const cp = ch.codePointAt(0) ?? 0;
-    if (isHidden(cp)) {continue;}
+    if (isHidden(ch, cp)) {continue;}
     out += isBreaking(cp) ? " " : ch;
   }
   out = out.replace(/\s+/g, " ").trim();
