@@ -34,7 +34,11 @@ export function assertExercised(counts: { startups: number; calls: number }): vo
 
 const GUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
 
-/** Text fit for the console: credentials, the bMS host and object IDs replaced. */
+/**
+ * Console text with credentials, the bMS host and object IDs replaced. The console
+ * stays local: it also carries server stderr (local paths, ports). Only the summary
+ * is for publishing.
+ */
 export function sanitise(text: string, run: { hostname: string; secrets: string[] }): string {
   let out = run.secrets.reduce((acc, secret) => acc.split(secret).join('***'), text);
   if (run.hostname) out = out.split(run.hostname).join('<bms>');

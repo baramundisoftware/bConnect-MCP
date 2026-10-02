@@ -284,5 +284,5 @@ function writeReport(): void {
     at: new Date().toISOString(), node: process.version, platform: process.platform, profile, runs: classified,
   }, null, 2));
   writeFileSync(join(dir, 'live-bms-summary.md'), summary);
-  console.log(`${summary}\nLocal report (not for publishing): reports/live-bms.json\nPublishable summary: reports/live-bms-summary.md`);
+  console.log(`${summary}\nPublish only reports/live-bms-summary.md. This console output and reports/live-bms.json stay local.`);
 }

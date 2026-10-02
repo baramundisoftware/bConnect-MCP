@@ -149,11 +149,13 @@ A failure stays a failure. A supported release with no test installation, e.g.
 
 ## Output
 
-| File | Content | Share? |
+| Output | Content | Share? |
 | --- | --- | --- |
-| console | sanitised summary; no credentials, host or object IDs | yes |
-| `reports/live-bms-summary.md` | counts, tool names, statuses, finding classes, environment | yes: PRs, issues, release notes |
+| `reports/live-bms-summary.md` | counts, tool names, statuses, finding classes, environment | **yes**: the only output for PRs, issues and release notes |
+| console | the summary, plus failure details and the last lines each server wrote to stderr (stack traces with local paths, the bMS port, redirect targets). Credentials, the bMS host name and object IDs are replaced, nothing else | no: read it locally |
 | `reports/live-bms.json` | everything, including the host, arguments, requests and tool errors | no: stays on the machine (git-ignored) |
+
+Publish only `reports/live-bms-summary.md`. Don't paste console output.
 
 ## Self-tests
 
