@@ -131,7 +131,7 @@ export interface BConnectConfig {
   auditLog?: {
     level?: AuditLevel;       // Audit level: 'all', 'write', 'security', 'none' (default: 'none')
     includeParameters?: boolean; // Include request parameters in audit log (default: false)
-    logHandler?: (entry: AuditLogEntry) => void; // Custom log handler (default: console)
+    logHandler?: (entry: AuditLogEntry) => void; // Custom log handler (default: one line per entry on stderr)
   };
 
   // Response Caching Configuration

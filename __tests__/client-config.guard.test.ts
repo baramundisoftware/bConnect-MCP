@@ -18,7 +18,10 @@
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
+import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import type { BConnectConfig } from '@bconnect/mcp-core';
@@ -631,3 +634,119 @@ describe('startup without credentials', () => {
   });
 });
 
+const AUDIT_INVALID = (value: string) => `BCONNECT_AUDIT_LEVEL "${value}" isn't valid. Use one of: none, security, write, all.`;
+
+describe('startup with an unknown audit level', () => {
+  it.each(SERVERS)('%s exits 1 with one line naming the value and the valid levels', (server) => {
+    const run = startServer(server, { BCONNECT_API_KEY: 'guard-key', BCONNECT_AUDIT_LEVEL: 'writes' });
+    expect(run.status).toBe(1);
+    expect(run.stdout).toBe('');
+    expect(run.stderr.trim()).toBe(`${server}: ${AUDIT_INVALID('writes')}`);
+  });
+});
+
+/** Lines on stdout that aren't JSON-RPC 2.0 messages. */
+function nonJsonRpcLines(stdout: string): string[] {
+  return stdout.split(/\r?\n/).filter((line) => line.trim() !== '').filter((line) => {
+    try {
+      return (JSON.parse(line) as { jsonrpc?: unknown }).jsonrpc !== '2.0';
+    } catch {
+      return true;
+    }
+  });
+}
+
+interface StdioSession { stdout: string; stderr: string; requests: string[]; tools: number }
+
+/**
+ * Starts a built server over stdio against a local stand-in for bConnect (plain
+ * http on 127.0.0.1, which the client allows) and runs initialize + tools/list.
+ * The startup check is the request that gets audited.
+ */
+async function stdioSession(server: string, env: Record<string, string>): Promise<StdioSession> {
+  const entry = join(ROOT, server, 'build', 'index.js');
+  const stale = staleBuild(join(ROOT, server), [join(ROOT, 'packages', 'mcp-core', 'src')]);
+  if (stale) throw new Error(`${server}: ${stale}; run npm run build`);
+  const requests: string[] = [];
+  const api = createServer((req, res) => {
+    requests.push(`${req.method} ${req.url}`);
+    res.setHeader('content-type', 'application/json');
+    res.end('[]');
+  });
+  await new Promise<void>((resolve) => api.listen(0, '127.0.0.1', resolve));
+  const { port } = api.address() as AddressInfo;
+  const blank = Object.fromEntries(CLIENT_VARS.map((v) => [v, '']));
+  const child = spawn(process.execPath, [entry], {
+    cwd: dir,
+    env: { PATH: process.env.PATH ?? '', ...blank, BCONNECT_BASE_URL: `http://127.0.0.1:${port}/bconnect`, BCONNECT_API_KEY: 'guard-key', ...env },
+  });
+  let stdout = '';
+  let stderr = '';
+  child.stderr.setEncoding('utf8').on('data', (chunk: string) => { stderr += chunk; });
+  const answered = new Promise<void>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${server}: no tools/list answer within 20 s; stderr: ${stderr}`)), 20_000);
+    child.stdout.setEncoding('utf8').on('data', (chunk: string) => {
+      stdout += chunk;
+      if (/"id":2[,}]/.test(stdout)) { clearTimeout(timer); resolve(); }
+    });
+    child.on('exit', (code) => { clearTimeout(timer); reject(new Error(`${server} exited with ${code}; stderr: ${stderr}`)); });
+    child.on('error', (error) => { clearTimeout(timer); reject(error); });
+  });
+  const send = (message: object) => child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', ...message })}\n`);
+  send({ id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'guard', version: '1' } } });
+  send({ method: 'notifications/initialized' });
+  send({ id: 2, method: 'tools/list' });
+  const closed = once(child, 'close');
+  try {
+    await answered;
+  } finally {
+    child.kill();
+    // stderr is a separate pipe: wait until both pipes are drained before reading it.
+    await closed;
+    api.closeAllConnections();
+    await new Promise<void>((resolve) => api.close(() => resolve()));
+  }
+  const list = stdout.split(/\r?\n/).map((line) => { try { return JSON.parse(line) as { id?: number; result?: { tools?: unknown[] } }; } catch { return undefined; } })
+    .find((message) => message?.id === 2);
+  return { stdout, stderr, requests, tools: list?.result?.tools?.length ?? 0 };
+}
+
+/** What's missing for the session to prove the audit path ran and stayed off stdout. */
+function auditProblems(session: StdioSession): string[] {
+  const problems = nonJsonRpcLines(session.stdout).map((line) => `stdout: ${line}`);
+  if (session.requests.length === 0) problems.push('no request reached the bConnect stand-in, so nothing could be audited');
+  // Audit lines name the path below the base URL (http://127.0.0.1:<port>/bconnect).
+  const probe = session.requests[0]?.split(' ')[1]?.split('?')[0]?.replace(/^\/bconnect(?=\/)/, '');
+  if (probe && !session.stderr.split('\n').some((line) => line.includes('[AUDIT]') && line.includes(probe))) {
+    problems.push(`stderr has no [AUDIT] line for ${probe}`);
+  }
+  return problems;
+}
+
+describe('audit output in stdio mode', () => {
+  it.each(SERVERS)('%s at audit level all: stdout carries only JSON-RPC, the audit line goes to stderr', async (server) => {
+    const session = await stdioSession(server, { BCONNECT_AUDIT_LEVEL: 'all' });
+    expect(auditProblems(session)).toEqual([]);
+    expect(session.tools, 'tools/list must answer with the tool catalogue').toBeGreaterThan(0);
+  }, 30_000);
+
+  it('accepts the level in any case and with surrounding spaces', async () => {
+    const session = await stdioSession('bconnect-groups-mcp', { BCONNECT_AUDIT_LEVEL: ' ALL ' });
+    expect(auditProblems(session)).toEqual([]);
+  }, 30_000);
+
+  describe('self-test', () => {
+    it('reports lines that are not JSON-RPC', () => {
+      expect(nonJsonRpcLines('{"jsonrpc":"2.0","id":1,"result":{}}\r\n[AUDIT] GET /x\n{"id":3}\n\n')).toEqual(['[AUDIT] GET /x', '{"id":3}']);
+    });
+
+    it('reports a session in which nothing reached bConnect, so nothing was audited', async () => {
+      const session = await stdioSession('bconnect-groups-mcp', { BCONNECT_AUDIT_LEVEL: 'all', BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true' });
+      expect(auditProblems(session)).toEqual(['no request reached the bConnect stand-in, so nothing could be audited']);
+    }, 30_000);
+
+    it('reports a request whose audit line is missing', () => {
+      expect(auditProblems({ stdout: '', stderr: 'started\n', requests: ['GET /bconnect/x/v2.0/Y?PageSize=1'], tools: 1 })).toEqual(['stderr has no [AUDIT] line for /x/v2.0/Y']);
+    });
+  });
+});
