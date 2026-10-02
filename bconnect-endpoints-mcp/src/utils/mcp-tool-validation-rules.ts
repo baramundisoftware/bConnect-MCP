@@ -6,6 +6,7 @@
  */
 
 import { ValidationRule, CommonRules } from "@bconnect/mcp-core";
+import { updateRules } from "../update-fields.js";
 
 /**
  * Common pagination parameters used across many tools
@@ -854,13 +855,13 @@ export const TOOL_RULES: Record<string, () => ValidationRule[]> = {
   trigger_intune_installation: EndpointsRules.getPlatformEndpoint,
   unlink_entra_id_data: () => [CommonRules.guid('endpointId')],
   update_android_endpoint: () => [CommonRules.guid('id'), CommonRules.guidOptional('logicalGroupId')],
-  update_industrial_endpoint: EndpointsRules.updateSpecializedEndpoint,
+  update_industrial_endpoint: () => updateRules("update_industrial_endpoint"),
   update_ios_endpoint: () => [CommonRules.guid('id'), CommonRules.guidOptional('logicalGroupId')],
-  update_linux_endpoint: () => [CommonRules.guid('id')],
-  update_logical_group: () => [CommonRules.guid('id')],
-  update_mac_endpoint: () => [CommonRules.guid('id')],
-  update_maintenance_window_for_endpoint: EndpointsRules.updateMaintenanceWindowForEndpoint,
-  update_maintenance_window_for_logical_group: EndpointsRules.updateMaintenanceWindowForLogicalGroup,
-  update_network_endpoint: EndpointsRules.updateSpecializedEndpoint,
-  update_windows_endpoint: () => [CommonRules.guid('id')],
+  update_linux_endpoint: () => updateRules("update_linux_endpoint"),
+  update_logical_group: () => updateRules("update_logical_group"),
+  update_mac_endpoint: () => updateRules("update_mac_endpoint"),
+  update_maintenance_window_for_endpoint: () => updateRules("update_maintenance_window_for_endpoint"),
+  update_maintenance_window_for_logical_group: () => updateRules("update_maintenance_window_for_logical_group"),
+  update_network_endpoint: () => updateRules("update_network_endpoint"),
+  update_windows_endpoint: () => updateRules("update_windows_endpoint"),
 };

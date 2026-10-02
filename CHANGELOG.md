@@ -62,6 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **`update_network_endpoint`, `update_industrial_endpoint` and the maintenance-window updates
+  take named fields** instead of an untyped `updateData` / `maintenanceWindowData` object, which
+  was never sent in a form bConnect accepts.
 - **`create_job_instance` no longer offers `scheduledStartTime`.** The API has no such field; the
   job always started immediately. The description now says so; `endpointId` is required and
   `startIfAlreadyAssigned` is available.
@@ -107,6 +110,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Endpoint and logical-group updates work.** The Windows, Linux, Mac, network and industrial
+  endpoint updates, `update_logical_group` and both maintenance-window updates now offer the
+  fields bConnect lets you change (display name, logical group, comment, host name, IP and MAC,
+  registered user, …) as named arguments, and send them as a JSON Patch. Before, they sent their
+  arguments as a plain object, which bConnect doesn't accept. A call that changes nothing is
+  refused.
 - **Update requests use the content type bConnect declares.** Every PATCH is now sent as
   `application/json-patch+json`, as all PATCH operations in the 25R2 and 26R1 specs require. 22
   update tools (endpoints, assets, OS, server management, variables, job folders, LAPS expiry)

@@ -48,3 +48,15 @@ export function jsonPatchArgument(value: unknown, name: string): JsonPatchOperat
     };
   });
 }
+
+/**
+ * A JSON Patch replacing each field the caller gave. `paths` maps argument
+ * names to the patch path bConnect expects for that route (its spelling can
+ * differ per route, e.g. `/DisplayName` vs `/displayName`). Fields left out are
+ * not touched; an empty result means the call changes nothing.
+ */
+export function patchFromArguments(args: Record<string, unknown>, paths: Record<string, string>): JsonPatchOperation[] {
+  return Object.entries(paths)
+    .filter(([name]) => args[name] !== undefined)
+    .map(([name, path]) => ({ op: "replace", path, value: args[name] }));
+}

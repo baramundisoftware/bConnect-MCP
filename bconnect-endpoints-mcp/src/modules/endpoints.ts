@@ -4,6 +4,7 @@
  * Handles endpoint (device) management operations
  */
 
+import type { JsonPatchOperation } from "@bconnect/mcp-core";
 import type { AxiosInstance } from "axios";
 import type { paths } from "../generated/endpoints-types.js";
 
@@ -44,25 +45,21 @@ type IosEnrollmentResponse = paths["/v2.0/IosEndpoints/{id}/StartEnrollment"]["p
 // Type aliases for Windows Endpoint WRITE operations
 type WindowsEndpointForCreation = paths["/v2.0/WindowsEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type WindowsEndpointCreated = paths["/v2.0/WindowsEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
-type WindowsEndpointUpdate = paths["/v2.0/WindowsEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 type WindowsEndpointUpdated = paths["/v2.0/WindowsEndpoints/{id}"]["patch"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for Linux Endpoint WRITE operations
 type LinuxEndpointForCreation = paths["/v2.0/LinuxEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type LinuxEndpointCreated = paths["/v2.0/LinuxEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
-type LinuxEndpointUpdate = paths["/v2.0/LinuxEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 type LinuxEndpointUpdated = paths["/v2.0/LinuxEndpoints/{id}"]["patch"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for Mac Endpoint WRITE operations
 type MacEndpointForCreation = paths["/v2.0/MacEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type MacEndpointCreated = paths["/v2.0/MacEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
-type MacEndpointUpdate = paths["/v2.0/MacEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 type MacEndpointUpdated = paths["/v2.0/MacEndpoints/{id}"]["patch"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for LogicalGroup WRITE operations
 type LogicalGroupForCreation = paths["/v2.0/LogicalGroups"]["post"]["requestBody"]["content"]["application/json"];
 type LogicalGroupCreated = paths["/v2.0/LogicalGroups"]["post"]["responses"]["201"]["content"]["application/json"];
-type LogicalGroupUpdate = paths["/v2.0/LogicalGroups/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 type LogicalGroupUpdated = paths["/v2.0/LogicalGroups/{id}"]["patch"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for Maintenance Window operations - Phase 3
@@ -404,7 +401,7 @@ export class EndpointsModule {
   /**
    * Update an existing Windows endpoint
    */
-  async updateWindowsEndpoint(id: string, updateData: WindowsEndpointUpdate): Promise<WindowsEndpointUpdated> {
+  async updateWindowsEndpoint(id: string, updateData: JsonPatchOperation[]): Promise<WindowsEndpointUpdated> {
     const response = await this.client.patch<WindowsEndpointUpdated>(
       `${this.basePath}/WindowsEndpoints/${id}`,
       updateData
@@ -460,7 +457,7 @@ export class EndpointsModule {
   /**
    * Update an existing Linux endpoint
    */
-  async updateLinuxEndpoint(id: string, updateData: LinuxEndpointUpdate): Promise<LinuxEndpointUpdated> {
+  async updateLinuxEndpoint(id: string, updateData: JsonPatchOperation[]): Promise<LinuxEndpointUpdated> {
     const response = await this.client.patch<LinuxEndpointUpdated>(
       `${this.basePath}/LinuxEndpoints/${id}`,
       updateData
@@ -495,7 +492,7 @@ export class EndpointsModule {
   /**
    * Update an existing Mac endpoint
    */
-  async updateMacEndpoint(id: string, updateData: MacEndpointUpdate): Promise<MacEndpointUpdated> {
+  async updateMacEndpoint(id: string, updateData: JsonPatchOperation[]): Promise<MacEndpointUpdated> {
     const response = await this.client.patch<MacEndpointUpdated>(
       `${this.basePath}/MacEndpoints/${id}`,
       updateData
@@ -541,7 +538,7 @@ export class EndpointsModule {
   /**
    * Update an existing logical group
    */
-  async updateLogicalGroup(id: string, updateData: LogicalGroupUpdate): Promise<LogicalGroupUpdated> {
+  async updateLogicalGroup(id: string, updateData: JsonPatchOperation[]): Promise<LogicalGroupUpdated> {
     const response = await this.client.patch<LogicalGroupUpdated>(
       `${this.basePath}/LogicalGroups/${id}`,
       updateData
@@ -576,7 +573,7 @@ export class EndpointsModule {
   /**
    * Update a maintenance window for an endpoint
    */
-  async updateMaintenanceWindowForEndpoint(id: string, maintenanceWindowData: Record<string, unknown>): Promise<unknown> {
+  async updateMaintenanceWindowForEndpoint(id: string, maintenanceWindowData: JsonPatchOperation[]): Promise<unknown> {
     const response = await this.client.patch(
       `${this.basePath}/Endpoints/${id}/MaintenanceWindow`,
       maintenanceWindowData
@@ -607,7 +604,7 @@ export class EndpointsModule {
   /**
    * Update a maintenance window for a logical group
    */
-  async updateMaintenanceWindowForLogicalGroup(id: string, maintenanceWindowData: Record<string, unknown>): Promise<unknown> {
+  async updateMaintenanceWindowForLogicalGroup(id: string, maintenanceWindowData: JsonPatchOperation[]): Promise<unknown> {
     const response = await this.client.patch(
       `${this.basePath}/LogicalGroups/${id}/MaintenanceWindow`,
       maintenanceWindowData
@@ -663,7 +660,7 @@ export class EndpointsModule {
   /**
    * Update an existing industrial endpoint
    */
-  async updateIndustrialEndpoint(id: string, updateData: Record<string, unknown>): Promise<IndustrialEndpoint> {
+  async updateIndustrialEndpoint(id: string, updateData: JsonPatchOperation[]): Promise<IndustrialEndpoint> {
     const response = await this.client.patch<IndustrialEndpoint>(
       `${this.basePath}/IndustrialEndpoints/${id}`,
       updateData
@@ -698,7 +695,7 @@ export class EndpointsModule {
   /**
    * Update an existing network endpoint
    */
-  async updateNetworkEndpoint(id: string, updateData: Record<string, unknown>): Promise<NetworkEndpoint> {
+  async updateNetworkEndpoint(id: string, updateData: JsonPatchOperation[]): Promise<NetworkEndpoint> {
     const response = await this.client.patch<NetworkEndpoint>(
       `${this.basePath}/NetworkEndpoints/${id}`,
       updateData

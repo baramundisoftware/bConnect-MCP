@@ -112,9 +112,9 @@ describe('trigger_intune_installation reports the result as it is (#172)', () =>
 
 describe('updates and cleanups return the result bMS sent (#172)', () => {
   it.each([
-    ['endpoints', 'update_maintenance_window_for_endpoint', { id: ID, maintenanceWindowData: { name: 'Night window' } }, 'Night window'],
-    ['endpoints', 'update_maintenance_window_for_logical_group', { id: ID, maintenanceWindowData: { name: 'Night window' } }, 'Night window'],
-    ['endpoints', 'update_network_endpoint', { id: ID, updateData: { displayName: 'Switch-01' } }, 'Switch-01'],
+    ['endpoints', 'update_maintenance_window_for_endpoint', { id: ID, maintenanceWindowDefinitionType: 'Never' }, 'Night window'],
+    ['endpoints', 'update_maintenance_window_for_logical_group', { id: ID, maintenanceWindowDefinitionType: 'Never' }, 'Night window'],
+    ['endpoints', 'update_network_endpoint', { id: ID, displayName: 'Switch-01' }, 'Switch-01'],
     ['servermanagement', 'msw_cleanup', {}, '42 files deleted'],
     ['servermanagement', 'simulate_msw_cleanup', {}, 'b.cab'],
     ['servermanagement', 'update_security_group', { id: ID, patchOperations: PATCH }, 'Helpdesk'],
