@@ -9,20 +9,32 @@
 const DEFAULT_MAX_LENGTH = 300;
 
 const FORMAT_CHARACTER = /\p{Cf}/u;
+const DEFAULT_IGNORABLE = /\p{Default_Ignorable_Code_Point}/u;
+
+const ZWNJ = 0x200c;
+const ZWJ = 0x200d;
+const TEXT_PRESENTATION = 0xfe0e;
+const EMOJI_PRESENTATION = 0xfe0f;
 
 /**
- * True for a code point that is removed outright: every Unicode format character
- * (soft hyphen, zero-width characters, bidi marks, embeddings, overrides and
- * isolates, Arabic letter mark, BOM, tag characters U+E0000-E007F), the
- * combining grapheme joiner and the variation selectors.
+ * The hidden-character class (REQ-XC-006 AC 2, ADR-0009): every format
+ * character, every default-ignorable code point (zero-width and bidi
+ * characters, variation selectors incl. the supplement used to smuggle bytes
+ * in emoji, Hangul fillers, the whole tag block U+E0000-E0FFF) - except ZWNJ,
+ * ZWJ and the two emoji presentation selectors, which visible text needs.
+ */
+function inHiddenClass(ch: string, cp: number): boolean {
+  if (cp === ZWNJ || cp === ZWJ || cp === TEXT_PRESENTATION || cp === EMOJI_PRESENTATION) {return false;}
+  return (cp >= 0xe0000 && cp <= 0xe0fff) || FORMAT_CHARACTER.test(ch) || DEFAULT_IGNORABLE.test(ch);
+}
+
+/**
+ * True for a code point removed outright from error text: the hidden class,
+ * and there also ZWNJ/ZWJ and the presentation selectors (error text is one
+ * plain line; nothing there needs them).
  */
 function isHidden(ch: string, cp: number): boolean {
-  return (
-    FORMAT_CHARACTER.test(ch) ||
-    cp === 0x034f ||                       // combining grapheme joiner
-    (cp >= 0xfe00 && cp <= 0xfe0f) ||      // variation selectors
-    (cp >= 0xe0100 && cp <= 0xe01ef)       // variation selectors supplement
-  );
+  return inHiddenClass(ch, cp) || cp === ZWNJ || cp === ZWJ || cp === TEXT_PRESENTATION || cp === EMOJI_PRESENTATION;
 }
 
 /** True for a code point that becomes a space (C0/C1 controls, line and paragraph separators). */
@@ -50,29 +62,30 @@ export function cleanModelText(text: string, maxLength: number = DEFAULT_MAX_LEN
 /** Shown where hidden characters were removed from bMS data, so the removal is visible. */
 export const HIDDEN_CHARACTERS_MARKER = "[hidden characters removed]";
 
-const ZWNJ = 0x200c;
-const ZWJ = 0x200d;
-
-/**
- * True for a character removed from bMS data (REQ-XC-006 AC 2, ADR-0009): every
- * format character and the whole tag block, but not ZWNJ/ZWJ, which several
- * scripts and emoji need.
- */
-function isHiddenInData(ch: string, cp: number): boolean {
-  if (cp >= 0xe0000 && cp <= 0xe007f) {return true;}
-  return cp !== ZWNJ && cp !== ZWJ && FORMAT_CHARACTER.test(ch);
-}
-
-/** Cheap pre-check: a string without format, unassigned or CR characters is returned as is. */
-const MAY_NEED_CLEANING = /[\p{Cf}\p{Cn}\r]/u;
+/** Cheap pre-check: a string without class or CR characters is returned as is. */
+const MAY_NEED_CLEANING = /[\p{Cf}\p{Default_Ignorable_Code_Point}\r]/u;
 
 function cleanDataString(text: string): string {
   if (!MAY_NEED_CLEANING.test(text)) {return text;}
+  const chars = [...text];
   let out = "";
   let inRun = false;
-  for (const ch of text) {
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
     const cp = ch.codePointAt(0) ?? 0;
-    if (isHiddenInData(ch, cp)) {
+    if (cp === 0x0d) {
+      // CR, hidden characters, LF: a line break (CRLF -> LF), with the marker if any were hidden.
+      let j = i + 1;
+      while (j < chars.length && inHiddenClass(chars[j], chars[j].codePointAt(0) ?? 0)) {j++;}
+      if (chars[j] === "\n") {
+        if (j > i + 1 && !inRun) {out += HIDDEN_CHARACTERS_MARKER;}
+        out += "\n";
+        inRun = false;
+        i = j;
+        continue;
+      }
+    }
+    if (inHiddenClass(ch, cp)) {
       if (!inRun) {out += HIDDEN_CHARACTERS_MARKER;}
       inRun = true;
       continue;
@@ -80,7 +93,7 @@ function cleanDataString(text: string): string {
     inRun = false;
     out += ch;
   }
-  return out.split("\r\n").join("\n");
+  return out;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -105,13 +118,18 @@ function cleanDataValue(value: unknown): unknown {
   if (!isPlainObject(value)) {return value;}
   const entries = Object.entries(value).map(([key, item]) => [key, cleanDataString(key), item, cleanDataValue(item)] as const);
   if (entries.every(([key, cleanKey, item, cleanItem]) => key === cleanKey && item === cleanItem)) {return value;}
+  // Keys that needed no cleaning keep their names; a cleaned key that collides
+  // with one gets another marker, so both stay (#167). Original order is kept.
+  const taken = new Set(entries.filter(([key, cleanKey]) => key === cleanKey).map(([key]) => key));
   const out: Record<string, unknown> = {};
-  for (const [, cleanKey, , cleanItem] of entries) {
-    // Two keys that differed only in removed characters both stay (#167).
-    let key = cleanKey;
-    while (Object.prototype.hasOwnProperty.call(out, key)) {key = `${key} ${HIDDEN_CHARACTERS_MARKER}`;}
+  for (const [key, cleanKey, , cleanItem] of entries) {
+    let name = cleanKey;
+    if (key !== cleanKey) {
+      while (taken.has(name)) {name = `${name} ${HIDDEN_CHARACTERS_MARKER}`;}
+      taken.add(name);
+    }
     // defineProperty, not assignment: a "__proto__" key from JSON stays an own property.
-    Object.defineProperty(out, key, { value: cleanItem, enumerable: true, writable: true, configurable: true });
+    Object.defineProperty(out, name, { value: cleanItem, enumerable: true, writable: true, configurable: true });
   }
   return out;
 }

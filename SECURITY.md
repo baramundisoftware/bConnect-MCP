@@ -92,11 +92,17 @@ A tool whose response contains live credentials is **disabled by default**, what
 
 Text from bMS (endpoint, job and software names, client error messages, directory descriptions) is
 often not written by the administrator. Before it reaches the model, the shared client removes
-characters that are invisible to people but read by a model: Unicode format characters (zero-width
-characters, direction controls) and tag characters (U+E0000–U+E007F). Each removed run is shown as
-`[hidden characters removed]`. ZWJ and ZWNJ, which several scripts and emoji need, are kept. Error
-text from bConnect is cleaned the same way and quoted as data. Visible text that tries to instruct
-the model can't be filtered reliably; keep write tools disabled unless you need them.
+characters that are invisible to people but read by a model: Unicode format characters and every
+default-ignorable code point, which covers zero-width characters, direction controls, variation
+selectors (used to hide bytes after an emoji), Hangul fillers and tag characters
+(U+E0000–U+E0FFF). Each removed run is shown as `[hidden characters removed]`. ZWJ, ZWNJ and the two
+emoji presentation selectors (U+FE0E, U+FE0F), which visible text needs, are kept.
+
+bConnect's error text is cleaned more strictly: it is quoted on one line, the same characters
+and also ZWJ/ZWNJ are removed, without a marker.
+
+Visible text that tries to instruct the model can't be filtered reliably; keep write tools disabled
+unless you need them. A value copied from a result into a write tool carries the marker into bMS.
 
 ### Rate Limiting
 

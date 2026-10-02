@@ -12,32 +12,40 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
-import { HIDDEN_CHARACTERS_MARKER, cleanModelData } from '../packages/mcp-core/src/model-text.js';
+import { HIDDEN_CHARACTERS_MARKER, cleanModelData, cleanModelText } from '../packages/mcp-core/src/model-text.js';
 import { BConnectClientBase, type BConnectConfig } from '../packages/mcp-core/src/bconnect-client-base.js';
 
 const MARKER = '[hidden characters removed]';
 
 it('exports the marker the tests expect', () => expect(HIDDEN_CHARACTERS_MARKER).toBe(MARKER));
 
-/** The class, defined from Unicode properties: format characters and the tag block, minus ZWNJ/ZWJ. */
-const inClass = (cp: number): boolean =>
-  (cp >= 0xe0000 && cp <= 0xe007f) || (/\p{Cf}/u.test(String.fromCodePoint(cp)) && cp !== 0x200c && cp !== 0x200d);
+/**
+ * The class, defined from Unicode properties: format characters, default-ignorable
+ * code points and the tag block, minus ZWNJ, ZWJ and the two presentation selectors.
+ */
+const KEPT = new Set([0x200c, 0x200d, 0xfe0e, 0xfe0f]);
+const inClass = (cp: number): boolean => {
+  if (KEPT.has(cp)) {return false;}
+  const ch = String.fromCodePoint(cp);
+  return (cp >= 0xe0000 && cp <= 0xe0fff) || /\p{Cf}/u.test(ch) || /\p{Default_Ignorable_Code_Point}/u.test(ch);
+};
 
 describe('the class of removed characters', () => {
   it('lists the known members explicitly (so the sweep does not only mirror \\p{Cf})', () => {
     const members = [
       0x00ad, 0x061c, 0x180e, 0x200b, 0x200e, 0x200f, 0x202a, 0x202b, 0x202c, 0x202d, 0x202e,
       0x2060, 0x2061, 0x2064, 0x2066, 0x2067, 0x2068, 0x2069, 0xfeff,
-      0xe0000, 0xe0001, 0xe0020, 0xe0041, 0xe007e, 0xe007f,
+      0xe0000, 0xe0001, 0xe0002, 0xe0010, 0xe0020, 0xe0041, 0xe007e, 0xe007f, 0xe0080,
+      0x034f, 0x115f, 0x1160, 0x180b, 0x2065, 0x3164, 0xfe00, 0xfe0d, 0xffa0, 0xfff0, 0xe0100, 0xe01ef,
     ];
     for (const cp of members) {
       expect({ cp: cp.toString(16), out: cleanModelData(String.fromCodePoint(cp)) }).toEqual({ cp: cp.toString(16), out: MARKER });
     }
   });
 
-  it('keeps ZWNJ, ZWJ, tab, LF, variation selectors, letters, emoji and other separators', () => {
+  it('keeps ZWNJ, ZWJ, tab, LF, the emoji presentation selectors, letters, emoji and other separators', () => {
     const keep = [
-      '\u200C', '\u200D', '\t', '\n', '\uFE0F', '\u{E0100}', 'a', '\u00E9', '\u0628\u0644\u062F',
+      '\u200C', '\u200D', '\t', '\n', '\uFE0E', '\uFE0F', '\u2764\uFE0F', 'a', '\u00E9', '\u0628\u0644\u062F',
       '\u{1F44D}\u{1F3FD}', '\u{1F468}\u200D\u{1F469}\u200D\u{1F467}', '\u2028', '\r', ' ',
     ];
     for (const text of keep) {
@@ -68,6 +76,18 @@ describe('strings', () => {
     expect(cleanModelData('line 1\r\nline 2\rend')).toBe('line 1\nline 2\rend');
   });
 
+  it('treats CR, hidden characters, LF as a line break with the marker', () => {
+    expect(cleanModelData('a\r\u200B\nb')).toBe(`a${MARKER}\nb`);
+  });
+
+  it('removes bytes smuggled in variation selectors after an emoji', () => {
+    expect(cleanModelData('ok\u{1F600}\u{E0151}\u{E0158}\u{E0145}')).toBe(`ok\u{1F600}${MARKER}`);
+  });
+
+  it('error text (cleanModelText) removes the whole tag block too, also unassigned code points', () => {
+    expect(cleanModelText('a\u{E0002}\u{E0010}\u{E0100}b')).toBe('ab');
+  });
+
   it('removes a bidi override that reverses visible text', () => {
     expect(cleanModelData('invoice\u202Etxt.exe')).toBe(`invoice${MARKER}txt.exe`);
   });
@@ -92,6 +112,11 @@ describe('objects and arrays', () => {
   it('keeps both keys when two differ only in hidden characters', () => {
     const out = cleanModelData({ name: 'visible', ['na\u200Bme']: 'hidden twin' });
     expect(out).toEqual({ name: 'visible', [`na${MARKER}me`]: 'hidden twin' });
+  });
+
+  it('never renames a key that needed no cleaning, even if it looks like a cleaned one', () => {
+    const out = cleanModelData({ ['a\u200Bb']: 1, [`a${MARKER}b`]: 3 });
+    expect(out).toEqual({ [`a${MARKER}b ${MARKER}`]: 1, [`a${MARKER}b`]: 3 });
   });
 
   it('returns clean data as the same object (byte-identical results)', () => {

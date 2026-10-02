@@ -10,11 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - **Hidden characters in bMS data no longer reach the model** (#167). Names, descriptions and
   messages from bMS can contain characters a person doesn't see but a model reads: zero-width
-  characters, direction controls, and Unicode tag characters that can spell out hidden
-  instructions. The shared client now removes them from every value and key of every response,
-  for all 13 servers, and shows `[hidden characters removed]` where they were. ZWJ and ZWNJ (needed
-  by several scripts and emoji), tab and line feed are kept; CRLF becomes LF. Responses without
-  such characters are unchanged.
+  characters, direction controls, variation selectors that hide bytes after an emoji, and Unicode
+  tag characters that can spell out hidden instructions. The shared client now removes every
+  format character and default-ignorable code point from every value and key of every response,
+  for all 13 servers, and shows `[hidden characters removed]` where they were. ZWJ, ZWNJ and the
+  emoji presentation selectors (needed by several scripts and emoji), tab and line feed are kept;
+  CRLF becomes LF. Responses without such characters are unchanged.
 - **Refused credential reads are audited.** A request the client refuses before sending it
   (a BitLocker or LAPS credential route while `ALLOW_SECRET_READ` is off, or a path that isn't
   in canonical form) is now recorded as a security audit entry at every

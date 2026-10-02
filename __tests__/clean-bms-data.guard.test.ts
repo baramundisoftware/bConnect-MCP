@@ -14,11 +14,13 @@ import { RELEASES, type Release } from './lib/spec.js';
 import { ID, SERVERS, connect, guardEnv, requiredArguments } from './lib/exerciser.js';
 
 const MARKER = '[hidden characters removed]';
-const HIDDEN = '\u{E0049}\u{E0067}\u{E006E}\u202E\u200B';
-const text = (s: string): string => `${s}${HIDDEN}value`;
+const HIDDEN = '\u{E0049}\u{E0067}\u{E006E}\u202E\u200B\u{E0151}\u3164';
+/** Marks text that came from bMS, so an echo can be recognised in a result. */
+const ECHO = 'Zq7';
+const text = (s: string): string => `${ECHO}${s}${HIDDEN}value\r\nline2`;
 
 /** Characters of the class, as the guard defines it independently of the implementation. */
-const CLASS = /[\u{E0000}-\u{E007F}]|(?![\u200C\u200D])\p{Cf}/u;
+const CLASS = /[\u{E0000}-\u{E0FFF}]|(?![\u200C\u200D\uFE0E\uFE0F])[\p{Cf}\p{Default_Ignorable_Code_Point}]/u;
 
 const row = {
   id: ID, displayName: text('d'), name: text('n'), comment: text('c'), hostName: text('h'),
@@ -29,7 +31,10 @@ const body = {
   hasNextPage: false, hasPreviousPage: false, ...row,
 };
 
-const msw = setupServer(http.all('*', () => HttpResponse.json(body)));
+let status = 200;
+const msw = setupServer(http.all('*', () => status === 200
+  ? HttpResponse.json(body)
+  : new HttpResponse(JSON.stringify({ title: text('t'), detail: text('d') }), { status, headers: { 'content-type': 'application/problem+json' } })));
 const savedEnv = { ...process.env };
 beforeAll(() => msw.listen({ onUnhandledRequest: 'error' }));
 afterAll(() => {
@@ -57,6 +62,7 @@ describe.each(RELEASES)('hidden characters, bMS %s', (release) => {
   let calls: Call[];
 
   beforeAll(async () => {
+    status = 200;
     calls = await exerciseAll(release);
   }, 180_000);
 
@@ -70,8 +76,25 @@ describe.each(RELEASES)('hidden characters, bMS %s', (release) => {
     expect(leaks.map((c) => c.tool)).toEqual([]);
   });
 
-  it('results that echo bMS data show the marker (most tools do)', () => {
-    const marked = calls.filter((c) => c.text.includes(MARKER));
-    expect(marked.length).toBeGreaterThan(calls.length / 2);
+  it('every result that echoes bMS data shows the marker where the hidden characters were', () => {
+    const echoing = calls.filter((c) => c.text.includes(ECHO));
+    expect(echoing.length).toBeGreaterThan(calls.length / 2); // self-check: most tools echo data
+    const unmarked = echoing.filter((c) => !c.text.includes(`${MARKER}value`));
+    expect(unmarked.map((c) => c.tool)).toEqual([]);
+  });
+});
+
+describe('hidden characters in bConnect error text', () => {
+  let calls: Call[];
+
+  beforeAll(async () => {
+    status = 404;
+    calls = await exerciseAll('26R1');
+    status = 200;
+  }, 180_000);
+
+  it('no error result contains a hidden character', () => {
+    expect(calls.filter((c) => c.isError).length).toBeGreaterThan(200);
+    expect(calls.filter((c) => CLASS.test(c.text)).map((c) => c.tool)).toEqual([]);
   });
 });
