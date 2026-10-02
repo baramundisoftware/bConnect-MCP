@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Refused credential reads are audited.** A request the client refuses before sending it
+  (a BitLocker or LAPS credential route while `ALLOW_SECRET_READ` is off, or a path that isn't
+  in canonical form) is now recorded as a security audit entry at every
+  `BCONNECT_AUDIT_LEVEL` except `none`. Before, it left no audit entry at any level. Audit
+  lines escape control characters, so one entry can't forge another.
+- **The credential-route gate and the path check refuse more unusual path forms.** Paths with
+  malformed percent escapes are refused, and the gate recognises a credential route in more
+  encodings.
 - **Credentials are only sent over HTTPS.** A `BCONNECT_BASE_URL` with `http://` is refused
   unless the host is this machine (`localhost`, `127.x.x.x`, `[::1]`, e.g. the bundled mock) or
   `BCONNECT_ALLOW_INSECURE_HTTP=true` is set, which logs a warning. Before, credentials went in

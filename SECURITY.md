@@ -78,7 +78,7 @@ Production deployments must use proper TLS certificate verification. Never set `
 
 ### Audit Logging
 
-Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`none` / `security` / `write` / `all`, in any case). Levels are cumulative: `security` records credential reads and changes (BitLocker secrets, LAPS passwords), `write` adds every write, and `all` records every request. An unknown value stops the server, so a typo can't switch auditing off (in the gateway, every tool call fails with the same message instead). Audit entries are written to stderr, so auditing works in stdio mode too.
+Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`none` / `security` / `write` / `all`, in any case). Levels are cumulative: `security` records credential reads and changes (BitLocker secrets, LAPS passwords), `write` adds every write, and `all` records every request. An unknown value stops the server, so a typo can't switch auditing off (in the gateway, every tool call fails with the same message instead). Audit entries are written to stderr, so auditing works in stdio mode too. A request the client refuses before sending it (a credential route while `ALLOW_SECRET_READ` is off, or a non-canonical path) is recorded as a security entry at every level except `none`.
 
 ### Write-Operation Gating
 
