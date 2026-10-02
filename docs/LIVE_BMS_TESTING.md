@@ -118,13 +118,20 @@ It also fails after the tests when no server started or no read tool was called.
 
 ## Read-only locks
 
-- **In-process request guard** (`__tests__/live/lib/guard.mjs`). Only GET requests
-  to the configured bMS origin leave the process. It refuses, before sending:
+- **In-process request guard** (`__tests__/live/lib/guard.mjs`). Of the requests
+  sent through Node's `http`/`https` modules (including named ESM imports), axios
+  and `fetch`, only GET requests to the configured bMS origin leave the process.
+  It refuses, before sending:
   - every other method;
   - every other origin;
   - every credential-returning route (`isSecretRoute` from `@bconnect/mcp-core`);
-  - every redirect.
+  - every redirect (`fetch` runs with `redirect: 'manual'` while the guard is on).
   Any refusal fails the run.
+
+  It does not cover raw sockets (`net`, `tls`), worker threads, or a `fetch`
+  reference taken before the guard started. The servers use none of these today;
+  all their requests go through axios. The read-only bMS account is the safety net
+  for anything the guard can't see.
 - **Spawned servers.** The servers started over stdio run as separate processes,
   outside the in-process guard. They run with `node --import child-guard.mjs`,
   which installs the same guard and logs every request. The test asserts that

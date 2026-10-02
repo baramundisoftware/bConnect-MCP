@@ -2,10 +2,15 @@
  * Request guard of the live tier, for the test process and the spawned servers.
  * Plain JavaScript: the spawned servers load it with `node --import`.
  *
- * Only GET requests to the configured bMS origin leave the process. Every other
- * method and origin, every credential-returning route (`isSecretRoute` from the
- * shared core, the same list the client's own gate uses) and every redirect is
- * refused and recorded.
+ * Of the requests sent through Node's http/https modules (including named ESM
+ * imports), axios and fetch, only GET requests to the configured bMS origin leave
+ * the process. Every other method and origin, every credential-returning route
+ * (`isSecretRoute` from the shared core, the same list the client's own gate uses)
+ * and every redirect is refused and recorded.
+ *
+ * Not covered: raw sockets (net, tls), worker threads, and a fetch reference taken
+ * before start(). The servers use none of these; the read-only bMS account is the
+ * safety net beyond the guard.
  */
 import { syncBuiltinESMExports } from 'node:module';
 import { isSecretRoute } from '@bconnect/mcp-core';
