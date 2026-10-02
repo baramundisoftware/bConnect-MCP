@@ -35,6 +35,9 @@ Thumbs.db
 src/generated/
 
 
+# Certificates and keys (e.g. an exported bMS CA for BCONNECT_CA_CERT_PATH)
+*.pem
+
 # Release artifacts (binaries, tarballs, checksums)
 *.tar.gz
 *.tgz
