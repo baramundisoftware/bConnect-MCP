@@ -99,11 +99,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **groups tools now work against a bConnect server with an internal CA (#197).** The groups
   server's tool calls ignored `BCONNECT_CA_CERT_PATH` and `NODE_TLS_REJECT_UNAUTHORIZED`:
   the server started, and then every groups tool failed with a TLS error. Its tool calls now
-  use the CA, TLS and `BCONNECT_AUDIT_LEVEL` settings like every other server. With an audit
-  level set, groups now also writes audit entries to stdout, which breaks stdio mode in every
-  server (#168). The startup check now uses the same settings as tool calls, so with
-  `BCONNECT_AUDIT_LEVEL=all`, every server also writes an audit entry for it to stdout
-  before the stdio transport starts (#168).
+  use the CA, TLS and `BCONNECT_AUDIT_LEVEL` settings like every other server, and the
+  startup check uses the same settings as tool calls.
+- **Audit logging works in stdio mode (#168).** Audit entries went to stdout, which carries
+  the MCP protocol in stdio mode, so enabling auditing broke the connection to Claude Desktop
+  or Claude Code. Every audit entry now goes to stderr.
+- **Audit levels include each other (#168).** `write` now also records what `security`
+  records, and `security` now also records reading or changing a LAPS password, not only
+  BitLocker secrets. Before, a LAPS password read was recorded at no level except `all`.
+- **A mistyped `BCONNECT_AUDIT_LEVEL` no longer switches auditing off (#161).** Case and
+  surrounding spaces no longer matter (`WRITE` and ` write ` mean `write`). **Behaviour
+  change:** any value other than `none`, `security`, `write` or `all` now stops the server
+  with a message naming the value and the valid levels. Before, it silently meant `none`.
+  Unset or empty still means `none`.
 - **The `BCONNECT_RATE_LIMIT_*` settings now reach every server's client.** Nine servers
   (compliance, defensecontrol, groups, operatingsystems, servermanagement, software,
   universaldynamicgroups, updatemanagement, variables) never passed them on. Each tool call

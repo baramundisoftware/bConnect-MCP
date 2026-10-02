@@ -80,7 +80,7 @@ Run inside the HTTP gateway, the server's own startup code doesn't run: `MCP_TRA
 | `BCONNECT_RELEASE` | No | `26R1` | Any value other than `26R1` (e.g. `25R2`, but also an empty value) hides the tools that need baramundi Management Suite 2026 R1. |
 | `ALLOW_WRITE_OPERATIONS` | No | off | `true` enables the tools that create, change or delete data, or start actions. |
 | `ALLOW_SECRET_READ` | No | off | `true` lets tools return BitLocker recovery keys / PINs and LAPS passwords. Also needs `ALLOW_WRITE_OPERATIONS=true` for the write tools that return them. |
-| `BCONNECT_AUDIT_LEVEL` | No | `none` | `all`, `write`, `security` or `none`; any other value means `none`. Request entries, and the response entries of successful calls, are written to stdout (warnings and errors to stderr), which breaks stdio mode (#168). |
+| `BCONNECT_AUDIT_LEVEL` | No | `none` | `none`, `security`, `write` or `all`, in any case. Levels are cumulative: `security` records credential reads and changes (BitLocker, LAPS), `write` adds every write, `all` records every request. Any other value stops the server. Entries go to stderr. |
 | `BCONNECT_RATE_LIMIT_ENABLED` | No | off | `true` limits the requests one client sends. Each tool call still creates a new client, so the limit doesn't apply across calls yet (#160). |
 | `BCONNECT_RATE_LIMIT_MAX_REQUESTS` | No | `100` | Requests allowed per window when the rate limit is on. |
 | `BCONNECT_RATE_LIMIT_WINDOW_MS` | No | `60000` | Window length in milliseconds. |
