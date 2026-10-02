@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { OperatingSystemsRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -45,7 +45,16 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
+  // Write tools: gated by ALLOW_WRITE_OPERATIONS, and marked unverified in tools/list
+  // until their live check is recorded (REQ-XC-003 AC 5).
+  const WRITE_TOOLS = new Set<string>([
+  "create_os_folder",
+  "update_os_folder",
+  "delete_os_folder",
+  "update_os_windows_endpoint",
+  ]);
+
+  server.setRequestHandler(ListToolsRequestSchema, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools = [
 
       // ── OS Folders ────────────────────────────────────────────────────────
@@ -178,7 +187,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     ];
 
     return { tools };
-  });
+  }));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -223,12 +232,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     validateToolArguments(name, args);
 
     // 2. Write-operation gate (REQ-SRV-012).
-    const WRITE_TOOLS = new Set<string>([
-    "create_os_folder",
-    "update_os_folder",
-    "delete_os_folder",
-    "update_os_windows_endpoint",
-    ]);
     if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
       return {
         content: [{

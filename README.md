@@ -434,6 +434,7 @@ For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING
 - **Use API keys** instead of username/password when possible
 - **Use `BCONNECT_CA_CERT_PATH`** for self-signed certificates instead of disabling TLS
 - **Audit logging** (`BCONNECT_AUDIT_LEVEL=security`, `write` or `all`) writes to stderr; `security` already records BitLocker and LAPS credential reads and changes
+- **Write tools are not yet verified against a live bMS.** They are off unless `ALLOW_WRITE_OPERATIONS=true`, and each says "Not yet verified against a live bMS." in its description until its live check is recorded. Try writes on a test system first
 - **Rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) applies only within one tool call for now; it does not protect the bConnect API across calls (#160)
 
 See [SECURITY.md](SECURITY.md) for the full security policy.

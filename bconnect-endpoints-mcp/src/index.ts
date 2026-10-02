@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, objectArgument, ClientConfigError, type JsonPatchOperation } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, objectArgument, ClientConfigError, withUnverifiedWriteMarker, type JsonPatchOperation } from "@bconnect/mcp-core";
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
@@ -69,7 +69,51 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => {
+  // Write tools: gated by ALLOW_WRITE_OPERATIONS, and marked unverified in tools/list
+  // until their live check is recorded (REQ-XC-003 AC 5).
+  const WRITE_TOOLS = new Set<string>([
+  "start_android_enrollment",
+  "start_ios_enrollment",
+  "create_android_endpoint",
+  "update_android_endpoint",
+  "delete_android_endpoint",
+  "create_ios_endpoint",
+  "update_ios_endpoint",
+  "delete_ios_endpoint",
+  "create_windows_endpoint",
+  "update_windows_endpoint",
+  "delete_windows_endpoint",
+  "start_windows_enrollment",
+  "trigger_intune_installation",
+  "create_linux_endpoint",
+  "update_linux_endpoint",
+  "delete_linux_endpoint",
+  "create_mac_endpoint",
+  "update_mac_endpoint",
+  "delete_mac_endpoint",
+  "start_mac_enrollment",
+  "create_logical_group",
+  "update_logical_group",
+  "delete_logical_group",
+  "create_maintenance_window_for_endpoint",
+  "update_maintenance_window_for_endpoint",
+  "delete_maintenance_window_for_endpoint",
+  "create_maintenance_window_for_logical_group",
+  "update_maintenance_window_for_logical_group",
+  "delete_maintenance_window_for_logical_group",
+  "create_industrial_endpoint",
+  "update_industrial_endpoint",
+  "delete_industrial_endpoint",
+  "create_network_endpoint",
+  "update_network_endpoint",
+  "delete_network_endpoint",
+  "delete_endpoint",
+  "delete_unmanaged_endpoint",
+  "link_entra_id_data",
+  "unlink_entra_id_data",
+  ]);
+
+  server.setRequestHandler(ListToolsRequestSchema, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
         // ── Endpoints API ─────────────────────────────────────────────────
         {
@@ -751,7 +795,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       }
 
       return { tools };
-  });
+  }));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -769,47 +813,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     // Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(name, args);
     // ── Write-operation gate (REQ-SRV-012) ───────────────────────────────────
-    const WRITE_TOOLS = new Set<string>([
-    "start_android_enrollment",
-    "start_ios_enrollment",
-    "create_android_endpoint",
-    "update_android_endpoint",
-    "delete_android_endpoint",
-    "create_ios_endpoint",
-    "update_ios_endpoint",
-    "delete_ios_endpoint",
-    "create_windows_endpoint",
-    "update_windows_endpoint",
-    "delete_windows_endpoint",
-    "start_windows_enrollment",
-    "trigger_intune_installation",
-    "create_linux_endpoint",
-    "update_linux_endpoint",
-    "delete_linux_endpoint",
-    "create_mac_endpoint",
-    "update_mac_endpoint",
-    "delete_mac_endpoint",
-    "start_mac_enrollment",
-    "create_logical_group",
-    "update_logical_group",
-    "delete_logical_group",
-    "create_maintenance_window_for_endpoint",
-    "update_maintenance_window_for_endpoint",
-    "delete_maintenance_window_for_endpoint",
-    "create_maintenance_window_for_logical_group",
-    "update_maintenance_window_for_logical_group",
-    "delete_maintenance_window_for_logical_group",
-    "create_industrial_endpoint",
-    "update_industrial_endpoint",
-    "delete_industrial_endpoint",
-    "create_network_endpoint",
-    "update_network_endpoint",
-    "delete_network_endpoint",
-    "delete_endpoint",
-    "delete_unmanaged_endpoint",
-    "link_entra_id_data",
-    "unlink_entra_id_data",
-    ]);
     if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
       return {
         content: [{
