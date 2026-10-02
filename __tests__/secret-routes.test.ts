@@ -52,8 +52,35 @@ describe('route classification', () => {
     ['backslashes', `/endpoints/v2.0/Endpoints/..\\..\\..\\${LAPS_REL.replace(/\//g, '\\')}`],
     ['a detour inside the domain', `/defensecontrol/v2.0/x/../LocalAdministrativeAccounts/WindowsEndpoints/${ID}`],
     ['encoded query marker', `/${LAPS_REL}%3Fx=1`],
+    // Fail closed: a part that can't be decoded must not stop the rest from being decoded.
+    ['a malformed escape before an encoded letter', `/defensecontrol/v2.0/BitLocker/WindowsEndpoints/${ID}%ZZ/Secret%73`],
+    ['a truncated escape before an encoded letter', `/defensecontrol/v2.0/BitLocker/WindowsEndpoints/${ID}%4/Secret%73`],
+    // Forms a web server may serve as the same route.
+    ['a trailing dot', `${BITLOCKER}.`],
+    ['a trailing encoded space', `${BITLOCKER}%20`],
+    ['a path parameter', `${BITLOCKER};x=1`],
+    ['a path parameter on the ID', `/defensecontrol/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/${ID};x`],
+    // URL parsers drop tab, LF and CR anywhere in a path; the server then sees the plain route.
+    ['a tab inside a segment', BITLOCKER.replace('Secrets', 'Secr\tets')],
+    ['a line feed inside a segment', BITLOCKER.replace('BitLocker', 'Bit\nLocker')],
+    ['a carriage return inside a segment', LAPS.replace('LocalAdministrativeAccounts', 'Lo\rcalAdministrativeAccounts')],
+    ['a dot segment with a trailing space', `${BITLOCKER}/x/.. `],
+    ['a dot segment split by a tab', `${BITLOCKER}/x/.\t.`],
+    ['an encoded no-break space at the end', `${BITLOCKER}%C2%A0`],
+    ['an encoded control character inside a segment', BITLOCKER.replace('Secrets', 'Secr%00ets')],
+    // The gate on its own (the path check refuses both before sending anyway).
+    ['an escape split by a tab', BITLOCKER.replace('Secrets', 'Secr%\t65ts')],
+    ['an invalid UTF-8 escape in front of an encoded traversal', `${BITLOCKER.replace('/Secrets', '')}/x%FF%2F..%2FSecrets`],
   ])('denies a secret route reached through %s', (_how, url) => {
     expect(isSecretRoute('GET', url)).toBe(true);
+  });
+
+  it('stays linear on long runs of the characters it strips', () => {
+    const started = performance.now();
+    for (const run of [' '.repeat(50_000), ';'.repeat(50_000), '. '.repeat(25_000), `${' '.repeat(50_000)}x`]) {
+      expect(isSecretRoute('GET', `/endpoints/v2.0/Endpoints/${run}`)).toBe(false);
+    }
+    expect(performance.now() - started).toBeLessThan(1000);
   });
 
   it('refuses unless ALLOW_SECRET_READ=true', () => {

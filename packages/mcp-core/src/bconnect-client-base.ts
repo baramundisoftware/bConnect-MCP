@@ -428,7 +428,12 @@ export class BConnectClientBase {
     // is still refused by that gate, and before cache, rate limiter or audit.
     this.client.interceptors.request.use(
       (requestConfig: InternalAxiosRequestConfig) => {
-        assertCanonicalRequestPath(requestConfig.url ?? "");
+        try {
+          assertCanonicalRequestPath(requestConfig.url ?? "");
+        } catch (error) {
+          this.auditRefusal(requestConfig, error);
+          throw error;
+        }
         return requestConfig;
       },
       (error) => Promise.reject(error)
@@ -438,7 +443,12 @@ export class BConnectClientBase {
     // rate limiter can act on a request whose response carries credentials.
     this.client.interceptors.request.use(
       (requestConfig: InternalAxiosRequestConfig) => {
-        assertSecretRouteAllowed(requestConfig.method ?? "GET", requestConfig.url ?? "");
+        try {
+          assertSecretRouteAllowed(requestConfig.method ?? "GET", requestConfig.url ?? "");
+        } catch (error) {
+          this.auditRefusal(requestConfig, error);
+          throw error;
+        }
         return requestConfig;
       },
       (error) => Promise.reject(error)
@@ -446,6 +456,22 @@ export class BConnectClientBase {
 
     // TODO: Initialize V2.0 module
     // Example: this.domain = new DomainModule(this.client);
+  }
+
+  /**
+   * Record a request refused before sending (secret route, non-canonical path).
+   * These refusals happen before the audit step that records sent requests.
+   */
+  private auditRefusal(requestConfig: InternalAxiosRequestConfig, error: unknown): void {
+    try {
+      this.auditLogger?.logRefusal(
+        requestConfig.method ?? "GET",
+        requestConfig.url ?? "",
+        error instanceof Error ? error.message : String(error),
+      );
+    } catch {
+      // A failing custom log handler must not replace the refusal itself.
+    }
   }
 
   /**

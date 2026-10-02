@@ -21,9 +21,14 @@ export class RequestPathRefusedError extends Error {
 
 // Encoded '.', '/', '\' and '%' (the last catches double encoding).
 const ENCODED_SEPARATOR = /%(2e|2f|5c|25)/i;
+// A '%' that doesn't start a valid escape: decoders disagree on it, so refuse it.
+const MALFORMED_ESCAPE = /%(?![0-9a-f]{2})/i;
+// Spaces and control characters: URL parsers drop tab, LF and CR anywhere in a
+// path, so "Secr<TAB>ets" would arrive as "Secrets". No real path contains them.
+const SPACE_OR_CONTROL = /[\u0000-\u0020\u007f-\u009f]/;
 
 export function assertCanonicalRequestPath(url: string): void {
-  if (/[?#\\]/.test(url) || ENCODED_SEPARATOR.test(url)) {
+  if (/[?#\\]/.test(url) || ENCODED_SEPARATOR.test(url) || MALFORMED_ESCAPE.test(url) || SPACE_OR_CONTROL.test(url)) {
     throw new RequestPathRefusedError();
   }
   const path = url.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]*/i, "");

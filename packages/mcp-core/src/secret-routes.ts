@@ -60,26 +60,61 @@ function pathOf(url: string): string {
  * slashes, dot segments resolved. Matching the raw string would let an encoded
  * or relative form of a secret route through.
  */
+/** Decode one escape; one that isn't valid UTF-8 on its own stays as is. */
+function decodeEscape(escape: string): string {
+  try {
+    return decodeURIComponent(escape);
+  } catch {
+    return escape;
+  }
+}
+
+const isSpace = (c: string): boolean => /\s/.test(c);
+
+/** `s` without its trailing characters that pass `test`; one scan from the end (no backtracking regex). */
+function trimEndWhere(s: string, test: (c: string) => boolean): string {
+  let end = s.length;
+  while (end > 0 && test(s[end - 1])) {
+    end--;
+  }
+  return s.slice(0, end);
+}
+
+/** `s` without a path parameter (";x" up to the end). */
+function withoutPathParameter(s: string): string {
+  const at = s.indexOf(";");
+  return at < 0 ? s : s.slice(0, at);
+}
+
 function canonicalPathOf(url: string): string {
-  let path = pathOf(url);
+  // URL parsers drop tab, LF and CR anywhere in a path before sending it.
+  let path = pathOf(url).replace(/[\t\n\r]/g, "");
   for (let round = 0; round < 3; round++) {
-    let decoded: string;
-    try {
-      decoded = decodeURIComponent(path);
-    } catch {
-      break; // malformed escape: match on what we have
-    }
+    // Run by run of escapes, so a malformed escape elsewhere doesn't stop the rest
+    // from being decoded (fail closed); a multi-byte character decodes as a whole,
+    // and a run that isn't valid UTF-8 falls back to escape by escape.
+    const decoded = path.replace(/(?:%[0-9a-f]{2})+/gi, (run) => {
+      try {
+        return decodeURIComponent(run);
+      } catch {
+        return run.replace(/%[0-9a-f]{2}/gi, decodeEscape);
+      }
+    });
     if (decoded === path) {
       break;
     }
     path = decoded;
   }
   const segments: string[] = [];
-  for (const segment of path.replace(/\\/g, "/").split("/")) {
+  for (const raw of path.replace(/\\/g, "/").split("/")) {
+    // Control characters, a path parameter (";x") and trailing spaces may be
+    // dropped by the web server, so the segment is matched without them.
+    const segment = trimEndWhere(withoutPathParameter(raw.replace(/[\u0000-\u001f\u007f-\u009f]/g, "")), isSpace);
     if (segment === "..") {
       segments.pop();
     } else if (segment !== ".") {
-      segments.push(segment);
+      // Trailing dots too, once dot segments are resolved.
+      segments.push(trimEndWhere(segment, (c) => c === "." || isSpace(c)));
     }
   }
   return "/" + segments.filter((s, i) => s !== "" || i === segments.length - 1).join("/");
