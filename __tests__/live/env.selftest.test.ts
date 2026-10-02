@@ -107,6 +107,23 @@ describe('live env: isolated', () => {
     expect(plain.plainHttp).toBe(true);
   });
 
+  it.each(['NODE_OPTIONS', 'SSL_CERT_FILE', 'SSL_CERT_DIR', 'NODE_USE_ENV_PROXY'])(
+    'refuses %s from the shell, which could change trust or proxy while the report says verified', (key) => {
+      expect(() => loadLiveConfig({ root: ROOT, file: envFile('shell-tls.env', [BASE]), shell: { [key]: '1' } })).toThrow(new RegExp(key));
+    });
+
+  it('gives spawned servers the forced values and none of the trust or proxy variables from the shell', () => {
+    const config = loadLiveConfig({ root: ROOT, file: envFile('child.env', [BASE]), shell: {} });
+    const dirty = {
+      PATH: '/bin', ALLOW_WRITE_OPERATIONS: 'true', ALLOW_SECRET_READ: 'true', BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true',
+      NODE_EXTRA_CA_CERTS: 'C:/x.pem', NODE_OPTIONS: '--use-openssl-ca', SSL_CERT_FILE: 'C:/x.pem', SSL_CERT_DIR: 'C:/certs', NODE_USE_ENV_PROXY: '1',
+    };
+    const child = childEnv(config, dirty);
+    expect(child.PATH).toBe('/bin');
+    for (const key of ['ALLOW_WRITE_OPERATIONS', 'ALLOW_SECRET_READ', 'BCONNECT_SKIP_CONNECTIVITY_CHECK']) expect(child[key], key).toBe('');
+    for (const key of ['NODE_EXTRA_CA_CERTS', 'NODE_OPTIONS', 'SSL_CERT_FILE', 'SSL_CERT_DIR', 'NODE_USE_ENV_PROXY']) expect(child, key).not.toHaveProperty(key);
+  });
+
   it('refuses NODE_EXTRA_CA_CERTS from the shell, which the test process cannot drop', () => {
     expect(() => loadLiveConfig({ root: ROOT, file: envFile('extra.env', [BASE]), shell: { NODE_EXTRA_CA_CERTS: 'C:/ca.pem' } }))
       .toThrow(/NODE_EXTRA_CA_CERTS/);

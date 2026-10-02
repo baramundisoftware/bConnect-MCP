@@ -20,6 +20,12 @@ import { declared, type Declared } from './profile.js';
 const PROXY_KEYS = ['HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy'];
 /** Gates and switches the file must not touch; they are always empty (closed, probe on, stdio). */
 const FORCED_EMPTY = ['ALLOW_WRITE_OPERATIONS', 'ALLOW_SECRET_READ', 'BCONNECT_SKIP_CONNECTIVITY_CHECK', 'MCP_TRANSPORT'];
+/**
+ * Shell variables that can change the trust store or the proxy of Node itself
+ * (read at startup, so this process can't drop them): the run refuses them, and
+ * spawned servers never get them.
+ */
+const SHELL_REFUSED = ['NODE_EXTRA_CA_CERTS', 'NODE_OPTIONS', 'SSL_CERT_FILE', 'SSL_CERT_DIR', 'NODE_USE_ENV_PROXY'];
 const CONTROLLED = /^(BCONNECT_|ALLOW_|MCP_|NODE_TLS_REJECT_UNAUTHORIZED$)/;
 
 function sourceFiles(dir: string): string[] {
@@ -96,8 +102,10 @@ export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS
   for (const key of FORCED_EMPTY) {
     if (values[key]) throw new LiveConfigError(`${file} must not set ${key}: the live run keeps writes, secrets and the startup check fixed`);
   }
-  if (shell.NODE_EXTRA_CA_CERTS) {
-    throw new LiveConfigError('NODE_EXTRA_CA_CERTS is set in the shell and cannot be dropped for this process; unset it and use BCONNECT_CA_CERT_PATH in the env file');
+  for (const key of SHELL_REFUSED) {
+    if (shell[key]) {
+      throw new LiveConfigError(`${key} is set in the shell; it can change the trust store or the proxy while the report says "verified", and this process can't drop it. Unset it; put the CA in BCONNECT_CA_CERT_PATH in the env file`);
+    }
   }
   const env: Record<string, string> = {};
   for (const key of controlledKeys(root)) env[key] = FORCED_EMPTY.includes(key) ? '' : values[key] ?? '';
@@ -162,7 +170,7 @@ export function checkReachable(config: LiveConfig): Promise<{ status: number; bm
 export function childEnv(config: LiveConfig, shell: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
   for (const [key, value] of Object.entries(shell)) {
-    if (!(key in config.env) && key !== 'NODE_EXTRA_CA_CERTS' && key !== 'VITEST') env[key] = value;
+    if (!(key in config.env) && !SHELL_REFUSED.includes(key) && key !== 'VITEST') env[key] = value;
   }
   return { ...env, ...config.env, NODE_ENV: 'production' };
 }
