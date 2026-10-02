@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker, type JsonPatchOperation } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments } from "@bconnect/mcp-core";
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
 import { createBody, createInputSchema } from "./create-fields.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
@@ -757,9 +757,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           { name: "list_unmanaged_endpoints", description: "[26R1] List all unmanaged endpoints detected by baramundi. Returns a paged list of devices that are not yet enrolled into management. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { SearchQuery: { type: "string" }, Page: { type: "number" }, PageSize: { type: "number" }, OrderBy: { type: "string" } } } },
           { name: "get_unmanaged_endpoint", description: "[26R1] Get details of a specific unmanaged endpoint by its GUID. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
           { name: "delete_unmanaged_endpoint", description: "[26R1] Delete an unmanaged endpoint record. WARNING: Permanently removes the unmanaged device record. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
-          { name: "get_entra_id_data", description: "[26R1] Get Microsoft EntraID (formerly Azure AD) data linked to a specific endpoint. Returns the associated Entra device ID and join state. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "Endpoint ID (GUID)" } }, required: ["endpointId"] } },
-          { name: "link_entra_id_data", description: "[26R1] Link a Microsoft EntraID device to a baramundi endpoint. WARNING: Associates the Entra device ID with the endpoint. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "Endpoint ID (GUID)" }, deviceId: { type: "string", description: "Microsoft Entra device ID to link" } }, required: ["endpointId", "deviceId"] } },
-          { name: "unlink_entra_id_data", description: "[26R1] Unlink Microsoft EntraID data from a baramundi endpoint. WARNING: Removes the Entra association. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "Endpoint ID (GUID)" } }, required: ["endpointId"] } }
+          { name: "get_entra_id_data", description: "[26R1] Get the Entra ID (formerly Azure AD) data bMS stores for a device, looked up by its Entra ID device ID (not the bMS endpoint ID). The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { deviceId: { type: "string", description: "Entra ID device ID (GUID), not the bMS endpoint ID" } }, required: ["deviceId"] } },
+          { name: "link_entra_id_data", description: "[26R1] Link a baramundi endpoint to its Entra ID device, tenant and user. WARNING: Creates or replaces the Entra ID association of the endpoint. The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "bMS endpoint ID (GUID)" }, entraIdDeviceId: { type: "string", description: "Entra ID device ID (GUID)" }, entraIdTenantId: { type: "string", description: "Entra ID tenant ID (GUID)" }, entraIdUserId: { type: "string", description: "Entra ID user ID (GUID)" } }, required: ["endpointId", "entraIdDeviceId", "entraIdTenantId", "entraIdUserId"] } },
+          { name: "unlink_entra_id_data", description: "[26R1] Remove the Entra ID association of a baramundi endpoint. WARNING: Removes the Entra association. The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "bMS endpoint ID (GUID)" } }, required: ["endpointId"] } },
         );
       }
 
@@ -1189,13 +1189,16 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "get_entra_id_data": {
           if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "get_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
-          const result = await bconnect.endpoints.getEntraIdData(args!.endpointId as string);
+          const result = await bconnect.endpoints.getEntraIdData(args!.deviceId as string);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "link_entra_id_data": {
           if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "link_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
-          const result = await bconnect.endpoints.linkEntraIdData(args!.endpointId as string, args!.deviceId as string);
+          const result = await bconnect.endpoints.linkEntraIdData(
+            args!.endpointId as string,
+            pickArguments(args!, ["entraIdDeviceId", "entraIdTenantId", "entraIdUserId"])
+          );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
