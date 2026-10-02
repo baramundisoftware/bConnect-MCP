@@ -161,7 +161,8 @@ A failure stays a failure. A supported release with no test installation, e.g.
 need no bMS. They show:
 - the guard refusing a non-GET, another origin, a redirect and a credential route,
   in-process and in a spawned process;
-- the startup-only rule;
+- the startup-only rule, including a redirect answer at startup;
+- which tools are called and which are skipped (write tools, credential routes);
 - every misconfiguration case failing;
 - environment isolation;
 - the per-tool expected answers;
