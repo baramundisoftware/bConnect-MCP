@@ -127,3 +127,61 @@ export function declaredArgumentsOnly<Result extends { tools: object[] }>(
     },
   };
 }
+
+/** Per bMS release, per tool: the query parameters the tool offers and sends, as schema properties (#179). */
+export type QueryParameterTable = Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, object>>>>>>;
+
+/**
+ * The table entry for the selected release: 25R2 only when set so; unset or anything else is 26R1,
+ * as the servers treat it. Empty when only the other release's route has query parameters; an
+ * error when no release lists the tool (the table wasn't regenerated).
+ */
+function queryEntry(table: QueryParameterTable, release: string | undefined, tool: string): Readonly<Record<string, object>> {
+  if (!Object.values(table).some((byTool) => byTool[tool])) {
+    throw new Error(`No query parameters for ${tool}; run node scripts/generate-query-parameters.mjs`);
+  }
+  return table[release === "25R2" ? "25R2" : "26R1"]?.[tool] ?? {};
+}
+
+/** The query parameters `tool` offers in `release`, as input-schema properties. */
+export function queryProperties(table: QueryParameterTable, release: string | undefined, tool: string): Record<string, object> {
+  return { ...queryEntry(table, release, tool) };
+}
+
+/** The names of the query parameters `tool` sends in `release`, for `pickArguments`. */
+export function queryParameters(table: QueryParameterTable, release: string | undefined, tool: string): string[] {
+  return Object.keys(queryEntry(table, release, tool));
+}
+
+const isSchemaTool = (tool: object): tool is { name: string; inputSchema: Record<string, unknown> } =>
+  "name" in tool && typeof tool.name === "string" && "inputSchema" in tool && isRecord(tool.inputSchema);
+
+/**
+ * Builds each listed tool's query parameters from the table (#179): the tool's
+ * own properties (its path arguments) stay, every query parameter comes from
+ * the table for the selected release, and one only the other release declares
+ * is removed. A tool without a table entry is listed unchanged.
+ */
+export function withQueryProperties<Result extends { tools: object[] }>(
+  table: QueryParameterTable,
+  release: () => string | undefined,
+  handler: () => Result | Promise<Result>,
+): () => Promise<Result> {
+  return async () => {
+    const result = await handler();
+    const selected = release();
+    return {
+      ...result,
+      tools: result.tools.map((tool) => {
+        if (!isSchemaTool(tool) || !Object.values(table).some((byTool) => byTool[tool.name])) {
+          return tool;
+        }
+        const queryNames = new Set(Object.values(table).flatMap((byTool) => Object.keys(byTool[tool.name] ?? {})));
+        const own = isRecord(tool.inputSchema.properties) ? tool.inputSchema.properties : {};
+        const pathArguments = Object.fromEntries(Object.entries(own).filter(([name]) => !queryNames.has(name)));
+        const offered = table[selected === "25R2" ? "25R2" : "26R1"]?.[tool.name] ?? {};
+        return { ...tool, inputSchema: { ...tool.inputSchema, properties: { ...pathArguments, ...offered } } };
+      }),
+    };
+  };
+}

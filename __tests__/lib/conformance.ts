@@ -144,6 +144,8 @@ function slotFits(slot: string, arg: string): boolean {
  * - `query-undeclared`: a query parameter the operation doesn't declare was sent.
  * - `query-not-offered`: a query parameter the operation declares is neither in the tool's input
  *   schema nor sent (a tool may offer it under its own argument name).
+ * - `query-dropped`: a query parameter the operation declares is in the tool's input schema and
+ *   was given, but the request doesn't carry it: the tool offers a filter it doesn't apply (#179).
  * - `path-slot`: a path slot is filled by an argument whose name doesn't fit the slot.
  * - `page-description`: a page argument (any case) isn't described as zero-based, or a page-size
  *   argument doesn't state the 1000 maximum.
@@ -197,6 +199,9 @@ export function checkParams(args: {
       const sent = new Set(r.query.map(([k]) => k));
       for (const name of op.queryParams) {
         if (!(name in props) && !sent.has(name)) v('query-not-offered', call.tool, name);
+        // Every offered argument is given in this call (allArguments), so an offered parameter
+        // missing from the request was dropped by the tool.
+        if (name in props && !sent.has(name) && !call.failed) v('query-dropped', call.tool, name);
       }
       const segments = m![2].split('/');
       slotsOf(op.path).forEach((slot, i) => {

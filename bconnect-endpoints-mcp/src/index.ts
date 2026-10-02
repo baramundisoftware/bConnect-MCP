@@ -22,8 +22,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, PAGE_PROPERTY, pageSizeProperty, PAGE_SIZE_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
-import { QUERY_PARAMS } from "./query-params.js";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, PAGE_PROPERTY, pageSizeProperty, PAGE_SIZE_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly, queryParameters } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
 import { createBody, createInputSchema } from "./create-fields.js";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
@@ -814,7 +817,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_logical_groups": {
-          const result = await bconnect.endpoints.getLogicalGroups(pickArguments(args ?? {}, QUERY_PARAMS.list_logical_groups));
+          const result = await bconnect.endpoints.getLogicalGroups(pickArguments(args ?? {}, sends("list_logical_groups")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -826,7 +829,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_group_endpoints": {
           const result = await bconnect.endpoints.getLogicalGroupEndpoints(
             args!.logicalGroupId as string,
-            pickArguments(args ?? {}, QUERY_PARAMS.list_group_endpoints)
+            pickArguments(args ?? {}, sends("list_group_endpoints"))
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -854,7 +857,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_endpoints_by_logical_group": {
           const result = await bconnect.endpoints.getEndpointsByLogicalGroup(
             args!.logicalGroupId as string,
-            pickArguments(args ?? {}, QUERY_PARAMS.list_endpoints_by_logical_group)
+            pickArguments(args ?? {}, sends("list_endpoints_by_logical_group"))
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
@@ -862,7 +865,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_windows_endpoints_by_logical_group": {
           const result = await bconnect.endpoints.getWindowsEndpointsByLogicalGroup(
             args!.logicalGroupId as string,
-            pickArguments(args ?? {}, QUERY_PARAMS.list_windows_endpoints_by_logical_group)
+            pickArguments(args ?? {}, sends("list_windows_endpoints_by_logical_group"))
           );
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }

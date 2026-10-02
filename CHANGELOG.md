@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Job tools offer every filter bConnect supports** (#179). `list_job_instances`, the job-instance
+  tools per group, endpoint and job definition, `list_job_definitions`, `list_job_folders` and
+  `list_job_subfolders` now take the filters their API route declares, among them `LastAction` (an
+  ISO 8601 date with an optional `lt`/`gt` prefix, e.g. `gt 2026-09-30T00:00:00Z`), `EndpointType`,
+  `JobDefinitionId`, `Name` and `includeSubfolders`. Their `SearchQuery` and `OrderBy` descriptions
+  now name the searchable fields and sort keys. The filters come from tables generated from the
+  API specification (`scripts/generate-query-parameters.mjs`), per bMS release.
+
 ### Security
 - **Audit level `security` records every security-relevant call** (#168). At that level only
   BitLocker and LAPS credential routes were recorded. Now it also records: listing API keys,
