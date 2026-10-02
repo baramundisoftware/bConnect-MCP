@@ -12,18 +12,13 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
-import * as core from '../packages/mcp-core/src/index.js';
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { BConnectClientBase, type BConnectConfig } from '../packages/mcp-core/src/bconnect-client-base.js';
 import { clientConfigFromEnv } from '../packages/mcp-core/src/client-config.js';
+import { toolErrorResult as coreToolErrorResult, type ToolErrorResult } from '../packages/mcp-core/src/tool-errors.js';
 
-type ToolResult = { isError?: boolean; content: { type: string; text: string }[] };
-type ToolErrorResult = (error: unknown, release: '25R2' | '26R1') => ToolResult;
-// Looked up at run time so each test fails on its own until the helper exists.
-const toolErrorResult = (error: unknown, release: '25R2' | '26R1' = '26R1'): ToolResult => {
-  const helper: unknown = Reflect.get(core, 'toolErrorResult');
-  if (typeof helper !== 'function') {throw new Error('@bconnect/mcp-core exports no toolErrorResult');}
-  return (helper as ToolErrorResult)(error, release);
-};
+type ToolResult = ToolErrorResult;
+const toolErrorResult = (error: unknown, release: '25R2' | '26R1' = '26R1'): ToolResult => coreToolErrorResult(error, release);
 
 const HOST = 'bms.errors.test';
 const BASE = `http://${HOST}/bconnect`;
@@ -105,6 +100,17 @@ describe('HTTP errors become isError tool results with the documented meaning', 
     const message = text(toolErrorResult(await failure('GET', `/compliance/v2.0/Vulnerabilities/${ID}`)));
     expect(message).toContain('no such vulnerability');
     expect(message).toContain('A vulnerability with the specified id does not exist');
+  });
+
+  it('matches the most specific route: a literal segment beats a {placeholder}', async () => {
+    // GET /AssetTypes/Folders documents no 404 of its own; the 404 meaning of
+    // GET /AssetTypes/{id} ("An asset type with the specified id does not exist")
+    // must not be borrowed for it.
+    reply = problem(404, { title: 'Not Found' });
+    const message = text(toolErrorResult(await failure('GET', '/assets/v2.0/AssetTypes/Folders')));
+    expect(message).not.toContain('asset type with the specified id');
+    const byId = text(toolErrorResult(await failure('GET', `/assets/v2.0/AssetTypes/${ID}`)));
+    expect(byId).toContain('An asset type with the specified id does not exist');
   });
 
   it('takes the meaning from the selected release', async () => {
@@ -228,6 +234,23 @@ describe('failures before or without an answer are tool results', () => {
     const result = toolErrorResult(await failure('GET', '/endpoints/v2.0/Endpoints'));
     expect(result.isError).toBe(true);
     expect(text(result)).toMatch(/connect/i);
+    expectNoLeak(text(result));
+  });
+
+  it('an untrusted TLS certificate, with the remediation hint (#59)', async () => {
+    const config = { url: '/endpoints/v2.0/Endpoints', method: 'get', headers: {} } as InternalAxiosRequestConfig;
+    const tlsError = new AxiosError('self-signed certificate in certificate chain', 'SELF_SIGNED_CERT_IN_CHAIN', config, {});
+    const mapper = client() as unknown as { handleError: (e: unknown) => never };
+    let error: unknown;
+    try {
+      mapper.handleError(tlsError);
+    } catch (e) {
+      error = e;
+    }
+    const result = toolErrorResult(error);
+    expect(result.isError).toBe(true);
+    expect(text(result)).toContain('SELF_SIGNED_CERT_IN_CHAIN');
+    expect(text(result)).toContain('BCONNECT_CA_CERT_PATH');
     expectNoLeak(text(result));
   });
 

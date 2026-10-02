@@ -13,17 +13,8 @@
  */
 import { STATUS_CODES } from 'node:http';
 import { describe, expect, it } from 'vitest';
-import * as core from '../packages/mcp-core/src/index.js';
-import { RELEASES, type Release, loadOperations, type Schema } from './lib/spec.js';
-
-interface ErrorMeaning {
-  releases: readonly Release[];
-  method: string;
-  domain: string;
-  path: string;
-  status: number;
-  meaning: string;
-}
+import { DOCUMENTED_ROUTES, ERROR_MEANINGS } from '../packages/mcp-core/src/error-meanings.js';
+import { RELEASES, loadOperations, type Schema } from './lib/spec.js';
 
 const REGENERATE = 'run `node scripts/generate-error-meanings.mjs` and commit packages/mcp-core/src/error-meanings.ts';
 
@@ -48,11 +39,7 @@ function fromSpecs(): string[] {
   return rows.sort();
 }
 
-function table(): readonly ErrorMeaning[] {
-  const value: unknown = Reflect.get(core, 'ERROR_MEANINGS');
-  if (!Array.isArray(value)) {throw new Error(`@bconnect/mcp-core exports no ERROR_MEANINGS; ${REGENERATE}`);}
-  return value as ErrorMeaning[];
-}
+const table = () => ERROR_MEANINGS;
 
 describe('error meanings come from the specs', () => {
   it('the derivation finds the documented meanings this design relies on', () => {
@@ -72,6 +59,14 @@ describe('error meanings come from the specs', () => {
     const stale = actual.filter((row) => !expected.includes(row));
     expect({ missing, stale }).toEqual({ missing: [], stale: [] });
     expect(actual).toEqual(expected); // no duplicates either
+  });
+
+  it(`DOCUMENTED_ROUTES lists every operation of both releases (else ${REGENERATE})`, () => {
+    const actual = DOCUMENTED_ROUTES
+      .flatMap((r) => r.releases.map((release) => `${release} ${r.method} /${r.domain}${r.path}`))
+      .sort();
+    const expected = RELEASES.flatMap((release) => loadOperations(release).map((op) => `${release} ${op.method} /${op.domain}${op.path}`)).sort();
+    expect(actual).toEqual(expected);
   });
 
   it('each entry is one clean line, keyed by an upper-case method and a spec path template', () => {
