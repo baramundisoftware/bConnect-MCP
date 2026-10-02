@@ -7,5 +7,6 @@
   "types": "./build/index.d.ts",
   "exports": { ".": { "types": "./build/index.d.ts", "default": "./build/index.js" } },
   "scripts": { "build": "tsc" },
+  "dependencies": { "@modelcontextprotocol/sdk": "^1.31.0", "axios": "^1.20.0", "axios-retry": "^4.5.0" },
   "devDependencies": { "typescript": "^5.9.3" }
 }

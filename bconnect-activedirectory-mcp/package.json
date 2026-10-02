@@ -33,12 +33,9 @@
   "dependencies": {
     "@bconnect/mcp-core": "*",
     "@modelcontextprotocol/sdk": "^1.31.0",
-    "axios": "^1.7.0",
-    "axios-retry": "^4.5.0",
+    "axios": "^1.20.0",
     "dotenv": "^16.4.0",
-    "express": "^4.21.0",
-    "node-cache": "^5.1.2",
-    "winston": "^3.18.3"
+    "express": "^4.21.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
