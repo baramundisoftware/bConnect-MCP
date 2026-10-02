@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, MissingCredentialsError } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { AssetsRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -626,7 +626,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       try {
         return new BConnectClient(clientConfigFromEnv(process.env, credentials));
       } catch (error) {
-        if (error instanceof MissingCredentialsError) {
+        if (error instanceof ClientConfigError) {
           throw new McpError(ErrorCode.InternalError, error.message);
         }
         throw error;
@@ -809,7 +809,7 @@ async function main(): Promise<void> {
     try {
       _config = clientConfigFromEnv(process.env);
     } catch (error) {
-      if (!(error instanceof MissingCredentialsError)) { throw error; }
+      if (!(error instanceof ClientConfigError)) { throw error; }
       console.error(`bconnect-assets-mcp: ${error.message}`);
       process.exit(1);
     }

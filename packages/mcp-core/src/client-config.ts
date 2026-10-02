@@ -10,11 +10,30 @@ export interface BConnectCredentials {
   apiKey?: string;
 }
 
+/**
+ * A configuration problem the operator has to fix (credentials, CA file, base
+ * URL). Servers map every subclass to a clean startup exit and tool error.
+ */
+export class ClientConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ClientConfigError";
+  }
+}
+
 /** Neither an API key nor both username and password are set. */
-export class MissingCredentialsError extends Error {
+export class MissingCredentialsError extends ClientConfigError {
   constructor() {
     super("Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
     this.name = "MissingCredentialsError";
+  }
+}
+
+/** The base URL would send credentials unencrypted, or isn't an http(s) URL (REQ-SRV-020). */
+export class InsecureBaseUrlError extends ClientConfigError {
+  constructor(message: string) {
+    super(message);
+    this.name = "InsecureBaseUrlError";
   }
 }
 
@@ -25,6 +44,45 @@ const AUDIT_LEVELS: readonly AuditLevel[] = ["all", "write", "security", "none"]
 
 const isAuditLevel = (value: string | undefined): value is AuditLevel =>
   AUDIT_LEVELS.some((level) => level === value);
+
+const isLoopback = (hostname: string): boolean =>
+  hostname === "localhost" || hostname === "[::1]" || /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname);
+
+let insecureHttpWarned = false;
+
+/**
+ * Every request carries the credential, so it may only travel over https.
+ * Loopback http (the bundled mock, local testing) is allowed; any other http
+ * host needs BCONNECT_ALLOW_INSECURE_HTTP=true and is warned about once.
+ */
+function assertSecureBaseUrl(baseUrl: string, env: NodeJS.ProcessEnv): void {
+  let url: URL;
+  try {
+    url = new URL(baseUrl);
+  } catch {
+    throw new InsecureBaseUrlError("BCONNECT_BASE_URL must be an https:// URL, for example https://bms.example.com/bconnect");
+  }
+  if (url.protocol === "https:") {
+    return;
+  }
+  if (url.protocol !== "http:") {
+    throw new InsecureBaseUrlError(`BCONNECT_BASE_URL must start with https:// (got ${url.protocol}//)`);
+  }
+  if (isLoopback(url.hostname)) {
+    return;
+  }
+  if ((env.BCONNECT_ALLOW_INSECURE_HTTP ?? "").trim().toLowerCase() !== "true") {
+    throw new InsecureBaseUrlError(
+      `BCONNECT_BASE_URL uses http:// for ${url.host}, which would send the bConnect credentials unencrypted. ` +
+      "Use https://, or set BCONNECT_ALLOW_INSECURE_HTTP=true for a test setup."
+    );
+  }
+  if (!insecureHttpWarned) {
+    insecureHttpWarned = true;
+    // stderr: stdout carries JSON-RPC in stdio mode.
+    console.error(`WARNING: BCONNECT_ALLOW_INSECURE_HTTP=true: bConnect credentials travel unencrypted to ${url.host}.`);
+  }
+}
 
 const intOr = (value: string | undefined, fallback: number): number => {
   const parsed = parseInt(value ?? "", 10);
@@ -38,8 +96,10 @@ const intOr = (value: string | undefined, fallback: number): number => {
  * is frozen: a server can't change the shared settings for one of its clients.
  *
  * Certificate verification is off only for NODE_TLS_REJECT_UNAUTHORIZED=0.
- * Throws MissingCredentialsError when no way to authenticate is set, and an
- * error when BCONNECT_CA_CERT_PATH can't be read or the file is empty.
+ * Throws a ClientConfigError: MissingCredentialsError when no way to
+ * authenticate is set, InsecureBaseUrlError for a base URL that isn't https
+ * (loopback http and BCONNECT_ALLOW_INSECURE_HTTP=true excepted), and the base
+ * class when BCONNECT_CA_CERT_PATH can't be read or the file is empty.
  */
 export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConnectCredentials): Readonly<BConnectConfig> {
   const baseUrl = credentials?.baseUrl || env.BCONNECT_BASE_URL || DEFAULT_BASE_URL;
@@ -50,12 +110,18 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
   if (!apiKey && (!username || !password)) {
     throw new MissingCredentialsError();
   }
+  assertSecureBaseUrl(baseUrl, env);
 
   const caCertPath = env.BCONNECT_CA_CERT_PATH;
-  const ca = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
+  let ca: string | undefined;
+  try {
+    ca = caCertPath ? fs.readFileSync(caCertPath, "utf8") : undefined;
+  } catch (error) {
+    throw new ClientConfigError(`BCONNECT_CA_CERT_PATH can't be read: ${caCertPath} (${(error as NodeJS.ErrnoException).code ?? "error"})`);
+  }
   if (ca !== undefined && ca.trim() === "") {
     // An empty CA would silently replace the default trust store with Node's bundled CAs only.
-    throw new Error(`BCONNECT_CA_CERT_PATH points to an empty file: ${caCertPath}`);
+    throw new ClientConfigError(`BCONNECT_CA_CERT_PATH points to an empty file: ${caCertPath}`);
   }
   const auditLevel = env.BCONNECT_AUDIT_LEVEL;
 

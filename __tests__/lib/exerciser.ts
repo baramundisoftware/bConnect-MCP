@@ -17,7 +17,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { Release } from './spec.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-export const BASE_URL = 'http://bms.guard.test/bconnect';
+export const BASE_URL = 'https://bms.guard.test/bconnect';
 export const BASE_PATH = new URL(BASE_URL).pathname;
 /** The GUID generated for every argument named like an ID. */
 export const ID = '00000000-0000-4000-8000-000000000001';
