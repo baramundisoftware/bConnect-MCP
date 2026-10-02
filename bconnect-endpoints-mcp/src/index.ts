@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, PAGE_PROPERTY, pageSizeProperty, PAGE_SIZE_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, PAGE_PROPERTY, pageSizeProperty, PAGE_SIZE_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
 import { QUERY_PARAMS } from "./query-params.js";
 import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
 import { createBody, createInputSchema } from "./create-fields.js";
@@ -115,7 +115,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "unlink_entra_id_data",
   ]);
 
-  server.setRequestHandler(ListToolsRequestSchema, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
         // ── Endpoints API ─────────────────────────────────────────────────
         {
@@ -740,6 +740,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
       return { tools };
   }));
+  server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -752,6 +753,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   }
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
+    await toolCatalog.refuseUndeclared(name, args);
 
     
     // Validate arguments first — pure, no side effects, fails fast on bad input.

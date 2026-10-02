@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { UpdateManagementRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -51,7 +51,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "update_update_management_endpoint",
   ]);
 
-  server.setRequestHandler(ListToolsRequestSchema, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     return {
       tools: [
         {
@@ -97,6 +97,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       ]
     };
   }));
+  server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -119,6 +120,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
+    await toolCatalog.refuseUndeclared(name, args);
 
     // 1. Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(name, args);
