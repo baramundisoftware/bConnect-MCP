@@ -39,3 +39,20 @@ export function startupProblems(requests: LoggedRequest[], domain: string, baseP
   if (new URLSearchParams(probe.query).get('PageSize') !== '1') return ['startup check without PageSize=1'];
   return [];
 }
+
+/**
+ * Why a server's startup failed; empty when it passed every check: it answered
+ * initialize, listed tools, wrote only JSON-RPC, and sent only its startup check.
+ * Only a startup with no failure counts as started.
+ */
+export function startupFailures(
+  s: { initialized: boolean; tools: number; nonJson: number; requests: LoggedRequest[] },
+  domain: string,
+  basePath: string,
+): string[] {
+  const failures: string[] = [];
+  if (!s.initialized) failures.push('no initialize answer');
+  if (s.tools === 0) failures.push('tools/list returned no tools');
+  if (s.nonJson > 0) failures.push(`${s.nonJson} stdout lines that are not JSON-RPC`);
+  return [...failures, ...startupProblems(s.requests, domain, basePath)];
+}

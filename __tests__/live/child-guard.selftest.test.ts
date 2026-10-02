@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { CHILD_GUARD, readGuardLog, startupProblems } from './lib/child.js';
+import { CHILD_GUARD, readGuardLog, startupFailures, startupProblems } from './lib/child.js';
 
 /** axios by file URL: the client script lives in a temp folder without node_modules. */
 const AXIOS = pathToFileURL(createRequire(import.meta.url).resolve('axios')).href;
@@ -125,6 +125,25 @@ describe('guard in a spawned process', () => {
       { method: 'GET', path: '/bconnect/endpoints/v2.0/Endpoints', query: 'PageSize=1' },
       { method: 'POST', path: '/bconnect/endpoints/v2.0/Endpoints', query: '', refused: 'method POST' },
     ]);
+  });
+});
+
+describe('a server counts as started only when every startup check passed', () => {
+  const probe = { method: 'GET', path: '/bconnect/endpoints/v2.0/Endpoints', query: 'PageSize=1' };
+  const clean = { initialized: true, tools: 12, nonJson: 0, requests: [probe] };
+
+  it('passes a clean startup', () => {
+    expect(startupFailures(clean, 'endpoints', '/bconnect')).toEqual([]);
+  });
+
+  it('fails a startup that answered but sent more than its startup check', () => {
+    expect(startupFailures({ ...clean, requests: [probe, probe] }, 'endpoints', '/bconnect')).toEqual(['2 requests at startup, expected 1']);
+  });
+
+  it('fails no initialize answer, no tools and non-JSON output', () => {
+    expect(startupFailures({ ...clean, initialized: false }, 'endpoints', '/bconnect')).toEqual(['no initialize answer']);
+    expect(startupFailures({ ...clean, tools: 0 }, 'endpoints', '/bconnect')).toEqual(['tools/list returned no tools']);
+    expect(startupFailures({ ...clean, nonJson: 2 }, 'endpoints', '/bconnect')).toEqual(['2 stdout lines that are not JSON-RPC']);
   });
 });
 

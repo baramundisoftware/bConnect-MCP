@@ -43,7 +43,7 @@ import { assertExercised, refusedLines, sanitise, sanitisedSummary, type ToolRun
 import { createGuard } from './lib/guard.mjs';
 import { expectedAnswer } from './lib/expected.js';
 import { classifyByProfile, endpointTypesFrom, type Profile } from './lib/profile.js';
-import { CHILD_GUARD, readGuardLog, startupProblems, type LoggedRequest } from './lib/child.js';
+import { CHILD_GUARD, readGuardLog, startupFailures, type LoggedRequest } from './lib/child.js';
 
 const ENV_FILE = process.env.BCONNECT_LIVE_ENV ?? join(ROOT, '.env.local');
 // A missing or incomplete env file fails the run here, before any test (lib/env.ts).
@@ -109,11 +109,10 @@ describe(`live bMS (${RELEASE}): startup`, () => {
   it.each(SERVERS)('%s starts with the probe on', async (server) => {
     expect(existsSync(join(ROOT, server, 'build', 'index.js')), `${server} is not built: run the build first`).toBe(true);
     const s = await startOverStdio(server);
-    if (s.initialized) started++;
-    expect(s.initialized, `no initialize answer; stderr:\n${s.stderr}`).toBe(true);
-    expect(s.tools, 'tools/list').toBeGreaterThan(0);
-    expect(s.nonJson, 'stdout lines that are not JSON-RPC').toBe(0);
-    expect(startupProblems(s.requests, domainOf(server), basePath), 'requests at startup besides the startup check').toEqual([]);
+    // Counted only when every check passed: answered, listed tools, JSON-RPC only, startup check only.
+    const failures = startupFailures(s, domainOf(server), basePath);
+    if (failures.length === 0) started++;
+    expect(failures, `startup failed; last stderr lines:\n${s.stderr}`).toEqual([]);
   });
 });
 
