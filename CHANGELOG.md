@@ -181,6 +181,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Basic authentication works with passwords containing `§`, umlauts or `ß`** (#228). The
+  credentials were sent as UTF-8, but bConnect reads Basic credentials as Latin-1, so such a
+  password was a different password to bMS and every call got 401. They are now sent as Latin-1;
+  ASCII credentials are unchanged. A username or password with a character Latin-1 doesn't have
+  (such as `€`) is refused at startup (in the gateway: on every tool call) with a message that names
+  the variable and suggests an API key. A password pasted in decomposed form (e.g. from macOS) is
+  sent in its composed form.
 - **LAPS and job-folder tools describe what they do.** `patch_local_admin_user_credentials` no longer
   claims to change the password or user name: it sets the requested expiration date, and a past date
   makes the client generate new credentials. `list_job_folders` returns folders at every level, not

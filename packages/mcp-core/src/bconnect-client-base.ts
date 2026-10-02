@@ -11,6 +11,7 @@ import https from "https";
 import tls, { PeerCertificate } from "node:tls";
 import { BConnectApiError, BConnectConnectionError, BConnectRedirectError } from "./api-errors.js";
 import { cleanModelData, cleanModelText } from "./model-text.js";
+import { basicAuthHeader } from "./client-config.js";
 
 /**
  * Build the default CA trust list when no explicit CA is configured.
@@ -580,10 +581,9 @@ export class BConnectClientBase {
     if (this.config.apiKey) {
       this.client.defaults.headers.common["X-Api-Key"] = this.config.apiKey;
     } else {
-      const authString = Buffer.from(
-        `${this.config.username}:${this.config.password}`
-      ).toString("base64");
-      this.client.defaults.headers.common["Authorization"] = `Basic ${authString}`;
+      // Latin-1, as bConnect decodes Basic credentials (#228); refuses what it can't carry.
+      this.client.defaults.headers.common["Authorization"] =
+        basicAuthHeader(this.config.username ?? "", this.config.password ?? "");
     }
   }
 
