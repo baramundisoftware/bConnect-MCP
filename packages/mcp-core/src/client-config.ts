@@ -144,15 +144,40 @@ export function assertLatin1Credential(source: string, value: string | undefined
 }
 
 /**
- * The Authorization header for Basic auth as bConnect reads it (#228): NFC,
- * then Latin-1, then base64. Refuses what Latin-1 can't carry.
+ * bConnect's API layer rejects a Basic password with a non-ASCII character
+ * (401 "Unauthenticated user"), although the Windows logon behind it accepts
+ * the Latin-1 form (#265, live on bMS 26.1.161). No encoding passes both, and
+ * each attempt counts toward the account lockout, so such a password is
+ * refused before anything is sent, naming where it came from, never the value.
+ */
+export function assertAsciiPassword(source: string, value: string | undefined): void {
+  if (value === undefined) {return;}
+  for (const ch of value) {
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp > 0x7f) {
+      const encoding = cp === 0xfffd ? " (U+FFFD usually means the file holding it isn't saved as UTF-8)" : "";
+      throw new ClientConfigError(
+        `${source} contains a non-ASCII character${encoding}. bConnect's API rejects such passwords (401) ` +
+        "even though Windows accepts them, so the server doesn't try: each attempt would count toward the " +
+        "account lockout. Use an ASCII-only password, or an API key (BCONNECT_API_KEY) instead."
+      );
+    }
+  }
+}
+
+/**
+ * The Authorization header for Basic auth as bConnect reads it: NFC, then
+ * Latin-1, then base64 (#228). The username may use Latin-1; the password must
+ * be ASCII (#265).
  */
 export function basicAuthHeader(username: string, password: string): string {
   const user = username.normalize("NFC");
-  const pass = password.normalize("NFC");
+  // The raw password: NFC would turn a few non-ASCII characters into ASCII
+  // (U+212A Kelvin sign -> "K") and send a different password. An ASCII password
+  // needs no normalising.
   assertLatin1Credential("The username", user);
-  assertLatin1Credential("The password", pass);
-  return `Basic ${Buffer.from(`${user}:${pass}`, "latin1").toString("base64")}`;
+  assertAsciiPassword("The password", password);
+  return `Basic ${Buffer.from(`${user}:${password}`, "latin1").toString("base64")}`;
 }
 
 /**
@@ -179,7 +204,7 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
   assertSecureBaseUrl(baseUrl, env);
   if (!apiKey) {
     assertLatin1Credential(credentials?.username !== undefined ? "The request's username" : "BCONNECT_USERNAME", username?.normalize("NFC"));
-    assertLatin1Credential(credentials?.password !== undefined ? "The request's password" : "BCONNECT_PASSWORD", password?.normalize("NFC"));
+    assertAsciiPassword(credentials?.password !== undefined ? "The request's password" : "BCONNECT_PASSWORD", password);
   }
 
   const caCertPath = env.BCONNECT_CA_CERT_PATH;

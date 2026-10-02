@@ -116,9 +116,11 @@ export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS
   if (!release) throw new LiveConfigError(`BCONNECT_RELEASE must be one of ${RELEASES.join(', ')}`);
   env.BCONNECT_RELEASE = release;
 
+  // The Basic header in both encodings: the client sends Latin-1 (#228), UTF-8 kept for safety.
+  const pair = env.BCONNECT_USERNAME && env.BCONNECT_PASSWORD ? `${env.BCONNECT_USERNAME}:${env.BCONNECT_PASSWORD}` : '';
   const secrets = [env.BCONNECT_PASSWORD, env.BCONNECT_API_KEY,
-    env.BCONNECT_USERNAME && env.BCONNECT_PASSWORD
-      ? Buffer.from(`${env.BCONNECT_USERNAME}:${env.BCONNECT_PASSWORD}`).toString('base64') : '',
+    pair ? Buffer.from(pair, 'latin1').toString('base64') : '',
+    pair ? Buffer.from(pair).toString('base64') : '',
   ].filter((s) => s.length >= 4);
 
   return {
