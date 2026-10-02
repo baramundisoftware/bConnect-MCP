@@ -49,20 +49,28 @@ export const DefenseControlRules = {
     CommonRules.guid('endpointId')
   ],
 
+  // Only the requested expiration date can be patched (#177).
   patchLocalAdminUserCredentials: (): ValidationRule[] => [
     CommonRules.guid('endpointId'),
-    patchOperationsRule
+    {
+      name: 'requestedExpirationDate',
+      required: true,
+      type: 'string',
+      pattern: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})$/,
+      message: "requestedExpirationDate must be an ISO 8601 date-time with time zone, e.g. '2026-01-01T00:00:00Z'"
+    }
   ],
 
-  triggerUpdateOnClient: (): ValidationRule[] => [
+  // The spec allows 0–60 seconds (#177).
+  refreshLocalAdminAccountExpiry: (): ValidationRule[] => [
     CommonRules.guid('endpointId'),
     {
       name: 'timeout',
       required: false,
       type: 'number',
+      integer: true,
       min: 0,
-      max: 3600,
-      message: 'timeout must be a non-negative integer (seconds, max 3600)'
+      max: 60
     }
   ],
 

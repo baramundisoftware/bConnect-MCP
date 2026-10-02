@@ -12,7 +12,7 @@ export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   get_bitlocker_windows_endpoint: ['GetBitLockerStatesByWindowsEndpointId'],
   get_local_admin_accounts: ['GetLocalAdminUserCredentialsByWindowsEndpointId'],
   patch_local_admin_user_credentials: ['PatchLocalAdminUserCredentialsForWindowsEndpointId'],
-  trigger_update_on_client: ['TriggerUpdateOnClient'],
+  refresh_local_admin_account_expiry: ['TriggerUpdateOnClient'],
   list_defender_threats: ['GetMicrosoftDefenderThreats'],
   get_defender_threat: ['GetMicrosoftDefenderThreat'],
   list_defender_threats_by_endpoint: ['GetMicrosoftDefenderThreatsByWindowsEndpointId'],

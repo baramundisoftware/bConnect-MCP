@@ -11,7 +11,7 @@
   },
   "bconnect-defensecontrol-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 7
+      "count": 6
     }
   },
   "bconnect-endpoints-mcp/src/index.ts": {

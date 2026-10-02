@@ -49,16 +49,21 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
+  // Old tool names that answer with the new one instead of "unknown tool" (#177).
+  const RENAMED_TOOLS = new Map<string, string>([
+    ["trigger_update_on_client", "refresh_local_admin_account_expiry"],
+  ]);
+
   // Write tools: gated by ALLOW_WRITE_OPERATIONS, and marked unverified in tools/list
   // until their live check is recorded (REQ-XC-003 AC 5).
   const WRITE_TOOLS = new Set<string>([
   "update_bitlocker_pin",
   "patch_local_admin_user_credentials",
-  "trigger_update_on_client",
+  "refresh_local_admin_account_expiry",
   ]);
 
   const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
-    const tools = [
+    const tools: object[] = [
 
       // ── BitLocker ──────────────────────────────────────────────────────
       {
@@ -101,27 +106,28 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "patch_local_admin_user_credentials",
-        description: "Update the Local Administrator account credentials for a specific Windows endpoint using a JSON Patch document. Allows modifying password or username for the managed local admin account on the specified baramundi-managed Windows endpoint.",
+        description: "Set the requested expiration date of the managed local administrator account on a Windows endpoint. This is the only thing the operation can change: it can't set a password or user name. A date in the past makes the client generate new credentials. The requested date applies once the client acknowledges it (then the account's expiration date holds the new value); use refresh_local_admin_account_expiry to ask an online client to apply it now. Returns the current local administrator account, which includes its credentials.",
         inputSchema: {
           type: "object",
           properties: {
-            endpointId: { type: "string", description: "GUID of the Windows endpoint to patch local admin credentials for." },
-            patchOperations: {
-              type: "array",
-              description: "JSON Patch operations array. Each item has op (replace/add/remove), path (JSON path), and value fields."
+            endpointId: { type: "string", description: "GUID of the Windows endpoint." },
+            requestedExpirationDate: {
+              type: "string",
+              format: "date-time",
+              description: "New expiration date of the local administrator account, ISO 8601 with time zone (e.g. '2026-01-01T00:00:00Z'). A date in the past makes the client generate new credentials."
             }
           },
-          required: ["endpointId", "patchOperations"]
+          required: ["endpointId", "requestedExpirationDate"]
         }
       },
       {
-        name: "trigger_update_on_client",
-        description: "Trigger an immediate update of managed information on a specific Windows endpoint client in baramundi Management Suite. Forces the baramundi client to refresh its managed data from the server, with an optional timeout for the operation.",
+        name: "refresh_local_admin_account_expiry",
+        description: "Ask a Windows endpoint's client to apply the requested expiration date of its managed local administrator account now (set it with patch_local_admin_user_credentials). Only works while the client is online. Returns true if the client changed its expiration date, false if it couldn't be reached. It does not refresh any other client data.",
         inputSchema: {
           type: "object",
           properties: {
-            endpointId: { type: "string", description: "GUID of the Windows endpoint to trigger the update on." },
-            timeout: { type: "number", description: "Optional timeout in seconds to wait for the update to complete." }
+            endpointId: { type: "string", description: "GUID of the Windows endpoint." },
+            timeout: { type: "integer", minimum: 0, maximum: 60, description: "Seconds to wait for the client, 0 to 60 (default 30)." }
           },
           required: ["endpointId"]
         }
@@ -272,8 +278,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       case "patch_local_admin_user_credentials":
         validateOrThrow(args, DefenseControlRules.patchLocalAdminUserCredentials());
         return;
-      case "trigger_update_on_client":
-        validateOrThrow(args, DefenseControlRules.triggerUpdateOnClient());
+      case "refresh_local_admin_account_expiry":
+        validateOrThrow(args, DefenseControlRules.refreshLocalAdminAccountExpiry());
         return;
       case "list_defender_threats":
         validateOrThrow(args, DefenseControlRules.listDefenderThreats());
@@ -299,6 +305,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const { name, arguments: args } = request.params;
+    // A renamed tool answers with its new name (#177).
+    const renamedTo = RENAMED_TOOLS.get(name);
+    if (renamedTo) {
+      throw new McpError(ErrorCode.MethodNotFound, `${name} was renamed to ${renamedTo}.`);
+    }
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
 
@@ -389,11 +400,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "patch_local_admin_user_credentials": {
-          const result = await dc.patchLocalAdminUserCredentials(args!.endpointId as string, args!.patchOperations as never);
+          const result = await dc.patchLocalAdminUserCredentials(args!.endpointId as string, args!.requestedExpirationDate as string);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
-        case "trigger_update_on_client": {
+        case "refresh_local_admin_account_expiry": {
           const timeout = typeof args?.timeout === "number" ? args.timeout : undefined;
           const result = await dc.triggerUpdateOnClient(args!.endpointId as string, timeout);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };

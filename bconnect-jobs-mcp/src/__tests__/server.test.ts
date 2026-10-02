@@ -201,7 +201,7 @@ const DEFENSECONTROL_TOOLS = [
   'get_bitlocker_windows_endpoint',
   'get_local_admin_accounts',
   'trigger_local_admin_accounts_update',
-  'trigger_update_on_client',
+  'refresh_local_admin_account_expiry',
   'patch_local_admin_user_credentials',
   'list_defender_threats',
   'get_defender_threat',
