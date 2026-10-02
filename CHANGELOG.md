@@ -242,8 +242,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   intervals, Everyday, WorkdayWeekend and IndividualWeekday need at least one.
 - **Basic credentials are sent as bConnect reads them, and a password bConnect can't accept is
   refused before signing in** (#228, #265). The credentials were sent as UTF-8, but bConnect reads
-  Basic credentials as Latin-1, so a username with an umlaut reached bMS as a different name. They
-  are now sent as Latin-1; ASCII credentials are unchanged. A **password** with any non-ASCII
+  Basic credentials as Latin-1. They are now sent as Latin-1; ASCII credentials are unchanged (a
+  username with an umlaut hasn't been verified live). A **password** with any non-ASCII
   character (`§`, an umlaut, `ß`, ...) still can't work: bConnect's API rejects it with 401 although
   Windows accepts it. Such a password is now refused at startup (in the gateway: on every tool call)
   with a message that names the variable and points to an ASCII-only password or an API key, so no

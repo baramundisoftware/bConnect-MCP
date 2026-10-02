@@ -69,7 +69,7 @@ describe('a password with a non-ASCII character (#265)', () => {
     expect(error.message).not.toContain(password.slice(2));
   });
 
-  it('per request (gateway) is refused too, naming the request, not the value', () => {
+  it('passed to createServer(credentials) is refused too, naming the request, not the value', () => {
     const error = refusal(() => clientConfigFromEnv(ENV, { baseUrl: BASE, username: 'admin', password: 'x\u00A7y' }));
     expect(error).toBeInstanceOf(ClientConfigError);
     expect(error.message).toMatch(/request's password/);
@@ -79,6 +79,11 @@ describe('a password with a non-ASCII character (#265)', () => {
   it('is refused by a client built without the shared config, and by the header helper', () => {
     expect(() => new BConnectClientBase({ baseUrl: BASE, username: 'admin', password: 'Pa\u00A7s' })).toThrow(ClientConfigError);
     expect(() => basicAuthHeader('admin', 'Pa\u00A7s')).toThrow(/non-ASCII/);
+  });
+
+  it('a character that NFC turns into ASCII (Kelvin sign) is refused, not sent as a different password', () => {
+    expect(() => basicAuthHeader('admin', 'Pa\u212Aword')).toThrow(/non-ASCII/);
+    expect(() => clientConfigFromEnv({ ...ENV, BCONNECT_USERNAME: 'admin', BCONNECT_PASSWORD: 'Pa\u212Aword' })).toThrow(/non-ASCII/);
   });
 
   it('a U+FFFD (a file not saved as UTF-8) gets a hint about the encoding', () => {

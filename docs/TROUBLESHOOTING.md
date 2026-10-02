@@ -86,6 +86,9 @@ npm run build                          # then all servers (or -w bconnect-endpoi
 2. **Check for special characters in password:**
    - Passwords with `$`, `` ` ``, `\`, `"` need escaping in `.env`
    - Use single quotes: `BCONNECT_PASSWORD='P@$$w0rd!'`
+   - **ASCII characters only.** bConnect's API rejects a password with `§`, an umlaut or `ß` (401)
+     even though Windows accepts it. The servers refuse such a password before signing in, so no
+     attempt counts toward the account lockout. Use an ASCII-only password or an API key.
 
 3. **Verify account status in baramundi console:**
    - Account not locked or expired

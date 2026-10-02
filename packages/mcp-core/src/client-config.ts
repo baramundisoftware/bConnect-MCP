@@ -172,10 +172,12 @@ export function assertAsciiPassword(source: string, value: string | undefined): 
  */
 export function basicAuthHeader(username: string, password: string): string {
   const user = username.normalize("NFC");
-  const pass = password.normalize("NFC");
+  // The raw password: NFC would turn a few non-ASCII characters into ASCII
+  // (U+212A Kelvin sign -> "K") and send a different password. An ASCII password
+  // needs no normalising.
   assertLatin1Credential("The username", user);
-  assertAsciiPassword("The password", pass);
-  return `Basic ${Buffer.from(`${user}:${pass}`, "latin1").toString("base64")}`;
+  assertAsciiPassword("The password", password);
+  return `Basic ${Buffer.from(`${user}:${password}`, "latin1").toString("base64")}`;
 }
 
 /**
