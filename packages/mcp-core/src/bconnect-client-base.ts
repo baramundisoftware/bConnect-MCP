@@ -175,6 +175,13 @@ function redirectOrigin(error: AxiosError): string {
   }
 }
 
+/** `value` without trailing slashes (a scan, not a regex: linear on any input). */
+function trimTrailingSlashes(value: string): string {
+  let end = value.length;
+  while (end > 0 && value[end - 1] === "/") {end--;}
+  return value.slice(0, end);
+}
+
 /**
  * Request path relative to the base URL, without query string or fragment. An
  * absolute URL loses the base URL's origin and path prefix; one outside the base
@@ -186,7 +193,7 @@ function relativeRequestPath(url: string | undefined, baseUrl: string): string {
   try {
     const target = new URL(raw);
     const base = new URL(baseUrl);
-    const prefix = base.pathname.replace(/\/+$/, "");
+    const prefix = trimTrailingSlashes(base.pathname);
     if (target.origin === base.origin && (target.pathname === prefix || target.pathname.startsWith(prefix + "/"))) {
       return target.pathname.slice(prefix.length);
     }
@@ -240,7 +247,7 @@ function problemText(data: unknown, baseUrl: string): string | undefined {
   let text = cleanModelText(parts.join(": "), Number.POSITIVE_INFINITY);
   try {
     const url = new URL(baseUrl);
-    for (const needle of [baseUrl.replace(/\/+$/, ""), url.origin, url.host, url.hostname.includes(".") ? url.hostname : ""]) {
+    for (const needle of [trimTrailingSlashes(baseUrl), url.origin, url.host, url.hostname.includes(".") ? url.hostname : ""]) {
       text = replaceAllIgnoreCase(text, needle, "[bConnect host]");
     }
   } catch {
