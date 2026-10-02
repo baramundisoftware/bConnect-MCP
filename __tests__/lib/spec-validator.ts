@@ -8,18 +8,27 @@
  * differently. `toJsonSchema` rewrites them, so valid data isn't reported as
  * a spec difference:
  * - `discriminator` on a base type: each mapped subtype accepts only its own
- *   value of the discriminator property. Without it, a `oneOf` of subtypes
- *   matches several and rejects valid data.
- * - `allOf` with a member that has `additionalProperties: false` (in the specs
- *   the base type itself, and the subtype's own part): JSON Schema applies
- *   each member on its own, so no object can satisfy all of them. The members
- *   lose `additionalProperties: false` and the `allOf` allows exactly the
- *   union of their properties.
+ *   value of the discriminator property, and a `oneOf` of mapped subtypes
+ *   becomes a dispatch on that value (`if`/`then`). Without it, a `oneOf` of
+ *   subtypes matches several and rejects valid data; with a plain `oneOf`,
+ *   one bad value would also be reported for every branch it doesn't belong to.
+ * - `allOf` with a closed member (`additionalProperties: false`, directly or
+ *   through a `$ref` to a closed `allOf`): JSON Schema applies each member on
+ *   its own, so an object with the properties of two members fails both. The
+ *   members are opened and the `allOf` allows exactly the union of their
+ *   properties. This fires on every such `allOf`, also on the many
+ *   single-member wrappers `allOf: [{$ref: X}]` with a closed X, where it
+ *   changes nothing.
  * - `nullable: true` → a `null` type, or `anyOf [..., null]` where it sits on
- *   `$ref`/`allOf`; an inline `enum` also gets `null`.
- * Formats: `guid`; `int32`/`int64`/`float`/`double` are annotations (the type
- * is checked); `time` accepts .NET TimeSpan text (`02:00:00`, up to 7
- * fraction digits) with an optional offset, where ajv-formats requires one.
+ *   `$ref`/`allOf`; an inline `enum` also gets `null`. The wrapper's own
+ *   errors (`must be null`, `anyOf`) are dropped from findings; the errors of
+ *   the non-null branch remain.
+ * Formats: ajv-formats, plus `guid` and `time`. `time` is not an OpenAPI 3.0
+ * format; the bMS sends .NET text such as `02:58` or `02:58:00.5`, so it
+ * accepts `hh:mm`, optional seconds with up to 7 fraction digits, and an
+ * optional offset (ajv-formats requires seconds and an offset). A leap second
+ * is not accepted. A format the validator doesn't know fails the compile, so a
+ * new format in a spec update can't go unchecked silently.
  */
 import { createRequire } from 'node:module';
 import type { Ajv as AjvInstance, ErrorObject, ValidateFunction } from 'ajv';
@@ -32,7 +41,9 @@ const { Ajv } = require('ajv') as { Ajv: typeof AjvInstance };
 const addFormats = require('ajv-formats') as (ajv: AjvInstance) => AjvInstance;
 
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const TIME = /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,7})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?$/i;
+const TIME = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,7})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)?$/i;
+/** Marks the schemas the nullable rewrite adds, so their errors can be dropped from findings. */
+const NULLABLE = 'x-nullable-wrapper';
 
 /** One way a value differs from its schema; array indices are folded so repeats collapse. */
 export interface SchemaFinding {
@@ -48,26 +59,42 @@ const refName = (ref: unknown): string | undefined =>
 /** discriminator + closed allOf, on a copy of the spec's schemas. */
 function withPolymorphism(spec: Schema): Schema {
   const schemas: Record<string, Schema> = spec.components?.schemas ?? {};
+  const tags = new Map<string, { property: string; value: string }>();  // subtype name → its discriminator value
   for (const base of Object.values(schemas)) {
     const { propertyName, mapping } = base?.discriminator ?? {};
     if (typeof propertyName !== 'string' || !mapping) continue;
     for (const [value, ref] of Object.entries(mapping)) {
-      const sub = schemas[refName(ref) ?? ''];
+      const name = refName(ref) ?? '';
+      const sub = schemas[name];
       if (!sub) throw new Error(`discriminator mapping ${value} → ${String(ref)}: no such schema`);
       sub.allOf = [...(sub.allOf ?? []), { properties: { [propertyName]: { const: value } } }];
+      tags.set(name, { property: propertyName, value });
     }
   }
   const resolve = (s: Schema): Schema | undefined => (s?.$ref ? schemas[refName(s.$ref) ?? ''] : s);
-  const isClosed = (member: Schema): boolean => resolve(member)?.additionalProperties === false;
+  const isClosed = (member: Schema, seen = new Set<Schema>()): boolean => {
+    const s = resolve(member);
+    if (!s || seen.has(s)) return false;
+    seen.add(s);
+    return s.additionalProperties === false || (Array.isArray(s.allOf) && s.allOf.some((m: Schema) => isClosed(m, seen)));
+  };
   const propertyNames = (s: Schema | undefined, seen: Set<Schema>): string[] => {
     if (!s || seen.has(s)) return [];
     seen.add(s);
     if (s.$ref) return propertyNames(resolve(s), seen);
     return [...Object.keys(s.properties ?? {}), ...(s.allOf ?? []).flatMap((m: Schema) => propertyNames(m, seen))];
   };
+  const inlining = new Set<Schema>();
+  /** A closed member, inlined and normalised, without its own closing. */
   const opened = (member: Schema): Schema => {
-    const { additionalProperties: _closed, discriminator: _d, ...rest } = resolve(member)!;
-    return rest;
+    const s = resolve(member)!;
+    if (inlining.has(s)) throw new Error(`cyclic allOf through ${String(member.$ref)}`);
+    inlining.add(s);
+    const out = walk(s) as Schema;
+    inlining.delete(s);
+    delete out.additionalProperties;
+    delete out.discriminator;
+    return out;
   };
   const walk = (node: unknown): unknown => {
     if (Array.isArray(node)) return node.map(walk);
@@ -75,11 +102,26 @@ function withPolymorphism(spec: Schema): Schema {
     const n = node as Schema;
     const out: Schema = {};
     for (const [k, v] of Object.entries(n)) out[k] = walk(v);
-    if (Array.isArray(n.allOf) && n.allOf.some(isClosed)) {
+    if (Array.isArray(n.allOf) && n.allOf.some((m: Schema) => isClosed(m))) {
       const names = new Set([...Object.keys(n.properties ?? {}), ...n.allOf.flatMap((m: Schema) => propertyNames(m, new Set()))]);
-      out.allOf = n.allOf.map((m: Schema) => walk(isClosed(m) ? opened(m) : m));
+      out.allOf = n.allOf.map((m: Schema) => (isClosed(m) ? opened(m) : walk(m)));
       out.properties = { ...Object.fromEntries([...names].map((name) => [name, true])), ...(out.properties ?? {}) };
       out.additionalProperties = false;
+    }
+    // A oneOf of subtypes of one discriminator: dispatch on its value, so only the chosen subtype reports errors.
+    const branchTags = Array.isArray(n.oneOf) ? n.oneOf.map((b: Schema) => tags.get(refName(b?.$ref) ?? '')) : [];
+    if (branchTags.length > 0 && branchTags.every(Boolean) && new Set(branchTags.map((x) => x!.property)).size === 1) {
+      const property = branchTags[0]!.property;
+      const { oneOf: _oneOf, ...rest } = out;
+      return {
+        ...rest,
+        required: [...new Set([...(rest.required ?? []), property])],
+        properties: { ...(rest.properties ?? {}), [property]: { enum: branchTags.map((x) => x!.value) } },
+        allOf: [...(rest.allOf ?? []), ...n.oneOf.map((branch: Schema, i: number) => ({
+          if: { required: [property], properties: { [property]: { const: branchTags[i]!.value } } },
+          then: branch,
+        }))],
+      };
     }
     return out;
   };
@@ -99,7 +141,7 @@ function withoutNullable(node: unknown): unknown {
     if (Array.isArray(out.enum) && !out.enum.includes(null)) out.enum = [...out.enum, null];
     return { ...out, type: [out.type, 'null'] };
   }
-  return { anyOf: [out, { type: 'null' }] };
+  return { anyOf: [out, { type: 'null', [NULLABLE]: true }], [NULLABLE]: true };
 }
 
 /** A whole OpenAPI 3.0 document as a JSON Schema document ajv validates as the API means it. The input is not changed. */
@@ -108,20 +150,28 @@ export function toJsonSchema(spec: Schema): Schema {
 }
 
 function newAjv(): AjvInstance {
-  const ajv = new Ajv({ strict: false, allErrors: true, logger: false });
+  // strict: false accepts the OpenAPI-only keywords (discriminator, example, readOnly …); ajv then only
+  // warns about an unknown format, so the logger turns that warning into a compile error.
+  const failOnUnknownFormat = (...args: unknown[]): void => {
+    const text = args.map(String).join(' ');
+    if (/unknown format/.test(text)) throw new Error(text);
+  };
+  const ajv = new Ajv({ strict: false, allErrors: true, verbose: true, logger: { log() {}, warn: failOnUnknownFormat, error: failOnUnknownFormat } });
   addFormats(ajv);
   ajv.addFormat('guid', GUID);
   ajv.addFormat('time', TIME);
-  for (const format of ['int32', 'int64', 'double', 'float']) ajv.addFormat(format, true);
   return ajv;
 }
 
 function findingsOf(errors: ErrorObject[] | null | undefined): SchemaFinding[] {
   const seen = new Map<string, SchemaFinding>();
   for (const e of errors ?? []) {
+    // The nullable wrapper's own errors and the dispatch's "must match then" repeat what the branch reports.
+    if (e.parentSchema?.[NULLABLE] === true || e.keyword === 'if') continue;
     // ajv names a missing required property in the message already, an additional one only in params.
     const extra = e.keyword === 'additionalProperties' ? ` '${String(e.params.additionalProperty)}'` : '';
     const finding = {
+      // Folds array indices; a numeric object key (e.g. a map keyed "2024") is folded too.
       path: e.instancePath.replace(/\/\d+(?=\/|$)/g, '/[]') || '/',
       keyword: e.keyword,
       message: `${e.message ?? e.keyword}${extra}`,

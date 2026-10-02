@@ -38,6 +38,10 @@ const doc: Schema = {
       Square: { allOf: [ref('Shape'), { type: 'object', properties: { side: { type: 'number' } }, additionalProperties: false }] },
       AnyShape: { oneOf: [ref('Circle'), ref('Square')] },
       Bases: { type: 'array', items: ref('Base') },
+      NullableTypedRef: { type: 'object', $ref: '#/components/schemas/Base', nullable: true },
+      Level1: { type: 'object', properties: { a: { type: 'string' } }, additionalProperties: false },
+      Level2: { allOf: [ref('Level1'), { type: 'object', properties: { b: { type: 'string' } }, additionalProperties: false }] },
+      Level3: { allOf: [ref('Level2'), { type: 'object', properties: { c: { type: 'string' } }, additionalProperties: false }] },
     },
   },
 };
@@ -56,6 +60,9 @@ describe('spec validator normalisations (fixtures)', () => {
     ok('NullableRef', null);
     ok('NullableRef', { name: 'x' });
     bad('NullableRef', {});
+    // type next to $ref: still the anyOf form, because the $ref would reject null.
+    ok('NullableTypedRef', null);
+    bad('NullableTypedRef', {});
   });
 
   it('OpenAPI nullable on a type with an inline enum accepts null and still checks the enum', () => {
@@ -71,14 +78,20 @@ describe('spec validator normalisations (fixtures)', () => {
     bad('Id', '0f8fad5b-d9cb-469f-a165-70867728950');
   });
 
-  it('OpenAPI numeric formats are annotations; the type is still checked', () => {
+  it('OpenAPI numeric formats check type and range', () => {
     ok('Count', 7);
     ok('Big', 9007199254740991);
     ok('Ratio', 1.5);
     ok('Share', 0.25);
     bad('Count', 'x');
     bad('Count', 1.5);
+    bad('Count', 2 ** 31);
     bad('Ratio', 'x');
+  });
+
+  it('a format the validator does not know fails the compile instead of being skipped', () => {
+    const odd = { components: { schemas: { Odd: { type: 'string', format: 'not-a-known-format' } } } };
+    expect(() => checkSchema(odd, 'Odd', 'x')).toThrow(/unknown format/);
   });
 
   it('allOf with a closed member accepts the union of the members and rejects anything else', () => {
@@ -89,9 +102,16 @@ describe('spec validator normalisations (fixtures)', () => {
     bad('Closed', { name: 'x', extra: 'no' });
   });
 
-  it('format time accepts TimeSpan text without an offset, and rejects invalid times', () => {
-    for (const t of ['02:00:00', '23:59:59.1234567', '00:00:00.5', '02:00:00Z', '02:00:00+02:00']) ok('Time', t);
-    for (const t of ['25:00:00', '02:60:00', 'abc', '02:00', '1.02:00:00', '02:00:00.12345678']) bad('Time', t);
+  it('format time accepts the .NET text a bMS sends (hh:mm, optional seconds and offset), and rejects invalid times', () => {
+    for (const t of ['02:58', '23:55', '02:00:00', '23:59:59.1234567', '00:00:00.5', '02:00:00Z', '02:00:00+02:00']) ok('Time', t);
+    for (const t of ['25:00:00', '24:00', '02:60', '2:58', '02:5', 'abc', '1.02:00:00', '02:00:00.12345678', '23:59:60Z']) bad('Time', t);
+  });
+
+  it('allOf over several levels: each level allows the union of all levels below it', () => {
+    ok('Level3', { a: 'x', b: 'y', c: 'z' });
+    ok('Level2', { a: 'x', b: 'y' });
+    bad('Level3', { a: 'x', b: 'y', c: 'z', d: 1 });
+    bad('Level2', { a: 'x', c: 'z' });
   });
 
   it('a discriminator mapping makes a oneOf of subtypes match exactly one', () => {
@@ -121,6 +141,19 @@ describe('spec validator findings', () => {
   it('names a missing required property once', () => {
     expect(checkSchema(doc, 'Base', {})).toEqual([
       { path: '/', keyword: 'required', message: "must have required property 'name'" },
+    ]);
+  });
+
+  it('reports one bad value inside a discriminated, nullable oneOf once, at its own path (real 26R1 Jobs spec)', () => {
+    const jobs = loadOperations('26R1').find((o) => o.domain === 'jobs')!.spec;
+    const validity = (periods: unknown) => ({ start: null, end: null, validityPeriods: periods });
+    expect(checkSchema(jobs, 'JobValidity', validity({ type: 'Everyday', validityPeriods: [{ start: '08:00', end: '17:30' }] }))).toEqual([]);
+    expect(checkSchema(jobs, 'JobValidity', validity(null))).toEqual([]);
+    expect(checkSchema(jobs, 'JobValidity', validity({ type: 'Everyday', validityPeriods: [{ start: '08:00', end: '25:00' }] }))).toEqual([
+      { path: '/validityPeriods/validityPeriods/[]/end', keyword: 'format', message: 'must match format "time"' },
+    ]);
+    expect(checkSchema(jobs, 'JobValidity', validity({ type: 'Hourly' })).map((f) => `${f.path} ${f.keyword}`)).toEqual([
+      '/validityPeriods/type enum',
     ]);
   });
 
@@ -177,17 +210,16 @@ describe('spec validator on the bundled specs', () => {
     const job = (interval: unknown[]) => ({ id: '0f8fad5b-d9cb-469f-a165-70867728950e', name: 'Nightly', interval });
     const check = (interval: unknown[]) => specValidator('26R1').response(getJob, job(interval));
 
-    it('accepts daily and weekly intervals with TimeSpan times', () => {
-      expect(check([{ type: 'Daily', time: '02:00:00' }])).toEqual([]);
+    it('accepts the intervals the bMS returned', () => {
+      expect(check([{ type: 'Daily', time: '02:58' }, { type: 'Weekly', weekdays: ['Friday'], time: '23:55' }])).toEqual([]);
       expect(check([{ type: 'Weekly', time: '02:00:00', weekdays: ['Monday', 'Friday'] }])).toEqual([]);
-      expect(check([{ type: 'Daily', time: '02:00:00' }, { type: 'Weekly', time: '22:30:00', weekdays: ['Sunday'] }])).toEqual([]);
     });
 
     it('rejects an unknown property, a wrong type value and an invalid time', () => {
       expect(check([{ type: 'Daily', time: '02:00:00', foo: 1 }]).length).toBeGreaterThan(0);
       expect(check([{ type: 'Daily', time: '02:00:00', weekdays: ['Monday'] }]).length).toBeGreaterThan(0);
       expect(check([{ type: 'Hourly', time: '02:00:00' }]).length).toBeGreaterThan(0);
-      expect(check([{ type: 'Daily', time: '25:00:00' }]).length).toBeGreaterThan(0);
+      expect(check([{ type: 'Daily', time: '25:00' }]).length).toBeGreaterThan(0);
     });
   });
 });

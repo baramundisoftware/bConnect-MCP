@@ -17,11 +17,14 @@ const TESTS = dirname(fileURLToPath(import.meta.url));
 const ALLOWED = new Set(['lib/spec-validator.ts', 'one-ajv.guard.test.ts']);
 const SOURCE = /\.(?:[cm]?ts|[cm]?js)$/;
 
-/** Module specifiers of ajv or ajv-formats in import, export-from, require() or import(). */
+/**
+ * Module specifiers of ajv or an ajv-* package (ajv-formats, ajv-draft-04 …) in import,
+ * export-from, require() or import(). `\s` also matches `\r`, so CRLF text needs no normalising.
+ */
 export function ajvSpecifiers(text: string): string[] {
   const found: string[] = [];
-  const re = /(?:\bfrom\s*|\brequire\s*\(\s*|\bimport\s*\(\s*|\bimport\s+)(['"`])(ajv(?:-formats)?(?:\/[^'"`]*)?)\1/g;
-  for (const m of text.replace(/\r\n?/g, '\n').matchAll(re)) found.push(m[2]);
+  const re = /(?:\bfrom\s*|\brequire\s*\(\s*|\bimport\s*\(\s*|\bimport\s+)(['"`])(ajv(?:-[\w-]+)?(?:\/[^'"`]*)?)\1/g;
+  for (const m of text.matchAll(re)) found.push(m[2]);
   return found;
 }
 
@@ -63,8 +66,10 @@ describe('one ajv setup', () => {
         "import 'ajv-formats';",
         "export { Ajv } from 'ajv';",
         'const x = require ( `ajv` );',
+        "const draft4 = require('ajv-draft-04');",
+        'import {\r\n  Ajv,\r\n} from\r\n  "ajv";',
       ].join('\r\n');
-      expect(ajvSpecifiers(text)).toEqual(['ajv', 'ajv-formats', 'ajv/dist/2019', 'ajv', 'ajv-formats', 'ajv', 'ajv']);
+      expect(ajvSpecifiers(text)).toEqual(['ajv', 'ajv-formats', 'ajv/dist/2019', 'ajv', 'ajv-formats', 'ajv', 'ajv', 'ajv-draft-04', 'ajv']);
     });
 
     it('ignores other modules and prose that only mentions ajv', () => {
