@@ -20,7 +20,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { ActiveDirectoryRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -62,14 +62,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort results by property name and direction. Possible values: Name, SID, Domain, Type (e.g. 'Name asc')."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: []
           }
@@ -108,14 +102,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort results by property name and direction (e.g. 'Name asc')."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: ["adGroupId"]
           }
@@ -139,14 +127,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort results by property name and direction (e.g. 'Name asc')."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: ["orgUnitId"]
           }
@@ -167,14 +149,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort results by property name and direction (e.g. 'Name asc')."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: []
           }
@@ -205,14 +181,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "GUID of the AD object whose group memberships to retrieve."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: ["id"]
           }
@@ -232,14 +202,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Filter results by matching against Name, SID, Domain, Comment, Type, or GUID."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: ["adGroupId"]
           }
@@ -259,14 +223,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Filter results by matching against Name, SID, Domain, Comment, Type, or GUID."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: ["orgUnitId"]
           }
@@ -287,14 +245,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort results by property name and direction. Possible values: Name, SID, Domain, LogonName (e.g. 'Name asc')."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: []
           }
@@ -333,14 +285,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort results by property name and direction (e.g. 'Name asc')."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: ["adGroupId"]
           }
@@ -364,14 +310,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort results by property name and direction (e.g. 'Name asc')."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: ["orgUnitId"]
           }
@@ -392,14 +332,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort results by property name and direction (e.g. 'Name asc')."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: []
           }
@@ -438,14 +372,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Sort results by property name and direction (e.g. 'Name asc')."
               },
-              Page: {
-                type: "integer",
-                description: "Zero-based page index for pagination. Default is 0."
-              },
-              PageSize: {
-                type: "integer",
-                description: "Number of items per page. Default is 20, maximum is 1000."
-              }
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY
             },
             required: ["orgUnitId"]
           }

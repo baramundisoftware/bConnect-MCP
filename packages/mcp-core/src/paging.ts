@@ -7,18 +7,18 @@
  */
 
 export interface PagingProperty {
-  type: "number";
+  type: "integer";
   description: string;
 }
 
 export const PAGE_PROPERTY: PagingProperty = {
-  type: "number",
+  type: "integer",
   description: "Zero-based page number; 0 is the first page (default 0).",
 };
 
 /** PageSize with the default the tool sends when the caller gives none. */
 export function pageSizeProperty(defaultSize = 20): PagingProperty {
-  return { type: "number", description: `Items per page, 1 to 1000 (default ${defaultSize}, max 1000).` };
+  return { type: "integer", description: `Items per page, 1 to 1000 (default ${defaultSize}, max 1000).` };
 }
 
 export const PAGE_SIZE_PROPERTY: PagingProperty = pageSizeProperty();

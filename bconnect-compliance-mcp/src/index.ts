@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { ComplianceRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -58,8 +58,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             properties: {
               OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'RuleName asc'). Possible values: EndpointName, RuleName." },
               SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or RuleName." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: []
           }
@@ -73,8 +73,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               endpointId: { type: "string", description: "GUID of the Android, iOS, or macOS endpoint to retrieve rule violations for." },
               OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: EndpointName, RuleName." },
               SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or RuleName." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["endpointId"]
           }
@@ -89,8 +89,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             properties: {
               OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: EndpointName, CveId." },
               SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or CveId." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: []
           }
@@ -104,8 +104,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve detected vulnerabilities for." },
               OrderBy: { type: "string", description: "Sort results by property name and direction. Possible value: CveId." },
               SearchQuery: { type: "string", description: "Filter results by matching against CveId." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["endpointId"]
           }
@@ -120,8 +120,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             properties: {
               OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: RuleName, Description." },
               SearchQuery: { type: "string", description: "Filter results by matching against RuleName or Description." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: []
           }
@@ -147,8 +147,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             properties: {
               OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: CveId, Severity." },
               SearchQuery: { type: "string", description: "Filter results by matching against searchable vulnerability properties." },
-              Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-              PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+              Page: PAGE_PROPERTY,
+              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: []
           }

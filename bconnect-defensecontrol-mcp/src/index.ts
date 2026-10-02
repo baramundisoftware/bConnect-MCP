@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { DefenseControlRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -69,8 +69,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           properties: {
             OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'EndpointName asc')." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: []
         }
@@ -136,8 +136,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           properties: {
             OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'ThreatName asc')." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable threat properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: []
         }
@@ -162,8 +162,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve Defender threats for." },
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against threat properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["endpointId"]
         }
@@ -177,8 +177,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             logicalGroupId: { type: "string", description: "GUID of the logical group to retrieve Defender threats for." },
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against threat properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["logicalGroupId"]
         }
@@ -193,8 +193,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           properties: {
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: []
         }

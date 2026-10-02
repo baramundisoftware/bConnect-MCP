@@ -148,6 +148,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`simulate_msw_cleanup` and `msw_cleanup` are refused on 25R2.** They were hidden from the tool
   list on 25R2 but still ran when called by name, against an operation 25R2 doesn't have. They now
   answer like the other 26R1-only tools.
+- **Paging arguments say where pages start.** Every `Page` argument says pages are zero-based (two
+  endpoints tools said "1-based"), and every `PageSize` states the 1000 limit and the default. All
+  tools share one definition from the core, and both are declared as integers, as in the spec (#169).
 - **Entra ID tools work.** `get_entra_id_data` reads by Entra ID device ID from the route bConnect
   provides, and `link_entra_id_data` sends the device, tenant and user IDs bConnect expects. The
   descriptions say bConnect marks these operations as temporary and meant for mobile devices.

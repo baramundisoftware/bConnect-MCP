@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { VariablesRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -67,8 +67,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           properties: {
             OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'Name asc')." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable variable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: []
         }
@@ -136,8 +136,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           properties: {
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: []
         }
@@ -162,8 +162,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             endpointId: { type: "string", description: "GUID of the endpoint to retrieve variable instances for." },
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["endpointId"]
         }
@@ -177,8 +177,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             logicalGroupId: { type: "string", description: "GUID of the logical group to retrieve variable instances for." },
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["logicalGroupId"]
         }
@@ -192,8 +192,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             adObjectId: { type: "string", description: "GUID of the Active Directory object to retrieve variable instances for." },
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["adObjectId"]
         }
@@ -207,8 +207,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             windowsJobDefinitionId: { type: "string", description: "GUID of the Windows job definition to retrieve variable instances for." },
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["windowsJobDefinitionId"]
         }
@@ -222,8 +222,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             windowsApplicationId: { type: "string", description: "GUID of the Windows application to retrieve variable instances for." },
             OrderBy: { type: "string", description: "Sort results by property name and direction." },
             SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: { type: "number", description: "Zero-indexed page number to return (default: 0)." },
-            PageSize: { type: "number", description: "Number of items per page (default: 20, max: 1000)." },
+            Page: PAGE_PROPERTY,
+            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["windowsApplicationId"]
         }

@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { AssetsRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -72,14 +72,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   server.setRequestHandler(ListToolsRequestSchema, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
 
     const paginationProps = {
-      Page: {
-        type: "integer",
-        description: "Zero-based page index for pagination. Default is 0."
-      },
-      PageSize: {
-        type: "integer",
-        description: "Number of items per page. Default is 20, maximum is 1000."
-      }
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY
     };
 
     const assetFilterProps = {
