@@ -23,7 +23,16 @@ type KioskReleasesList = paths["/v2.0/KioskReleases"]["get"]["responses"]["200"]
 type KioskRelease = paths["/v2.0/KioskReleases/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
 type KioskReleaseForCreation = paths["/v2.0/KioskReleases"]["post"]["requestBody"]["content"]["application/json"];
 type AssignJobDefinitionRequest = paths["/v2.0/LogicalGroups/{logicalGroupId}/AssignJobDefinition"]["post"]["requestBody"]["content"]["application/json"];
-type JsonPatchDocument = paths["/v2.0/Folders/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
+/**
+ * One RFC 6902 operation. The generated spec type types `value` as
+ * `Record<string, never> | null`, which no real value fits, so the folder
+ * update uses this instead.
+ */
+export interface JsonPatchOperation {
+  op: "add" | "remove" | "replace";
+  path: string;
+  value?: unknown;
+}
 
 // Phase 26: Folder navigation
 type FoldersList = paths["/v2.0/Folders"]["get"]["responses"]["200"]["content"]["application/json"];
@@ -214,7 +223,7 @@ export class JobsModule {
   /**
    * Update a job folder by ID (uses JSON Patch format)
    */
-  async updateFolder(id: string, data: JsonPatchDocument): Promise<Folder> {
+  async updateFolder(id: string, data: JsonPatchOperation[]): Promise<Folder> {
     const response = await this.client.patch<Folder>(
       `${this.basePath}/Folders/${id}`,
       data

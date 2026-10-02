@@ -28,9 +28,27 @@ import type { paths as JobsPaths } from "./generated/jobs-types.js";
 
 // Type aliases for call-site casts (args are validated before use)
 type AssignJobDefinitionRequest = JobsPaths["/v2.0/LogicalGroups/{logicalGroupId}/AssignJobDefinition"]["post"]["requestBody"]["content"]["application/json"];
-type KioskReleaseForCreation = JobsPaths["/v2.0/KioskReleases"]["post"]["requestBody"]["content"]["application/json"];
-type JsonPatchDocument = JobsPaths["/v2.0/Folders/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
-type JobInstanceForCreation = JobsPaths["/v2.0/JobInstances"]["post"]["requestBody"]["content"]["application/json"];
+
+/** The body of a group assignment: only the fields the API declares; the group id goes in the path. */
+function assignmentBody(args: Record<string, unknown>): AssignJobDefinitionRequest {
+  return {
+    jobDefinitionId: args.jobDefinitionId as string,
+    ...(args.startIfAlreadyAssigned !== undefined && { startIfAlreadyAssigned: args.startIfAlreadyAssigned as boolean }),
+  };
+}
+
+/**
+ * What a group assignment did. The API declares 207 ("fully or partially
+ * succeeded") with a problem report that may list failed assignments; its
+ * fields are passed on as they are. A list of created instances is counted.
+ */
+function assignmentReport(result: unknown): string {
+  if (Array.isArray(result)) {
+    return `Created ${result.length} job instances:\n${JSON.stringify(result, null, 2)}`;
+  }
+  return "Assignment finished: fully or partially succeeded (HTTP 207). " +
+    "Check the details below for assignments that failed.\n" + JSON.stringify(result ?? {}, null, 2);
+}
 type FolderForCreation = JobsPaths["/v2.0/Folders"]["post"]["requestBody"]["content"]["application/json"];
 
 // ─── Factory exported for testing ───────────────────────────────────────────
@@ -255,7 +273,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // Jobs API - Write Operations
         {
           name: "create_job_instance",
-          description: "Create a job instance by assigning a job definition to an endpoint in baramundi. This initiates a deployment or script execution. WARNING: This creates a new job assignment that will be executed on the target endpoint.",
+          description: "Create a job instance by assigning a job definition to an endpoint in baramundi. The job starts as soon as the instance is created, unless the job definition itself defers it; it can't be scheduled through this tool. WARNING: This creates a new job assignment that will be executed on the target endpoint.",
           inputSchema: {
             type: "object",
             properties: {
@@ -267,12 +285,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Target endpoint ID (GUID)"
               },
-              scheduledStartTime: {
-                type: "string",
-                description: "Scheduled start time (ISO 8601 format, optional)"
+              startIfAlreadyAssigned: {
+                type: "boolean",
+                description: "If the job definition is already assigned to the endpoint, start the existing job instance instead (optional)"
               }
             },
-            required: ["jobDefinitionId"]
+            required: ["jobDefinitionId", "endpointId"]
           }
         },
         {
@@ -355,7 +373,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               name: { type: "string", description: "New folder name (optional)" },
               comment: { type: "string", description: "New comment (optional)" }
             },
-            required: ["id"]
+            required: ["id"],
+            // id plus at least one field to change
+            minProperties: 2
           }
         },
         {
@@ -372,48 +392,52 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // Assignment operations
         {
           name: "assign_job_to_logical_group",
-          description: "Assign a job definition to all endpoints in a logical group in baramundi. Creates job instances for each endpoint in the group. WARNING: Creates job instances for all endpoints in the group and triggers deployment.",
+          description: "Assign a job definition to every endpoint in a logical group in baramundi, including the endpoints in all of its sub-groups (a parent group with no direct members can still reach many endpoints). A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first (list the group's members) and confirm it with the user before assigning. WARNING: Triggers deployment on all of these endpoints.",
           inputSchema: {
             type: "object",
             properties: {
               logicalGroupId: { type: "string", description: "Logical group ID (GUID)" },
-              jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" }
+              jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" },
+              startIfAlreadyAssigned: { type: "boolean", description: "If the job definition is already assigned to an endpoint, start the existing job instance there (optional)" }
             },
             required: ["logicalGroupId", "jobDefinitionId"]
           }
         },
         {
           name: "assign_job_to_static_group",
-          description: "Assign a job definition to all endpoints in a static group in baramundi. Creates job instances for each endpoint in the static group. WARNING: Creates job instances for all endpoints in the group.",
+          description: "Assign a job definition to every endpoint in a static group in baramundi. A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first (list the group's members) and confirm it with the user before assigning. WARNING: Triggers deployment on all of these endpoints.",
           inputSchema: {
             type: "object",
             properties: {
               staticGroupId: { type: "string", description: "Static group ID (GUID)" },
-              jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" }
+              jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" },
+              startIfAlreadyAssigned: { type: "boolean", description: "If the job definition is already assigned to an endpoint, start the existing job instance there (optional)" }
             },
             required: ["staticGroupId", "jobDefinitionId"]
           }
         },
         {
           name: "assign_job_to_dynamic_group",
-          description: "Assign a job definition to all endpoints in a Windows dynamic group in baramundi. Creates job instances for each endpoint matching the dynamic group criteria. WARNING: Creates job instances for all matching endpoints.",
+          description: "Assign a job definition to every endpoint matching a Windows dynamic group in baramundi. A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first (list the group's members) and confirm it with the user before assigning. WARNING: Triggers deployment on all of these endpoints.",
           inputSchema: {
             type: "object",
             properties: {
               dynamicGroupId: { type: "string", description: "Dynamic group ID (GUID)" },
-              jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" }
+              jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" },
+              startIfAlreadyAssigned: { type: "boolean", description: "If the job definition is already assigned to an endpoint, start the existing job instance there (optional)" }
             },
             required: ["dynamicGroupId", "jobDefinitionId"]
           }
         },
         {
           name: "assign_job_to_universal_dynamic_group",
-          description: "Assign a job definition to all endpoints in a universal dynamic group in baramundi. Creates job instances for each endpoint matching the universal dynamic group criteria. WARNING: Creates job instances for all matching endpoints.",
+          description: "Assign a job definition to every endpoint matching a universal dynamic group in baramundi. A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first (list the group's members) and confirm it with the user before assigning. WARNING: Triggers deployment on all of these endpoints.",
           inputSchema: {
             type: "object",
             properties: {
               universalDynamicGroupId: { type: "string", description: "Universal dynamic group ID (GUID)" },
-              jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" }
+              jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" },
+              startIfAlreadyAssigned: { type: "boolean", description: "If the job definition is already assigned to an endpoint, start the existing job instance there (optional)" }
             },
             required: ["universalDynamicGroupId", "jobDefinitionId"]
           }
@@ -426,9 +450,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               jobDefinitionId: { type: "string", description: "Job definition ID (GUID)" },
-              targetId: { type: "string", description: "Target object ID (endpoint, group, or AD object, optional)" }
+              assignmentTargetId: { type: "string", description: "ID (GUID) of the endpoint, group or AD object the job is released to" }
             },
-            required: ["jobDefinitionId"]
+            required: ["assignmentTargetId", "jobDefinitionId"]
           }
         },
         {
@@ -601,7 +625,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_job_instance": {
-          const result = await bconnect.jobs.createJobInstance(args as unknown as JobInstanceForCreation);
+          const result = await bconnect.jobs.createJobInstance({
+            jobDefinitionId: args!.jobDefinitionId as string,
+            endpointId: args!.endpointId as string,
+            ...(args!.startIfAlreadyAssigned !== undefined && { startIfAlreadyAssigned: args!.startIfAlreadyAssigned as boolean }),
+          });
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -631,7 +659,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_job_folder": {
-          const result = await bconnect.jobs.updateFolder(args!.id as string, args! as unknown as JsonPatchDocument);
+          const patch = (["name", "comment"] as const)
+            .filter((field) => args![field] !== undefined)
+            .map((field) => ({ op: "replace" as const, path: `/${field}`, value: args![field] as string }));
+          if (patch.length === 0) {
+            throw new McpError(ErrorCode.InvalidParams, "update_job_folder needs at least one field to change: name or comment.");
+          }
+          const result = await bconnect.jobs.updateFolder(args!.id as string, patch);
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -643,37 +677,40 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "assign_job_to_logical_group": {
           const result = await bconnect.jobs.assignJobDefinitionToLogicalGroup(
             args!.logicalGroupId as string,
-            args! as unknown as AssignJobDefinitionRequest
+            assignmentBody(args!)
           );
-          return { content: [{ type: "text", text: `Created ${result.length} job instances:\n${JSON.stringify(result, null, 2)}` }] };
+          return { content: [{ type: "text", text: assignmentReport(result) }] };
         }
 
         case "assign_job_to_static_group": {
           const result = await bconnect.jobs.assignJobDefinitionToStaticGroup(
             args!.staticGroupId as string,
-            args! as unknown as AssignJobDefinitionRequest
+            assignmentBody(args!)
           );
-          return { content: [{ type: "text", text: `Created ${result.length} job instances:\n${JSON.stringify(result, null, 2)}` }] };
+          return { content: [{ type: "text", text: assignmentReport(result) }] };
         }
 
         case "assign_job_to_dynamic_group": {
           const result = await bconnect.jobs.assignJobDefinitionToWindowsDynamicGroup(
             args!.dynamicGroupId as string,
-            args! as unknown as AssignJobDefinitionRequest
+            assignmentBody(args!)
           );
-          return { content: [{ type: "text", text: `Created ${result.length} job instances:\n${JSON.stringify(result, null, 2)}` }] };
+          return { content: [{ type: "text", text: assignmentReport(result) }] };
         }
 
         case "assign_job_to_universal_dynamic_group": {
           const result = await bconnect.jobs.assignJobDefinitionToUniversalDynamicGroup(
             args!.universalDynamicGroupId as string,
-            args! as unknown as AssignJobDefinitionRequest
+            assignmentBody(args!)
           );
-          return { content: [{ type: "text", text: `Created ${result.length} job instances:\n${JSON.stringify(result, null, 2)}` }] };
+          return { content: [{ type: "text", text: assignmentReport(result) }] };
         }
 
         case "create_kiosk_release": {
-          const result = await bconnect.jobs.createKioskRelease(args! as unknown as KioskReleaseForCreation);
+          const result = await bconnect.jobs.createKioskRelease({
+            assignmentTargetId: args!.assignmentTargetId as string,
+            jobDefinitionId: args!.jobDefinitionId as string,
+          });
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

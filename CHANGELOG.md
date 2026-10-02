@@ -54,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **`create_job_instance` no longer offers `scheduledStartTime`.** The API has no such field; the
+  job always started immediately. The description now says so; `endpointId` is required and
+  `startIfAlreadyAssigned` is available.
 - **`BCONNECT_REJECT_UNAUTHORIZED` is removed.** Only the groups server read it, while the
   READMEs listed it for every server. To turn certificate checks off for development, set
   `NODE_TLS_REJECT_UNAUTHORIZED=0`, which every server honors. In production, keep
@@ -96,6 +99,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Job write tools send what the API accepts and report what happened.** `create_kiosk_release`
+  sends `assignmentTargetId`, `update_job_folder` sends a JSON Patch (and refuses a call that
+  changes nothing), and the four `assign_job_to_*_group` tools send only the assignment fields.
+  A group assignment that bMS answers with 207 is reported as "fully or partially succeeded"
+  with bMS's details on failed targets, instead of "Created undefined job instances". The assign
+  tools' descriptions now say that a job instance is created and started for every member,
+  including all sub-groups of a logical group.
 - **Gateway settings in `.env.gateway` now take effect** (#98, reported by @AndreasHanikel).
   `docker-compose.gateway.yml` passes `LOG_LEVEL`, `LOG_FORMAT`, the inbound rate limit
   (`MCP_GATEWAY_RATE_LIMIT_*`), `MCP_GATEWAY_MAX_BODY`, `BCONNECT_RELEASE` and the outbound rate
