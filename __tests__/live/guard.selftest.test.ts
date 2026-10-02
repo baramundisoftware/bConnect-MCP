@@ -94,6 +94,12 @@ describe('live request guard', () => {
     expect(guard.refused).toEqual([{ method: 'GET', path: '/bconnect/endpoints/v2.0/Endpoints', reason: 'another origin' }]);
   });
 
+  it('refuses the bMS host on another port', async () => {
+    await expect(axios.get(`${otherOrigin}/bconnect/endpoints/v2.0/Endpoints`)).rejects.toThrow();
+    expect(otherHits).toEqual([]);
+    expect(guard.refused).toEqual([{ method: 'GET', path: '/bconnect/endpoints/v2.0/Endpoints', reason: 'another origin' }]);
+  });
+
   it('refuses a credential-returning route', async () => {
     await expect(axios.get(`${origin}${SECRET}`)).rejects.toThrow();
     expect(hits).toEqual([]);
