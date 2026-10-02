@@ -100,7 +100,7 @@ jobs:
     # required-checks:end
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Two commits: the PR merge commit and its base, for the cast diff check.
           fetch-depth: 2
@@ -198,7 +198,7 @@ jobs:
     # ignore red (REQ-CI-001). A workspace below its floor is now a warning
     # annotation plus a job-summary line; a failed install or build still fails.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: "22.15"
@@ -274,7 +274,7 @@ jobs:
     # the half a contributor's PR is genuinely responsible for. Read this job's
     # output when it warns; do not gate a merge on it.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: "22.15"
