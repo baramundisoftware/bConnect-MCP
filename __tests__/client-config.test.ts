@@ -11,6 +11,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  ClientConfigError,
   MissingCredentialsError,
   clientConfigFromEnv,
 } from '../packages/mcp-core/src/client-config.js';
@@ -181,8 +182,19 @@ describe('clientConfigFromEnv', () => {
       expect(clientConfigFromEnv(BASIC).auditLog?.level).toBe('none');
     });
 
-    it.each(['ALL', 'verbose', '', 'write '])('maps unknown value %j to none', (value) => {
+    it.each([['ALL', 'all'], [' write ', 'write'], ['Security', 'security'], ['\tNONE\n', 'none']] as const)(
+      'ignores case and surrounding spaces: %j is %s', (value, level) => {
+        expect(clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: value }).auditLog?.level).toBe(level);
+      });
+
+    it.each(['', '   '])('treats %j like unset: none', (value) => {
       expect(clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: value }).auditLog?.level).toBe('none');
+    });
+
+    it.each(['writes', 'verbose', 'yes', '0', 'all write'])('refuses unknown value %j, naming it and the valid levels', (value) => {
+      const run = () => clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: value });
+      expect(run).toThrow(ClientConfigError);
+      expect(run).toThrow(`BCONNECT_AUDIT_LEVEL "${value}" isn't valid. Use one of: none, security, write, all.`);
     });
   });
 
@@ -253,15 +265,15 @@ describe('clientConfigFromEnv', () => {
     });
 
     it('does not change the environment it is given', () => {
-      const env = { ...BASIC, BCONNECT_AUDIT_LEVEL: 'bogus' };
+      const env = { ...BASIC, BCONNECT_AUDIT_LEVEL: ' ALL ' };
       clientConfigFromEnv(env);
-      expect(env).toEqual({ ...BASIC, BCONNECT_AUDIT_LEVEL: 'bogus' });
+      expect(env).toEqual({ ...BASIC, BCONNECT_AUDIT_LEVEL: ' ALL ' });
     });
 
     it('writes nothing to stdout, which carries JSON-RPC in stdio mode', () => {
       const write = vi.spyOn(process.stdout, 'write');
       const log = vi.spyOn(console, 'log');
-      clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: 'bogus', BCONNECT_RATE_LIMIT_ENABLED: 'true' });
+      clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: 'ALL', BCONNECT_RATE_LIMIT_ENABLED: 'true' });
       expect(write).not.toHaveBeenCalled();
       expect(log).not.toHaveBeenCalled();
     });
