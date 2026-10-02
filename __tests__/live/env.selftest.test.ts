@@ -6,7 +6,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ROOT } from '../lib/exerciser.js';
-import { checkReachable, childEnv, controlledKeys, loadLiveConfig } from './lib/env.js';
+import { checkReachable, childEnv, controlledKeys, controlledKeysIn, loadLiveConfig } from './lib/env.js';
 import { assertExercised } from './lib/report.js';
 
 const dir = mkdtempSync(join(tmpdir(), 'live-env-'));
@@ -30,6 +30,26 @@ describe('live env: isolated', () => {
       'BCONNECT_SKIP_CONNECTIVITY_CHECK', 'HTTPS_PROXY', 'https_proxy', 'NO_PROXY']) {
       expect(keys, key).toContain(key);
     }
+  });
+
+  it('takes the keys from real reads, not from names in comments or strings', () => {
+    const keys = controlledKeysIn([{ file: 'a.ts', text: [
+      '// BCONNECT_ONLY_IN_A_COMMENT is documented here',
+      "const hint = 'set BCONNECT_ONLY_IN_A_STRING';",
+      'const url = process.env.BCONNECT_REAL_READ;',
+      "const { MCP_DESTRUCTURED } = process.env;",
+      "const tls = process['env'].NODE_TLS_REJECT_UNAUTHORIZED;",
+    ].join('\n') }]);
+    expect(keys).toContain('BCONNECT_REAL_READ');
+    expect(keys).toContain('MCP_DESTRUCTURED');
+    expect(keys).toContain('NODE_TLS_REJECT_UNAUTHORIZED');
+    expect(keys).not.toContain('BCONNECT_ONLY_IN_A_COMMENT');
+    expect(keys).not.toContain('BCONNECT_ONLY_IN_A_STRING');
+  });
+
+  it('fails on a read whose name cannot be known, which isolation could not cover', () => {
+    expect(() => controlledKeysIn([{ file: 'b.ts', text: 'const k = "BCONNECT_" + x; export const v = process.env[k];' }]))
+      .toThrow(/b\.ts/);
   });
 
   it('sets every controlled key, empty when the file has no value', () => {

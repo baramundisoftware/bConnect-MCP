@@ -13,6 +13,7 @@ import https from 'node:https';
 import { join } from 'node:path';
 import { parse } from 'dotenv';
 import { RELEASES, type Release } from '../../lib/spec.js';
+import { envReads } from '../../lib/env-reads.js';
 import { declared, type Declared } from './profile.js';
 
 /** Proxy variables axios honors; a shell proxy must not reroute the run. */
@@ -36,14 +37,23 @@ export function controlledKeys(root: string): string[] {
     ...readdirSync(root).filter((d) => /^bconnect-.+-mcp$/.test(d) && d !== 'bconnect-mcp-gateway').map((d) => join(root, d, 'src')),
     join(root, 'packages', 'mcp-core', 'src'),
   ];
-  const keys = new Set<string>(PROXY_KEYS);
-  for (const file of dirs.flatMap(sourceFiles)) {
-    for (const m of readFileSync(file, 'utf8').matchAll(/\benv(?:\.([A-Z][A-Z0-9_]*)|\[\s*["']([A-Z][A-Z0-9_]*)["']\s*\])/g)) {
-      const key = m[1] ?? m[2];
-      if (CONTROLLED.test(key)) keys.add(key);
+  return controlledKeysIn(dirs.flatMap(sourceFiles).map((file) => ({ file, text: readFileSync(file, 'utf8') })));
+}
+
+/**
+ * The controlled keys among the environment reads in `sources`, found with the
+ * shared parser (__tests__/lib/env-reads.ts): names in comments and strings don't
+ * count. A read whose name can't be known fails the run, because the run couldn't
+ * set that variable.
+ */
+export function controlledKeysIn(sources: Array<{ file: string; text: string }>): string[] {
+  const keys = new Set<string>([...PROXY_KEYS, ...FORCED_EMPTY]);
+  for (const { file, text } of sources) {
+    for (const read of envReads(text, file)) {
+      if (read.name === null) throw new LiveConfigError(`${file}:${read.line} reads the environment with a name the live run can't know: ${read.text}`);
+      if (CONTROLLED.test(read.name)) keys.add(read.name);
     }
   }
-  for (const key of FORCED_EMPTY) keys.add(key);
   return [...keys].sort();
 }
 
