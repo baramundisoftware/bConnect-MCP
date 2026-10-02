@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   API specification (`scripts/generate-query-parameters.mjs`), per bMS release.
 
 ### Security
+- **Unused runtime dependencies removed.** `limiter`, `node-cache`, `winston`, `openapi-fetch` and
+  `@types/node-cache` were declared (in the root and the servers) but imported nowhere, so they
+  were installed and shipped for nothing; `axios-retry` is now declared only where it is used. The
+  shared core now declares what it imports (`axios`, `axios-retry`, the MCP SDK) instead of relying
+  on another package's copy, and every package requires `axios` 1.20 or later. A test keeps each
+  package's runtime dependencies equal to its imports (replaces Dependabot #182).
 - **MCP SDK 1.31.0 in every package** (was 1.29.0). Its HTTP transport, used by the gateway, now
   reads request bodies with a size limit, caps the length of JSON-RPC batches and checks the
   Content-Type properly; SSE keep-alive is fixed. All 16 manifests and both lockfiles move
