@@ -23,7 +23,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, withUnverifiedWriteMarker, pickArguments } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { VariablesRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -86,16 +86,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "create_variable_definition",
-        description: "Create a new variable definition in baramundi Management Suite. Requires a name and data type. Variable definitions act as templates that can be instantiated with specific values on endpoints, groups, and other objects.",
+        description: "Create a new variable definition in baramundi Management Suite. Requires a name, a category and at least one scope. Variable definitions act as templates that can be instantiated with specific values on endpoints, groups, and other objects.",
         inputSchema: {
           type: "object",
           properties: {
             name: { type: "string", description: "Name of the new variable definition." },
-            dataType: { type: "string", description: "Data type of the variable (e.g. String, Integer, Boolean)." },
+            category: { type: "string", description: "Category the variable definition belongs to." },
+            scopes: { type: "array", items: { type: "string", enum: ["ADObject", "AndroidEndpoint", "Endpoint", "Deprecated_IndustrialEndpoint", "IosEndpoint", "LogicalGroup", "NetworkEndpoint", "WindowsApplication", "WindowsJobDefinition", "LinuxEndpoint"] }, uniqueItems: true, description: "Objects the variable applies to; several scopes form a multi-scope variable." },
+            type: { type: "string", enum: ["String", "Integer", "Password", "Date", "DropDownList", "DropDownEditableList", "Checkbox", "FileLink", "Folder"], description: "Data type of the variable." },
             defaultValue: { type: "string", description: "Optional default value for the variable." },
-            description: { type: "string", description: "Optional description explaining the variable's purpose." }
+            comment: { type: "string", description: "Optional comment explaining the variable's purpose." }
           },
-          required: ["name", "dataType"]
+          required: ["name", "category", "scopes"]
         }
       },
       {
@@ -342,7 +344,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_variable_definition": {
-          const result = await vars.createVariableDefinition(args as never);
+          const result = await vars.createVariableDefinition(pickArguments(args ?? {}, ["name", "category", "scopes", "type", "defaultValue", "comment"]));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

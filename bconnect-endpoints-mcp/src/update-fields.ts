@@ -13,21 +13,22 @@
  */
 import { CommonRules, patchFromArguments, type JsonPatchOperation, type ValidationRule } from "@bconnect/mcp-core";
 
-interface Field {
+export interface Field {
   path: string;
   description: string;
-  type?: "string" | "boolean" | "integer" | "array";
+  type?: "string" | "boolean" | "integer" | "array" | "object";
   guid?: boolean;
   enum?: readonly string[];
   items?: Record<string, unknown>;
+  properties?: Record<string, unknown>;
 }
 
-const text = (path: string, description: string): Field => ({ path, description });
-const guid = (path: string, description: string): Field => ({ path, description, guid: true });
-const flag = (path: string, description: string): Field => ({ path, description, type: "boolean" });
-const choice = (path: string, description: string, values: readonly string[]): Field => ({ path, description, enum: values });
+export const text = (path: string, description: string): Field => ({ path, description });
+export const guid = (path: string, description: string): Field => ({ path, description, guid: true });
+export const flag = (path: string, description: string): Field => ({ path, description, type: "boolean" });
+export const choice = (path: string, description: string, values: readonly string[]): Field => ({ path, description, enum: values });
 
-const MAINTENANCE_INTERVAL = {
+export const MAINTENANCE_INTERVAL = {
   type: "object",
   properties: {
     maintenancePeriod: { type: "string", enum: ["Everyday", "Workdays", "Weekends", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] },
@@ -37,7 +38,7 @@ const MAINTENANCE_INTERVAL = {
   required: ["start", "end"],
 };
 
-const maintenanceWindowFields: Record<string, Field> = {
+export const maintenanceWindowFields: Record<string, Field> = {
   maintenanceWindowDefinitionType: choice("/maintenancewindowdefinitiontype",
     "Window type: Anytime (no restriction), Everyday (same slot every day), WorkdayWeekend, IndividualWeekday, or Never",
     ["Everyday", "WorkdayWeekend", "IndividualWeekday", "Anytime", "Never"]),

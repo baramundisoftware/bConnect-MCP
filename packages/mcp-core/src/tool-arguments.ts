@@ -60,3 +60,12 @@ export function patchFromArguments(args: Record<string, unknown>, paths: Record<
     .filter(([name]) => args[name] !== undefined)
     .map(([name, path]) => ({ op: "replace", path, value: args[name] }));
 }
+
+/**
+ * A request body with only the named arguments the caller gave, so nothing a
+ * tool doesn't declare reaches bConnect. `rename` maps an argument name to the
+ * field name the API uses, where they differ.
+ */
+export function pickArguments(args: Record<string, unknown>, names: readonly string[], rename: Record<string, string> = {}): Record<string, unknown> {
+  return Object.fromEntries(names.filter((name) => args[name] !== undefined).map((name) => [rename[name] ?? name, args[name]]));
+}

@@ -44,7 +44,12 @@ export function sample(name: string, schema: JsonSchema): unknown {
     case 'number': return 1;
     case 'boolean': return false;
     case 'array': return /patch|operations/i.test(name) ? [{ op: 'replace', path: '/name', value: 'x' }] : [];
-    case 'object': return { name: 'x' };
+    case 'object':
+      // A declared structure gets a sample per property; an untyped object a placeholder.
+      if (schema.properties) {
+        return Object.fromEntries(Object.entries<JsonSchema>(schema.properties).map(([k, v]) => [k, sample(k, v)]));
+      }
+      return { name: 'x' };
     default: return 'x';
   }
 }

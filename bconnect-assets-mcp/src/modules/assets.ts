@@ -1,7 +1,6 @@
 import type { AxiosInstance } from 'axios';
 import type {
   Asset,
-  AssetForCreation,
   AssetPagedList,
   AssetStockFolder,
   AssetStockFolderForCreation,
@@ -57,7 +56,7 @@ export class AssetsModule {
     return response.data;
   }
 
-  async createAsset(data: AssetForCreation): Promise<Asset> {
+  async createAsset(data: Record<string, unknown>): Promise<Asset> {
     const response = await this.httpClient.post(`${this.basePath}/Assets`, data);
     return response.data;
   }

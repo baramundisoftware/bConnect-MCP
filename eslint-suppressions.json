@@ -6,7 +6,7 @@
   },
   "bconnect-assets-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 18
+      "count": 17
     }
   },
   "bconnect-compliance-mcp/src/index.ts": {
@@ -21,7 +21,7 @@
   },
   "bconnect-endpoints-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 19
+      "count": 13
     }
   },
   "bconnect-jobs-mcp/src/index.ts": {
@@ -41,7 +41,7 @@
   },
   "bconnect-software-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 14
+      "count": 12
     }
   },
   "bconnect-universaldynamicgroups-mcp/src/index.ts": {
@@ -56,7 +56,7 @@
   },
   "bconnect-variables-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 10
+      "count": 9
     }
   }
 }

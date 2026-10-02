@@ -89,11 +89,11 @@ describe('bconnect-variables-mcp', () => {
       ).rejects.toThrow(/id is required/i);
     });
 
-    it('create_variable_definition: missing dataType', async () => {
+    it('create_variable_definition: missing category', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({ name: 'create_variable_definition', arguments: { name: 'foo' } })
-      ).rejects.toThrow(/dataType is required/i);
+      ).rejects.toThrow(/category is required/i);
     });
 
     it('list_variable_instances_by_endpoint: endpointId not a GUID', async () => {
