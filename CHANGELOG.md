@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `BCONNECT_TIMEOUT_MS=90000` for the servers you use them with (see `docs/TROUBLESHOOTING.md`).
 
 ### Added
+- **The gateway image is published automatically again** (#130). A version tag `vX.Y.Z` builds
+  `ghcr.io/baramundisoftware/bconnect-mcp-gateway` for linux/amd64 and linux/arm64 and tags it
+  `X.Y.Z`, `X.Y` and `latest`, with a build provenance attestation
+  (`gh attestation verify oci://ghcr.io/baramundisoftware/bconnect-mcp-gateway:<version> --repo baramundisoftware/bConnect-MCP`).
+  Pull requests that change the image build it without publishing. `scripts/publish-image.sh`
+  stays as the fallback for publishing by hand.
 - **Every list tool offers the filters bConnect supports** (#179). Active Directory, assets,
   compliance, Defender/BitLocker, operating systems, server management, software, universal dynamic
   groups, update management and variables list tools now take the filters their API route declares,

@@ -1,0 +1,207 @@
+# Gateway image: build on every change to it, publish on a version tag (#130).
+#
+# ── What it does ────────────────────────────────────────────────────────────
+# A tag `vX.Y.Z` builds the gateway image for linux/amd64 and linux/arm64 and
+# publishes it to GHCR as `:X.Y.Z`, `:X.Y` and `:latest`, with a build
+# provenance attestation. A pull request that touches the image (Dockerfile,
+# gateway, core, servers, this file) builds both platforms and pushes nothing,
+# so a broken image shows up before the tag, not after it.
+#
+# This replaces the hand-run `scripts/publish-image.sh` for releases; the
+# script stays as the fallback when Actions is unavailable. Same image name,
+# same tags, same labels.
+#
+# ── Why no docker/* actions ─────────────────────────────────────────────────
+# The repository allows GitHub-owned actions only. The workflow removed in #93
+# used five docker/* actions; here `docker buildx` (preinstalled on GitHub's
+# runners) does the same in plain `run` steps.
+#
+# ── Why two runners instead of QEMU ─────────────────────────────────────────
+# Each platform builds natively (`ubuntu-24.04` and `ubuntu-24.04-arm`) and
+# pushes by digest only; the `publish` job then joins both digests into one
+# multi-platform tag. No emulation, no third-party setup action.
+#
+# ── Tag rules ───────────────────────────────────────────────────────────────
+# - Only `v<major>.<minor>.<patch>` triggers a publish; anything else is ignored.
+# - The tag must equal the version in the root and the gateway package.json,
+#   so the image tag and the code inside it can't disagree.
+# - `:latest` moves with every release tag. All 26.1.x releases are
+#   pre-releases, but the newest one is the safest one to run. Tag releases in
+#   order: tagging an older version after a newer one moves `:latest` back.
+# - Pushing a version tag publishes an image, so only admins may push `v*`
+#   tags (repository ruleset, not this file).
+
+name: Gateway image
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  pull_request:
+    paths:
+      - .github/workflows/image.yml
+      - .dockerignore
+      - bconnect-mcp-gateway/**
+      - 'packages/**'
+      - bconnect-server-template/**
+      - 'bconnect-*-mcp/**'
+      - package.json
+      - package-lock.json
+  workflow_dispatch:
+
+# Two runs for the same tag must not race each other to the registry.
+concurrency:
+  group: image-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/baramundisoftware/bconnect-mcp-gateway
+  # Pushes happen only for a version tag. A pull request or a manual run builds.
+  PUBLISH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
+
+jobs:
+  build:
+    name: build (${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Version
+        id: version
+        shell: bash
+        run: |
+          root=$(jq -r .version package.json)
+          gateway=$(jq -r .version bconnect-mcp-gateway/package.json)
+          # Checked on every run, so a release PR that bumps only one fails here, not on the tag.
+          if [ "$root" != "$gateway" ]; then
+            echo "::error::package.json ($root) and bconnect-mcp-gateway/package.json ($gateway) disagree. The image is labelled with one version, so bump both."
+            exit 1
+          fi
+          if [ "$PUBLISH" = "true" ] && [ "${GITHUB_REF_NAME#v}" != "$root" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match package.json ($root). Bump the version in the release PR, then tag again."
+            exit 1
+          fi
+          echo "version=$root" >> "$GITHUB_OUTPUT"
+          echo "created=$(git log -1 --format=%cI)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        if: env.PUBLISH == 'true'
+        shell: bash
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build${{ env.PUBLISH == 'true' && ' and push by digest' || '' }}
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+          VERSION: ${{ steps.version.outputs.version }}
+          CREATED: ${{ steps.version.outputs.created }}
+        run: |
+          docker buildx create --name gateway --driver docker-container --use --bootstrap >/dev/null
+          if [ "$PUBLISH" = "true" ]; then
+            output="type=image,name=$IMAGE,push-by-digest=true,name-canonical=true,push=true"
+          else
+            output="type=cacheonly"
+          fi
+          docker buildx build \
+            --file bconnect-mcp-gateway/Dockerfile \
+            --platform "$PLATFORM" \
+            --provenance=false \
+            --label "org.opencontainers.image.title=bconnect-mcp-gateway" \
+            --label "org.opencontainers.image.description=bConnect MCP HTTP gateway (multi-user / n8n)" \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.version=$VERSION" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --label "org.opencontainers.image.created=$CREATED" \
+            --label "org.opencontainers.image.vendor=baramundi software GmbH" \
+            --metadata-file metadata.json \
+            --output "$output" \
+            .
+          if [ "$PUBLISH" = "true" ]; then
+            digest=$(jq -r '."containerimage.digest"' metadata.json)
+            mkdir -p digests
+            touch "digests/${digest#sha256:}"
+          fi
+
+      - name: Keep the digest for the publish job
+        if: env.PUBLISH == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: digest-${{ strategy.job-index }}
+          path: digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: publish
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: digest-*
+          path: digests
+          merge-multiple: true
+
+      - name: Log in to GHCR
+        shell: bash
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: printf '%s' "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+
+      - name: Tag X.Y.Z, X.Y and latest
+        id: tag
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          count=$(ls digests | wc -l)
+          if [ "$count" -ne 2 ]; then
+            echo "::error::Expected 2 platform digests, found $count."
+            exit 1
+          fi
+          sources=$(for d in digests/*; do printf '%s@sha256:%s ' "$IMAGE" "$(basename "$d")"; done)
+          # shellcheck disable=SC2086 # one word per source digest
+          docker buildx imagetools create \
+            --tag "$IMAGE:$version" \
+            --tag "$IMAGE:${version%.*}" \
+            --tag "$IMAGE:latest" \
+            --annotation "index:org.opencontainers.image.description=bConnect MCP HTTP gateway (multi-user / n8n)" \
+            --annotation "index:org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --annotation "index:org.opencontainers.image.version=$version" \
+            --annotation "index:org.opencontainers.image.revision=$GITHUB_SHA" \
+            $sources
+          digest=$(docker buildx imagetools inspect "$IMAGE:$version" --format '{{json .Manifest}}' | jq -r .digest)
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          docker buildx imagetools inspect "$IMAGE:$version"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.tag.outputs.digest }}
+          push-to-registry: true
