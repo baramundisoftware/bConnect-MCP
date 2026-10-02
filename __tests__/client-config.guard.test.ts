@@ -568,9 +568,9 @@ describe.each(SERVERS)('%s: the client a tool call builds', (server) => {
     const config = await clientConfig(
       server,
       { BCONNECT_API_KEY: 'env-key' },
-      { credentials: { baseUrl: 'http://bms.request.test/bconnect', apiKey: 'request-key' } },
+      { credentials: { baseUrl: 'https://bms.request.test/bconnect', apiKey: 'request-key' } },
     );
-    expect(config.baseUrl).toBe('http://bms.request.test/bconnect');
+    expect(config.baseUrl).toBe('https://bms.request.test/bconnect');
     expect(config.apiKey).toBe('request-key');
   });
 
