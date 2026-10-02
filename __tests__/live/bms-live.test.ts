@@ -39,7 +39,7 @@ import { RELEASES, findOperation, type ApiOperation, type Release } from '../lib
 import { readOperations } from './lib/select.js';
 import { specValidator, type SchemaFinding, type SpecValidator } from '../lib/spec-validator.js';
 import { checkReachable, childEnv, loadLiveConfig } from './lib/env.js';
-import { assertExercised, sanitise, sanitisedSummary, type ToolRun } from './lib/report.js';
+import { assertExercised, refusedLines, sanitise, sanitisedSummary, type ToolRun } from './lib/report.js';
 import { createGuard } from './lib/guard.mjs';
 import { expectedAnswer } from './lib/expected.js';
 import { classifyByProfile, endpointTypesFrom, type Profile } from './lib/profile.js';
@@ -254,7 +254,8 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
         runs.push(run);
         mine.push(run);
       }
-      expect(guard.refused, 'requests the guard stopped (must be none: tools are read-only)').toEqual([]);
+      expect(refusedLines(guard.refused, { hostname: config.baseUrl.hostname, secrets: config.secrets }),
+        'requests the guard stopped (must be none: tools are read-only)').toEqual([]);
       const failed = mine.filter((r) => r.outcome === 'failed').map((r) => clean(`${r.tool} [${r.requests?.join(', ')}] ${r.detail}`));
       expect(failed, `${server} read tools that failed on the live bMS`).toEqual([]);
     }, 300_000);

@@ -41,6 +41,11 @@ export function sanitise(text: string, run: { hostname: string; secrets: string[
   return out.replace(GUID, '{id}');
 }
 
+/** Refused requests as console lines (method, path, reason), sanitised like all console text. */
+export function refusedLines(refused: Array<{ method: string; path: string; reason: string }>, run: { hostname: string; secrets: string[] }): string[] {
+  return refused.map((r) => sanitise(`${r.method} ${r.path} (${r.reason})`, run));
+}
+
 export interface SummaryInput {
   release: string;
   bmsVersion?: string;

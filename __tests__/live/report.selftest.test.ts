@@ -2,7 +2,7 @@
  * Self-test of what the live tier prints and publishes. Needs no bMS.
  */
 import { describe, expect, it } from 'vitest';
-import { sanitise, sanitisedSummary, type ToolRun } from './lib/report.js';
+import { refusedLines, sanitise, sanitisedSummary, type ToolRun } from './lib/report.js';
 
 const HOST = 'bms-host.corp.example';
 const SECRETS = ['S3cret-Passw0rd', 'QWRtaW46UzNjcmV0'];
@@ -25,6 +25,14 @@ describe('sanitise', () => {
   it('removes credentials, the host and object IDs', () => {
     const out = sanitise(`https://${HOST}:444/bconnect/x/${GUID} ${SECRETS[0]} ${SECRETS[1]}`, { hostname: HOST, secrets: SECRETS });
     expect(out).toBe('https://<bms>:444/bconnect/x/{id} *** ***');
+  });
+
+  it('describes refused requests without object IDs or the host', () => {
+    const lines = refusedLines([
+      { method: 'GET', path: `/bconnect/endpoints/v2.0/Endpoints/${GUID}`, reason: 'redirect (302)' },
+      { method: 'POST', path: '/bconnect/jobs/v2.0/JobInstances', reason: 'method POST' },
+    ], { hostname: HOST, secrets: SECRETS });
+    expect(lines).toEqual(['GET /bconnect/endpoints/v2.0/Endpoints/{id} (redirect (302))', 'POST /bconnect/jobs/v2.0/JobInstances (method POST)']);
   });
 
   it('removes object IDs written in upper case', () => {
