@@ -23,7 +23,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { SoftwareRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -62,7 +66,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "replace_application_in_bundle",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
 
       // ── Installed Software (25R2 + 26R1) ──────────────────────────────
@@ -71,12 +75,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all installed Windows software across all endpoints managed in baramundi Management Suite. Returns a paged list with software name, vendor, version, install date, and associated endpoint information for every installed application tracked.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'SoftwareName asc')." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-          },
+          properties: {},
           required: []
         }
       },
@@ -87,10 +86,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve installed software for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["endpointId"]
         }
@@ -102,11 +97,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             logicalGroupId: { type: "string", description: "GUID of the logical group to retrieve installed software for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-            includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
           },
           required: ["logicalGroupId"]
         }
@@ -118,10 +108,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             universalDynamicGroupId: { type: "string", description: "GUID of the Universal Dynamic Group to retrieve installed software for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["universalDynamicGroupId"]
         }
@@ -138,12 +124,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "[26R1] List all software bundles defined in baramundi Management Suite. Returns a paged list with bundle id, name, folder, and associated applications for each bundle. Available in bConnect 26R1 and later.",
           inputSchema: {
             type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'Name asc')." },
-              SearchQuery: { type: "string", description: "Filter results by matching against searchable bundle properties." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -191,12 +172,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "[26R1] List all bundle application assignments across all software bundles in baramundi Management Suite. Returns a paged list with bundle name, application name, vendor, and order index for each assignment. Available in bConnect 26R1 and later.",
           inputSchema: {
             type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'ApplicationName asc')." },
-              SearchQuery: { type: "string", description: "Filter results by matching against bundle or application properties." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -207,10 +183,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               bundleId: { type: "string", description: "GUID of the software bundle to list applications for." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction." },
-              SearchQuery: { type: "string", description: "Filter results by matching against application properties." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["bundleId"]
           }
@@ -261,13 +233,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "[26R1] List all software bundle folders in baramundi Management Suite. Returns a paged list with folder id, name, parent folder id, and optional comment for each folder in the bundle folder hierarchy. Available in bConnect 26R1 and later.",
           inputSchema: {
             type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'Name asc')." },
-              SearchQuery: { type: "string", description: "Filter results by matching against folder name or comment." },
-              Name: { type: "string", description: "Filter results to match this exact folder name." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -289,12 +255,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               folderId: { type: "string", description: "GUID of the parent bundle folder to list sub-folders for." },
-              includeSubfolders: { type: "boolean", description: "If true, recursively include all nested sub-folders." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction." },
-              SearchQuery: { type: "string", description: "Filter results by matching against folder name or comment." },
-              Name: { type: "string", description: "Filter results to match this exact folder name." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["folderId"]
           }
@@ -342,7 +302,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
 
     return { tools };
-  }));
+  })));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -439,32 +399,32 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // ── Installed Software ─────────────────────────────────────────
         case "list_installed_windows_software": {
-          const result = await sw.getInstalledWindowsSoftware((args ?? {}) as never);
+          const result = await sw.getInstalledWindowsSoftware(pickArguments(args ?? {}, sends("list_installed_windows_software")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_installed_software_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await sw.getInstalledSoftwareByEndpoint(endpointId as string, params as never);
+          const result = await sw.getInstalledSoftwareByEndpoint(endpointId as string, pickArguments(params, sends("list_installed_software_by_endpoint")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_installed_software_by_logical_group": {
           const { logicalGroupId, ...params } = args as Record<string, unknown>;
-          const result = await sw.getInstalledSoftwareByLogicalGroup(logicalGroupId as string, params as never);
+          const result = await sw.getInstalledSoftwareByLogicalGroup(logicalGroupId as string, pickArguments(params, sends("list_installed_software_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_installed_software_by_dynamic_group": {
           const { universalDynamicGroupId, ...params } = args as Record<string, unknown>;
-          const result = await sw.getInstalledSoftwareByUniversalDynamicGroup(universalDynamicGroupId as string, params as never);
+          const result = await sw.getInstalledSoftwareByUniversalDynamicGroup(universalDynamicGroupId as string, pickArguments(params, sends("list_installed_software_by_dynamic_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // ── Software Bundles (26R1) ────────────────────────────────────
         case "list_software_bundles": {
           requires26R1();
-          const result = await sw.getSoftwareBundles((args ?? {}) as never);
+          const result = await sw.getSoftwareBundles(pickArguments(args ?? {}, sends("list_software_bundles")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -492,14 +452,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Bundle Applications (26R1) ─────────────────────────────────
         case "list_bundle_applications": {
           requires26R1();
-          const result = await sw.getBundleApplications((args ?? {}) as never);
+          const result = await sw.getBundleApplications(pickArguments(args ?? {}, sends("list_bundle_applications")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_bundle_applications_by_bundle": {
           requires26R1();
           const { bundleId, ...params } = args as Record<string, unknown>;
-          const result = await sw.getBundleApplicationsByBundle(bundleId as string, params as never);
+          const result = await sw.getBundleApplicationsByBundle(bundleId as string, pickArguments(params, sends("list_bundle_applications_by_bundle")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -524,7 +484,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Bundle Folders (26R1) ──────────────────────────────────────
         case "list_bundle_folders": {
           requires26R1();
-          const result = await sw.getBundleFolders((args ?? {}) as never);
+          const result = await sw.getBundleFolders(pickArguments(args ?? {}, sends("list_bundle_folders")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -537,7 +497,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_bundle_folders_by_folder": {
           requires26R1();
           const { folderId, ...params } = args as Record<string, unknown>;
-          const result = await sw.getBundleFoldersByFolder(folderId as string, params as never);
+          const result = await sw.getBundleFoldersByFolder(folderId as string, pickArguments(params, sends("list_bundle_folders_by_folder")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

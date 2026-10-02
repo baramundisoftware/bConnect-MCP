@@ -23,7 +23,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, jsonPatchArgument, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, jsonPatchArgument, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { ServerManagementRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -68,7 +72,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "msw_cleanup",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools = [
 
       // ── Server Information ────────────────────────────────────────────────
@@ -162,12 +166,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all Security Groups defined in the baramundi Management Suite. Returns a paged list of security groups with their names, descriptions, assigned members, and permission configurations.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY
-          },
+          properties: {},
           required: []
         }
       },
@@ -223,12 +222,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all Security Profiles defined in the baramundi Management Suite. Returns a paged list of security profiles with their names, descriptions, assigned permissions, and configuration details.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY
-          },
+          properties: {},
           required: []
         }
       },
@@ -365,7 +359,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
 
     return { tools };
-  }));
+  })));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -542,7 +536,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_security_groups": {
-          const result = await sm.getSecurityGroups((args ?? {}) as never);
+          const result = await sm.getSecurityGroups(pickArguments(args ?? {}, sends("list_security_groups")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -567,7 +561,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_security_profiles": {
-          const result = await sm.getSecurityProfiles((args ?? {}) as never);
+          const result = await sm.getSecurityProfiles(pickArguments(args ?? {}, sends("list_security_profiles")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -637,7 +631,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_download_jobs": {
           requires26R1();
-          const result = await sm.getDownloadJobs();
+          const result = await sm.getDownloadJobs(pickArguments(args ?? {}, sends("list_download_jobs")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

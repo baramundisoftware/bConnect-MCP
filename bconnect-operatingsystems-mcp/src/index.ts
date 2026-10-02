@@ -22,7 +22,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { OperatingSystemsRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -54,7 +58,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "update_os_windows_endpoint",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools = [
 
       // ── OS Folders ────────────────────────────────────────────────────────
@@ -63,12 +67,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all Operating Systems folders in baramundi Management Suite. Returns a paged list of OS folders used to organize operating system configurations with their names, IDs, and hierarchy structure.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'Name asc')." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-          },
+          properties: {},
           required: []
         }
       },
@@ -90,10 +89,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             folderId: { type: "string", description: "GUID of the parent OS folder whose sub-folders should be listed." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["folderId"]
         }
@@ -105,12 +100,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all Windows endpoints with Operating System installation information managed in baramundi Management Suite. Returns a paged list of Windows endpoints including their OS installation configuration, target OS details, and installation status.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-          },
+          properties: {},
           required: []
         }
       },
@@ -187,7 +177,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     ];
 
     return { tools };
-  }));
+  })));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -261,7 +251,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       switch (name) {
 
         case "list_os_folders": {
-          const result = await os.getFolders((args ?? {}) as never);
+          const result = await os.getFolders(pickArguments(args ?? {}, sends("list_os_folders")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -272,12 +262,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_os_folders_by_folder": {
           const { folderId, ...params } = args as Record<string, unknown>;
-          const result = await os.getFoldersByFolderId(folderId as string, params as never);
+          const result = await os.getFoldersByFolderId(folderId as string, pickArguments(params, sends("list_os_folders_by_folder")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_os_windows_endpoints": {
-          const result = await os.getWindowsEndpoints((args ?? {}) as never);
+          const result = await os.getWindowsEndpoints(pickArguments(args ?? {}, sends("list_os_windows_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

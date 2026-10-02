@@ -22,7 +22,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { UpdateManagementRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -51,7 +55,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "update_update_management_endpoint",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     return {
       tools: [
         {
@@ -59,12 +63,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all Windows endpoints with their Microsoft Update Management status in baramundi Management Suite. Returns a paged list with endpoint name, update profile name, last inventory date, and last successful update timestamp for each endpoint.",
           inputSchema: {
             type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'EndpointName asc'). Possible values: EndpointName, LastInventory, LastSuccessfulUpdate." },
-              SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or UpdateProfileName." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -96,7 +95,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         },
       ]
     };
-  }));
+  })));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -153,7 +152,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       switch (name) {
 
         case "list_update_management_endpoints": {
-          const result = await um.getWindowsEndpoints((args ?? {}) as never);
+          const result = await um.getWindowsEndpoints(pickArguments(args ?? {}, sends("list_update_management_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

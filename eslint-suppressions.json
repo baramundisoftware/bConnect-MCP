@@ -4,14 +4,9 @@
       "count": 6
     }
   },
-  "bconnect-compliance-mcp/src/index.ts": {
-    "no-restricted-syntax": {
-      "count": 6
-    }
-  },
   "bconnect-defensecontrol-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 6
+      "count": 1
     }
   },
   "bconnect-endpoints-mcp/src/index.ts": {
@@ -26,32 +21,27 @@
   },
   "bconnect-operatingsystems-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 6
+      "count": 3
     }
   },
   "bconnect-servermanagement-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 4
+      "count": 2
     }
   },
   "bconnect-software-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 12
-    }
-  },
-  "bconnect-universaldynamicgroups-mcp/src/index.ts": {
-    "no-restricted-syntax": {
-      "count": 4
+      "count": 3
     }
   },
   "bconnect-updatemanagement-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 2
+      "count": 1
     }
   },
   "bconnect-variables-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 9
+      "count": 2
     }
   }
 }

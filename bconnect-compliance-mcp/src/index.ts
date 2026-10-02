@@ -22,7 +22,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { ComplianceRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -45,7 +49,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  const toolCatalog = declaredArgumentsOnly(async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async () => {
     return {
       tools: [
 
@@ -55,12 +59,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all detected compliance rule violations for Android, iOS, and macOS endpoints managed in baramundi Management Suite. Returns a paged list of rule violations with endpoint names, rule names, violation states, and detection timestamps.",
           inputSchema: {
             type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'RuleName asc'). Possible values: EndpointName, RuleName." },
-              SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or RuleName." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -71,10 +70,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               endpointId: { type: "string", description: "GUID of the Android, iOS, or macOS endpoint to retrieve rule violations for." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: EndpointName, RuleName." },
-              SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or RuleName." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["endpointId"]
           }
@@ -86,12 +81,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all detected CVE vulnerabilities across all Windows endpoints managed in baramundi Management Suite. Returns a paged list of detected vulnerabilities including CVE identifiers, endpoint names, detection timestamps, and whether vulnerabilities are ignored.",
           inputSchema: {
             type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: EndpointName, CveId." },
-              SearchQuery: { type: "string", description: "Filter results by matching against EndpointName or CveId." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -102,10 +92,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             type: "object",
             properties: {
               endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve detected vulnerabilities for." },
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible value: CveId." },
-              SearchQuery: { type: "string", description: "Filter results by matching against CveId." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
             },
             required: ["endpointId"]
           }
@@ -117,12 +103,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all mobile device compliance rules configured in baramundi Management Suite for Android, iOS, and macOS endpoints. Returns a paged list of rules with names, types, severity levels, and descriptions used to evaluate endpoint compliance status.",
           inputSchema: {
             type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: RuleName, Description." },
-              SearchQuery: { type: "string", description: "Filter results by matching against RuleName or Description." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -144,12 +125,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "List all CVE vulnerabilities in the baramundi vulnerability library for Windows endpoints. Returns a paged list of vulnerabilities with CVE identifiers, CVSS scores, severity ratings, descriptions, and affected products and operating systems.",
           inputSchema: {
             type: "object",
-            properties: {
-              OrderBy: { type: "string", description: "Sort results by property name and direction. Possible values: CveId, Severity." },
-              SearchQuery: { type: "string", description: "Filter results by matching against searchable vulnerability properties." },
-              Page: PAGE_PROPERTY,
-              PageSize: PAGE_SIZE_PROPERTY,
-            },
+            properties: {},
             required: []
           }
         },
@@ -167,7 +143,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
       ]
     };
-  });
+  }));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -228,31 +204,31 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // ── Rule Violations ─────────────────────────────────────────────
         case "list_detected_rule_violations": {
-          const result = await compliance.getDetectedRuleViolations((args ?? {}) as never);
+          const result = await compliance.getDetectedRuleViolations(pickArguments(args ?? {}, sends("list_detected_rule_violations")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_detected_rule_violations_for_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await compliance.getDetectedRuleViolationsForEndpoint(endpointId as string, params as never);
+          const result = await compliance.getDetectedRuleViolationsForEndpoint(endpointId as string, pickArguments(params, sends("list_detected_rule_violations_for_endpoint")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // ── Detected Vulnerabilities ────────────────────────────────────
         case "list_detected_vulnerabilities": {
-          const result = await compliance.getAllDetectedVulnerabilities((args ?? {}) as never);
+          const result = await compliance.getAllDetectedVulnerabilities(pickArguments(args ?? {}, sends("list_detected_vulnerabilities")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_detected_vulnerabilities_for_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await compliance.getDetectedVulnerabilitiesByEndpoint(endpointId as string, params as never);
+          const result = await compliance.getDetectedVulnerabilitiesByEndpoint(endpointId as string, pickArguments(params, sends("list_detected_vulnerabilities_for_endpoint")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         // ── Mobile Device Rules ─────────────────────────────────────────
         case "list_mobile_device_rules": {
-          const result = await compliance.getAllMobileDeviceRules((args ?? {}) as never);
+          const result = await compliance.getAllMobileDeviceRules(pickArguments(args ?? {}, sends("list_mobile_device_rules")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -263,7 +239,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // ── Vulnerabilities (CVE Library) ───────────────────────────────
         case "list_vulnerabilities": {
-          const result = await compliance.getAllVulnerabilities((args ?? {}) as never);
+          const result = await compliance.getAllVulnerabilities(pickArguments(args ?? {}, sends("list_vulnerabilities")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

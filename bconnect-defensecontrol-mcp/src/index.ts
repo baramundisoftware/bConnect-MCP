@@ -23,7 +23,11 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY, declaredArgumentsOnly } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
+import { QUERY_PARAMETERS } from "./query-params.js";
+
+/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { DefenseControlRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -62,7 +66,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "refresh_local_admin_account_expiry",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
 
       // ── BitLocker ──────────────────────────────────────────────────────
@@ -71,12 +75,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all Windows endpoints with BitLocker encryption status managed in baramundi Management Suite. Returns a paged list with volume data, encryption status, BitLocker version, and protection state for each endpoint.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'EndpointName asc')." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-          },
+          properties: {},
           required: []
         }
       },
@@ -139,12 +138,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all Microsoft Defender threat detections across all Windows endpoints managed in baramundi Management Suite. Returns a paged list of threats with threat identifiers, names, severity, categories, and detection status information.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort results by property name and direction (e.g. 'ThreatName asc')." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable threat properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-          },
+          properties: {},
           required: []
         }
       },
@@ -166,10 +160,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve Defender threats for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against threat properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
           },
           required: ["endpointId"]
         }
@@ -181,11 +171,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           type: "object",
           properties: {
             logicalGroupId: { type: "string", description: "GUID of the logical group to retrieve Defender threats for." },
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against threat properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-            includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
           },
           required: ["logicalGroupId"]
         }
@@ -197,12 +182,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all Windows endpoints with Microsoft Defender status managed in baramundi Management Suite. Returns a paged list of endpoints with Defender protection state, real-time protection status, signature version, and last scan information.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: { type: "string", description: "Sort results by property name and direction." },
-            SearchQuery: { type: "string", description: "Filter results by matching against searchable properties." },
-            Page: PAGE_PROPERTY,
-            PageSize: PAGE_SIZE_PROPERTY,
-          },
+          properties: {},
           required: []
         }
       },
@@ -252,7 +232,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
 
     return { tools };
-  }));
+  })));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
@@ -369,7 +349,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       switch (name) {
 
         case "list_bitlocker_windows_endpoints": {
-          const result = await dc.getBitLockerWindowsEndpoints((args ?? {}) as never);
+          const result = await dc.getBitLockerWindowsEndpoints(pickArguments(args ?? {}, sends("list_bitlocker_windows_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -411,7 +391,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_defender_threats": {
-          const result = await dc.getMicrosoftDefenderThreats((args ?? {}) as never);
+          const result = await dc.getMicrosoftDefenderThreats(pickArguments(args ?? {}, sends("list_defender_threats")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
@@ -422,18 +402,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_defender_threats_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await dc.getMicrosoftDefenderThreatsByEndpoint(endpointId as string, params as never);
+          const result = await dc.getMicrosoftDefenderThreatsByEndpoint(endpointId as string, pickArguments(params, sends("list_defender_threats_by_endpoint")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_defender_threats_by_logical_group": {
           const { logicalGroupId, ...params } = args as Record<string, unknown>;
-          const result = await dc.getMicrosoftDefenderThreatsByLogicalGroup(logicalGroupId as string, params as never);
+          const result = await dc.getMicrosoftDefenderThreatsByLogicalGroup(logicalGroupId as string, pickArguments(params, sends("list_defender_threats_by_logical_group")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 
         case "list_defender_windows_endpoints": {
-          const result = await dc.getMicrosoftDefenderWindowsEndpoints((args ?? {}) as never);
+          const result = await dc.getMicrosoftDefenderWindowsEndpoints(pickArguments(args ?? {}, sends("list_defender_windows_endpoints")));
           return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
         }
 

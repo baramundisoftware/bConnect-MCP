@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Every list tool offers the filters bConnect supports** (#179). Active Directory, assets,
+  compliance, Defender/BitLocker, operating systems, server management, software, universal dynamic
+  groups, update management and variables list tools now take the filters their API route declares,
+  among them `includeIndirect` and `includeSubOrgUnit(s)` (AD), `Category`, `Scope`, `StateValue` and
+  `LastExecution` (download jobs, which ignored all filters before), plus `Name`, `OrderBy` and
+  `includeSubfolders` where they were missing.
 - **Endpoint and group list tools offer every filter bConnect supports** (#179). The endpoint lists,
   `list_logical_groups`, `search_endpoints` and the group member tools now take the filters their API
   route declares, among them `HostName`, `Domain`, `DisplayName`, `EntraIdDeviceId` (26R1 only), `Name`

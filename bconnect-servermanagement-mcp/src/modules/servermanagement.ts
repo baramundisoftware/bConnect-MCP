@@ -238,8 +238,8 @@ export class ServerManagementModule {
   }
 
   /** Get all download jobs in baramundi Management Suite (26R1 only) */
-  async getDownloadJobs(): Promise<unknown[]> {
-    const response = await this.httpClient.get(`${this.basePath}/DownloadJobs`);
+  async getDownloadJobs(params: Record<string, unknown> = {}): Promise<unknown[]> {
+    const response = await this.httpClient.get(`${this.basePath}/DownloadJobs`, { params });
     return response.data;
   }
 

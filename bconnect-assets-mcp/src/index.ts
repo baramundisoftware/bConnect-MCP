@@ -22,7 +22,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, PAGE_PROPERTY, PAGE_SIZE_PROPERTY, declaredArgumentsOnly, queryParameters } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
@@ -73,44 +73,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "delete_asset_type",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
-
-    const paginationProps = {
-      Page: PAGE_PROPERTY,
-      PageSize: PAGE_SIZE_PROPERTY
-    };
-
-    const assetFilterProps = {
-      OrderBy: {
-        type: "string",
-        description: "Sort results by property name and direction. Possible values: AssetId, OwnerId, OwnerType, etc. (e.g. 'OwnerId asc')."
-      },
-      SearchQuery: {
-        type: "string",
-        description: "Filter results by matching against Name, InventoryNumber, Contact, or CostCenter."
-      },
-      DisplayName: {
-        type: "string",
-        description: "Filter results by matching the exact value against DisplayName."
-      },
-      ...paginationProps
-    };
-
-    const folderFilterProps = {
-      OrderBy: {
-        type: "string",
-        description: "Sort results by property name and direction."
-      },
-      SearchQuery: {
-        type: "string",
-        description: "Filter results by matching searchable properties."
-      },
-      Name: {
-        type: "string",
-        description: "Filter results by exact folder name."
-      },
-      ...paginationProps
-    };
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
 
     const patchBodyProp = {
       operations: {
@@ -136,7 +99,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all assets in baramundi Management Suite. Returns a paged list of assets with their IDs, names, asset type, owner, inventory number, and other metadata. Use this to browse all assets or filter by search query.",
         inputSchema: {
           type: "object",
-          properties: assetFilterProps,
+          properties: {},
           required: []
         }
       },
@@ -230,7 +193,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all assets located in the Asset Stock (the well-known stock container, GUID: D4E3C25B-A3AB-4204-9D26-08ECC6237DC6). Returns a paged list of assets not currently assigned to an endpoint or user.",
         inputSchema: {
           type: "object",
-          properties: assetFilterProps,
+          properties: {},
           required: []
         }
       },
@@ -241,8 +204,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            logicalGroupId: { type: "string", description: "GUID of the logical group whose assets to list." },
-            ...assetFilterProps
+            logicalGroupId: { type: "string", description: "GUID of the logical group whose assets to list." }
           },
           required: ["logicalGroupId"]
         }
@@ -254,8 +216,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            endpointId: { type: "string", description: "GUID of the Windows endpoint whose assets to list." },
-            ...assetFilterProps
+            endpointId: { type: "string", description: "GUID of the Windows endpoint whose assets to list." }
           },
           required: ["endpointId"]
         }
@@ -267,7 +228,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all asset stock folders in baramundi Management Suite. Returns a paged list of folders used to organize assets in the asset stock.",
         inputSchema: {
           type: "object",
-          properties: folderFilterProps,
+          properties: {},
           required: []
         }
       },
@@ -329,9 +290,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            folderId: { type: "string", description: "GUID of the parent asset stock folder whose subfolders to list." },
-            includeSubfolders: { type: "boolean", description: "If true, recursively include all nested subfolders." },
-            ...folderFilterProps
+            folderId: { type: "string", description: "GUID of the parent asset stock folder whose subfolders to list." }
           },
           required: ["folderId"]
         }
@@ -343,7 +302,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all asset type folders in baramundi Management Suite. Returns a paged list of folders used to organize asset types.",
         inputSchema: {
           type: "object",
-          properties: folderFilterProps,
+          properties: {},
           required: []
         }
       },
@@ -405,9 +364,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            folderId: { type: "string", description: "GUID of the parent asset type folder whose subfolders to list." },
-            includeSubfolders: { type: "boolean", description: "If true, recursively include all nested subfolders." },
-            ...folderFilterProps
+            folderId: { type: "string", description: "GUID of the parent asset type folder whose subfolders to list." }
           },
           required: ["folderId"]
         }
@@ -419,29 +376,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         description: "List all asset types defined in baramundi Management Suite. Returns a paged list of asset types with their GUIDs, names, and optional summary data. Asset types define the structure and properties of assets.",
         inputSchema: {
           type: "object",
-          properties: {
-            OrderBy: {
-              type: "string",
-              description: "Sort results by property name and direction."
-            },
-            SearchQuery: {
-              type: "string",
-              description: "Filter results by matching searchable properties."
-            },
-            ShowSummary: {
-              type: "boolean",
-              description: "If true, include summary statistics (stock count, asset count, total purchase price, total operating cost) in results."
-            },
-            Icon: {
-              type: "boolean",
-              description: "If true, include icon data in results."
-            },
-            AdditionalProperties: {
-              type: "boolean",
-              description: "If true, include additional property definitions in results."
-            },
-            ...paginationProps
-          },
+          properties: {},
           required: []
         }
       },
@@ -518,8 +453,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           inputSchema: {
             type: "object",
             properties: {
-              orgUnitId: { type: "string", description: "GUID of the organizational unit whose assets to list." },
-              ...assetFilterProps
+              orgUnitId: { type: "string", description: "GUID of the organizational unit whose assets to list." }
             },
             required: ["orgUnitId"]
           }
@@ -530,8 +464,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           inputSchema: {
             type: "object",
             properties: {
-              adObjectId: { type: "string", description: "GUID of the Active Directory object whose assets to list." },
-              ...assetFilterProps
+              adObjectId: { type: "string", description: "GUID of the Active Directory object whose assets to list." }
             },
             required: ["adObjectId"]
           }
@@ -540,7 +473,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
 
     return { tools };
-  }));
+  })));
   server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
