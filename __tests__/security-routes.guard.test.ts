@@ -9,6 +9,9 @@
  * list exactly these, so a new such operation in a future spec fails here
  * until it's added.
  */
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import * as core from '../packages/mcp-core/src/index.js';
 import { AuditLogger } from '../packages/mcp-core/src/audit-logger.js';
@@ -87,5 +90,14 @@ describe.each(RELEASES)('audit at level security, bMS %s', (release) => {
     const reads = fromSpecs(release).filter((op) => op.method === 'GET');
     expect(reads.length).toBeGreaterThan(3);
     expect(reads.filter((op) => !recorded('write', 'GET', concrete(op))).map(key)).toEqual([]);
+  });
+});
+
+describe('docs/AUDIT.md', () => {
+  it('lists exactly the routes of SECURITY_ROUTES', () => {
+    const page = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'AUDIT.md'), 'utf8');
+    const block = page.split('<!-- security-routes:start -->')[1]?.split('<!-- security-routes:end -->')[0] ?? '';
+    const listed = [...block.matchAll(/^\| `([A-Z]+)` \| `([^`]+)` \|/gm)].map((m) => `${m[1]} ${m[2]}`).sort();
+    expect(listed).toEqual(table().map(key).sort());
   });
 });

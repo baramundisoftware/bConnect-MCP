@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Security
+- **Audit level `security` records every security-relevant call** (#168). It recorded only
+  BitLocker and LAPS credential routes; listing API keys, reading or changing object rights, every
+  security-group and security-profile operation, LAPS `TriggerUpdateOnClient` and mobile enrollment
+  starts left no record. The list now comes from the API specifications (a test checks it against
+  25R2 and 26R1) and is documented with the levels in `docs/AUDIT.md`.
 - **Hidden characters in bMS data no longer reach the model** (#167). Names, descriptions and
   messages from bMS can contain characters a person doesn't see but a model reads: zero-width
   characters, direction controls, variation selectors that hide bytes after an emoji, and Unicode
