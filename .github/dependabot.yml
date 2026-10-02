@@ -1,7 +1,20 @@
 version: 2
-# npm only for now. CI runs on GitHub Actions (.github/workflows/ci.yml); a
-# github-actions ecosystem entry comes with the planned actions/* update.
+# npm (every manifest) and the GitHub Actions the CI workflow uses.
 updates:
+  - package-ecosystem: "github-actions"
+    # .github/workflows/*.yml; only GitHub-owned actions are allowed in this org.
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "chore(ci)"
+    labels:
+      - "dependencies"
   - package-ecosystem: "npm"
     # Cover the root, the gateway, the template, and all 13 domain servers.
     # Glob support in `directories` fans this single entry across every manifest.
