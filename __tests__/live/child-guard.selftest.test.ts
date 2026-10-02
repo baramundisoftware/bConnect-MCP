@@ -17,14 +17,30 @@ import { CHILD_GUARD, readGuardLog, startupProblems } from './lib/child.js';
 const AXIOS = pathToFileURL(createRequire(import.meta.url).resolve('axios')).href;
 const dir = mkdtempSync(join(tmpdir(), 'child-guard-'));
 let server: Server;
+let other: Server;
 let base = '';
+let otherOrigin = '';
 const hits: string[] = [];
+const otherHits: string[] = [];
 
 beforeAll(async () => {
+  // Another origin: a redirect target the spawned process must never reach.
+  other = createServer((req, res) => {
+    otherHits.push(`${req.method} ${req.url}`);
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end('[]');
+  });
+  await new Promise<void>((resolve) => other.listen(0, '127.0.0.1', resolve));
+  otherOrigin = `http://127.0.0.1:${(other.address() as AddressInfo).port}`;
   server = createServer((req, res) => {
     hits.push(`${req.method} ${req.url}`);
     if (req.url === '/bconnect/redirect') {
       res.writeHead(302, { Location: '/bconnect/target' });
+      res.end();
+      return;
+    }
+    if (req.url === '/bconnect/redirect-elsewhere') {
+      res.writeHead(307, { Location: `${otherOrigin}/bconnect/endpoints/v2.0/Endpoints` });
       res.end();
       return;
     }
@@ -36,6 +52,7 @@ beforeAll(async () => {
 });
 afterAll(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
+  await new Promise<void>((resolve) => other.close(() => resolve()));
   rmSync(dir, { recursive: true, force: true });
 });
 
@@ -58,7 +75,7 @@ async function underGuard(name: string, lines: string[]): Promise<ReturnType<typ
 const SECRET = '/bconnect/defensecontrol/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/00000000-0000-4000-8000-000000000001';
 
 describe('guard in a spawned process', () => {
-  beforeEach(() => { hits.length = 0; });
+  beforeEach(() => { hits.length = 0; otherHits.length = 0; });
 
   it('refuses another origin, a credential route and a redirect, and logs each', async () => {
     const log = await underGuard('refusals', [
@@ -74,6 +91,15 @@ describe('guard in a spawned process', () => {
       { method: 'GET', path: '/bconnect/redirect', query: '', refused: 'redirect (302)' },
       { method: 'GET', path: '/bconnect/target', query: '', refused: 'redirect target' },
     ]);
+  });
+
+  it('logs a redirect that fetch would follow, and never reaches its target', async () => {
+    const log = await underGuard('fetch-redirect', [
+      `await fetch('${base}/redirect-elsewhere').catch(() => {});`,
+    ]);
+    expect(hits).toEqual(['GET /bconnect/redirect-elsewhere']);
+    expect(otherHits).toEqual([]);
+    expect(log).toContainEqual({ method: 'GET', path: '/bconnect/redirect-elsewhere', query: '', refused: 'redirect (307)' });
   });
 
   it('refuses and logs a request sent through a named ESM import of node:http', async () => {

@@ -51,6 +51,7 @@ export function createGuard({ origin, onRequest, onResponse }) {
     }
     onResponse?.(request, response);
   });
+  let guardedFetch;
   return {
     server,
     refused,
@@ -58,12 +59,21 @@ export function createGuard({ origin, onRequest, onResponse }) {
      * Install the guard. MSW patches the CommonJS `http`/`https` modules; named ESM
      * imports (`import { request } from 'node:http'`) keep the original functions
      * until the builtin ESM exports are resynced.
+     *
+     * `fetch` follows redirects itself (undici, `redirect: 'follow'` by default),
+     * underneath the guard. Every fetch is sent with `redirect: 'manual'`, so the
+     * 3xx comes back as an answer, is recorded as refused, and is not followed.
      */
     start() {
       server.listen({ onUnhandledRequest: 'error' });
       syncBuiltinESMExports();
+      guardedFetch = globalThis.fetch;
+      const inner = guardedFetch;
+      globalThis.fetch = (input, init) => inner(input, { ...init, redirect: 'manual' });
     },
     stop() {
+      if (guardedFetch) globalThis.fetch = guardedFetch;
+      guardedFetch = undefined;
       server.close();
       syncBuiltinESMExports();
     },
