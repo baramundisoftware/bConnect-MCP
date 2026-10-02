@@ -421,6 +421,7 @@ done
 | **SSL/TLS certificate errors** | Set `BCONNECT_CA_CERT_PATH` to your CA certificate. Only use `NODE_TLS_REJECT_UNAUTHORIZED=0` for development. |
 | **401 Unauthorized** | Verify your credentials. If using an API key, check it hasn't expired. If using Basic Auth, confirm the user has bConnect API access in the bMS console. |
 | **A tool answers with an error from bConnect** | The answer names the status, the call, what the bConnect API documentation says the status means for that call, and bConnect's own message. A 404 can mean a wrong id, missing read rights or, on some calls, "no data"; the documented meaning says which apply. |
+| **"The bConnect API didn't answer within 30 s" on vulnerability or installed-software lists** | These lists are slow on a large or busy bMS (30 to 50 s on a test bMS 26R1). Set `BCONNECT_TIMEOUT_MS=90000`; see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). |
 | **404 Not Found on every call** | Verify `BCONNECT_RELEASE` matches your bMS version. 26R1 endpoints don't exist on a 25R2 server. |
 | **compliance / universaldynamicgroups won't start** | These servers require 26R1. Remove them from your config when using a 25R2 bMS. |
 | **Tool not showing in AI assistant** | Restart your AI assistant after changing the MCP config. Verify the server process starts without errors. |
