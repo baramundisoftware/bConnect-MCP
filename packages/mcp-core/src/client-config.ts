@@ -100,6 +100,23 @@ function assertSecureBaseUrl(baseUrl: string, env: NodeJS.ProcessEnv): void {
   }
 }
 
+const DEFAULT_TIMEOUT_MS = 30000;
+
+/**
+ * A whole-number setting within [min, max]; unset or empty gives the default.
+ * Anything else stops the server with the variable and the allowed range
+ * (REQ-XC-002 AC 1).
+ */
+function boundedInt(name: string, setting: string | undefined, min: number, max: number, fallback: number): number {
+  const raw = (setting ?? "").trim();
+  if (raw === "") {return fallback;}
+  const value = /^\d+$/.test(raw) ? Number(raw) : NaN;
+  if (!(value >= min && value <= max)) {
+    throw new ClientConfigError(`${name}=${JSON.stringify(setting)} isn't valid. Use a whole number from ${min} to ${max}.`);
+  }
+  return value;
+}
+
 const intOr = (value: string | undefined, fallback: number): number => {
   const parsed = parseInt(value ?? "", 10);
   return isNaN(parsed) ? fallback : parsed;
@@ -140,6 +157,9 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
     throw new ClientConfigError(`BCONNECT_CA_CERT_PATH points to an empty file: ${caCertPath}`);
   }
   const auditLevel = auditLevelOf(env.BCONNECT_AUDIT_LEVEL);
+  const timeout = boundedInt("BCONNECT_TIMEOUT_MS", env.BCONNECT_TIMEOUT_MS, 1000, 600000, DEFAULT_TIMEOUT_MS);
+  // Retries apply to reads only, whatever this says (REQ-XC-003 AC 2).
+  const maxRetries = boundedInt("BCONNECT_MAX_RETRIES", env.BCONNECT_MAX_RETRIES, 0, 5, 0);
 
   return Object.freeze({
     baseUrl,
@@ -147,6 +167,8 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
     password,
     apiKey,
     rejectUnauthorized: env.NODE_TLS_REJECT_UNAUTHORIZED !== "0",
+    timeout,
+    maxRetries,
     ...(ca !== undefined && { ca }),
     ...(env.BCONNECT_RATE_LIMIT_ENABLED === "true" && {
       rateLimit: Object.freeze({

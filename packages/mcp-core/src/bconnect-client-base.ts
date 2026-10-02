@@ -256,6 +256,9 @@ function problemText(data: unknown, baseUrl: string): string | undefined {
   return cleanModelText(text);
 }
 
+/** Responses the success step has handled; see the retry note there. */
+const processedResponses = new WeakSet<object>();
+
 export class BConnectClientBase {
   protected client: AxiosInstance;
   // List route of the server's own domain probed by testConnection(), e.g.
@@ -330,26 +333,19 @@ export class BConnectClientBase {
         const baseDelay = config.retryDelay || 100;
         return baseDelay * Math.pow(2, retryCount - 1);
       },
+      // A retried request gets its own timeout window.
+      shouldResetTimeout: true,
+      // Only reads are retried, and only when the failure may be transient:
+      // no answer (network error, timeout) or 502/503/504. A write is never
+      // sent twice (REQ-XC-003 AC 2); 4xx, 429 and 500 aren't retried (#162).
       retryCondition: (error: AxiosError) => {
-        // Retry on network errors (no response)
+        if ((error.config?.method ?? "get").toUpperCase() !== "GET") {
+          return false;
+        }
         if (!error.response) {
           return true;
         }
-
-        const status = error.response.status;
-
-        // Retry on 5xx server errors
-        if (status >= 500 && status < 600) {
-          return true;
-        }
-
-        // Retry on 429 rate limit
-        if (status === 429) {
-          return true;
-        }
-
-        // Don't retry on 4xx client errors (except 429)
-        return false;
+        return [502, 503, 504].includes(error.response.status);
       },
     });
 
@@ -453,6 +449,13 @@ export class BConnectClientBase {
     // Setup error handling and rate limit headers interceptor for V2.0 client
     this.client.interceptors.response.use(
       (response) => {
+        // A response that succeeded on a retry already went through this step in
+        // the retried request's own chain; process it once (audit, cache, cleaning).
+        if (processedResponses.has(response)) {
+          return response;
+        }
+        processedResponses.add(response);
+
         // Hidden characters in bMS data never reach the cache, the audit step or
         // the model (REQ-XC-006 AC 2, ADR-0009). Binary bodies are left alone.
         response.data = cleanModelData(response.data);
@@ -593,6 +596,11 @@ export class BConnectClientBase {
     if (error instanceof SecretRouteBlockedError || error instanceof RequestPathRefusedError) {
       throw error;
     }
+    // A retry (axios-retry) sends the request through this whole chain again,
+    // so its failure arrives here already mapped and audited: pass it on as is.
+    if (!(error instanceof AxiosError) && !(error instanceof RateLimitError)) {
+      throw error;
+    }
 
     // Log error if audit logging is enabled
     if (this.auditLogger && 'config' in error && error.config) {
@@ -655,6 +663,16 @@ export class BConnectClientBase {
       const certHint = tlsUntrustedCertHint(error);
       if (certHint) {
         throw new BConnectConnectionError(certHint);
+      }
+      // axios's own timeout ("timeout of N ms exceeded") isn't a connection failure:
+      // the request went out but no answer came in time (#203). A TCP connect
+      // timeout from the operating system (also ETIMEDOUT) stays "Cannot connect".
+      if ((error.code === "ECONNABORTED" || error.code === "ETIMEDOUT") && /^timeout of \d+ms exceeded/.test(error.message)) {
+        const seconds = (error.config?.timeout ?? this.config.timeout ?? 30000) / 1000;
+        throw new BConnectConnectionError(
+          `The bConnect API didn't answer within ${seconds} s (BCONNECT_TIMEOUT_MS). ` +
+          "The bMS may be busy; try a smaller page size or raise the timeout."
+        );
       }
       // do not expose internal hostname
       throw new BConnectConnectionError(

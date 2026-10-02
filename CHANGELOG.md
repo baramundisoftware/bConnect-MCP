@@ -70,6 +70,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **New settings `BCONNECT_TIMEOUT_MS` and `BCONNECT_MAX_RETRIES`** (#162). The request timeout
+  (default 30000 ms, 1000 to 600000) and retries (default 0, up to 5) can be set in every server
+  and the gateway. Only read requests are retried, and only after a network error, a timeout or
+  HTTP 502/503/504; a write is never sent twice, and 4xx, 429 and 500 aren't retried. A read can
+  then take up to (retries + 1) × the timeout. An invalid value stops the server with a message
+  naming the variable (in the gateway, every tool call reports it).
 - **`list_windows_endpoints_by_logical_group` takes `includeSubfolders`** instead of `includeSubGroups`,
   which bConnect never read (#170).
 - **`list_unmanaged_endpoints` takes no arguments**: its route declares no paging or filters (#186).
@@ -161,6 +167,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the check timed out and the server exited. With `BCONNECT_RELEASE=26R1` (the default) it now checks the light
   `Bundles` list; with any other value it keeps `InstalledWindowsSoftware`, the only list route 25R2
   has.
+- **A timeout is reported as a timeout** (#203). A request bConnect didn't answer in time was
+  reported as "Cannot connect to the bConnect API". It now says "The bConnect API didn't answer
+  within 30 s (BCONNECT_TIMEOUT_MS) …", in tool results and in the startup log. Refused
+  connections, DNS failures and certificate problems keep their own messages.
 - **List tools send only the query parameters bConnect declares.** Active Directory, assets, jobs and
   logical-group tools no longer repeat the path ID (e.g. `adGroupId`) or pass other arguments as query
   parameters; each sends exactly what its route declares (#186).
