@@ -87,9 +87,8 @@ Workflow:
                                         total: ~19,000 tokens
 ```
 
-> **Write tools are off through the gateway.** With `docker-compose.gateway.yml`, the agent sees
-> write tools in the list, but each call answers "Write operation '…' is disabled"; setting the
-> variable in `.env.gateway` has no effect (see [DOCKER.md → Environment Variables](DOCKER.md#environment-variables)).
+> **Write tools are off through the gateway.** The agent sees write tools in the list, but each
+> call answers "Write operation '…' is disabled"; the gateway ignores `ALLOW_WRITE_OPERATIONS` (see [DOCKER.md → Environment Variables](DOCKER.md#environment-variables)).
 > Use **Tools to Include → Selected** to hide them.
 
 ---

@@ -20,15 +20,38 @@
  *                         authenticating proxy is in front (fail-closed default).
  *   BCONNECT_BASE_URL / BCONNECT_API_KEY / BCONNECT_USERNAME / BCONNECT_PASSWORD
  *                       — the service credential (see secrets.ts for *_FILE support).
+ *   ALLOW_WRITE_OPERATIONS / ALLOW_SECRET_READ — ignored: kept off (see gates.ts).
  */
 
+import { checkRelease } from "@bconnect/mcp-core";
 import { createApp, domains } from "./app.js";
+import { closeGates } from "./gates.js";
 import { createLogger } from "./logger.js";
 import { resolveFileSecrets } from "./secrets.js";
 
 const log = createLogger();
 
-// audit M2: hydrate credential env vars from mounted secret files (*_FILE).
+// Before any server runs: writes and secret reads stay off in the gateway, whatever
+// the environment or a .env file says (see gates.ts).
+const ignoredGates = closeGates();
+if (ignoredGates.length > 0) {
+  log.warn(
+    "ignored: the gateway has no built-in auth, so write tools and secret reads stay off",
+    { settings: ignoredGates.join(",") },
+  );
+}
+
+// The servers build their tool list from BCONNECT_RELEASE before any client checks
+// it, so an invalid value would quietly serve the 25R2 list. Stop instead, as a
+// stdio server does.
+try {
+  checkRelease(process.env.BCONNECT_RELEASE);
+} catch (err) {
+  log.error((err as Error).message);
+  process.exit(1);
+}
+
+// Hydrate credential env vars from mounted secret files (*_FILE).
 try {
   resolveFileSecrets();
 } catch (err) {

@@ -43,7 +43,8 @@ describe('software startup check (#202)', () => {
     expect(sent).toEqual(['/bconnect/software/v2.0/Bundles']);
   });
 
-  it.each(['25R2', '25r2', '', '2025R2'])('probes InstalledWindowsSoftware for any value other than 26R1 (%j), like the tool set does', async (release) => {
+  // Only 25R2 reaches the probe; other values are refused earlier (client-config.ts checkRelease).
+  it.each(['25R2'])('probes InstalledWindowsSoftware on %s', async (release) => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     process.env.BCONNECT_RELEASE = release;
     expect(await client().testConnection()).toBe(false); // never answers here: the check times out

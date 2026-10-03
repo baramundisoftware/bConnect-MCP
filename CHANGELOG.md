@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   API specification (`scripts/generate-query-parameters.mjs`), per bMS release.
 
 ### Security
+- **The gateway keeps write tools and secret reads off, however it is started.** It has no
+  authentication of its own, so it now ignores `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ`
+  wherever they are set and logs a warning at startup if either was. Before, only
+  `docker-compose.gateway.yml` kept them out; started another way, the gateway honoured them.
 - **Unused runtime dependencies removed.** `limiter`, `node-cache`, `winston`, `openapi-fetch` and
   `@types/node-cache` were declared (in the root and the servers) but imported nowhere, so they
   were installed and shipped for nothing; `axios-retry` is now declared only where it is used. The
@@ -119,6 +123,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **An invalid `BCONNECT_RELEASE` stops the server.** Only `26R1` and `25R2` (spelt exactly so) or
+  leaving it unset (26R1) are accepted. Before, any other value, for example `26r1` or an empty
+  value, quietly gave the 25R2 tool set. **Breaking** for configurations with such a value. The
+  gateway stops at startup too.
 - **19 write tools verified on a live bMS no longer say "Not yet verified against a live bMS."**
   Checked on a test bMS 26R1 (26.1.161): the Windows, Mac and logical-group create, update and delete
   tools, the logical-group maintenance-window tools, the job-folder tools, `create_kiosk_release`,
@@ -242,8 +250,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the n8n HTTP Request example (missing `Accept` header) and the mock-tier setup (needs a 26R1 mock).
   TROUBLESHOOTING.md quotes the messages the servers print, with new sections on why a server exits
   at startup and on refused calls. The guides no longer offer `NODE_TLS_REJECT_UNAUTHORIZED=0` or
-  `curl -k` as options. They also say that only the shipped compose file keeps write tools and secret reads out of
-  the gateway, so any other start must leave both unset, and give the n8n version and token figures as measured. `bconnect-groups-mcp` ships a
+  `curl -k` as options. They also say that write tools and secret reads are off in the gateway, and give the n8n version and token figures as measured. `bconnect-groups-mcp` ships a
   `.env.example` like the other servers. A new docs guard checks that the guides name only settings
   the code reads and quote only messages it prints.
 - **Job assign tools say how to check their reach** (#178). `assign_job_to_logical_group` points to

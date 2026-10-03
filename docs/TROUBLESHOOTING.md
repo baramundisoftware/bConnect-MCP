@@ -81,6 +81,7 @@ failed or disconnected; the reason is in the client's MCP log.
 | `BCONNECT_BASE_URL uses http:// for <host>, which would send the bConnect credentials unencrypted. …` | `http://` to a host other than this machine | Use `https://`; `BCONNECT_ALLOW_INSECURE_HTTP=true` only for a test setup |
 | `BCONNECT_TIMEOUT_MS="…" isn't valid. Use a whole number from 1000 to 600000.` (same for `BCONNECT_MAX_RETRIES`, 0 to 5) | Not a whole number, or out of range | Fix the value |
 | `BCONNECT_AUDIT_LEVEL "…" isn't valid. Use one of: none, security, write, all.` | Misspelt audit level | Fix the value; the server refuses to run with auditing in an unknown state |
+| `BCONNECT_RELEASE "…" isn't valid. Use 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.` | A release other than `26R1`/`25R2` (also `26r1` or an empty value) | Fix the value, or remove the line for 26R1 |
 | `BCONNECT_CA_CERT_PATH can't be read: <path> (<code>)` or `… points to an empty file` | CA file missing, unreadable or empty | Fix the path or the file |
 | `Connection test failed: …` then `<server>: cannot reach bConnect API at <url>. Check BCONNECT_BASE_URL, credentials, and network.` | The startup call failed. The first line names the cause: 401, TLS, timeout, unreachable | See [Authentication Errors](#authentication-errors), [TLS Certificate Errors](#tls-certificate-errors) or [Network & Connection Errors](#network--connection-errors) |
 
@@ -400,8 +401,8 @@ These calls are refused by the server itself, before anything is sent to bConnec
 
 | Answer | Why | What to do |
 |---|---|---|
-| `Write operation '<tool>' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.` | Write tools are off by default | An operator sets `ALLOW_WRITE_OPERATIONS=true` in the server's environment and restarts it. Through the HTTP gateway, keep it off: the gateway has no authentication (see [DOCKER.md](DOCKER.md#environment-variables)). |
-| `Secret-returning operation '<tool>' is disabled …` or `Refusing GET …: the response contains live credentials …` | BitLocker keys/PIN and LAPS passwords need their own opt-in | An operator sets `ALLOW_SECRET_READ=true` and restarts the server (independent of `ALLOW_WRITE_OPERATIONS`; keep it off in the gateway) |
+| `Write operation '<tool>' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.` | Write tools are off by default | An operator sets `ALLOW_WRITE_OPERATIONS=true` in the server's environment and restarts it. The HTTP gateway ignores it: it has no authentication (see [DOCKER.md](DOCKER.md#environment-variables)). |
+| `Secret-returning operation '<tool>' is disabled …` or `Refusing GET …: the response contains live credentials …` | BitLocker keys/PIN and LAPS passwords need their own opt-in | An operator sets `ALLOW_SECRET_READ=true` and restarts the server (independent of `ALLOW_WRITE_OPERATIONS`; the gateway ignores it) |
 | `Unknown argument(s) for <tool>: … This tool accepts: …` | The call passed an argument the tool doesn't have (often a misspelt filter) | Use one of the listed arguments |
 | `Invalid parameters: …` | An argument has the wrong type or format | See [Invalid parameters](#invalid-parameters-or-unknown-arguments) |
 | `bConnect answered with a redirect to another address. Redirects are not followed …` | bConnect (or a proxy) redirected, e.g. from `http` to `https` or to another host name | Set `BCONNECT_BASE_URL` to the final address; credentials only go to the configured host |

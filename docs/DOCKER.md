@@ -142,13 +142,12 @@ The gateway uses one bConnect **service credential** (`BCONNECT_API_KEY`, or
 in `.env.gateway`; `docker-compose.gateway.yml` passes on the variables below. The defaults
 are the code's; where Compose or the image sets another, the table says so.
 
-> **Keep write tools and secret reads off in the gateway.** The gateway has no authentication of
-> its own, so whoever reaches it could use them. `docker-compose.gateway.yml` keeps
-> `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ` out of the container, so with it every write
-> tool and every tool that returns credentials (BitLocker keys and PIN, LAPS passwords) is
-> refused, whatever `.env.gateway` says. The gateway itself doesn't filter them: if you start it
-> another way (`docker run`, Node.js, Kubernetes), leave both unset, also in any `.env` file in
-> the directory you start it from.
+> **Write tools and secret reads are off in the gateway.** The gateway has no authentication of
+> its own, so whoever reaches it could use them. It therefore ignores `ALLOW_WRITE_OPERATIONS`
+> and `ALLOW_SECRET_READ`, however it is started and wherever they are set (environment,
+> `.env.gateway`, a `.env` file): every write tool and every tool that returns credentials
+> (BitLocker keys and PIN, LAPS passwords) is refused, and the gateway logs a warning at startup
+> if either was set. This stays so until the gateway has its own authentication.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
