@@ -1,6 +1,6 @@
 # bConnect MCP Server
 
-Connect your AI assistant to the **baramundi Management Suite** (bMS). This project provides MCP servers that let AI tools like Claude Desktop, Claude Code, Github Copilot or others read and manage your bMS — endpoints, jobs, software, compliance, and more — through the bConnect REST API.
+Connect your AI assistant to the **baramundi Management Suite** (bMS). This project provides MCP servers that let AI tools like Claude Desktop, Claude Code, GitHub Copilot or others read and manage your bMS — endpoints, jobs, software, compliance, and more — through the bConnect REST API.
 
 > [!WARNING] 
 > 🧪 This project is currently in **Technical Preview**.
@@ -24,14 +24,14 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 - A **baramundi Management Suite** (25R2 or 26R1) with bConnect API enabled
 - Your **bMS server address** (e.g. `https://bms.company.com:443/bconnect`)
 - A **bMS user account** with API access, or an **API key**
-  (generate one in the baramundi mangement console under **Server Management > API Keys**)
-- **Node.js 20 or later** ([download](https://nodejs.org/)) — **22.15+ recommended** so the OS/Windows CA trust store is honored automatically
+  (generate one in the baramundi Management Center under **Server Management > API Keys**)
+- **Node.js 22.15 or 24** ([download](https://nodejs.org/)), the versions CI tests; 22.15 and later also honor the OS/Windows CA trust store. The packages still allow Node.js 20, but it isn't tested.
 
 ### Network Requirements
 
 - Port **443** (HTTPS) must be open between the machine running the MCP server and your bMS server
   - 443 is the default. Some installations expose bConnect on a different port (e.g. **444** in older/test setups) — check the bConnect port in your baramundi Management Center and adjust the port in `BCONNECT_BASE_URL` accordingly.
-- Test connectivity: `curl -sS -o /dev/null -w '%{http_code}\n' https://bms.company.com:443/bconnect/info/v2.0/Info` (add `--cacert <your-ca.pem>` for an internal CA; don't use `-k`, it hides exactly the certificate problem the servers would hit)
+- Test connectivity: `curl -sS -o /dev/null -w '%{http_code}\n' https://bms.company.com:443/bconnect/`. Any HTTP status, even 401 or 404, means the network and the certificate are fine. Add `--cacert <your-ca.pem>` for an internal CA; don't use `-k`, it hides exactly the certificate problem the servers would hit.
 
 ---
 
@@ -40,6 +40,8 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 ### Step 1: Download
 
 **Prefer a pre-built download?** Grab the latest `bconnect-mcp-suite-<version>.zip` from the [**Releases page**](https://github.com/baramundisoftware/bConnect-MCP/releases) — it ships the compiled output, so you can **skip the build (Step 2)**: extract it, run `npm ci --omit=dev` at the extracted root, then jump to Step 3. See the bundled `INSTALL.md`.
+
+> This README describes the current `main` branch. The latest release may predate some of it; the changes since then are listed under [Unreleased] in [CHANGELOG.md](CHANGELOG.md).
 
 To build from source instead:
 
@@ -90,7 +92,7 @@ BCONNECT_API_KEY=your-api-key-here
 # BCONNECT_USERNAME=your-username
 # BCONNECT_PASSWORD=your-password
 
-# Your bMS version: 26R1 or 25R2
+# Your bMS version: 26R1 or 25R2, spelt exactly so
 BCONNECT_RELEASE=26R1
 ```
 
@@ -161,6 +163,11 @@ claude mcp add bconnect-endpoints \
 > start `claude` elsewhere). Use `--scope user` to make it available in every project,
 > or `--scope project` to commit it to the repo's `.mcp.json` for the team.
 
+**VS Code / GitHub Copilot, Cursor, Continue, LibreChat and others** — see
+[docs/CLIENTS.md](docs/CLIENTS.md): the file, the top-level key (VS Code uses `servers`) and the
+`"type"` field differ per client. It also shows how to keep the credentials out of the client's
+configuration with `node --env-file`.
+
 Restart your AI assistant. You can now ask it questions like:
 - *"List all Windows endpoints"*
 - *"Show me endpoints that haven't been seen in 30 days"*
@@ -182,22 +189,25 @@ Only the gateway is distributed as a container; the 13 stdio servers run via Nod
 
 ## Available Servers
 
-| Server | Tools | 25R2 | 26R1 | What It Does |
-|--------|-------|------|------|--------------|
-| `bconnect-endpoints-mcp` | 66 | Yes | Yes | Windows/Linux/Mac/Android/iOS endpoints, logical groups, maintenance windows |
-| `bconnect-groups-mcp` | 33 | Yes | Yes | Endpoints by logical/static/dynamic/AD group |
-| `bconnect-jobs-mcp` | 34 | Yes | Yes | Job definitions, instances, folders, kiosk releases |
-| `bconnect-servermanagement-mcp` | 30 | Yes | Yes | Management server, microservices, security groups, API keys |
-| `bconnect-assets-mcp` | 26 | Yes | Yes | Asset inventory, asset types, stock folders |
-| `bconnect-software-mcp` | 19 | Yes | Yes | Installed software inventory, software bundles |
-| `bconnect-activedirectory-mcp` | 16 | Yes | Yes | AD groups, users, objects, organizational units |
-| `bconnect-variables-mcp` | 13 | Yes | Yes | Variable definitions and instances |
-| `bconnect-defensecontrol-mcp` | 13 | Yes | Yes | BitLocker, local admin accounts, Defender threats |
-| `bconnect-operatingsystems-mcp` | 9 | Yes | Yes | OS deployment folders and profiles |
-| `bconnect-compliance-mcp` | 8 | No | Yes | Compliance violations, CVE vulnerabilities (26R1 only) |
-| `bconnect-universaldynamicgroups-mcp` | 6 | No | Yes | Universal Dynamic Group definitions (26R1 only) |
-| `bconnect-updatemanagement-mcp` | 3 | Yes | Yes | Windows Update management |
-| **Total** | **276** | | | |
+| Server | Tools on 26R1 | Tools on 25R2 | What It Does |
+|--------|------|------|--------------|
+| `bconnect-endpoints-mcp` | 66 | 60 | Windows/Linux/Mac/Android/iOS/industrial endpoints, logical groups, maintenance windows |
+| `bconnect-groups-mcp` | 33 | 33 | Endpoints by logical/static/dynamic/universal dynamic group and by AD user |
+| `bconnect-jobs-mcp` | 34 | 34 | Job definitions, instances, folders, kiosk releases |
+| `bconnect-servermanagement-mcp` | 30 | 25 | Management server, microservices, security groups, API keys |
+| `bconnect-assets-mcp` | 26 | 24 | Asset inventory, asset types, stock folders |
+| `bconnect-software-mcp` | 19 | 4 | Installed software inventory, software bundles |
+| `bconnect-activedirectory-mcp` | 16 | 16 | AD groups, users, objects, organizational units |
+| `bconnect-variables-mcp` | 13 | 13 | Variable definitions and instances |
+| `bconnect-defensecontrol-mcp` | 13 | 11 | BitLocker, local admin accounts, Defender threats |
+| `bconnect-operatingsystems-mcp` | 9 | 9 | OS folders and the OS deployment settings of Windows endpoints |
+| `bconnect-compliance-mcp` | 8 | — | Compliance violations, CVE vulnerabilities (needs 26R1) |
+| `bconnect-universaldynamicgroups-mcp` | 6 | — | Universal Dynamic Group definitions (needs 26R1) |
+| `bconnect-updatemanagement-mcp` | 3 | 3 | Windows Update management |
+| **Total** | **276** | **232** | |
+
+Set `BCONNECT_RELEASE=25R2` for a 2025 R2 bMS. Compliance and universal dynamic groups don't exist
+there: don't configure those two servers for a 25R2 bMS.
 
 Install only the servers you need. Most users start with `bconnect-endpoints-mcp`.
 
@@ -213,17 +223,24 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `BCONNECT_API_KEY` | Yes* | — | API key for authentication |
 | `BCONNECT_USERNAME` | Yes* | — | Username for Basic Auth |
 | `BCONNECT_PASSWORD` | Yes* | — | Password for Basic Auth |
-| `BCONNECT_RELEASE` | — | `26R1` | bMS version: `25R2` or `26R1` |
+| `BCONNECT_RELEASE` | — | `26R1` | bMS version: `25R2` or `26R1`, spelt exactly so |
 | `BCONNECT_CA_CERT_PATH` | — | — | Path to CA certificate (PEM) for self-signed certs |
+| `ALLOW_WRITE_OPERATIONS` | — | off | `true` enables the write tools (create, update, delete, start, assign …) |
+| `ALLOW_SECRET_READ` | — | off | `true` enables the tools that return BitLocker keys/PIN or LAPS passwords (defensecontrol) |
+| `BCONNECT_TIMEOUT_MS` | — | `30000` | How long to wait for bConnect, 1000 to 600000 ms |
+| `BCONNECT_MAX_RETRIES` | — | `0` | Retries for reads after a network error, a timeout or 502/503/504, 0 to 5; writes are never retried |
+| `BCONNECT_ALLOW_INSECURE_HTTP` | — | `false` | `http://` base URLs are refused except for this machine; `true` allows them (credentials unencrypted) |
+| `BCONNECT_SKIP_CONNECTIVITY_CHECK` | — | `false` | `true` skips the startup call to bConnect |
 | `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `none`, `security`, `write` or `all`, in any case; levels are cumulative. Any other value stops the server. Entries go to stderr; what each level records: [docs/AUDIT.md](docs/AUDIT.md) |
 | `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Limit the requests one client sends. Each tool call still creates a new client, so the limit doesn't apply across calls yet (#160) |
-| `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (network) |
+| `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (loopback only, no authentication) |
 | `MCP_PORT` | — | `3000` | HTTP port (when `MCP_TRANSPORT=http`) |
+| `MCP_BIND` | — | `127.0.0.1` | HTTP bind address (when `MCP_TRANSPORT=http`) |
 | `MCP_GATEWAY_PORT` | — | `3001` | Gateway listen port (when using `bconnect-mcp-gateway`) |
 | `MCP_GATEWAY_BIND` | — | `127.0.0.1` | Gateway bind address (loopback-only unless behind a proxy) |
-| `MCP_ALLOW_NO_AUTH` | — | `false` | Allow a non-loopback gateway bind; asserts an authenticating proxy is in front |
+| `MCP_ALLOW_NO_AUTH` | — | `false` | Allow a non-loopback bind (gateway or HTTP mode); asserts an authenticating proxy is in front |
 
-> \* **Authentication**: provide either `BCONNECT_API_KEY` alone, or both `BCONNECT_USERNAME` and `BCONNECT_PASSWORD`. API key takes precedence if both are set.
+> \* **Authentication**: provide either `BCONNECT_API_KEY` alone, or both `BCONNECT_USERNAME` and `BCONNECT_PASSWORD`. API key takes precedence if both are set. The password must be ASCII only (bConnect rejects `§`, umlauts or `ß`; the servers refuse such a password before signing in).
 
 ### How to Find Your bMS Server URL
 
@@ -259,27 +276,8 @@ Don't set `NODE_TLS_REJECT_UNAUTHORIZED=0`, not even for a test: it turns off ce
 
 ## Client Configuration Examples
 
-All examples show `bconnect-endpoints-mcp` for brevity. Add more servers by repeating the pattern.
-
-### Claude Desktop (local, stdio)
-
-Edit `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "bconnect-endpoints": {
-      "command": "node",
-      "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
-      "env": {
-        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
-        "BCONNECT_API_KEY": "your-api-key"
-      }
-    }
-  }
-}
-```
-
+Configuration for Claude Desktop, Claude Code, VS Code / GitHub Copilot, Cursor, Continue,
+LibreChat and HTTP-only clients: **[docs/CLIENTS.md](docs/CLIENTS.md)**.
 
 ### Centralized Gateway (HTTP, multi-user)
 
@@ -289,7 +287,7 @@ teams and n8n.
 > ## ⚠️ Security: you MUST put authentication in front of the gateway
 >
 > **The gateway has no built-in authentication.** On its own it is an unauthenticated
-> HTTP proxy to bConnect — anyone who can reach its port can call every tool using the
+> HTTP proxy to bConnect — anyone who can reach its port can call every read tool using the
 > gateway's bMS credential. Securing it is **your responsibility as the operator** (the
 > standard model for self-hosted infrastructure services).
 >
@@ -299,18 +297,19 @@ teams and n8n.
 > - **terminate TLS** — tokens and data must never travel in cleartext;
 > - **authenticate every caller** against your identity provider (OIDC / SAML / SSO);
 > - **reach the gateway only over a private/loopback network** — publish the proxy, not the gateway;
-> - **strip any client-supplied identity headers** before forwarding.
+> - **check `Host` and `Origin`**, and **strip any client-supplied identity headers** before forwarding.
 >
 > As a fail-closed safeguard the gateway **refuses to start on a non-loopback bind**
 > unless you set `MCP_ALLOW_NO_AUTH=true` — your explicit assertion that an
-> authenticating proxy is in front. Details: [docs/DOCKER.md](docs/DOCKER.md) → "TLS and authentication".
+> authenticating proxy is in front. For the same reason, write tools and secret reads are
+> off in the gateway. Details: [docs/DOCKER.md](docs/DOCKER.md#tls-and-authentication-operator-responsibility).
 
 **Credentials.** The gateway uses a single bConnect service credential (`BCONNECT_*`)
 for all downstream calls, and **bMS RBAC governs what it can do** — scope that account
-to least privilege. (Per-user bConnect credentials keyed by the proxy-asserted identity
-are a planned option.)
+to least privilege.
 
-**Start:**
+**Start** (the compose file builds the image from this checkout; to use the published
+image, see [docs/DOCKER.md](docs/DOCKER.md)):
 
 ```bash
 cp .env.gateway.example .env.gateway
@@ -320,17 +319,27 @@ docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 ```
 
 **Configure each client** to connect *through your authenticating proxy* (which supplies
-whatever credential/session the proxy requires):
+whatever credential/session the proxy requires). Claude Code:
+
+```bash
+claude mcp add --transport http bconnect-endpoints https://mcp-gateway.company.com/endpoints/mcp
+```
+
+In a configuration file (here `.mcp.json`; other clients: [docs/CLIENTS.md](docs/CLIENTS.md#through-the-http-gateway)):
 
 ```json
 {
   "mcpServers": {
     "bconnect-endpoints": {
+      "type": "http",
       "url": "https://mcp-gateway.company.com/endpoints/mcp"
     }
   }
 }
 ```
+
+Claude Desktop starts only local (stdio) servers from its configuration file; use the servers
+directly there.
 
 Available domains: `activedirectory`, `assets`, `compliance`, `defensecontrol`,
 `endpoints`, `groups`, `jobs`, `operatingsystems`, `servermanagement`, `software`,
@@ -338,49 +347,8 @@ Available domains: `activedirectory`, `assets`, `compliance`, `defensecontrol`,
 
 For using the gateway from **n8n workflows**, see [docs/N8N.md](docs/N8N.md).
 
-### Centralized Server (HTTP, single credential set)
-
-Run a single server on a central machine when all users share one bConnect credential
-(from the repo root — point at the server's build output):
-
-```bash
-MCP_TRANSPORT=http MCP_PORT=3000 \
-BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
-BCONNECT_API_KEY=your-api-key \
-node bconnect-endpoints-mcp/build/index.js
-```
-
-Then configure each workstation's AI assistant to connect to the central server:
-
-```json
-{
-  "mcpServers": {
-    "bconnect-endpoints": {
-      "url": "http://mcp-server.company.com:3000/mcp"
-    }
-  }
-}
-```
-
-### Other MCP Clients
-
-Most MCP clients use the same JSON format. Add to your client's configuration file
-(e.g. `.mcp.json`, `.vscode/mcp.json`, or equivalent):
-
-```json
-{
-  "mcpServers": {
-    "bconnect-endpoints": {
-      "command": "node",
-      "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
-      "env": {
-        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
-        "BCONNECT_API_KEY": "your-api-key"
-      }
-    }
-  }
-}
-```
+> A single server also has an HTTP mode (`MCP_TRANSPORT=http`), for local use only: it binds
+> loopback and has no authentication. For access from other machines, use the gateway.
 
 ---
 
@@ -400,15 +368,16 @@ npm run build                          # all servers
 
 ## Testing
 
-```bash
-# Test a single server
-cd bconnect-endpoints-mcp && npm test
+From the repo root, after the build above:
 
-# Test all servers
-for dir in bconnect-*-mcp; do
-  (cd "$dir" && npm test)
-done
+```bash
+npm test          # every server's tests plus the suite-wide checks
+npm run lint
 ```
+
+Optional tiers run by hand: [docs/MOCK_INTEGRATION_TESTING.md](docs/MOCK_INTEGRATION_TESTING.md)
+(against bConnect-Mock) and [docs/LIVE_BMS_TESTING.md](docs/LIVE_BMS_TESTING.md) (read-only,
+against a real bMS).
 
 ---
 
@@ -421,8 +390,13 @@ done
 | **401 Unauthorized** | Verify your credentials. If using an API key, check it hasn't expired. If using Basic Auth, confirm the user has bConnect API access in the bMS console. |
 | **A tool answers with an error from bConnect** | The answer names the status, the call, what the bConnect API documentation says the status means for that call, and bConnect's own message. A 404 can mean a wrong id, missing read rights or, on some calls, "no data"; the documented meaning says which apply. |
 | **"The bConnect API didn't answer within 30 s" on vulnerability or installed-software lists** | These lists are slow on a large or busy bMS (30 to 50 s on a test bMS 26R1). Set `BCONNECT_TIMEOUT_MS=90000`; see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). |
-| **404 Not Found on every call** | Verify `BCONNECT_RELEASE` matches your bMS version. 26R1 endpoints don't exist on a 25R2 server. |
-| **compliance / universaldynamicgroups won't start** | These servers require 26R1. Remove them from your config when using a 25R2 bMS. |
+| **Server exits at startup with "cannot reach bConnect API"** | The startup call failed; the line before it names the cause (credentials, certificate, timeout, address). Check that `BCONNECT_BASE_URL` ends in `/bconnect`. See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#server-exits-at-startup). |
+| **404 only on some tools** | They may need 26R1. On a 25R2 bMS set `BCONNECT_RELEASE=25R2`, which hides them. |
+| **compliance / universaldynamicgroups won't start** | These servers need 26R1: their startup check fails on a 25R2 bMS. Remove them from your config. |
+| **"BCONNECT_BASE_URL uses http://"** | Use `https://`. `http://` is allowed only for this machine or with `BCONNECT_ALLOW_INSECURE_HTTP=true` (credentials unencrypted). |
+| **"Redirects are not followed"** | bConnect or a proxy redirected the call. Set `BCONNECT_BASE_URL` to the final address. |
+| **"Unknown argument(s) for …"** | The tool doesn't have that argument (often a misspelt filter); the message lists the ones it accepts. |
+| **Password with `§`, umlauts or `ß` refused** | bConnect only accepts ASCII passwords. Change the password or use an API key. |
 | **Tool not showing in AI assistant** | Restart your AI assistant after changing the MCP config. Verify the server process starts without errors. |
 
 For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
@@ -431,11 +405,12 @@ For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING
 
 ## Security
 
-- **Never hardcode credentials** — always use environment variables or `.env` files
+- **Keep credentials out of shared files** — use a `.env` or env file readable only by you (`node --env-file`, see [docs/CLIENTS.md](docs/CLIENTS.md)), never commit it
 - **Use API keys** instead of username/password when possible
 - **Use `BCONNECT_CA_CERT_PATH`** for self-signed certificates instead of disabling TLS
 - **Audit logging** (`BCONNECT_AUDIT_LEVEL=security`, `write` or `all`) writes to stderr; `security` records every call to a security-relevant route: credentials, API keys, object rights, security groups and profiles ([docs/AUDIT.md](docs/AUDIT.md))
-- **Write tools are not yet verified against a live bMS.** They are off unless `ALLOW_WRITE_OPERATIONS=true`, and each says "Not yet verified against a live bMS." in its description until its live check is recorded. Try writes on a test system first
+- **Write tools are off** unless `ALLOW_WRITE_OPERATIONS=true`, and off in the gateway. A write tool whose description ends with "Not yet verified against a live bMS." hasn't been checked against a real bMS yet. Try writes on a test system first
+- **Secret reads** (BitLocker keys/PIN, LAPS passwords) are off unless `ALLOW_SECRET_READ=true`, and off in the gateway
 - **Rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) applies only within one tool call for now; it does not protect the bConnect API across calls (#160)
 
 See [SECURITY.md](SECURITY.md) for the full security policy.
@@ -450,6 +425,7 @@ Each server is an independent Node.js process that connects directly to the bCon
 AI Assistant (Claude, VS Code, etc.)
     │
     ├── bconnect-endpoints-mcp              → Endpoints, groups, maintenance windows
+    ├── bconnect-groups-mcp                 → Endpoints by group and by AD user
     ├── bconnect-jobs-mcp                   → Jobs, instances, folders, kiosk
     ├── bconnect-assets-mcp                 → Assets, types, stock folders
     ├── bconnect-activedirectory-mcp        → AD groups, users, org units
@@ -457,7 +433,7 @@ AI Assistant (Claude, VS Code, etc.)
     ├── bconnect-software-mcp               → Software inventory, bundles
     ├── bconnect-variables-mcp              → Variables and instances
     ├── bconnect-defensecontrol-mcp         → BitLocker, Defender, local admins
-    ├── bconnect-operatingsystems-mcp       → OS deployment profiles
+    ├── bconnect-operatingsystems-mcp       → OS folders, Windows endpoints' OS settings
     ├── bconnect-compliance-mcp             → CVE vulnerabilities (26R1 only)
     ├── bconnect-universaldynamicgroups-mcp → Dynamic groups (26R1 only)
     └── bconnect-updatemanagement-mcp       → Windows Update management
@@ -472,15 +448,16 @@ bConnect-MCP/
 ├── packages/
 │   └── mcp-core/              @bconnect/mcp-core — the shared library every server
 │                             imports: BConnectClientBase (HTTP / auth / TLS / retry),
-│                             parameter validation, rate limiting, audit logging,
-│                             response caching, batch operations.
+│                             configuration, argument validation, error results,
+│                             audit logging, response cleaning.
 ├── bconnect-endpoints-mcp/   ┐  the 13 domain MCP servers (stdio) — each a workspace
 │   … (13 servers) …          │  member depending on @bconnect/mcp-core. A fix in the
 ├── bconnect-variables-mcp/   ┘  core applies to all 13 at once.
 ├── bconnect-server-template/    scaffold for adding a new server (workspace member)
 ├── bconnect-mcp-gateway/        optional HTTP gateway (multi-user / n8n); NOT a
 │                                workspace member — it bundles the core + all servers.
-├── docs/                        installation, Docker, n8n, troubleshooting
+├── docs/                        installation, clients, Docker, n8n, troubleshooting,
+│                                audit, mock and live testing
 └── scripts/                     local CI, image publish, release (see package.json)
 ```
 

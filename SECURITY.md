@@ -4,17 +4,21 @@
 
 | Version | Supported |
 |---------|-----------|
-| 26.1.x (bMS 26R1) | ✅ Active support |
-| 25.2.x (bMS 25R2) | ⚠️ Security fixes only |
-| < 25.2.0 | ❌ No support |
+| Latest 26.1.x release (supports bMS 2026 R1 and 2025 R2) | ✅ Security fixes |
+| Older 26.1.x releases | ❌ Update to the latest |
+
+All releases are pre-releases (Technical Preview). There is no separate 25.2.x line: one release
+line supports both bMS releases, selected with `BCONNECT_RELEASE`.
 
 ## Reporting a Vulnerability
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Report vulnerabilities by email to:
+Report vulnerabilities privately through GitHub:
+**[Report a vulnerability](https://github.com/baramundisoftware/bConnect-MCP/security/advisories/new)**
+(the repository's *Security* tab → *Report a vulnerability*). Only the maintainers see the report.
 
-**bernd.wiedemann@baramundi.de**
+If you can't use GitHub, email **bernd.wiedemann@baramundi.de**.
 
 Include as much of the following as possible:
 
@@ -63,18 +67,31 @@ credential can do no more than that account can. Leave `ALLOW_WRITE_OPERATIONS` 
 **3. Never commit or export it.** `.gitignore` already excludes `.env`. Avoid leaking
 it via shell history, process listings, logs, or backups.
 
-**4. Prefer a secret mechanism where available.** For the **gateway**, supply
+**4. Keep credentials out of the client configuration.** Start the server with
+`node --env-file=/path/to/bconnect.env …/build/index.js` (Node.js reads the file itself), so
+the MCP client's configuration holds no secret; restrict that file as in step 2. See
+[docs/CLIENTS.md](docs/CLIENTS.md).
+
+**5. Prefer a secret mechanism where available.** For the **gateway**, supply
 credentials from mounted secrets via the `*_FILE` convention (e.g. Docker/Kubernetes
 secrets) instead of plain env vars — see [HTTP Gateway](#http-gateway-bconnect-mcp-gateway).
 
-> **Before customer / GA hand-off:** file permissions are a mitigation, not encryption.
-> A non-plaintext, decrypted-at-runtime option (OS credential store — Windows DPAPI /
-> Credential Manager, macOS Keychain — or an external secret store) is planned in #60
-> and should land before leaving credential configuration to customers.
+> File permissions are a mitigation, not encryption. An option that keeps credentials
+> encrypted at rest (OS credential store — Windows DPAPI / Credential Manager, macOS
+> Keychain — or an external secret store) is planned in #60.
+
+### Connection to bConnect
+
+- **HTTPS only.** A `BCONNECT_BASE_URL` with `http://` is refused, except for this machine
+  (`localhost`, `127.x.x.x`, `[::1]`) or with the explicit opt-in `BCONNECT_ALLOW_INSECURE_HTTP=true`.
+- **No redirects.** The client doesn't follow HTTP redirects, so credentials only go to the
+  configured host; a redirect stops the call.
+- **Configuration errors stop the server**: missing credentials, an unreadable CA file, an
+  invalid timeout, retry count, audit level or release.
 
 ### TLS Configuration
 
-Production deployments must use proper TLS certificate verification. Never set `NODE_TLS_REJECT_UNAUTHORIZED=0`, in production or in a test against a real bMS: it disables all certificate validation, so the credentials go to whoever answers. See [docs/INSTALLATION.md](docs/INSTALLATION.md) for the correct TLS setup using `BCONNECT_CA_CERT_PATH`.
+Always verify the bMS certificate. Never set `NODE_TLS_REJECT_UNAUTHORIZED=0`, in production or in a test against a real bMS: it disables all certificate validation, so the credentials go to whoever answers. See [docs/INSTALLATION.md](docs/INSTALLATION.md) for the correct TLS setup using `BCONNECT_CA_CERT_PATH`.
 
 ### Audit Logging
 
@@ -114,14 +131,15 @@ Each server's bConnect client has a token-bucket rate limiter, set via `BCONNECT
 
 ### HTTP Gateway (`bconnect-mcp-gateway`)
 
-The optional `bconnect-mcp-gateway` exposes all 13 servers over **HTTP** for multi-user / n8n use (the individual servers remain stdio-only). Its security model, hardened per the 2026-06-22 internal audit:
+The optional `bconnect-mcp-gateway` exposes all 13 servers over **HTTP** for multi-user / n8n use. (A single server also has an HTTP mode, `MCP_TRANSPORT=http`, for local use: it binds loopback and has no authentication either.) Its security model:
 
-- **No built-in authentication — by design.** The gateway is an unopinionated HTTP component; **authentication and TLS are the operator's responsibility.** Front it with a TLS-terminating, authenticating reverse proxy / IdP (nginx, Caddy, Traefik, Entra Application Proxy, …) that terminates TLS, authenticates every caller, reaches the gateway only over a private/loopback network, and strips client-supplied identity headers. (The former per-user token map was removed — see ADR-0003.)
+- **No built-in authentication — by design.** The gateway is an unopinionated HTTP component; **authentication and TLS are the operator's responsibility.** Front it with a TLS-terminating, authenticating reverse proxy / IdP (nginx, Caddy, Traefik, Entra Application Proxy, …) that terminates TLS, authenticates every caller, reaches the gateway only over a private/loopback network, and strips client-supplied identity headers. (The former per-user token map was removed.) The proxy should also check `Host` and `Origin`: the gateway checks neither, so without a proxy a web page in a browser on the same host can reach a gateway on loopback.
 - **Fail-closed default.** The gateway binds `127.0.0.1` and **refuses to start on a non-loopback bind** unless `MCP_ALLOW_NO_AUTH=true` is set — an explicit operator assertion that a proxy is in front. This prevents an accidentally-exposed, unauthenticated bMS proxy.
 - **Single service credential.** Downstream bMS calls use one `BCONNECT_*` service credential; **bMS RBAC governs what it can do**, so scope that account to least privilege. Credentials can be supplied from mounted secrets via the `*_FILE` convention instead of plain env vars.
+- **Write tools and secret reads stay off.** Because the gateway has no authentication of its own, it ignores `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ`, wherever they are set.
 - **Tenant isolation.** The gateway is stateless and builds a fresh MCP server + bConnect client per request; the response cache is per-request, so there is no cross-caller leakage.
-- **Rate limiting / body cap.** A per-client-IP token-bucket limiter (`MCP_GATEWAY_RATE_LIMIT_*`) plus a request body-size cap (`MCP_GATEWAY_MAX_BODY`) bound abuse; richer edge/flood limiting belongs at the proxy.
-- **Structured access log.** Every request is logged with method / path / status / duration and a client-IP caller id (`LOG_LEVEL` / `LOG_FORMAT`).
+- **Rate limiting / body cap.** A per-client-IP token-bucket limiter (`MCP_GATEWAY_RATE_LIMIT_*`) plus a request body-size cap (`MCP_GATEWAY_MAX_BODY`) bound abuse. Behind a proxy, every request comes from the proxy's address (the gateway doesn't read `X-Forwarded-For`), so all callers share one limit: do per-caller limiting at the proxy.
+- **Structured access log.** Every request is logged with method / path / status / duration and the client address, which behind a proxy is the proxy's (`LOG_LEVEL` / `LOG_FORMAT`).
 
 ### Operational Hardening
 
@@ -129,7 +147,7 @@ These items are not exploitable as written, but are recommended practices to kee
 
 **Reproducible installs.** Production builds and CI must use `npm ci` against the committed `package-lock.json`, never `npm install`. `npm install` resolves a fresh dependency graph that may differ from what was reviewed; `npm ci` fails if the lockfile and `node_modules` would diverge from the lockfile, which is the property you want.
 
-**Dependency monitoring.** All 15 manifests (root + 13 servers + template) are subscribed to automated dependency updates via [`renovate.json`](renovate.json) at the repo root so CVE-bearing transitive dependencies surface as PRs rather than ageing silently. The config groups MCP SDK / axios / OpenAPI-tooling updates across manifests so a single ecosystem bump becomes one PR rather than fifteen, runs lockfile maintenance monthly, and keeps `vulnerabilityAlerts` always-on with no schedule. Activation requires either pushing to a GitHub repo with the Renovate App installed, or pointing self-hosted Renovate at the repo. The April 2026 MCP host CVEs underline that timely SDK upgrades matter even when the local code is not directly affected.
+**Dependency monitoring.** Dependabot ([`.github/dependabot.yml`](.github/dependabot.yml)) proposes updates weekly for the npm workspace (root lockfile: core, servers, template), the gateway and the GitHub Actions; minor and patch updates are grouped. Dependabot alerts and secret scanning are on. The gateway image's Node.js base image is pinned by digest and updated by hand. The April 2026 MCP host CVEs underline that timely SDK upgrades matter even when the local code is not directly affected.
 
 **Tool-argument validation.** Tool arguments arrive untyped from the MCP host (`request.params.arguments`) and are forwarded to the bConnect REST API over HTTPS. All 13 servers share a single validation architecture:
 
@@ -137,25 +155,18 @@ These items are not exploitable as written, but are recommended practices to kee
 - The request handler dispatches arguments through a `validateToolArguments(name, args)` pre-pass that runs **before** the write-operation gate and **before** `getBconnect()`. Argument validation is pure; bConnect setup has side effects; the pure step runs first.
 - `validateOrThrow` (from the shared `@bconnect/mcp-core` package, used by all servers) raises an `McpError` with `ErrorCode.InvalidParams` on any rule violation.
 
-This boundary blocks malformed or attacker-influenced arguments from reaching the bConnect REST call. An audit (2026-05-05) confirmed 0 bypassing tool cases across all 13 servers, and 50 explicit validator regression tests prove every server rejects its known-bad-argument shapes. Removing or weakening the pre-pass on any tool case re-opens the prompt-injection-via-arguments surface — treat changes to `index.ts` dispatch logic as security-relevant.
+- Arguments a tool doesn't declare are refused (`Unknown argument(s) for <tool>`), and the shared client only sends request paths in canonical form.
+
+This boundary blocks malformed or attacker-influenced arguments from reaching the bConnect REST call. Tests in each server and suite-wide guards (`__tests__/tool-arguments.test.ts`, `__tests__/declared-arguments.test.ts`) check it. Removing or weakening the pre-pass on any tool case re-opens the prompt-injection-via-arguments surface — treat changes to `index.ts` dispatch logic as security-relevant.
 
 **Mock-integration HTTP boundary checks.** Per-server `npm run test:mock` runs the production `BConnectClient` axios path against `bConnect-Mock` (51 tests across 13 servers; run by hand, not in CI). It is a security-adjacent property: the test the unit tier cannot see is whether each module call hits the URL and HTTP method documented in the OpenAPI spec. `list_detected_vulnerabilities_for_endpoint` calling the wrong path was an internal correctness bug, but the same class of mistake on a write tool could route a `PATCH` to an unintended resource. The integration tier raises the floor against that class. Recipe: `docs/MOCK_INTEGRATION_TESTING.md`. The tests skip when the mock is unreachable and the run still passes, so a green run without the mock tests nothing.
 
-**MCP-registry publication (forward-looking).** Should bConnect-MCP servers ever be published to a public MCP registry, marketplace poisoning becomes in-scope. The April 2026 OX Security analysis found 9 of 11 surveyed MCP registries to be compromised. Mitigation prerequisites for any future public listing: signed release artefacts (the existing `releases/` GPG-signature workflow), a pinned canonical install path documented in this `SECURITY.md`, and a published verification recipe so consumers can reject impostors. Today bConnect-MCP is not on any registry — leave it that way until the above is in place.
+**MCP-registry publication (forward-looking).** Should bConnect-MCP servers ever be published to a public MCP registry, marketplace poisoning becomes in-scope. The April 2026 OX Security analysis found 9 of 11 surveyed MCP registries to be compromised. Mitigation prerequisites for any future public listing: verifiable release artefacts (today: a SHA-256 checksum next to each release zip, and a build provenance attestation for the gateway image, `gh attestation verify oci://ghcr.io/baramundisoftware/bconnect-mcp-gateway:<version> --repo baramundisoftware/bConnect-MCP`), a pinned canonical install path documented in this `SECURITY.md`, and a published verification recipe so consumers can reject impostors. Today bConnect-MCP is not on any registry — leave it that way until the above is in place.
 
-### Accepted vulnerabilities (unreachable in our usage)
+### Accepted vulnerabilities
 
-A baseline `npm audit` after the SDK and axios bumps surfaced one transitive moderate-severity advisory we have decided to **accept** rather than remediate:
-
-- **[GHSA-v2v4-37r5-5v8g](https://github.com/advisories/GHSA-v2v4-37r5-5v8g)** — `ip-address`, XSS in `Address6` HTML-emitting methods. Reaches us via `@modelcontextprotocol/sdk@1.29.0` → `express-rate-limit` → `ip-address`.
-
-**Why it is unreachable here:**
-- The vulnerable methods in `ip-address` are **HTML-emitting renderers** (`Address6` HTML output). **No component renders HTML** — the stdio servers speak JSON-RPC over stdio and the HTTP gateway serves MCP JSON-RPC only, so the `Address6` HTML path is never invoked on any transport.
-- The stdio servers never instantiate the SDK's HTTP transport at all. The HTTP gateway *does* use an HTTP transport and carries `express-rate-limit` transitively, but it applies its own token-bucket limiter and still never reaches the HTML-emitting `ip-address` methods.
-
-**Why we are not "fixing" it:** `npm audit fix --force` resolves this advisory by **downgrading** the SDK from `1.29.0` to `1.25.3`, which is a breaking change going backwards over the very upgrade we just landed in `a991dce`. Carrying a dormant transitive at the latest SDK is preferable to rolling back into an older SDK that may itself contain unrelated issues.
-
-**Re-evaluate when:** the SDK ships a release whose `express-rate-limit` pin moves past the vulnerable `ip-address` range, or `express-rate-limit` releases a fix without an SDK bump being required. At that point `npm audit fix` (no `--force`) will resolve cleanly.
+None at present. The `ip-address` advisory accepted earlier (GHSA-v2v4-37r5-5v8g, via the MCP SDK)
+was resolved by the dependency updates listed under [Unreleased] in [CHANGELOG.md](CHANGELOG.md).
 
 ## Published Advisories
 
@@ -166,10 +177,10 @@ A class of architectural RCE vulnerabilities was disclosed against the Model Con
 **bConnect-MCP is the spawned MCP server, not the spawner.** The codebase has been reviewed against this vulnerability class with the following result:
 
 - All 13 servers and the server template use `StdioServerTransport` from `@modelcontextprotocol/sdk/server/stdio.js`. This transport reads from stdin / writes to stdout — it does not spawn child processes.
-- The codebase contains no calls to `child_process`, `spawn`, `exec`, `execSync`, `execFile`, `eval`, or `new Function` (verified by full-tree grep).
-- Configuration is sourced exclusively from environment variables (`BCONNECT_BASE_URL`, `BCONNECT_USERNAME`, `BCONNECT_PASSWORD`, `BCONNECT_CA_CERT_PATH`, `BCONNECT_RELEASE`, `BCONNECT_AUDIT_LEVEL`, `BCONNECT_RATE_LIMIT_*`). No configuration field is interpreted as a shell command or process path.
+- The shipped code (servers, `@bconnect/mcp-core`, gateway) contains no calls to `child_process`, `spawn`, `exec`, `execSync`, `execFile`, `eval`, or `new Function`; only some tests spawn processes.
+- Configuration comes only from environment variables (`BCONNECT_*`, `ALLOW_*`, `MCP_*`; each server's README lists the ones it reads). No configuration field is interpreted as a shell command or process path.
 - Tool arguments are forwarded as typed parameters to the bConnect REST API over HTTPS via `axios`. They never cross a shell boundary.
-- The MCP SDK is pinned to `^1.29.0`, the current upstream release.
+- The MCP SDK is kept current (`^1.31.0` at the time of writing).
 - The unused `puppeteer` dependency (which would have spawned a Chromium subprocess) has been removed from all manifests.
 
 #### Deployer guidance

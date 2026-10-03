@@ -15,14 +15,25 @@
  */
 import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import ts from 'typescript';
 import { ROOT } from './lib/exerciser.js';
 import { envReads } from './lib/env-reads.js';
 
-/** The guides published under docs/ (the rest of docs/ is git-ignored). */
-const GUIDES = ['AUDIT', 'DOCKER', 'INSTALLATION', 'LIVE_BMS_TESTING', 'MOCK_INTEGRATION_TESTING', 'N8N', 'TROUBLESHOOTING']
-  .map((name) => join(ROOT, 'docs', `${name}.md`));
+/** The guides published under docs/ (the rest of docs/ is git-ignored), and the root documents. */
+const GUIDES = [
+  ...['AUDIT', 'CLIENTS', 'DOCKER', 'INSTALLATION', 'LIVE_BMS_TESTING', 'MOCK_INTEGRATION_TESTING', 'N8N', 'TROUBLESHOOTING']
+    .map((name) => join(ROOT, 'docs', `${name}.md`)),
+  ...['README', 'SECURITY', 'CONTRIBUTING', 'SUPPORT'].map((name) => join(ROOT, `${name}.md`)),
+];
+
+/** Every published Markdown file whose links are checked: the guides plus each server's README. */
+const LINKED = [
+  ...GUIDES,
+  join(ROOT, 'CODE_OF_CONDUCT.md'),
+  ...readdirSync(ROOT).filter((d) => /^bconnect-.+-(mcp|template)$/.test(d) || d === 'bconnect-server-template')
+    .map((d) => join(ROOT, d, 'README.md')).filter(existsSync),
+];
 
 /** Named in the guides, read by something other than this repo's TypeScript. */
 const READ_ELSEWHERE: Record<string, string> = {
@@ -175,5 +186,34 @@ describe('docs — TROUBLESHOOTING.md quotes messages the code prints', () => {
   it('lists no runtime-built message the guide doesn\'t quote', () => {
     const quoted = new Set(quotedMessages());
     expect(Object.keys(BUILT_AT_RUNTIME).filter((m) => !quoted.has(m))).toEqual([]);
+  });
+});
+
+/** GitHub's heading anchor: lower case, punctuation dropped, spaces to hyphens. */
+const slug = (heading: string): string =>
+  heading.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/ /g, '-');
+
+const anchorsOf = (file: string): Set<string> =>
+  new Set([...readFileSync(file, 'utf8').replace(/```[\s\S]*?```/g, '').matchAll(/^#{1,6} (.+)$/gm)].map((m) => slug(m[1])));
+
+describe('docs — relative links resolve', () => {
+  it('checks the published documents (self-check)', () => {
+    expect(LINKED.length).toBeGreaterThan(25);
+  });
+
+  it('every relative link points to an existing file and heading', () => {
+    const broken = LINKED.flatMap((file) => {
+      const text = readFileSync(file, 'utf8').replace(/```[\s\S]*?```/g, '');
+      return [...text.matchAll(/\]\(([^)\s]+)\)/g)].map((m) => m[1])
+        .filter((target) => !/^(?:https?:|mailto:)/.test(target))
+        .filter((target) => {
+          const [path, anchor] = target.split('#');
+          const resolved = path ? join(dirname(file), path) : file;
+          if (!existsSync(resolved)) return true;
+          return Boolean(anchor) && /\.md$/i.test(resolved) && !anchorsOf(resolved).has(anchor);
+        })
+        .map((target) => `${relative(ROOT, file)}: ${target}`);
+    });
+    expect(broken).toEqual([]);
   });
 });

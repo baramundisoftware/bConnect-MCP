@@ -1,0 +1,65 @@
+/**
+ * README tools guard: each server's README lists exactly the tools the server
+ * offers, and its tool count matches.
+ *
+ * The docs review (2026-10-03) found the groups README missing 6 of its 33
+ * tools, endpoints and jobs missing 3 more, and wrong counts for 25R2 in three
+ * READMEs. The tables are written by hand, so this compares them with the
+ * server's own tool list, for each release:
+ *
+ * - the rows under "## Available Tools" name exactly the tools offered on 26R1;
+ * - rows marked **(26R1)** are exactly the tools missing on 25R2;
+ * - the `**Tools:**` line gives the 26R1 count, and the 25R2 count when it differs.
+ */
+import { afterAll, describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { ROOT, SERVERS, connect, guardEnv } from './lib/exerciser.js';
+
+const saved = { ...process.env };
+afterAll(() => {
+  process.env = saved;
+});
+
+async function toolNames(server: string, release: '26R1' | '25R2'): Promise<string[]> {
+  Object.assign(process.env, guardEnv(release, { writes: false, secretRead: false }));
+  const connected = await connect(server);
+  try {
+    return connected.tools.map((t) => t.name).sort();
+  } finally {
+    await connected.close();
+  }
+}
+
+/** The tool rows of the "## Available Tools" section: name and whether it is marked (26R1). */
+function documentedTools(readme: string): Array<{ name: string; only26R1: boolean }> {
+  const start = readme.indexOf('## Available Tools');
+  if (start < 0) return [];
+  const end = readme.indexOf('\n## ', start + 1);
+  const section = readme.slice(start, end < 0 ? undefined : end);
+  return [...section.matchAll(/^\| `([a-z_0-9]+)` \|(.*)$/gm)].map((m) => ({ name: m[1], only26R1: m[2].includes('**(26R1)**') }));
+}
+
+describe.each(SERVERS)('%s README', (server) => {
+  const readme = readFileSync(join(ROOT, server, 'README.md'), 'utf8');
+
+  it('lists exactly the tools the server offers, with the 26R1-only ones marked', async () => {
+    const on26 = await toolNames(server, '26R1');
+    const on25 = new Set(await toolNames(server, '25R2'));
+    const documented = documentedTools(readme);
+    expect(documented.map((t) => t.name).sort()).toEqual(on26);
+    expect(documented.filter((t) => t.only26R1).map((t) => t.name).sort()).toEqual(on26.filter((t) => !on25.has(t)));
+  });
+
+  it('gives the tool count for 26R1, and for 25R2 where it differs', async () => {
+    const n26 = (await toolNames(server, '26R1')).length;
+    const n25 = (await toolNames(server, '25R2')).length;
+    const line = readme.match(/^\*\*Tools:\*\* (.*)$/m)?.[1] ?? '';
+    expect(line.startsWith(`${n26}`)).toBe(true);
+    if (n25 !== n26) {
+      expect(line).toContain(`(${n25 === 0 ? 'none' : n25} with \`BCONNECT_RELEASE=25R2\`)`);
+    } else {
+      expect(line).not.toMatch(/BCONNECT_RELEASE=25R2/);
+    }
+  });
+});

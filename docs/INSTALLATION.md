@@ -254,7 +254,7 @@ why Node **22.15+** is recommended.
 > Node to ≥ 22.15 is the simplest fix; the options below cover locked-down or older
 > environments.
 
-### Production: Using BCONNECT_CA_CERT_PATH (Recommended)
+### Recommended: BCONNECT_CA_CERT_PATH
 
 Set `BCONNECT_CA_CERT_PATH` to the path of a PEM-encoded CA certificate file. The server loads this cert at startup and uses it to verify the bMS server's certificate.
 
@@ -392,7 +392,9 @@ curl asks for the password, so it doesn't end up in your shell history. `HTTP 20
 
 ## Claude Configuration
 
-Add each server you want to use to your Claude MCP configuration.
+Add each server you want to use to your Claude MCP configuration. For VS Code / GitHub
+Copilot, Cursor, Continue, LibreChat and HTTP-only clients, and for keeping the credentials out
+of the client configuration, see [CLIENTS.md](CLIENTS.md).
 
 ### Claude Code (`claude mcp add`)
 
