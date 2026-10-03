@@ -4,7 +4,9 @@
 
 - **[docs/INSTALLATION.md](docs/INSTALLATION.md)** — installation, configuration, TLS setup
 - **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** — common issues and solutions
-- **[docs/DOCKER.md](docs/DOCKER.md)** — Docker deployment
+- **[docs/CLIENTS.md](docs/CLIENTS.md)** — configuration for Claude, VS Code / GitHub Copilot and other MCP clients
+- **[docs/DOCKER.md](docs/DOCKER.md)** — the HTTP gateway as a container
+- **[docs/N8N.md](docs/N8N.md)** — the gateway from n8n workflows
 
 ## Getting Help
 
@@ -15,10 +17,11 @@ For questions, bugs, or feature requests specific to **bConnect-MCP**, contact:
 
 **bernd.wiedemann@baramundi.de**
 
-You can also open a GitHub issue in this repository. Please include:
+For a bug or a change you'd like, open a GitHub issue with the bug report or change proposal
+template. Please include:
 
-- bConnect MCP Suite version (`package.json` → `version`)
-- baramundi Management Suite version (`BCONNECT_RELEASE` value)
+- bConnect MCP Suite release tag or commit (e.g. `v26.1.7`)
+- baramundi Management Suite release (`BCONNECT_RELEASE` value)
 - Which server(s) are affected
 - Steps to reproduce
 - Relevant log output

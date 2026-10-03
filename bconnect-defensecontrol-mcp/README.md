@@ -3,45 +3,56 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Defense Control — BitLocker encryption, Local Admin (LAPS) credentials, and Microsoft Defender threat monitoring  
-**Tools:** 9 (13 in 26R1 mode)
+**Tools:** 13 (11 with `BCONNECT_RELEASE=25R2`)
 
 ---
 
 ## Quick Start
 
+Build from the **repo root**: the server needs the shared `@bconnect/mcp-core` package, so a
+server directory can't be built on its own.
+
+```bash
+npm ci
+npm run build -w @bconnect/mcp-core
+npm run build -w bconnect-defensecontrol-mcp
+```
+
+Configure it in your MCP client's `env` block (below), or keep the credentials out of the
+client's configuration with `node --env-file` ([docs/CLIENTS.md](../docs/CLIENTS.md)). A `.env`
+file (copy `.env.example`) is read only when you start the server from `bconnect-defensecontrol-mcp/` yourself; MCP
+clients start it from another directory.
+
 ```env
 BCONNECT_BASE_URL=https://<your-bms-server>:443/bconnect
-BCONNECT_USERNAME=mcp-reader
-BCONNECT_PASSWORD=<password>
-# Optional: BCONNECT_RELEASE=25R2   (hides the tools that need baramundi 2026 R1)
+BCONNECT_API_KEY=<api-key>          # or BCONNECT_USERNAME + BCONNECT_PASSWORD
 # Optional: BCONNECT_CA_CERT_PATH=/path/to/internal-ca.pem
 ```
 
-```bash
-# Run directly (development)
-cd bconnect-defensecontrol-mcp
-npm install && npm run build
-node build/index.js
+Claude Code:
 
-# Claude Code / Claude Desktop entry (~/.claude.json or claude_desktop_config.json):
-{
-  "mcpServers": {
-    "bconnect-defensecontrol": {
-      "command": "node",
-      "args": ["/opt/bconnect-mcp-suite/bconnect-defensecontrol-mcp/build/index.js"],
-      "env": {
-        "BCONNECT_BASE_URL": "https://bms-server:443/bconnect",
-        "BCONNECT_USERNAME": "mcp-reader",
-        "BCONNECT_PASSWORD": "<password>"
-      }
-    }
-  }
-}
+```bash
+claude mcp add bconnect-defensecontrol --scope user \
+  --env BCONNECT_BASE_URL=https://<your-bms-server>:443/bconnect \
+  --env BCONNECT_API_KEY=<api-key> \
+  -- node /absolute/path/to/bconnect-defensecontrol-mcp/build/index.js
 ```
+
+Claude Desktop (`claude_desktop_config.json`) and other clients: see
+[docs/CLIENTS.md](../docs/CLIENTS.md).
 
 ---
 
 ## Available Tools
+
+Write tools (create, update, delete, start, assign, …) are **off** unless
+`ALLOW_WRITE_OPERATIONS=true` is set: they still appear in the tool list, but each call is
+refused. A write tool whose description ends with "Not yet verified against a live bMS." hasn't
+been checked against a real bMS yet.
+
+`get_bitlocker_secrets`, `update_bitlocker_pin`, `get_local_admin_accounts` and
+`patch_local_admin_user_credentials` return live credentials and also need
+`ALLOW_SECRET_READ=true`.
 
 | Tool | Description |
 |------|-------------|
@@ -72,15 +83,15 @@ Run inside the HTTP gateway, the server's own startup code doesn't run: `MCP_TRA
 |----------|----------|---------|-------------|
 | `BCONNECT_BASE_URL` | Yes | — | bConnect base URL, e.g. `https://bms.corp.local:443/bconnect`. If unset, a placeholder is used and the startup check fails. |
 | `BCONNECT_API_KEY` | One of | — | API key. Set this, or `BCONNECT_USERNAME` and `BCONNECT_PASSWORD`. Used instead of them when both are set. |
-| `BCONNECT_USERNAME` | One of | — | User for Basic authentication, together with `BCONNECT_PASSWORD`. |
+| `BCONNECT_USERNAME` | One of | — | User for Basic authentication, together with `BCONNECT_PASSWORD`. Latin-1 characters only (e.g. `ö` works, `€` doesn't). |
 | `BCONNECT_PASSWORD` | One of | — | Password for `BCONNECT_USERNAME`. ASCII characters only: bConnect's API rejects a password with `§`, an umlaut or `ß` (401) even though Windows accepts it, so such a password is refused at startup (in the gateway: on every tool call) before anything is sent. Use an ASCII-only password or an API key. |
 | `BCONNECT_CA_CERT_PATH` | No | — | PEM file with the CA certificate that signed the bMS server certificate (internal CA). When set, only this CA is trusted; when unset, Node's default and (Node 22.15 or later) the operating system's trusted CAs are used. The server fails if the file can't be read or is empty. |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | No | verify | Leave unset. `0` turns certificate verification off for every TLS connection of the process, so anyone in the network path can pose as the bMS and receive the credentials. Trust the CA instead: Node ≥ 22.15 (OS store) or `BCONNECT_CA_CERT_PATH`. |
 | `BCONNECT_ALLOW_INSECURE_HTTP` | No | off | `true` allows an `http://` base URL to a host other than this machine, which sends the bConnect credentials unencrypted; the server warns once at startup. Test setups only. `http://` to `localhost`, `127.x.x.x` or `[::1]` (the bundled mock) needs no opt-in. |
-| `BCONNECT_RELEASE` | No | `26R1` | Any value other than `26R1` (e.g. `25R2`, but also an empty value) hides the tools that need baramundi Management Suite 2026 R1. It also selects the API documentation used to explain an error. |
+| `BCONNECT_RELEASE` | No | `26R1` | The release of your bMS: `26R1` or `25R2`, spelt exactly so. It selects the tools and list filters for that release and the API documentation used to explain an error. With `25R2`, the tools marked **(26R1)** are hidden. |
 | `ALLOW_WRITE_OPERATIONS` | No | off | `true` enables the tools that create, change or delete data, or start actions. |
 | `ALLOW_SECRET_READ` | No | off | `true` lets tools return BitLocker recovery keys / PINs and LAPS passwords. Also needs `ALLOW_WRITE_OPERATIONS=true` for the write tools that return them. |
-| `BCONNECT_AUDIT_LEVEL` | No | `none` | `none`, `security`, `write` or `all`, in any case. Levels are cumulative: `security` records credential reads and changes (BitLocker, LAPS), `write` adds every write, `all` records every request. Any other value stops the server. Entries go to stderr. |
+| `BCONNECT_AUDIT_LEVEL` | No | `none` | `none`, `security`, `write` or `all`, in any case. Levels are cumulative: `security` records security-relevant calls (credentials, API keys, rights, security groups and profiles, enrollments, restarts; see [docs/AUDIT.md](../docs/AUDIT.md)) and refused requests, `write` adds every write, `all` records every request. Any other value stops the server. Entries go to stderr. |
 | `BCONNECT_RATE_LIMIT_ENABLED` | No | off | `true` limits the requests one client sends. Each tool call still creates a new client, so the limit doesn't apply across calls yet (#160). |
 | `BCONNECT_RATE_LIMIT_MAX_REQUESTS` | No | `100` | Requests allowed per window when the rate limit is on. |
 | `BCONNECT_RATE_LIMIT_WINDOW_MS` | No | `60000` | Window length in milliseconds. |
@@ -97,17 +108,14 @@ Run inside the HTTP gateway, the server's own startup code doesn't run: `MCP_TRA
 
 ## Part of the Suite
 
-This server is one of 13 in the bConnect MCP Suite. See the [suite README](../MCP_Deployment/README.md) for deployment options (Windows installer, Linux systemd, Docker).
+This server is one of 13 in the bConnect MCP Suite. See the [suite README](../README.md) for an
+overview and [docs/INSTALLATION.md](../docs/INSTALLATION.md) for setup, including the HTTP gateway
+that serves all 13 servers.
 
 ---
 
 ## Compatibility
 
-| MCP server version | Supported bMS release | bConnect API | Notes |
-|--------------------|-----------------------|--------------|-------|
-| `26.1.7` | baramundi Management Suite 2026R1 | V2.0 | Current — full tool set |
-| `25.2.0` *(planned)* | baramundi Management Suite 2025R2 | V2.0 | Subset of tools (25R2 spec) |
-| `1.0.0` (legacy) | ≤25R2 (unspecified) | V2.0 | Pre-versioning-scheme release |
-
-> Version scheme: `<bMS-year-2digit>.<bMS-release-number>.<mcp-patch>`
-> Example: `26.1.7` targets bMS 2026R1; patch-only fixes increment the last digit.
+Releases are numbered `26.1.x` and support **bMS 2026 R1 and 2025 R2**: set `BCONNECT_RELEASE`
+to the release of your bMS (default `26R1`). See [CHANGELOG.md](../CHANGELOG.md) for what each
+release changed.

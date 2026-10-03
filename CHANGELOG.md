@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+> There is no 26.1.8 release: changes merged under that label (#112) were reverted (#134). The next
+> release is 26.1.9.
+
+### Upgrading from 26.1.7
+- **`BCONNECT_BASE_URL` must use `https://`.** `http://` is refused except for this machine, or set
+  `BCONNECT_ALLOW_INSECURE_HTTP=true` (credentials unencrypted). Behind a redirect, set the final address.
+- **Set `BCONNECT_RELEASE=25R2` on a 2025 R2 bMS.** The default is now `26R1`.
+- **`BCONNECT_AUDIT_LEVEL` must be `none`, `security`, `write` or `all`**; any other value stops the server.
+- **Remove `BCONNECT_REJECT_UNAUTHORIZED`**; use `BCONNECT_CA_CERT_PATH`. An empty CA file is now an error.
+- **Basic-auth passwords must be ASCII**; otherwise use an API key.
+- **Automation that waits for error code `-32603`** now receives tool results with `isError: true`.
+- **Drop arguments a tool doesn't declare**: they are refused now. Renamed or removed arguments are
+  listed under Changed (e.g. `includeSubGroups` → `includeSubfolders`, `scheduledStartTime`,
+  `patchOperations`). `trigger_update_on_client` is now `refresh_local_admin_account_expiry`.
+- **Tools that return BitLocker or LAPS credentials need `ALLOW_SECRET_READ=true`.**
+- **Gateway:** compare your `.env.gateway` with `.env.gateway.example` (new settings are passed on).
+  Write tools and secret reads are off in the gateway. Per-server Dockerfiles and `docker-compose.yml`
+  are gone: run the servers over stdio, or use the gateway image.
+- **Slow reads:** consider `BCONNECT_TIMEOUT_MS=90000` (see Known issues).
+
 ### Known issues
+- **The gateway has no built-in authentication.** Front it with an authenticating, TLS-terminating
+  reverse proxy that also checks `Host` and `Origin`. Behind a proxy, the
+  gateway sees every request as coming from the proxy, so all callers share one rate limit and the
+  access log shows the proxy's address.
+- **The outbound rate limit (`BCONNECT_RATE_LIMIT_*`) applies only within one tool call** (#160).
 - **Some reads are slow on a large or busy bMS.** On a test bMS 26R1 (26.1.161),
   `list_detected_vulnerabilities` and `list_vulnerabilities` took about 30 s and
   `list_installed_windows_software` about 50 s, so they can run into the default 30 s timeout. Set
@@ -52,7 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   package's runtime dependencies equal to its imports (replaces Dependabot #182).
 - **MCP SDK 1.31.0 in every package** (was 1.29.0). Its HTTP transport, used by the gateway, now
   reads request bodies with a size limit, caps the length of JSON-RPC batches and checks the
-  Content-Type properly; SSE keep-alive is fixed. All 16 manifests and both lockfiles move
+  Content-Type properly; SSE keep-alive is fixed. All manifests and both lockfiles move
   together (replaces Dependabot #181, which updated only two of them and didn't install).
 - **Audit level `security` records every security-relevant call** (#168). At that level only
   BitLocker and LAPS credential routes were recorded. Now it also records: listing API keys,
@@ -117,9 +142,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
-- **An invalid `BCONNECT_RELEASE` stops the server.** Only `26R1` and `25R2` (spelt exactly so) or
+- **esbuild** dev dependency bumped `0.27.7` → `0.28.1` (dev-only).
+- **An invalid `BCONNECT_RELEASE` stops the server (breaking).** Only `26R1` and `25R2` (spelt exactly so) or
   leaving it unset (26R1) are accepted. Before, any other value, for example `26r1` or an empty
-  value, quietly gave the 25R2 tool set. **Breaking** for configurations with such a value. The
+  value, quietly gave the 25R2 tool set. Change such a value. The
   gateway stops at startup too.
 - **19 write tools verified on a live bMS no longer say "Not yet verified against a live bMS."**
   Checked on a test bMS 26R1 (26.1.161): the Windows, Mac and logical-group create, update and delete
@@ -153,10 +179,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   such an argument was ignored or passed on, and bConnect returned unfiltered data. Every advertised
   input schema says `additionalProperties: false`. Integrations that send extra keys must drop them
   (#163).
-- **`list_windows_endpoints_by_logical_group` takes `includeSubfolders`** instead of `includeSubGroups`,
+- **`list_windows_endpoints_by_logical_group` takes `includeSubfolders` (breaking)** instead of `includeSubGroups`,
   which bConnect never read (#170).
-- **`list_unmanaged_endpoints` takes no arguments**: its route declares no paging or filters (#186).
-- **bConnect errors are tool results the model can read** (#158, #195, #166). When bConnect
+- **`list_unmanaged_endpoints` takes no arguments (breaking)**: its route declares no paging or filters (#186).
+- **bConnect errors are tool results the model can read** (#158, #195; part of #166). When bConnect
   refuses a call, the tool now answers with `isError: true` and a message that names the status,
   the method and the path, the meaning the bConnect API documentation gives that status for
   this operation, and bConnect's own message:
@@ -179,10 +205,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     error; every server now reads it.
   - **Breaking for automation that waits for error code `-32603`:** it now receives a tool
     result with `isError: true`.
-- **`get_entra_id_data` takes the Entra ID device ID** (`deviceId`) instead of the bMS endpoint ID;
+- **`get_entra_id_data` takes the Entra ID device ID (breaking)** (`deviceId`) instead of the bMS endpoint ID;
   `link_entra_id_data` takes `entraIdDeviceId`, `entraIdTenantId` and `entraIdUserId` instead of
   `deviceId`. The old forms never reached a working bConnect operation.
-- **Renamed or replaced arguments on create tools** (the old forms never produced a valid request):
+- **Renamed or replaced arguments on create tools (breaking)** (the old forms never produced a valid request):
   enrollment takes `enrollmentMailAddress` (was `emailRecipient`); `create_variable_definition` takes
   `category`, `scopes`, `type` and `comment` (was `dataType`, `description`); `create_network_endpoint`,
   `create_industrial_endpoint` and the maintenance-window creates take named fields instead of
@@ -192,15 +218,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tell you before it changes anything. The note disappears tool by tool as live checks are
   recorded.
 - **`update_network_endpoint`, `update_industrial_endpoint` and the maintenance-window updates
-  take named fields** instead of an untyped `updateData` / `maintenanceWindowData` object, which
+  take named fields (breaking)** instead of an untyped `updateData` / `maintenanceWindowData` object, which
   was never sent in a form bConnect accepts.
-- **`create_job_instance` no longer offers `scheduledStartTime`.** The API has no such field; the
+- **`create_job_instance` no longer offers `scheduledStartTime` (breaking).** The API has no such field; the
   job always started immediately. The description now says so; `endpointId` is required and
   `startIfAlreadyAssigned` is available.
-- **`BCONNECT_REJECT_UNAUTHORIZED` is removed.** Only the groups server read it, while the
-  READMEs listed it for every server. To turn certificate checks off for development, set
-  `NODE_TLS_REJECT_UNAUTHORIZED=0`, which every server honors. In production, keep
-  verification on and point `BCONNECT_CA_CERT_PATH` at your internal CA instead (#197).
 - **One shared function builds every server's bConnect client config.** `@bconnect/mcp-core`
   now reads the connection settings (base URL, credentials, API key, CA certificate, TLS,
   audit level, rate limit) for the tool client and the startup check of all 13 servers, so
@@ -214,13 +236,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     a different one for the startup check; all now use the same placeholder.
   - An empty `BCONNECT_BASE_URL`, or an empty base URL passed per request, now counts as
     unset (it used to be passed on as an empty URL).
-  - Missing credentials give the same error in every server: tool calls fail with an
-    internal error (groups returned an invalid-request error with a different text), and
+  - Missing credentials give the same error in every server: tool calls return a tool error
+    naming both ways to authenticate (groups returned an invalid-request error), and
     the server exits at startup with one line naming both ways to authenticate (endpoints
     and jobs printed a stack trace).
   - An empty `BCONNECT_CA_CERT_PATH` file is an error. It used to replace the trusted CAs
     with Node's built-in list without saying so.
-- **`BCONNECT_RELEASE` now defaults to `26R1`** (was `25R2`), matching the documented
+- **`BCONNECT_RELEASE` now defaults to `26R1` (breaking)** (was `25R2`), matching the documented
   default and the advertised tool counts (e.g. 66 endpoints tools, 276 total). Following
   the README with no `BCONNECT_RELEASE` set previously registered the smaller 25R2 subset
   (60 endpoints tools) silently. Set `BCONNECT_RELEASE=25R2` explicitly on older servers;
@@ -230,7 +252,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   as the others.
 
 ### Removed
-- **Per-server container files** (aligning with ADR-0003 — only the gateway is
+- **`BCONNECT_REJECT_UNAUTHORIZED` (breaking).** Only the groups server read it, while the
+  READMEs listed it for every server. Keep certificate verification on and point
+  `BCONNECT_CA_CERT_PATH` at your internal CA instead (#197).
+- **Per-server container files (breaking)** (only the gateway is
   distributed as a container; the 13 servers run over stdio via Node/Claude Desktop).
   Removed `docker-compose.yml`, the 13 per-server `Dockerfile`s, and
   `build-tests/docker-smoke.test.sh`. These built each server from its own directory,
@@ -239,6 +264,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **README, SECURITY, CONTRIBUTING, SUPPORT and the server READMEs match the code.** Server
+  READMEs list every tool (six groups, two endpoints and one jobs tool were missing) with correct
+  counts for 26R1 and 25R2, build from the repo root, and no longer link to a repository readers
+  can't open. SECURITY.md describes the supported version line as it is (no 25.2.x), GitHub
+  private vulnerability reporting, Dependabot and the release checksums. CONTRIBUTING.md
+  describes how a change gets in and the full steps for a new server. The README's VS Code example
+  used Claude's `mcpServers` key; a new `docs/CLIENTS.md` gives the right file, key and `"type"`
+  for each client (based on an earlier client guide by Manuel Schödl). The CHANGELOG marks the
+  breaking changes, adds "Upgrading from 26.1.7" and explains the missing 26.1.8. Tests now compare
+  each server README's tool table with the server's tools and check every relative link.
 - **The guides under `docs/` match the code again.** Commands that didn't work are fixed: the
   `docker run` examples (missing `MCP_ALLOW_NO_AUTH=true`), the gateway build steps, `claude mcp add`,
   the n8n HTTP Request example (missing `Accept` header) and the mock-tier setup (needs a 26R1 mock).
@@ -299,7 +334,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   endpoint creates, maintenance-window creates, Windows/Mac enrollment, `create_asset`,
   `create_variable_definition`, `create_software_bundle` and `add_application_to_bundle` declare the
   fields bConnect requires (e.g. `hostName`, `category` and `scopes`) and send only those.
-  `trigger_update_on_client` no longer sends a body.
+  `refresh_local_admin_account_expiry` (formerly `trigger_update_on_client`) no longer sends a body.
 - **Endpoint and logical-group updates work.** The Windows, Linux, Mac, network and industrial
   endpoint updates, `update_logical_group` and both maintenance-window updates now offer the
   fields bConnect lets you change (display name, logical group, comment, host name, IP and MAC,
@@ -367,27 +402,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   against the registered domains only; anything else is `404 Unknown MCP domain`.
 - **`update_bitlocker_pin` called a route the API doesn't have** (`PATCH …/{id}/Pin`); it now
   uses the spec operation `PATCH …/BitLocker/WindowsEndpoints/{id}/Secrets`.
-- **Startup connectivity check.** `BConnectClientBase.testConnection()` probed a
-  non-existent `/info` route (always 404) — latent because every deployment either set
-  `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` or ran the gateway (which never probes). A
-  standalone server started from a plain `.env` (no skip flag) failed at startup. It now
-  probes a real lightweight list endpoint (`/v2.0/WindowsEndpoints?$top=1`), overridable
-  via `healthCheckPath` for credentials scoped away from endpoints.
-- **esbuild** dev dependency bumped `0.27.7` → `0.28.1` (Dependabot alerts; dev-only).
-- **TLS: honor the OS/client CA trust store on Node ≥ 22.15** (issue #59) — an
-  already-trusted enterprise CA now works without a manual export; clearer TLS errors.
-- **Docs** actualized: build-from-root (workspaces) instructions, Node 22 baseline,
+- **Docs** actualized: build-from-root (workspaces) instructions, Node 22 in the Docker image,
   gateway-only Docker guide, credentials-at-rest hardening, and a Repository layout section.
 
 ## [26.1.7] - 2026-07-14
 
-> Version bumped `26.1.5` → `26.1.7` across the suite (26.1.6 was documented but
-> never tagged/released).
+> Version bumped `26.1.5` → `26.1.7` across the suite. 26.1.3 to 26.1.6 below were
+> documented but never tagged or released; their changes first shipped in 26.1.7.
 
 ### Removed (breaking)
 - **Gateway token-map authentication (`MCP_AUTH_CONFIG`).** The gateway no longer
-  authenticates callers or maps Bearer tokens to bConnect credentials. Per ADR-0003,
-  **authentication is the operator's responsibility** — front the gateway with an
+  authenticates callers or maps Bearer tokens to bConnect credentials.
+  **Authentication is the operator's responsibility** — front the gateway with an
   authenticating, TLS-terminating reverse proxy / IdP — and the gateway uses a single
   `BCONNECT_*` **service credential** (bMS RBAC governs it). Removed `MCP_AUTH_CONFIG`,
   the token map, hashed-token mode, and the `hash-token` helper.
@@ -399,8 +425,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docker-compose.gateway.yml` publishes the host port on **loopback only** by default.
 - README / `docs/DOCKER.md` / `docs/INSTALLATION.md` / `docs/N8N.md` updated to the
   proxy-fronted, service-credential model, with a prominent operator-security notice.
-- **Node.js baseline raised to 22 (LTS).** Docker images now build on `node:22-alpine`
-  and `engines.node` is `>=20.0.0` (18 is EOL). The automatic OS-trust-store behavior
+- **Node.js 22 in the Docker image.** Docker images now build on `node:22-alpine`;
+  `engines.node` is `>=20.0.0` (18 is EOL). The automatic OS-trust-store behavior
   below requires Node ≥ 22.15.
 
 ### Fixed
@@ -526,3 +552,8 @@ providing 212 tools across endpoints, jobs, assets, software, compliance, and mo
 - Authentication via Basic Auth or API Key
 - Transport modes: stdio (local) and HTTP (network/Docker)
 - Unit tests and mock-integration tests across all servers
+
+[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.7...HEAD
+[26.1.7]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.2...v26.1.7
+[26.1.2]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.1...v26.1.2
+[26.1.1]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.0...v26.1.1
