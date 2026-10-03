@@ -147,6 +147,9 @@ You should see a JSON response listing all available tools (e.g. `list_windows_e
 }
 ```
 
+These examples put the API key in the client's configuration. To keep it out, start the server
+with `node --env-file` instead, as shown in [docs/CLIENTS.md](docs/CLIENTS.md).
+
 **Claude Code (CLI)** — register the server with `claude mcp add` (use an **absolute** path to `build/index.js`):
 
 ```bash
@@ -206,6 +209,8 @@ Only the gateway is distributed as a container; the 13 stdio servers run via Nod
 | `bconnect-updatemanagement-mcp` | 3 | 3 | Windows Update management |
 | **Total** | **276** | **232** | |
 
+— means the server needs 26R1. (Compliance still lists its 8 tools with `BCONNECT_RELEASE=25R2`, but they fail on a 25R2 bMS.)
+
 Set `BCONNECT_RELEASE=25R2` for a 2025 R2 bMS. Compliance and universal dynamic groups don't exist
 there: don't configure those two servers for a 25R2 bMS.
 
@@ -233,7 +238,7 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `BCONNECT_SKIP_CONNECTIVITY_CHECK` | — | `false` | `true` skips the startup call to bConnect |
 | `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `none`, `security`, `write` or `all`, in any case; levels are cumulative. Any other value stops the server. Entries go to stderr; what each level records: [docs/AUDIT.md](docs/AUDIT.md) |
 | `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Limit the requests one client sends. Each tool call still creates a new client, so the limit doesn't apply across calls yet (#160) |
-| `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (loopback only, no authentication) |
+| `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (binds loopback by default, no authentication) |
 | `MCP_PORT` | — | `3000` | HTTP port (when `MCP_TRANSPORT=http`) |
 | `MCP_BIND` | — | `127.0.0.1` | HTTP bind address (when `MCP_TRANSPORT=http`) |
 | `MCP_GATEWAY_PORT` | — | `3001` | Gateway listen port (when using `bconnect-mcp-gateway`) |

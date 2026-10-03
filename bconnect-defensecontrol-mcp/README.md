@@ -18,8 +18,10 @@ npm run build -w @bconnect/mcp-core
 npm run build -w bconnect-defensecontrol-mcp
 ```
 
-Configure it in your MCP client's `env` block (below), or copy `.env.example` to `.env` in
-`bconnect-defensecontrol-mcp/`: a `.env` file is read from the directory the server is started in.
+Configure it in your MCP client's `env` block (below), or keep the credentials out of the
+client's configuration with `node --env-file` ([docs/CLIENTS.md](../docs/CLIENTS.md)). A `.env`
+file (copy `.env.example`) is read only when you start the server from `bconnect-defensecontrol-mcp/` yourself; MCP
+clients start it from another directory.
 
 ```env
 BCONNECT_BASE_URL=https://<your-bms-server>:443/bconnect
@@ -50,7 +52,7 @@ been checked against a real bMS yet.
 
 `get_bitlocker_secrets`, `update_bitlocker_pin`, `get_local_admin_accounts` and
 `patch_local_admin_user_credentials` return live credentials and also need
-`ALLOW_SECRET_READ=true` (the two write tools need both settings).
+`ALLOW_SECRET_READ=true`.
 
 | Tool | Description |
 |------|-------------|

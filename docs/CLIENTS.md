@@ -208,9 +208,8 @@ Domains: `activedirectory`, `assets`, `compliance`, `defensecontrol`, `endpoints
 These have no way to start a local process, so the gateway is their only route:
 
 - **n8n**: MCP Client Tool node, one per domain. See [N8N.md](N8N.md).
-- **Open WebUI**: add the gateway URL as an MCP (Streamable HTTP) server in the admin
-  settings. A containerised Open WebUI reaches a gateway on the host via
-  `http://host.docker.internal:<port>`.
+- **Open WebUI**: add the gateway's URL at your proxy as an MCP (Streamable HTTP) server in the
+  admin settings.
 - **Microsoft Copilot Studio** and other cloud-hosted agents: the call comes from the vendor's
   cloud, so the gateway has to be reachable from the internet, behind a proxy that
   authenticates each person.

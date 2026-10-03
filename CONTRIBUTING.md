@@ -12,7 +12,8 @@ to include.
    excluded). Larger work is split into several PRs, as agreed in the issue.
 3. **CI must be green.** `main` requires the four `build + test` checks (Linux and Windows,
    Node.js 22.15 and 24) on the PR's latest commit, the branch up to date with `main`, one
-   approving review after the last push, and all review threads resolved.
+   approving review after the last push, and all review threads resolved. Repository admins
+   can merge a pull request without the review; nobody can push to `main` directly.
 4. **Security issues are never reported in a public issue or PR.** Use GitHub's private
    vulnerability reporting (see [SECURITY.md](SECURITY.md)).
 
@@ -60,7 +61,8 @@ for each release of this project. One release line supports both bMS 2026 R1 and
 5. Bind each tool to its API operation in `src/operations.ts`; the spec-conformance guard
    checks every route, parameter and body against the spec.
 6. Generate `src/query-params.ts` with `node scripts/generate-query-parameters.mjs`.
-7. Register the server in `bconnect-mcp-gateway/src/app.ts`.
+7. Register the server in `bconnect-mcp-gateway/src/app.ts` and add it as a `file:` dependency
+   in `bconnect-mcp-gateway/package.json`.
 8. Add tests (`src/__tests__/server.test.ts`, a `vitest.config.ts`), the README with its
    environment table and tool table (both checked by tests), and a `.env.example`.
 9. Build and test from the repo root as above.
@@ -91,9 +93,8 @@ hidden when `BCONNECT_RELEASE=25R2` and marked **(26R1)** in the server's README
 
 ## Tool Count Accountability
 
-The server table in the root `README.md` lists every server and its tool count, and each
-server's README lists every tool; a test compares those tables with the servers' real tool
-lists.
+The server table in the root `README.md` lists every server and its tool counts, and each
+server's README lists every tool; tests compare both with the servers' real tool lists.
 
 ## Type Safety
 

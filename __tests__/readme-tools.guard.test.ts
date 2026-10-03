@@ -63,3 +63,34 @@ describe.each(SERVERS)('%s README', (server) => {
     }
   });
 });
+
+describe('root README server table', () => {
+  const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
+  /** Rows: server, 26R1 count, 25R2 cell. */
+  const rows = [...readme.matchAll(/^\| `(bconnect-[a-z]+-mcp)` \| (\d+) \| ([^|]+) \|/gm)]
+    .map((m) => ({ server: m[1], n26: Number(m[2]), cell25: m[3].trim() }));
+  const totals = readme.match(/^\| \*\*Total\*\* \| \*\*(\d+)\*\* \| \*\*(\d+)\*\* \|/m);
+
+  it('lists every server once', () => {
+    expect(rows.map((r) => r.server).sort()).toEqual([...SERVERS].sort());
+  });
+
+  it('gives each server\'s tool counts for 26R1 and 25R2, and the totals', async () => {
+    let sum26 = 0;
+    let sum25 = 0;
+    for (const row of rows) {
+      const n26 = (await toolNames(row.server, '26R1')).length;
+      const n25 = (await toolNames(row.server, '25R2')).length;
+      expect(row.n26, row.server).toBe(n26);
+      // "—": the server needs 26R1 (none offered, or compliance, which lists tools that fail on 25R2).
+      if (row.cell25 === '—') {
+        expect(n25 === 0 || row.server === 'bconnect-compliance-mcp', row.server).toBe(true);
+      } else {
+        expect(Number(row.cell25), row.server).toBe(n25);
+        sum25 += n25;
+      }
+      sum26 += n26;
+    }
+    expect(totals?.slice(1).map(Number)).toEqual([sum26, sum25]);
+  });
+});

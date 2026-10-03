@@ -18,8 +18,10 @@ npm run build -w @bconnect/mcp-core
 npm run build -w bconnect-groups-mcp
 ```
 
-Configure it in your MCP client's `env` block (below), or copy `.env.example` to `.env` in
-`bconnect-groups-mcp/`: a `.env` file is read from the directory the server is started in.
+Configure it in your MCP client's `env` block (below), or keep the credentials out of the
+client's configuration with `node --env-file` ([docs/CLIENTS.md](../docs/CLIENTS.md)). A `.env`
+file (copy `.env.example`) is read only when you start the server from `bconnect-groups-mcp/` yourself; MCP
+clients start it from another directory.
 
 ```env
 BCONNECT_BASE_URL=https://<your-bms-server>:443/bconnect
