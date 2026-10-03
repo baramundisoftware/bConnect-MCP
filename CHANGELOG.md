@@ -91,11 +91,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Local secret files are ignored by git.** `.gitignore` now covers every `.env` and `.env.*`
   copy in any directory (for example the `.env.gateway` the gateway setup asks for) and a
   `secrets/` directory. The `*.example` templates stay tracked.
-- **Four write tools are now refused while write operations are disabled.**
-  `withdraw_kiosk_release`, `link_entra_id_data`, `unlink_entra_id_data` and
-  `replace_application_in_bundle` were missing from their server's write gate and sent
-  their request even with `ALLOW_WRITE_OPERATIONS` unset. They now return the same
-  refusal as every other write tool (#190).
+- **Every write tool is refused while write operations are disabled.** A few write tools were
+  missing from their server's write gate; they now return the same refusal as every other
+  write tool (#190).
 - **Updated dependencies with known advisories.** All updates stay within their major
   version: axios 1.20.0, hono 4.13.12, @hono/node-server 1.19.17, js-yaml 4.3.2,
   fast-uri 3.1.8, ip-address 10.7.2, qs 6.16.0, body-parser, and express 4.22.3 in the
@@ -103,18 +101,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gateway. `openapi-typescript`, a code generator, is now a development dependency, so a
   production install (`npm ci --omit=dev`) no longer pulls it in. dotenv stays on 16:
   from 17 on it writes to stdout, which breaks stdio MCP clients.
-- **Tool arguments are validated in every server.** The endpoints, groups and jobs servers
-  now check each tool's arguments before sending a request, as the other servers already
-  did: ID arguments must be GUIDs. Invalid input is refused with an `Invalid parameters`
-  error and nothing is sent.
-- **The shared client only sends canonical request paths.** `@bconnect/mcp-core` refuses a
-  request whose path contains dot segments, backslashes, percent-encoded separators or a
-  query string, whichever tool built it. Query parameters are always passed separately.
-- **Credential-returning write tools now require `ALLOW_SECRET_READ`.**
-  `update_bitlocker_pin` and `patch_local_admin_user_credentials` return the same BitLocker
-  recovery keys / startup PIN and LAPS password as `get_bitlocker_secrets` and
-  `get_local_admin_accounts`, but were gated only by `ALLOW_WRITE_OPERATIONS`. They now need
-  both gates. The refusal says an operator must set the variable and restart the server.
+- **Tool arguments are validated in every server.** All 13 servers check each tool's
+  arguments before sending a request; ID arguments must be GUIDs. Invalid input is refused
+  with an `Invalid parameters` error and nothing is sent.
+- **The shared client only sends request paths in canonical form**, whichever tool built
+  them. Query parameters are always passed separately.
+- **Every tool that returns credentials requires `ALLOW_SECRET_READ`**, write tools included
+  (those also need `ALLOW_WRITE_OPERATIONS`). The refusal says an operator must set the
+  variable and restart the server.
 - **Second lock in the shared client.** `@bconnect/mcp-core` refuses the BitLocker-secrets and
   LAPS operations before sending unless `ALLOW_SECRET_READ=true`, whichever tool issues the
   request, matching on the canonical request path.

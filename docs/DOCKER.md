@@ -105,10 +105,7 @@ The proxy in front of the gateway must:
   on a non-loopback bind without auth unless `MCP_ALLOW_NO_AUTH=true` is set
   explicitly.
 - **Check `Host` and `Origin`** — accept only the host names you serve the gateway
-  under, and reject browser requests from origins you don't expect. The gateway
-  checks neither itself. That also means a gateway on loopback **without** a proxy
-  can be reached by a web page open in a browser on the same host: don't browse the
-  web on a machine that runs the gateway without a proxy in front.
+  under, and reject browser requests from origins you don't expect.
 - **Strip any client-supplied identity headers** before injecting its own.
 
 Clients then connect to `https://<host>/<domain>/mcp` through the proxy, which
