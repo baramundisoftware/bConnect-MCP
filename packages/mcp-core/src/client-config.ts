@@ -61,6 +61,22 @@ function auditLevelOf(value: string | undefined): AuditLevel {
   return level;
 }
 
+/** The bMS releases the servers know, spelt as the servers compare them. */
+export const RELEASES = ["26R1", "25R2"] as const;
+
+/**
+ * BCONNECT_RELEASE: unset means 26R1. The servers compare the value exactly
+ * (`=== "26R1"`), so anything else, even `26r1` or an empty value, would quietly
+ * give the 25R2 tool set; it stops the server instead.
+ */
+function checkRelease(value: string | undefined): void {
+  if (value === undefined || (RELEASES as readonly string[]).includes(value)) {
+    return;
+  }
+  const shown = JSON.stringify(value.length > 64 ? `${value.slice(0, 64)}…` : value);
+  throw new ClientConfigError(`BCONNECT_RELEASE ${shown} isn't valid. Use 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.`);
+}
+
 const isLoopback = (hostname: string): boolean =>
   hostname === "localhost" || hostname === "[::1]" || /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname);
 
@@ -218,6 +234,7 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
     // An empty CA would silently replace the default trust store with Node's bundled CAs only.
     throw new ClientConfigError(`BCONNECT_CA_CERT_PATH points to an empty file: ${caCertPath}`);
   }
+  checkRelease(env.BCONNECT_RELEASE);
   const auditLevel = auditLevelOf(env.BCONNECT_AUDIT_LEVEL);
   const timeout = boundedInt("BCONNECT_TIMEOUT_MS", env.BCONNECT_TIMEOUT_MS, 1000, 600000, DEFAULT_TIMEOUT_MS);
   // Retries apply to reads only, whatever this says (REQ-XC-003 AC 2).

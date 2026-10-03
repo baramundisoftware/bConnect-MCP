@@ -285,3 +285,20 @@ describe('clientConfigFromEnv', () => {
     });
   });
 });
+
+describe('BCONNECT_RELEASE', () => {
+  it.each(['26R1', '25R2'])('accepts %s', (value) => {
+    expect(() => clientConfigFromEnv({ ...BASIC, BCONNECT_RELEASE: value })).not.toThrow();
+  });
+
+  it('accepts it unset (the servers then use 26R1)', () => {
+    expect(() => clientConfigFromEnv({ ...BASIC })).not.toThrow();
+  });
+
+  // The servers compare `=== "26R1"`, so each of these would quietly give the 25R2 tool set.
+  it.each(['26r1', ' 26R1', '', '2026R1', '26R2'])('refuses %j, naming it and the valid values', (value) => {
+    const run = () => clientConfigFromEnv({ ...BASIC, BCONNECT_RELEASE: value });
+    expect(run).toThrow(ClientConfigError);
+    expect(run).toThrow(`BCONNECT_RELEASE ${JSON.stringify(value)} isn't valid. Use 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.`);
+  });
+});
