@@ -85,7 +85,8 @@ describe('bconnect-servermanagement-mcp', () => {
     for (const tool of EXPECTED_26R1_ONLY_TOOLS) {expect(names).toContain(tool);}
   });
 
-  it('hides the 26R1-only tools for an empty BCONNECT_RELEASE, like the other servers', async () => {
+  // An empty value never gets this far: the startup check refuses it (client-config.ts checkRelease).
+  it('builds the 25R2 list for an empty BCONNECT_RELEASE, the value the startup check refuses', async () => {
     const { client } = await startServer('');
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(25);

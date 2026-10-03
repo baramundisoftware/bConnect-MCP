@@ -125,8 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **An invalid `BCONNECT_RELEASE` stops the server.** Only `26R1` and `25R2` (spelt exactly so) or
   leaving it unset (26R1) are accepted. Before, any other value, for example `26r1` or an empty
-  value, quietly gave the 25R2 tool set. **Breaking** for configurations with such a value. In the
-  gateway, every tool call reports the error instead.
+  value, quietly gave the 25R2 tool set. **Breaking** for configurations with such a value. The
+  gateway stops at startup too.
 - **19 write tools verified on a live bMS no longer say "Not yet verified against a live bMS."**
   Checked on a test bMS 26R1 (26.1.161): the Windows, Mac and logical-group create, update and delete
   tools, the logical-group maintenance-window tools, the job-folder tools, `create_kiosk_release`,

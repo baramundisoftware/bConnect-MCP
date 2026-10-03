@@ -75,10 +75,18 @@ describe("gateway with the gates closed", () => {
     }
   });
 
+  it("gateway.ts checks BCONNECT_RELEASE before it creates the app", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(join(here, "..", "gateway.ts"), "utf8");
+    const check = source.search(/^  checkRelease\(process\.env\.BCONNECT_RELEASE\);$/m);
+    expect(check).toBeGreaterThan(-1);
+    expect(check).toBeLessThan(source.indexOf("createApp()"));
+  });
+
   it("gateway.ts closes the gates before it creates the app", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(here, "..", "gateway.ts"), "utf8");
-    const close = source.indexOf("closeGates()");
+    const close = source.search(/^const \w+ = closeGates\(\);$/m);
     expect(close).toBeGreaterThan(-1);
     expect(close).toBeLessThan(source.indexOf("createApp()"));
   });

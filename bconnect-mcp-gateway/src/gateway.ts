@@ -23,6 +23,7 @@
  *   ALLOW_WRITE_OPERATIONS / ALLOW_SECRET_READ — ignored: kept off (see gates.ts).
  */
 
+import { checkRelease } from "@bconnect/mcp-core";
 import { createApp, domains } from "./app.js";
 import { closeGates } from "./gates.js";
 import { createLogger } from "./logger.js";
@@ -40,7 +41,17 @@ if (ignoredGates.length > 0) {
   );
 }
 
-// audit M2: hydrate credential env vars from mounted secret files (*_FILE).
+// The servers build their tool list from BCONNECT_RELEASE before any client checks
+// it, so an invalid value would quietly serve the 25R2 list. Stop instead, as a
+// stdio server does.
+try {
+  checkRelease(process.env.BCONNECT_RELEASE);
+} catch (err) {
+  log.error((err as Error).message);
+  process.exit(1);
+}
+
+// Hydrate credential env vars from mounted secret files (*_FILE).
 try {
   resolveFileSecrets();
 } catch (err) {

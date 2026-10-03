@@ -401,8 +401,8 @@ These calls are refused by the server itself, before anything is sent to bConnec
 
 | Answer | Why | What to do |
 |---|---|---|
-| `Write operation '<tool>' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.` | Write tools are off by default | An operator sets `ALLOW_WRITE_OPERATIONS=true` in the server's environment and restarts it. Through the HTTP gateway, keep it off: the gateway has no authentication (see [DOCKER.md](DOCKER.md#environment-variables)). |
-| `Secret-returning operation '<tool>' is disabled …` or `Refusing GET …: the response contains live credentials …` | BitLocker keys/PIN and LAPS passwords need their own opt-in | An operator sets `ALLOW_SECRET_READ=true` and restarts the server (independent of `ALLOW_WRITE_OPERATIONS`; keep it off in the gateway) |
+| `Write operation '<tool>' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.` | Write tools are off by default | An operator sets `ALLOW_WRITE_OPERATIONS=true` in the server's environment and restarts it. The HTTP gateway ignores it: it has no authentication (see [DOCKER.md](DOCKER.md#environment-variables)). |
+| `Secret-returning operation '<tool>' is disabled …` or `Refusing GET …: the response contains live credentials …` | BitLocker keys/PIN and LAPS passwords need their own opt-in | An operator sets `ALLOW_SECRET_READ=true` and restarts the server (independent of `ALLOW_WRITE_OPERATIONS`; the gateway ignores it) |
 | `Unknown argument(s) for <tool>: … This tool accepts: …` | The call passed an argument the tool doesn't have (often a misspelt filter) | Use one of the listed arguments |
 | `Invalid parameters: …` | An argument has the wrong type or format | See [Invalid parameters](#invalid-parameters-or-unknown-arguments) |
 | `bConnect answered with a redirect to another address. Redirects are not followed …` | bConnect (or a proxy) redirected, e.g. from `http` to `https` or to another host name | Set `BCONNECT_BASE_URL` to the final address; credentials only go to the configured host |

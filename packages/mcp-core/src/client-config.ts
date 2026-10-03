@@ -69,7 +69,7 @@ export const RELEASES = ["26R1", "25R2"] as const;
  * (`=== "26R1"`), so anything else, even `26r1` or an empty value, would quietly
  * give the 25R2 tool set; it stops the server instead.
  */
-function checkRelease(value: string | undefined): void {
+export function checkRelease(value: string | undefined): void {
   if (value === undefined || (RELEASES as readonly string[]).includes(value)) {
     return;
   }
