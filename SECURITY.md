@@ -37,6 +37,10 @@ Include as much of the following as possible:
 
 ## Security Considerations
 
+> The controls below describe the current `main` branch. Some of them are newer than the
+> latest release; 26.1.9 will be the first release that has all of them (see
+> [CHANGELOG.md](CHANGELOG.md) → Unreleased). Update when it is published.
+
 ### Credentials at rest (`.env` and client config)
 
 Each MCP server reads `BCONNECT_USERNAME`/`BCONNECT_PASSWORD` (or `BCONNECT_API_KEY`)
@@ -96,10 +100,6 @@ Always verify the bMS certificate. Never set `NODE_TLS_REJECT_UNAUTHORIZED=0`, i
 ### Audit Logging
 
 Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`none` / `security` / `write` / `all`, in any case). Levels are cumulative: `security` records every call to a security-relevant route (credential reads and changes for BitLocker and LAPS, enrollment tokens, API keys, object rights, security groups and profiles; the list is derived from the API specifications and checked by a test, see [docs/AUDIT.md](docs/AUDIT.md)), `write` adds every write, and `all` records every request. An unknown value stops the server, so a typo can't switch auditing off (in the gateway, every tool call fails with the same message instead). Audit entries are written to stderr, so auditing works in stdio mode too. A request the client refuses before sending it (a credential route while `ALLOW_SECRET_READ` is off, or a non-canonical path) is recorded as a security entry at every level except `none`.
-
-> The controls below describe the current `main` branch. Some of them are newer than the
-> latest release; 26.1.9 will be the first release that has all of them (see
-> [CHANGELOG.md](CHANGELOG.md) → Unreleased). Update when it is published.
 
 ### Write-Operation Gating
 
