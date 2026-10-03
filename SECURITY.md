@@ -80,6 +80,10 @@ Production deployments must use proper TLS certificate verification. Never set `
 
 Each server supports configurable audit logging via `BCONNECT_AUDIT_LEVEL` (`none` / `security` / `write` / `all`, in any case). Levels are cumulative: `security` records every call to a security-relevant route (credential reads and changes for BitLocker and LAPS, enrollment tokens, API keys, object rights, security groups and profiles; the list is derived from the API specifications and checked by a test, see [docs/AUDIT.md](docs/AUDIT.md)), `write` adds every write, and `all` records every request. An unknown value stops the server, so a typo can't switch auditing off (in the gateway, every tool call fails with the same message instead). Audit entries are written to stderr, so auditing works in stdio mode too. A request the client refuses before sending it (a credential route while `ALLOW_SECRET_READ` is off, or a non-canonical path) is recorded as a security entry at every level except `none`.
 
+> The controls below describe the current `main` branch. Some of them are newer than the
+> latest release; 26.1.9 will be the first release that has all of them (see
+> [CHANGELOG.md](CHANGELOG.md) → Unreleased). Update when it is published.
+
 ### Write-Operation Gating
 
 Write/mutating tools are **disabled by default**. A server exposes them only when `ALLOW_WRITE_OPERATIONS=true` is set; otherwise every write tool returns a clear "disabled" error. Leave it unset for monitoring / reporting deployments where mutation must be prevented. Secret-returning tools (BitLocker recovery keys, LAPS local-admin passwords) are additionally gated behind `ALLOW_SECRET_READ`.
