@@ -237,6 +237,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **The guides under `docs/` match the code again.** Commands that didn't work are fixed: the
+  `docker run` examples (missing `MCP_ALLOW_NO_AUTH=true`), the gateway build steps, `claude mcp add`,
+  the n8n HTTP Request example (missing `Accept` header) and the mock-tier setup (needs a 26R1 mock).
+  TROUBLESHOOTING.md quotes the messages the servers print, with new sections on why a server exits
+  at startup and on refused calls. The guides no longer offer `NODE_TLS_REJECT_UNAUTHORIZED=0` or
+  `curl -k` as options. They also say that only the shipped compose file keeps write tools and secret reads out of
+  the gateway, so any other start must leave both unset, and give the n8n version and token figures as measured. `bconnect-groups-mcp` ships a
+  `.env.example` like the other servers. A new docs guard checks that the guides name only settings
+  the code reads and quote only messages it prints.
 - **Job assign tools say how to check their reach** (#178). `assign_job_to_logical_group` points to
   `list_endpoints_by_logical_group` with `includeSubfolders: true` and `PageSize: 1`, whose `totalItems`
   is the number of endpoints the assignment reaches at all sub-group levels (a plain member list shows

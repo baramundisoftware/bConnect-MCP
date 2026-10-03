@@ -74,7 +74,7 @@ secrets) instead of plain env vars — see [HTTP Gateway](#http-gateway-bconnect
 
 ### TLS Configuration
 
-Production deployments must use proper TLS certificate verification. Never set `NODE_TLS_REJECT_UNAUTHORIZED=0` in production — it disables all certificate validation. See [docs/INSTALLATION.md](docs/INSTALLATION.md) for the correct TLS setup using `BCONNECT_CA_CERT_PATH`.
+Production deployments must use proper TLS certificate verification. Never set `NODE_TLS_REJECT_UNAUTHORIZED=0`, in production or in a test against a real bMS: it disables all certificate validation, so the credentials go to whoever answers. See [docs/INSTALLATION.md](docs/INSTALLATION.md) for the correct TLS setup using `BCONNECT_CA_CERT_PATH`.
 
 ### Audit Logging
 
@@ -135,7 +135,7 @@ These items are not exploitable as written, but are recommended practices to kee
 
 This boundary blocks malformed or attacker-influenced arguments from reaching the bConnect REST call. An audit (2026-05-05) confirmed 0 bypassing tool cases across all 13 servers, and 50 explicit validator regression tests prove every server rejects its known-bad-argument shapes. Removing or weakening the pre-pass on any tool case re-opens the prompt-injection-via-arguments surface — treat changes to `index.ts` dispatch logic as security-relevant.
 
-**Mock-integration HTTP boundary checks.** Per-server `npm run test:mock` runs the production `BConnectClient` axios path against `bConnect-Mock` (51 tests across 13 servers). It is a security-adjacent property: the test the unit tier cannot see is whether each module call hits the URL and HTTP method documented in the OpenAPI spec. P29.2 — `list_detected_vulnerabilities_for_endpoint` calling the wrong path — was an internal correctness bug, but the same class of mistake on a write tool could route a `PATCH` to an unintended resource. The integration tier raises the floor against that class. Recipe: `docs/MOCK_INTEGRATION_TESTING.md`. The tests skip cleanly when the mock is unreachable, so the tier is safe to leave wired into CI.
+**Mock-integration HTTP boundary checks.** Per-server `npm run test:mock` runs the production `BConnectClient` axios path against `bConnect-Mock` (51 tests across 13 servers; run by hand, not in CI). It is a security-adjacent property: the test the unit tier cannot see is whether each module call hits the URL and HTTP method documented in the OpenAPI spec. `list_detected_vulnerabilities_for_endpoint` calling the wrong path was an internal correctness bug, but the same class of mistake on a write tool could route a `PATCH` to an unintended resource. The integration tier raises the floor against that class. Recipe: `docs/MOCK_INTEGRATION_TESTING.md`. The tests skip when the mock is unreachable and the run still passes, so a green run without the mock tests nothing.
 
 **MCP-registry publication (forward-looking).** Should bConnect-MCP servers ever be published to a public MCP registry, marketplace poisoning becomes in-scope. The April 2026 OX Security analysis found 9 of 11 surveyed MCP registries to be compromised. Mitigation prerequisites for any future public listing: signed release artefacts (the existing `releases/` GPG-signature workflow), a pinned canonical install path documented in this `SECURITY.md`, and a published verification recipe so consumers can reject impostors. Today bConnect-MCP is not on any registry — leave it that way until the above is in place.
 

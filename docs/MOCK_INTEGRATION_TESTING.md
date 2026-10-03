@@ -3,23 +3,41 @@
 A per-server tier of integration tests that exercise the production
 `BConnectClient` HTTP path against a running `bConnect-Mock` instance.
 
-These tests catch the class of bug that unit tests can't see: wrong REST
-URLs, missing path segments, wrong HTTP methods, mistaken query shapes.
-The `list_detected_vulnerabilities_for_endpoint` URL bug fixed in
-P29.2 (commit `3f73e24`) is the canonical example.
+These tests catch the class of bug that unit tests can't see: wrong resource
+paths and HTTP methods below the domain segment, mistaken query shapes. They
+don't catch everything: the mock ignores the domain segment (`/endpoints/…`,
+`/compliance/…`) and serves a few routes that aren't in the API specification.
+`npm test` checks every route against the specification (the spec-conformance
+guard), which covers those cases.
+The canonical example is `list_detected_vulnerabilities_for_endpoint`,
+which once called the wrong path (see the comment in
+`bconnect-compliance-mcp/src/__tests__/mock-integration/compliance.mock.test.ts`).
 
 ## Running
 
-The mock must be reachable. Default endpoint is `http://127.0.0.1:13433`.
+The tests expect the mock at `http://127.0.0.1:13433` and a **26R1** mock: the
+compliance and software tests call 26R1-only routes (`/v2.0/Rules`, `Bundles`),
+which the mock's default 25R2 mode answers with 404. The mock listens on 3433
+inside the container, so map it to 13433:
 
 ```bash
+docker run -d --name bconnect-mock -p 127.0.0.1:13433:3433 \
+  -e BCONNECT_BMS_VERSION=26r1 \
+  ghcr.io/baramundisoftware/bconnect-mock:latest
+
 docker ps --filter name=bconnect-mock                # confirm mock is up
 cd bconnect-<domain>-mcp && npm run test:mock        # run one server's tier
 ```
 
+Unset `BCONNECT_BASE_URL`, `BCONNECT_USERNAME` and `BCONNECT_PASSWORD` in your
+shell first. The test client prefers them over the mock URL, so with them set
+the tests would send those credentials to that host, with certificate checks off.
+
 Skip behavior: every test calls `checkMockAvailable()` in `beforeAll`.
-If the mock is unreachable, every test in the file early-returns. The run
-reports passing — never failing — so this tier is safe to invoke in CI.
+If the mock is unreachable, every test in the file early-returns and the run
+**passes without testing anything**; only a console warning
+(`bConnectMock not reachable at … — … mock tests skipped`) says so. Check for that warning before you
+trust a green run.
 
 Override the mock URL with `BCONNECT_MOCK_URL`:
 
@@ -27,9 +45,8 @@ Override the mock URL with `BCONNECT_MOCK_URL`:
 BCONNECT_MOCK_URL=http://other-host:13433 npm run test:mock
 ```
 
-Running a server itself against the mock (not this tier): bConnect-Mock serves 25R2 unless it is
-started for 26R1 (`BCONNECT_BMS_VERSION=26r1`). Set the server's `BCONNECT_RELEASE` to the same
-release. The software server's startup check probes `/software/v2.0/Bundles` for `26R1` (the
+Running a server itself against the mock (not this tier): set the server's `BCONNECT_RELEASE`
+to the release the mock was started for (`BCONNECT_BMS_VERSION`, default 25R2). The software server's startup check probes `/software/v2.0/Bundles` for `26R1` (the
 default), which a 25R2 mock answers with 404, so the server would stop at startup.
 
 ## Layout
@@ -104,33 +121,18 @@ production client path per server against the mock.
    - `BCONNECT_MOCK_URL=http://127.0.0.1:1 npm run test:mock` skips cleanly.
    - `npm test` still runs only the unit tier and passes.
 
-## Known fixture IDs (for hardcoding when needed)
+## Fixture IDs
 
-Pulled from `standard-readwrite` (default profile). Verify with `curl` against
-the mock if a test fails because a fixture changed.
-
-| Domain                  | First-list ID example                      |
-|-------------------------|--------------------------------------------|
-| logical groups          | `d1000001-0001-0001-0001-000000000001`     |
-| windows endpoint        | `d0000001-0001-0001-0001-000000000001`     |
-| asset                   | `a0000001-0001-0001-0001-000000000001`     |
-| ad group                | `a9000001-0001-0001-0001-000000000001`     |
-| mobile device rule      | `c0011111-0000-0000-0000-000000000001`     |
-| bitlocker endpoint      | `bl000001-0001-0001-0001-000000000001`     |
-| job definition          | `bb000001-0001-0001-0001-000000000001`     |
-| os folder               | `a1000001-0001-0001-0001-000000000001`     |
-| security group          | `d1000001-0001-0001-0001-000000000001`     |
-| software bundle         | `b0011111-0000-0000-0000-000000000001`     |
-| universal dynamic group | `d0011111-0000-0000-0000-000000000001`     |
-| variable definition     | `a0000001-0001-0001-0001-000000000001`     |
-
-`NONEXISTENT_GUID = '00000000-0000-0000-0000-000000000000'` is exported
-from `helpers.ts` for 404 tests.
+The tests don't hardcode IDs; they take them from a list call. If you need one,
+do the same, or look it up in the mock's fixtures: `fixtures/<profile>/` in the
+bConnect-Mock repository (default profile `standard-readonly`). With
+`BCONNECT_BMS_VERSION=26r1`, 26R1-only data such as compliance rules, bundles and
+universal dynamic groups comes from `fixtures/standard-26r1/`.
 
 ## What this tier deliberately does NOT do
 
-- It doesn't run during `npm test`. It's an opt-in tier; CI calls it
-  separately when a mock instance is provisioned.
+- It doesn't run during `npm test`, in CI or in `npm run ci`. Nothing runs it
+  automatically: run it by hand against a running mock.
 - It doesn't replace the unit tier. Argument-validation, dispatch wiring,
   and tool-name coverage are all unit concerns.
 - It doesn't try to be exhaustive. 2–5 tests per server is enough to catch

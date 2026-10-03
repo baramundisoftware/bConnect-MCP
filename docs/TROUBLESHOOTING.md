@@ -5,15 +5,17 @@ Complete guide for diagnosing and resolving common issues with the bConnect MCP 
 ## Table of Contents
 
 1. [Quick Diagnostics](#quick-diagnostics)
-2. [Build Errors](#build-errors)
-3. [Authentication Errors](#authentication-errors)
-4. [Network & Connection Errors](#network--connection-errors)
-5. [API Errors (4xx / 5xx)](#api-errors-4xx--5xx)
-6. [Configuration Issues](#configuration-issues)
-7. [MCP Tool Errors](#mcp-tool-errors)
-8. [Performance Issues](#performance-issues)
-9. [Debugging Techniques](#debugging-techniques)
-10. [Getting Help](#getting-help)
+2. [Server Exits at Startup](#server-exits-at-startup)
+3. [Build Errors](#build-errors)
+4. [Authentication Errors](#authentication-errors)
+5. [Network & Connection Errors](#network--connection-errors)
+6. [API Errors (4xx / 5xx)](#api-errors-4xx--5xx)
+7. [Configuration Issues](#configuration-issues)
+8. [MCP Tool Errors](#mcp-tool-errors)
+9. [Refused Calls](#refused-calls)
+10. [Performance Issues](#performance-issues)
+11. [Debugging Techniques](#debugging-techniques)
+12. [Getting Help](#getting-help)
 
 ---
 
@@ -28,25 +30,71 @@ cd bconnect-endpoints-mcp
 node build/index.js
 ```
 
-Expected output: `bconnect-endpoints-mcp started on stdio`
+Expected output (on stderr), once the startup check has reached bConnect:
+
+```text
+bconnect-endpoints-mcp: verifying bConnect API connectivity...
+bconnect-endpoints-mcp: API connectivity verified.
+bconnect-endpoints-mcp started on stdio
+```
+
+If the check fails, the server prints `Connection test failed: …` and
+`bconnect-endpoints-mcp: cannot reach bConnect API at <url>. Check BCONNECT_BASE_URL, credentials, and network.`
+and exits. The `Connection test failed` line names the cause (wrong credentials, untrusted
+certificate, timeout, unreachable host); the sections below explain each one.
 
 ### Verify Configuration
 
-Each server reads its own `.env` (or inherits from environment). Required variables:
+A server reads the environment it is started with, plus a `.env` file in the **current working
+directory** (not the server's directory). Claude Desktop and Claude Code start servers from another
+directory, so for them put the variables in the client configuration's `env` block. Needed:
 
 ```env
 BCONNECT_BASE_URL=https://your-bms-server:443/bconnect
-BCONNECT_USERNAME=your-username
-BCONNECT_PASSWORD=your-password
-BCONNECT_RELEASE=26R1          # or 25R2
+BCONNECT_API_KEY=your-api-key           # or BCONNECT_USERNAME + BCONNECT_PASSWORD
+BCONNECT_RELEASE=26R1                   # optional, default 26R1; 25R2 for a 25R2 bMS
 ```
 
 ### Test API Connection Directly
 
 ```bash
-curl -k -u "username:password" \
+curl --cacert /path/to/bms-ca.pem -u "username" -w '\nHTTP %{http_code}\n' \
   "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
 ```
+
+curl asks for the password, so it doesn't end up in your shell history. With an API key,
+use `-H "X-Api-Key: <key>"` instead of `-u`. Leave out `--cacert` if your system already
+trusts the bMS certificate. Don't add `-k`: it skips the certificate check, so curl would
+succeed where the MCP servers fail.
+
+---
+
+## Server Exits at Startup
+
+A server checks its settings, then calls bConnect once, before it accepts MCP requests. If
+either fails it prints the reason on stderr and exits. Claude then shows the server as
+failed or disconnected; the reason is in the client's MCP log.
+
+| Message (stderr) | Cause | Fix |
+|---|---|---|
+| `Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required` | No credential reached the server | Set them in the client config's `env` block (a `.env` file is read only from the working directory) |
+| `BCONNECT_BASE_URL uses http:// for <host>, which would send the bConnect credentials unencrypted. …` | `http://` to a host other than this machine | Use `https://`; `BCONNECT_ALLOW_INSECURE_HTTP=true` only for a test setup |
+| `BCONNECT_TIMEOUT_MS="…" isn't valid. Use a whole number from 1000 to 600000.` (same for `BCONNECT_MAX_RETRIES`, 0 to 5) | Not a whole number, or out of range | Fix the value |
+| `BCONNECT_AUDIT_LEVEL "…" isn't valid. Use one of: none, security, write, all.` | Misspelt audit level | Fix the value; the server refuses to run with auditing in an unknown state |
+| `BCONNECT_CA_CERT_PATH can't be read: <path> (<code>)` or `… points to an empty file` | CA file missing, unreadable or empty | Fix the path or the file |
+| `Connection test failed: …` then `<server>: cannot reach bConnect API at <url>. Check BCONNECT_BASE_URL, credentials, and network.` | The startup call failed. The first line names the cause: 401, TLS, timeout, unreachable | See [Authentication Errors](#authentication-errors), [TLS Certificate Errors](#tls-certificate-errors) or [Network & Connection Errors](#network--connection-errors) |
+
+The startup call goes to a light list route of the server's domain. Two cases to know:
+
+- **25R2 and the software server:** on 25R2 the software server checks
+  `/software/v2.0/InstalledWindowsSoftware`, which can take longer than the default 30 s on a
+  large bMS. Raise `BCONNECT_TIMEOUT_MS` for that server (e.g. `90000`).
+- **26R1-only servers on 25R2:** compliance and universaldynamicgroups fail the check, because a
+  25R2 bMS doesn't have their routes. Don't configure them for a 25R2 bMS.
+
+`BCONNECT_SKIP_CONNECTIVITY_CHECK=true` skips the startup call (the settings are still checked).
+The server then starts even if bConnect is unreachable, and the first tool call reports the
+problem instead.
 
 ---
 
@@ -71,7 +119,11 @@ npm run build                          # then all servers (or -w bconnect-endpoi
 
 ## Authentication Errors
 
-### Error: "Authentication failed. Check your username and password."
+### Error: "Authentication failed" (HTTP 401)
+
+The server log says `Authentication failed. Check your credentials (username/password or API key).`
+A tool call answers `bConnect answered HTTP 401 (Unauthorized) to …` followed by
+`Authentication failed: bConnect rejected the configured credentials (API key or username/password).`
 
 **Cause:** Invalid credentials (HTTP 401)
 
@@ -79,13 +131,16 @@ npm run build                          # then all servers (or -w bconnect-endpoi
 
 1. **Test credentials with curl:**
    ```bash
-   curl -k -u "username:password" \
+   curl --cacert /path/to/bms-ca.pem -u "username" -w '\nHTTP %{http_code}\n' \
      "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
    ```
+   `HTTP 401` means bConnect rejected the credentials (see
+   [Test API Connection Directly](#test-api-connection-directly) for the options).
 
 2. **Check for special characters in password:**
-   - Passwords with `$`, `` ` ``, `\`, `"` need escaping in `.env`
-   - Use single quotes: `BCONNECT_PASSWORD='P@$$w0rd!'`
+   - In `.env`, an unquoted `#` starts a comment: `BCONNECT_PASSWORD=ab#cd` sets `ab`. Put such a
+     password in single quotes: `BCONNECT_PASSWORD='ab#cd'` (`$` needs no escaping in `.env`)
+   - In a JSON client config, escape `"` and `\` as `\"` and `\\`
    - **ASCII characters only.** bConnect's API rejects a password with `§`, an umlaut or `ß` (401)
      even though Windows accepts it. The servers refuse such a password before signing in, so no
      attempt counts toward the account lockout. Use an ASCII-only password or an API key.
@@ -104,17 +159,11 @@ npm run build                          # then all servers (or -w bconnect-endpoi
 2. Verify API access is enabled for the account
 3. Use an administrator account for testing
 
-### Error: "Token expired" or "Session timeout"
-
-**Cause:** A long-running operation exceeded the request timeout.
-
-**Solution:** Each request waits up to `BCONNECT_TIMEOUT_MS` (default 30000, i.e. 30 s). For large datasets, page through results with a smaller `PageSize` so each call completes well within the timeout, or raise `BCONNECT_TIMEOUT_MS` (see below).
-
 ---
 
 ## Network & Connection Errors
 
-### Error: "Cannot connect to bConnect API."
+### Error: "Cannot connect to the bConnect API."
 
 **Cause:** Server unreachable or network issue
 
@@ -123,8 +172,10 @@ npm run build                          # then all servers (or -w bconnect-endpoi
 1. **Verify server is reachable:**
    ```bash
    ping your-bms-server
-   curl -k https://your-bms-server:443/bconnect/
+   curl -sS -o /dev/null -w 'HTTP %{http_code}\n' https://your-bms-server:443/bconnect/
    ```
+   Any `HTTP` code means the server is reachable. A certificate error means it is reachable
+   but not trusted: see [TLS Certificate Errors](#tls-certificate-errors).
 
 2. **Verify firewall:** Port 443 must be open between client and server.
 
@@ -133,9 +184,10 @@ npm run build                          # then all servers (or -w bconnect-endpoi
 4. **Check the URL path.** `BCONNECT_BASE_URL` must end in `/bconnect`
    (e.g. `https://your-bms-server:443/bconnect`).
 
-### Error: "ECONNREFUSED" or "Connection refused"
+### Connection refused
 
-Nothing is listening on the port in `BCONNECT_BASE_URL` (443 by default; some installations use 444 — see above). Check that the baramundi bConnect service is running on the BMS server and that the port matches:
+The servers report a refused connection as "Cannot connect to the bConnect API." too (above).
+A common cause: nothing is listening on the port in `BCONNECT_BASE_URL` (443 by default; some installations use 444 — see above). Check that the baramundi bConnect service is running on the BMS server and that the port matches:
 
 ```powershell
 Get-Service | Where-Object {$_.Name -like "*baramundi*"}
@@ -156,7 +208,11 @@ Each request waits up to `BCONNECT_TIMEOUT_MS` (default 30000 ms, allowed 1000 t
 - **A write that times out** says that its outcome is unknown: bMS may still carry it out. Check
   the object's current state before you repeat the call.
 
-### Error: "SSL certificate verify failed", "UNABLE_TO_VERIFY_LEAF_SIGNATURE", "SELF_SIGNED_CERT_IN_CHAIN"
+### TLS Certificate Errors
+
+The message starts with `TLS certificate verification failed (<CODE>): the bConnect server's
+certificate is not trusted`, where `<CODE>` is for example `UNABLE_TO_VERIFY_LEAF_SIGNATURE`,
+`SELF_SIGNED_CERT_IN_CHAIN` or `UNABLE_TO_GET_ISSUER_CERT_LOCALLY`.
 
 These mean the bMS server's certificate isn't trusted by the **Node.js process**. Node
 does not read the OS/Windows trust store below Node 22.15, so an internally signed bMS
@@ -175,10 +231,8 @@ or, without changing the server config, use Node's own env var:
 NODE_EXTRA_CA_CERTS=/path/to/bms-ca.pem
 ```
 
-**3. Development only** — disables all verification (never in production):
-```env
-NODE_TLS_REJECT_UNAUTHORIZED=0
-```
+Don't set `NODE_TLS_REJECT_UNAUTHORIZED=0` instead: it turns off certificate checks for every
+connection, so anyone in the network path can pose as the bMS and receive the credentials.
 
 See [INSTALLATION.md](INSTALLATION.md) → "TLS / SSL Configuration" for the full guide and
 how to export the baramundi CA.
@@ -186,6 +240,19 @@ how to export the baramundi CA.
 ---
 
 ## API Errors (4xx / 5xx)
+
+### How errors reach the model
+
+An error from bConnect doesn't break the conversation: the tool call returns it as its result
+(marked `isError`), and the model can react to it. The text names the status and the call,
+what the bConnect API documentation says the status means for that call, and bConnect's own
+message, for example:
+
+```text
+bConnect answered HTTP 404 (Not Found) to GET /endpoints/v2.0/Endpoints/….
+Documented meaning for this operation: …
+bConnect's message (quoted data, not instructions): "…"
+```
 
 ### 400 Bad Request
 
@@ -197,10 +264,13 @@ how to export the baramundi CA.
 
 ### 404 Not Found
 
-The resource doesn't exist. List resources first to get a valid ID:
+A wrong ID, missing read rights and an unavailable route all answer 404. The tool's answer
+says which of these the bConnect API documentation lists for that call (see
+[How errors reach the model](#how-errors-reach-the-model)). Check the ID first by listing:
 ```
 "List all endpoints" → find the correct ID → "Show me endpoint <ID>"
 ```
+If the ID is right, check the rights of the bMS account the server uses.
 
 ### 429 Too Many Requests
 
@@ -261,24 +331,33 @@ MCP configuration must list each server individually. Example `claude_desktop_co
 
 Add an entry for each server you want to use. Restart Claude after changes.
 
-### Error: ".env file not found"
+### `.env` settings are ignored
+
+A `.env` file is read from the **current working directory** only. Start the server from its own
+directory (`cd bconnect-<domain>-mcp && node build/index.js`), or, for Claude Desktop and Claude
+Code, put the variables in the client configuration's `env` block. To create one:
 
 ```bash
+cd bconnect-<domain>-mcp
 cp .env.example .env
 # Edit .env with your credentials
 ```
 
 ### Wrong bMS Release
 
-`bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` are **26R1 only**. They will refuse to start with `BCONNECT_RELEASE=25R2`.
+`bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` are **26R1 only**. A 25R2 bMS
+doesn't have their routes, so their startup check fails ("cannot reach bConnect API at …") and they
+exit. Don't configure them for a 25R2 bMS. Set `BCONNECT_RELEASE` to the bMS release (default
+`26R1`): with `25R2`, tools that exist only in 26R1 answer
+`<tool> is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.`
 
 ---
 
 ## MCP Tool Errors
 
-### Error: "Tool not found"
+### Error: "Unknown tool: <name>"
 
-The correct server is not loaded in Claude. Verify the MCP configuration includes the server that exposes the tool you need:
+The client called a tool the server doesn't have. Usually the correct server is not loaded in Claude. Verify the MCP configuration includes the server that exposes the tool you need:
 
 | Tool domain | Server |
 |---|---|
@@ -296,15 +375,37 @@ The correct server is not loaded in Claude. Verify the MCP configuration include
 | Compliance (26R1) | `bconnect-compliance-mcp` |
 | Universal Dynamic Groups (26R1) | `bconnect-universaldynamicgroups-mcp` |
 
-### Error: "Invalid parameters for tool"
+### Invalid parameters or unknown arguments
+
+The answer starts with `Invalid parameters: …` or `Unknown argument(s) for <tool>: …`. The call was refused before anything was sent to bConnect. `Unknown argument(s)` names the
+arguments the tool accepts. Common causes of `Invalid parameters`:
+
 
 - GUIDs must be strings in `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` format
 - `PageSize` must be a number, not a string
 - Booleans must be `true`/`false`, not `"true"`/`"false"`
 
-### Error: "Tool execution timeout"
+### A tool call times out
 
-Requests use a fixed 30-second timeout. Use pagination with a smaller `PageSize` for large datasets so each call returns well within it.
+Each request waits up to `BCONNECT_TIMEOUT_MS` (default 30000). See
+[The bConnect API didn't answer …](#error-the-bconnect-api-didnt-answer-within-30-s-bconnect_timeout_ms)
+above. Your MCP client may also have its own timeout; keep `(BCONNECT_MAX_RETRIES + 1) × BCONNECT_TIMEOUT_MS`
+below it.
+
+---
+
+## Refused Calls
+
+These calls are refused by the server itself, before anything is sent to bConnect.
+
+| Answer | Why | What to do |
+|---|---|---|
+| `Write operation '<tool>' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.` | Write tools are off by default | An operator sets `ALLOW_WRITE_OPERATIONS=true` in the server's environment and restarts it. Through the HTTP gateway, keep it off: the gateway has no authentication (see [DOCKER.md](DOCKER.md#environment-variables)). |
+| `Secret-returning operation '<tool>' is disabled …` or `Refusing GET …: the response contains live credentials …` | BitLocker keys/PIN and LAPS passwords need their own opt-in | An operator sets `ALLOW_SECRET_READ=true` and restarts the server (independent of `ALLOW_WRITE_OPERATIONS`; keep it off in the gateway) |
+| `Unknown argument(s) for <tool>: … This tool accepts: …` | The call passed an argument the tool doesn't have (often a misspelt filter) | Use one of the listed arguments |
+| `Invalid parameters: …` | An argument has the wrong type or format | See [Invalid parameters](#invalid-parameters-or-unknown-arguments) |
+| `bConnect answered with a redirect to another address. Redirects are not followed …` | bConnect (or a proxy) redirected, e.g. from `http` to `https` or to another host name | Set `BCONNECT_BASE_URL` to the final address; credentials only go to the configured host |
+| `bConnect didn't answer the <METHOD> request (…)` … outcome unknown | A write timed out or the connection closed after it was sent | bMS may still carry it out: check the object's state before repeating the call |
 
 ---
 
@@ -332,34 +433,40 @@ Use filters and specific queries to reduce result set size.
 ### Test API Directly
 
 ```bash
-# Test authentication
-curl -v -k -u "username:password" \
+# Test authentication (-v shows the TLS handshake and the status line; curl asks for the password)
+curl -v --cacert /path/to/bms-ca.pem -u "username" \
   "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1"
 
 # Save response
-curl -k -u "username:password" \
+curl --cacert /path/to/bms-ca.pem -u "username" \
   "https://your-bms-server:443/bconnect/endpoints/v2.0/Endpoints?PageSize=1" \
-  -o response.json && cat response.json | jq .
+  -o response.json && jq . response.json
 ```
 
 ### Enable Verbose Logging
 
+The 13 servers write their messages to stderr; they have no debug level. To record every request
+they send, set `BCONNECT_AUDIT_LEVEL=all` (see [AUDIT.md](AUDIT.md)). The gateway reads
+`LOG_LEVEL` (`debug`, `info`, `warn`, `error`):
+
 ```env
-DEBUG=*
-LOG_LEVEL=debug
+BCONNECT_AUDIT_LEVEL=all   # servers: one entry per request, on stderr
+LOG_LEVEL=debug            # gateway only
 ```
 
 ### Run Tests
 
 ```bash
-# Unit tests across all 13 servers (root aggregate)
+# Build first: the shared core, then all servers + template
+# (`npm run build` alone doesn't rebuild the core, and tests of a server run
+# against its last build)
+npm run build -w @bconnect/mcp-core && npm run build
+
+# Unit tests across all 13 servers and the suite-wide checks (root aggregate)
 npm test
 
 # Per-server tests
 cd bconnect-<domain>-mcp && npm test
-
-# Build all servers + template
-npm run build
 
 # Audit all manifests for high-severity advisories
 npm run audit
@@ -385,11 +492,11 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 
 ## Common Mistake Checklist
 
-- [ ] `.env` file exists and all required variables are set
-- [ ] Credentials verified with curl
-- [ ] `BCONNECT_BASE_URL` includes port (e.g. `:443`)
-- [ ] `BCONNECT_RELEASE` matches your bMS version (`26R1` or `25R2`)
-- [ ] TLS configured correctly (`BCONNECT_CA_CERT_PATH` or `NODE_TLS_REJECT_UNAUTHORIZED=0` for dev)
+- [ ] Variables set where the server reads them (client config `env` block, or `.env` in the working directory)
+- [ ] Credentials verified with curl; password ASCII only (or use an API key)
+- [ ] `BCONNECT_BASE_URL` is `https://…/bconnect`, with the port if bConnect doesn't use 443
+- [ ] `BCONNECT_RELEASE` matches your bMS version (default `26R1`; set `25R2` for a 25R2 bMS)
+- [ ] bMS certificate trusted: Node.js ≥ 22.15 (OS store), `BCONNECT_CA_CERT_PATH` or `NODE_EXTRA_CA_CERTS`; verification not turned off
 - [ ] Claude MCP config lists the correct server(s) for the domain you need
 - [ ] Claude was restarted after config changes
 - [ ] BMS server is reachable (ping / curl test)
@@ -410,4 +517,4 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 
 ---
 
-*bConnect MCP Suite v26.1.7 — 13 servers, 276 tools, bMS 26R1 / 25R2*
+*bConnect MCP Suite — 13 servers; 276 tools on bMS 26R1, 240 on 25R2*

@@ -8,8 +8,8 @@
 # TLS-terminating, authenticating reverse proxy (see README / docs/DOCKER.md).
 # Downstream bMS calls use a single BCONNECT_* service credential.
 #
-# For single-developer stdio use (Claude Desktop / Claude Code) use
-# docker-compose.yml instead.
+# For single-developer stdio use (Claude Desktop / Claude Code), run the
+# servers directly with Node.js instead (docs/INSTALLATION.md).
 #
 # See docs/INSTALLATION.md and docs/N8N.md for full setup.
 #
@@ -20,7 +20,7 @@
 #
 # Health check:
 #   curl http://localhost:3001/health
-#   # → {"status":"ok","count":13}
+#   # → {"status":"ok","servers":[...],"count":13}
 
 services:
 

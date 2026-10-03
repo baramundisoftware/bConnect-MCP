@@ -21,8 +21,13 @@ can't switch auditing off; in the gateway, every tool call reports it instead.
 
 Each entry is one line on **stderr**, never stdout, so auditing works with stdio clients (Claude
 Desktop, Claude Code). Security entries start with `[SECURITY AUDIT]`, others with `[AUDIT]`.
-A recorded call writes two entries: the request, then its response or error. An entry has a
-timestamp, the user, the method, the path and, for the response, the status and the duration.
+A recorded call writes two entries: the request, then its response (with the status) or its
+error (with the error message). The response or error entry carries the duration, unless it
+rounds to 0 ms. A read retried under `BCONNECT_MAX_RETRIES` writes a request entry for each
+attempt, and one response or error entry for the final outcome. A request the client
+refuses before sending it writes one entry ending in `- REFUSED: <reason>`. Every entry has a
+timestamp, the user (the configured username, or `api-key-user` with an API key), the method and
+the path.
 Control characters in a path are escaped, so one entry can't forge another. Request parameters and
 bodies aren't recorded (no setting turns that on), so neither are credentials.
 

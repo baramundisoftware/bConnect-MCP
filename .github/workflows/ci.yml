@@ -24,8 +24,9 @@
 # a reason to promote it into `gate`.
 #
 # ── Relationship to scripts/ci-local.sh ────────────────────────────────────
-# That script remains the richer local gate (jscpd, semgrep, the opt-in
-# mock-integration tier that needs a live bConnect-Mock). This workflow is
+# That script remains the richer local gate (jscpd, semgrep). Neither it nor
+# this workflow runs the mock-integration tier (`npm run test:mock`, needs a
+# live bConnect-Mock); that one is run by hand. This workflow is
 # deliberately NOT a second copy of it: it runs the root `vitest run`, which
 # covers every per-server suite and every suite-wide guard in one pass, so
 # there is no per-server list here to drift out of step with the one there.

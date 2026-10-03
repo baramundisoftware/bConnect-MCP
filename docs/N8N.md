@@ -1,7 +1,7 @@
 # n8n Integration Guide — bConnect MCP Suite
 
 This guide explains how to use the bConnect MCP gateway from n8n workflows —
-connecting the MCP Client node to the gateway and calling bConnect tools.
+connecting the MCP Client Tool node to the gateway and calling bConnect tools.
 
 > **⚠️ The gateway has no built-in authentication.** Run n8n and the gateway on a
 > **trusted private network** (e.g. the same Docker network, gateway on loopback),
@@ -13,7 +13,8 @@ connecting the MCP Client node to the gateway and calling bConnect tools.
 
 - bConnect MCP gateway running and reachable from n8n on a private network
   (see [INSTALLATION.md — Option C](INSTALLATION.md#option-c--gateway-http-multi-user))
-- n8n 1.22 or later (MCP Client node requires n8n 1.22+)
+- n8n 1.104.0 or later: the gateway speaks MCP over **HTTP Streamable**, which the MCP Client
+  Tool node supports from 1.104.0 on. Choose that transport in the node (not SSE).
 
 ---
 
@@ -39,7 +40,7 @@ bMS RBAC bounds what workflows can do.
 
 ## Step 1 — Reach the gateway from n8n
 
-Point the n8n MCP Client node at the gateway URL on your private network — no
+Point the n8n MCP Client Tool node at the gateway URL on your private network — no
 `Authorization` header is needed by the gateway itself. For example, with n8n and
 the gateway on the same Docker network:
 
@@ -53,52 +54,43 @@ carrying your proxy/IdP token).
 
 ---
 
-## Step 2 — Add an MCP Server Credential
+## Step 2 — Add an MCP Client Tool to the AI Agent
 
-The MCP Server credential bundles the URL (and any proxy auth) so you can reuse
-it across multiple workflow nodes.
-
-1. In n8n go to **Credentials → Add Credential → MCP Server**
-2. Fill in:
+1. Add an **AI Agent** node to your workflow.
+2. Connect an **MCP Client Tool** node to the agent's **Tool** input.
+3. Configure it:
 
 | Field | Value |
 |-------|-------|
-| **Name** | e.g. `bConnect Endpoints` |
-| **URL** | `http://mcp-gateway:3001/endpoints/mcp` (private network) |
-| **Authentication** | **None** on a trusted private network. If a proxy fronts the gateway, use **Header Auth** with whatever token/session the proxy requires. |
+| **Endpoint** | `http://mcp-gateway:3001/endpoints/mcp` (private network) |
+| **Server Transport** | **HTTP Streamable** (the default in current n8n versions; the gateway doesn't serve SSE) |
+| **Authentication** | **None** on a trusted private network. If a proxy fronts the gateway, use **Bearer Auth** or **Header Auth** with whatever token the proxy requires. |
+| **Tools to Include** | **All**, or **Selected** to offer the agent only some tools (fewer tokens, see below) |
 
-3. Save
-
-Repeat for each domain you need — one MCP Server credential per domain URL.
-
----
-
-## Step 3 — Wire the AI Agent node
-
-1. Add an **AI Agent** node to your workflow
-2. Add a **Tool: MCP** sub-node connected to the AI Agent
-3. In the MCP tool node, set **Credential** to your `bConnect Endpoints` credential
-
-The AI Agent now has access to exactly the 66 endpoints tools (~41,000 tokens) —
+The AI Agent now has access to exactly the 66 endpoints tools (~14,000 tokens) —
 nothing from the other 12 domains is loaded.
 
 ```
 Workflow:
   [Trigger] → [AI Agent] → (answer)
                   │
-                  └── [Tool: MCP]  credential: bConnect Endpoints
-                                   → /endpoints/mcp (66 tools)
+                  └── [MCP Client Tool]  → /endpoints/mcp (66 tools)
 ```
 
-**Adding a second domain** — add another MCP tool sub-node with its own credential:
+**Adding a second domain** — add another MCP Client Tool node with that domain's endpoint:
 
 ```
   [AI Agent]
       │
-      ├── [Tool: MCP]  credential: bConnect Endpoints  → /endpoints/mcp  (66 tools)
-      └── [Tool: MCP]  credential: bConnect Software   → /software/mcp   (19 tools)
-                                                                     total: ~53,000 tokens
+      ├── [MCP Client Tool]  → /endpoints/mcp  (66 tools)
+      └── [MCP Client Tool]  → /software/mcp   (19 tools)
+                                        total: ~19,000 tokens
 ```
+
+> **Write tools are off through the gateway.** With `docker-compose.gateway.yml`, the agent sees
+> write tools in the list, but each call answers "Write operation '…' is disabled"; setting the
+> variable in `.env.gateway` has no effect (see [DOCKER.md → Environment Variables](DOCKER.md#environment-variables)).
+> Use **Tools to Include → Selected** to hide them.
 
 ---
 
@@ -122,14 +114,14 @@ Each bConnect domain is a separate URL path on the gateway:
 | `universaldynamicgroups` | `/universaldynamicgroups/mcp` | Universal Dynamic Groups (26R1 only) |
 | `updatemanagement` | `/updatemanagement/mcp` | Windows Update management |
 
-To use multiple domains in one workflow, add one MCP Client node per domain —
-each pointing to a different URL path but using the same credential.
+To use multiple domains in one workflow, add one MCP Client Tool node per domain,
+each with its domain's endpoint (as in Step 2).
 
 ---
 
-## Step 3 — Call a Tool via HTTP Request Node (Alternative)
+## Alternative — Call a Tool with the HTTP Request Node
 
-If the MCP Client node is not available in your n8n version, use an
+If the MCP Client Tool node is not available in your n8n version, use an
 **HTTP Request** node to call the gateway directly.
 
 **Node configuration:**
@@ -139,7 +131,9 @@ If the MCP Client node is not available in your n8n version, use an
 | **Method** | POST |
 | **URL** | `http://mcp-gateway:3001/endpoints/mcp` (private network) |
 | **Authentication** | None on a private network; Header Auth with your proxy's token if a proxy fronts the gateway |
+| **Send Headers** | `Accept: application/json, text/event-stream` (required: without it the gateway answers `406 Not Acceptable`) |
 | **Content Type** | JSON |
+| **Response Format** | Text (the answer is a server-sent event, not plain JSON; see below) |
 
 **Body** (JSON):
 
@@ -170,6 +164,25 @@ If the MCP Client node is not available in your n8n version, use an
 
 The response contains all tool names and their input schemas.
 
+**Reading the response.** The gateway answers in the MCP Streamable HTTP format,
+as a server-sent event:
+
+```text
+event: message
+data: {"result":{"content":[{"type":"text","text":"…"}]},"jsonrpc":"2.0","id":1}
+```
+
+The JSON-RPC answer is the `data:` line. Parse it in a **Code** node after the
+HTTP Request node, for example:
+
+```javascript
+const line = $json.data.split('\n').find((l) => l.startsWith('data: '));
+return [{ json: JSON.parse(line.slice('data: '.length)) }];
+```
+
+If the tool call failed (bConnect unreachable, an API error, a refused write),
+the result carries `"isError": true` and the reason in `content[0].text`.
+
 ---
 
 ## Multi-User Notes
@@ -198,21 +211,27 @@ server** and injects all returned tool definitions — name, description, full J
 input schema — into the LLM system prompt **on every single invocation**. Tools
 are not loaded lazily.
 
-Each tool definition costs roughly 600–700 tokens. The bConnect MCP suite has
-276 tools across 13 domains.
+Each tool definition costs roughly 250 tokens on average (from about 200 to
+over 400; the group member tools carry the largest schemas). The bConnect MCP
+suite has 276 tools across 13 domains on 26R1 (240 on 25R2).
 
 ### Token cost per configuration
 
 | Domains connected | Tools | Approx. tokens consumed |
 |-------------------|-------|------------------------|
-| `endpoints` only | 66 | ~41,000 |
-| `endpoints` + `software` | 85 | ~53,000 |
-| `endpoints` + `jobs` + `assets` | 126 | ~78,000 |
-| `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 161 | ~100,000 |
-| All 13 domains | 276 | ~170,000+ |
+| `endpoints` only | 66 | ~14,000 |
+| `endpoints` + `software` | 85 | ~19,000 |
+| `endpoints` + `jobs` + `assets` | 126 | ~29,000 |
+| `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 161 | ~38,000 |
+| All 13 domains | 276 | ~68,000 |
 
-At 170,000 tokens for tool definitions alone, you have consumed the entire context
-window of many models — before any conversation, user data, or system instructions.
+Measured on 26R1 from the gateway's `tools/list` answers (about 240,000 characters
+of tool definitions for all 13 domains, at roughly 3.5 characters per token). The
+exact count depends on the model's tokenizer and on how n8n passes the tools on.
+
+At ~68,000 tokens for tool definitions alone, every call of the AI Agent spends a
+large part of the context window before any conversation, user data, or system
+instructions.
 
 ### Rule: connect only what the workflow needs
 
@@ -228,7 +247,8 @@ Each n8n workflow should configure only the domains it actually uses:
 | Full IT ops assistant | pick 3–5 max |
 
 The gateway's domain-per-URL design makes this straightforward — add one MCP
-Client node per domain you need and leave the rest out.
+Client Tool node per domain you need and leave the rest out. Within a domain,
+**Tools to Include → Selected** narrows it further.
 
 ### Never connect all 13 domains to a single AI Agent
 
@@ -243,7 +263,9 @@ effective reasoning budget for actual work.
 | Problem | Cause | Fix |
 |---------|-------|-----|
 | `404 Unknown MCP domain` | Wrong domain in the URL | Check the URL path matches one of the domains listed above |
-| `405 Method Not Allowed` | GET request sent instead of POST | Ensure the HTTP Request node uses method POST |
+| `405 Method Not Allowed` | GET request sent instead of POST, or the MCP Client Tool node set to **Server Sent Events** | Use POST in the HTTP Request node; choose **HTTP Streamable** in the MCP Client Tool node |
+| `406 Not Acceptable` | HTTP Request node without the `Accept` header | Add `Accept: application/json, text/event-stream` |
+| `Write operation '…' is disabled` | Writes are off through the gateway | See the note in Step 2 |
 | Gateway not reachable | Network or firewall issue | Verify `curl http://mcp-gateway:3001/health` returns `{"status":"ok","servers":[…],"count":13}` |
 | Gateway refuses to start | Non-loopback bind without `MCP_ALLOW_NO_AUTH=true` | Bind loopback, or set `MCP_ALLOW_NO_AUTH=true` once a proxy is in front |
 | Tool call fails with credential error | bConnect rejects the service credential | Verify the `BCONNECT_API_KEY` (or `BCONNECT_USERNAME`/`BCONNECT_PASSWORD`) in `.env.gateway` is valid in baramundi Management Center → Server Management → API Keys |
@@ -260,4 +282,4 @@ effective reasoning budget for actual work.
 
 ---
 
-*bConnect MCP Suite v26.1.7 — see [INSTALLATION.md](INSTALLATION.md) for full setup instructions.*
+*bConnect MCP Suite — see [INSTALLATION.md](INSTALLATION.md) for full setup instructions.*
