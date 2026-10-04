@@ -48,6 +48,10 @@ the gateway on the same Docker network:
 http://mcp-gateway:3001/<domain>/mcp
 ```
 
+The gateway answers only host names it knows: `mcp-gateway` (the Compose default), `localhost`
+and the names in `MCP_GATEWAY_ALLOWED_HOSTS`. If n8n reaches it under another name, add that
+name there, or the call gets `403`.
+
 If you front the gateway with an authenticating proxy, use the proxy URL and add
 whatever credential the proxy requires (e.g. an n8n **Header Auth** credential
 carrying your proxy/IdP token).

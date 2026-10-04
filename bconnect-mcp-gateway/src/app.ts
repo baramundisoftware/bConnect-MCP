@@ -9,6 +9,7 @@
 
 import express, { Request, Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { allowedHosts, hostCheck } from "@bconnect/mcp-core";
 
 import { createServer as createActivedirectoryServer } from "bconnect-activedirectory-mcp";
 import { createServer as createAssetsServer } from "bconnect-assets-mcp";
@@ -57,6 +58,11 @@ export function getServerFactory(domain: string): Function | undefined {
   return Object.hasOwn(serverFactories, domain) ? serverFactories[domain] : undefined;
 }
 
+/** The host names the gateway answers to: loopback plus MCP_GATEWAY_ALLOWED_HOSTS. */
+export function gatewayAllowedHosts(): string[] {
+  return allowedHosts(process.env.MCP_GATEWAY_ALLOWED_HOSTS);
+}
+
 // ─── App factory ──────────────────────────────────────────────────────────────
 
 export function createApp(): express.Application {
@@ -64,6 +70,15 @@ export function createApp(): express.Application {
   const logger = createLogger();
   // Access log first so it records every request's final status (incl. 401/429).
   app.use(createAccessLogMiddleware(logger));
+  // Only requests addressed to an allowed host name: loopback names plus
+  // MCP_GATEWAY_ALLOWED_HOSTS (DNS-rebinding protection). Header values are logged quoted.
+  app.use(hostCheck(gatewayAllowedHosts(), (reason, host, origin) => {
+    logger.warn("refused: request host name not allowed (MCP_GATEWAY_ALLOWED_HOSTS)", {
+      reason,
+      host: JSON.stringify((host ?? "").slice(0, 100)),
+      ...(origin !== undefined && { origin: JSON.stringify(origin.slice(0, 100)) }),
+    });
+  }));
   // Cap request body size (default 1mb) to bound per-request memory (audit H2).
   app.use(express.json({ limit: process.env.MCP_GATEWAY_MAX_BODY ?? "1mb" }));
   // Per-client-IP inbound rate limiting. The gateway has no built-in auth

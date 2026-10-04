@@ -172,7 +172,8 @@ mcpServers:
 `bconnect-mcp-gateway` serves all 13 servers on one HTTP port, each at `/<domain>/mcp`
 (Streamable HTTP). It has **no authentication of its own**: clients reach it through your
 authenticating, TLS-terminating reverse proxy, which supplies whatever token or session it
-requires. Write tools and secret reads are off in the gateway. Setup:
+requires. Write tools and secret reads are off in the gateway, and it answers only host names it
+knows (`MCP_GATEWAY_ALLOWED_HOSTS`). Setup:
 [INSTALLATION.md → Option C](INSTALLATION.md#option-c--gateway-http-multi-user) and
 [DOCKER.md](DOCKER.md).
 

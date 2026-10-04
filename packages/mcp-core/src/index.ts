@@ -18,3 +18,4 @@ export * from "./lazy-client.js";
 export * from "./paging.js";
 export * from "./group-scope.js";
 export * from "./security-routes.js";
+export * from "./host-check.js";
