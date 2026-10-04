@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> There is no 26.1.8 release: changes merged under that label (#112) were reverted (#134). The next
-> release is 26.1.9.
+## [26.1.9] - 2026-10-04
+
+> There is no 26.1.8 release: changes merged under that label (#112) were reverted (#134).
 
 ### Upgrading from 26.1.7
 - **Set `BCONNECT_BASE_URL`.** Without it the server no longer starts (before, it fell back to a
@@ -578,7 +579,8 @@ providing 212 tools across endpoints, jobs, assets, software, compliance, and mo
 - Transport modes: stdio (local) and HTTP (network/Docker)
 - Unit tests and mock-integration tests across all servers
 
-[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.7...HEAD
+[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.9...HEAD
+[26.1.9]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.7...v26.1.9
 [26.1.7]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.2...v26.1.7
 [26.1.2]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.1...v26.1.2
 [26.1.1]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.0...v26.1.1
