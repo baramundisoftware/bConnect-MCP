@@ -72,7 +72,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a host name other than `localhost`, `127.0.0.1`, `[::1]` or one listed in
   `MCP_GATEWAY_ALLOWED_HOSTS` (gateway) / `MCP_ALLOWED_HOSTS` (a server's HTTP mode), or a browser
   request from another origin, gets 403. `docker-compose.gateway.yml` allows `mcp-gateway`, its
-  service name. **Breaking** for a proxy that passes on the original `Host`: list that name.
+  service name; setting the variable replaces that default. **Breaking** for a proxy that passes
+  on the original `Host`: list that name (and keep `mcp-gateway`).
 - **The gateway keeps write tools and secret reads off, however it is started.** It has no
   authentication of its own, so it now ignores `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ`
   wherever they are set and logs a warning at startup if either was. Before, only

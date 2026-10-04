@@ -165,7 +165,7 @@ are the code's; where Compose or the image sets another, the table says so.
 | `BCONNECT_RATE_LIMIT_ENABLED` / `_MAX_REQUESTS` / `_WINDOW_MS` | Outbound limit towards bMS, per tool call for now (#160) | `false` / `100` / `60000` |
 | `MCP_ALLOW_NO_AUTH` | Allow a non-loopback gateway bind (asserts a proxy is in front) | `false` |
 | `MCP_GATEWAY_PORT` | Gateway listen port | `3001` |
-| `MCP_GATEWAY_ALLOWED_HOSTS` | Host names the gateway answers to besides `localhost`, `127.0.0.1` and `[::1]`, comma-separated (ports ignored); requests addressed to other names get 403. List the name your proxy passes on as `Host`, and the Docker service name for clients on the same network | — (Compose: `mcp-gateway`) |
+| `MCP_GATEWAY_ALLOWED_HOSTS` | Host names the gateway answers to besides `localhost`, `127.0.0.1` and `[::1]`, comma-separated (ports ignored); requests addressed to other names get 403. List the name your proxy passes on as `Host`, and the Docker service name for clients on the same network | — (Compose: `mcp-gateway`; setting it replaces that, so keep `mcp-gateway` in your list) |
 | `MCP_GATEWAY_BIND` | Gateway bind address | `127.0.0.1` (the image and Compose: `0.0.0.0`, see [Manual `docker run`](#manual-docker-run)) |
 | `MCP_GATEWAY_RATE_LIMIT_ENABLED` | Per-client-IP inbound rate limiting | `true` |
 | `MCP_GATEWAY_RATE_LIMIT_MAX` | Max requests per window, per client IP | `300` |

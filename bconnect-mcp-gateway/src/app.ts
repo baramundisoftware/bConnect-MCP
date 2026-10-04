@@ -58,9 +58,12 @@ export function getServerFactory(domain: string): Function | undefined {
   return Object.hasOwn(serverFactories, domain) ? serverFactories[domain] : undefined;
 }
 
-/** The host names the gateway answers to: loopback plus MCP_GATEWAY_ALLOWED_HOSTS. */
-export function gatewayAllowedHosts(): string[] {
-  return allowedHosts(process.env.MCP_GATEWAY_ALLOWED_HOSTS);
+/**
+ * The host names the gateway answers to: loopback plus MCP_GATEWAY_ALLOWED_HOSTS.
+ * `onIgnored` hears about list entries that can't match (wildcards, paths, spaces).
+ */
+export function gatewayAllowedHosts(onIgnored?: (entry: string) => void): string[] {
+  return allowedHosts(process.env.MCP_GATEWAY_ALLOWED_HOSTS, onIgnored);
 }
 
 // ─── App factory ──────────────────────────────────────────────────────────────

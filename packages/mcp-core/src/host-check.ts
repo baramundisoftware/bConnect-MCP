@@ -5,32 +5,51 @@
  * Allowed: localhost, 127.0.0.1 and [::1], plus the names the operator lists
  * (the gateway's MCP_GATEWAY_ALLOWED_HOSTS, a server's MCP_ALLOWED_HOSTS).
  * Ports are ignored. A request with an `Origin` (browsers send one, MCP clients
- * usually don't) is accepted only when that origin's host name is allowed too.
+ * usually don't) is accepted only when that origin's host name is allowed too;
+ * scheme and port aren't compared, so any page served from an allowed name counts.
+ * Header values must be plain host names or addresses (no user info, path or query).
  */
 
 /** Host names always allowed: the loopback names. */
 export const LOOPBACK_HOSTS = ["localhost", "127.0.0.1", "[::1]"] as const;
 
-/**
- * The allowed host names: the loopback names plus a comma-separated list
- * (e.g. the value of MCP_GATEWAY_ALLOWED_HOSTS), lower-cased, without ports.
- */
-export function allowedHosts(list: string | undefined): string[] {
-  const extra = (list ?? "")
-    .split(",")
-    .map((entry) => hostnameOf(entry.trim()))
-    .filter((name): name is string => Boolean(name));
-  return [...new Set([...LOOPBACK_HOSTS, ...extra])];
-}
+/** A host name, an IPv4 address or a bracketed IPv6 address, with an optional port; nothing else. */
+const HOST_VALUE = /^(?:[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*|\[[0-9A-Fa-f:.]+\])(?::\d{1,5})?$/;
 
-/** The host name of a Host header value or origin (`name`, `name:port`, `http://name:port`), or undefined. */
-function hostnameOf(value: string): string | undefined {
-  if (value === "") {return undefined;}
+/** The lower-cased host name of a strict Host value (`name` or `name:port`), or undefined. */
+function hostOfHeader(value: string): string | undefined {
+  if (!HOST_VALUE.test(value)) {return undefined;}
   try {
-    return new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : `http://${value}`).hostname.toLowerCase();
+    return new URL(`http://${value}`).hostname.toLowerCase();
   } catch {
     return undefined;
   }
+}
+
+/** The host of an Origin (`scheme://host[:port]`, nothing after it), or undefined. */
+function hostOfOrigin(value: string): string | undefined {
+  const match = /^[a-z][a-z0-9+.-]*:\/\/([^/]+)$/i.exec(value);
+  return match ? hostOfHeader(match[1]) : undefined;
+}
+
+/**
+ * The allowed host names: the loopback names plus a comma-separated list (e.g.
+ * the value of MCP_GATEWAY_ALLOWED_HOSTS), lower-cased, without ports. An entry
+ * may be `name`, `name:port` or `scheme://name[:port]`; an IPv6 address may be
+ * given without brackets. `onIgnored` is told about every entry that can't
+ * match (wildcards, spaces, paths), so a typo doesn't go unnoticed.
+ */
+export function allowedHosts(list: string | undefined, onIgnored?: (entry: string) => void): string[] {
+  const extra: string[] = [];
+  for (const raw of (list ?? "").split(",")) {
+    const entry = raw.trim();
+    if (entry === "") {continue;}
+    const bare = entry.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "");
+    const withBrackets = /^[0-9A-Fa-f]*:[0-9A-Fa-f:.]*$/.test(bare) ? `[${bare}]` : bare;
+    const name = hostOfHeader(withBrackets);
+    if (name) {extra.push(name);} else {onIgnored?.(entry);}
+  }
+  return [...new Set([...LOOPBACK_HOSTS, ...extra])];
 }
 
 /** Why a request is refused, or undefined when its Host and Origin are allowed. */
@@ -38,12 +57,12 @@ export function hostCheckRefusal(
   headers: { host?: string; origin?: string },
   allowed: readonly string[],
 ): string | undefined {
-  const host = hostnameOf(headers.host ?? "");
+  const host = hostOfHeader(headers.host ?? "");
   if (!host || !allowed.includes(host)) {
     return "host";
   }
   if (headers.origin !== undefined) {
-    const origin = hostnameOf(headers.origin);
+    const origin = hostOfOrigin(headers.origin);
     if (!origin || !allowed.includes(origin)) {
       return "origin";
     }

@@ -5,6 +5,7 @@
 import { describe, expect, it } from 'vitest';
 import { spawn } from 'node:child_process';
 import http from 'node:http';
+import net from 'node:net';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { allowedHosts, hostCheckRefusal } from '../packages/mcp-core/src/host-check.js';
@@ -19,6 +20,16 @@ describe('allowedHosts', () => {
     expect(allowedHosts(' mcp-gateway , MCP.Company.com:443,https://proxy.example ,,localhost'))
       .toEqual(['localhost', '127.0.0.1', '[::1]', 'mcp-gateway', 'mcp.company.com', 'proxy.example']);
   });
+
+  it('accepts an IPv6 address with or without brackets', () => {
+    expect(allowedHosts('fd00::1,[fd00::2]')).toEqual(['localhost', '127.0.0.1', '[::1]', '[fd00::1]', '[fd00::2]']);
+  });
+
+  it('reports entries that can never match instead of dropping them silently', () => {
+    const ignored: string[] = [];
+    expect(allowedHosts('*.corp, mcp gw, host/path, ok.example', (e) => ignored.push(e))).toContain('ok.example');
+    expect(ignored).toEqual(['*.corp', 'mcp gw', 'host/path']);
+  });
 });
 
 describe('hostCheckRefusal', () => {
@@ -28,7 +39,8 @@ describe('hostCheckRefusal', () => {
     expect(hostCheckRefusal({ host }, allowed)).toBeUndefined();
   });
 
-  it.each(['evil.example', 'evil.example:3001', '127.0.0.1.evil.example', 'localhost.evil.example', '10.0.0.5:3001'])('refuses Host %s', (host) => {
+  it.each(['evil.example', 'evil.example:3001', '127.0.0.1.evil.example', 'localhost.evil.example', '10.0.0.5:3001',
+    'x@localhost', 'evil.example:3001@localhost', 'localhost/evil', 'localhost\\evil', 'localhost?x', 'localhost#x', '%6cocalhost', 'localhost.'])('refuses Host %s', (host) => {
     expect(hostCheckRefusal({ host }, allowed)).toBe('host');
   });
 
@@ -41,10 +53,22 @@ describe('hostCheckRefusal', () => {
     expect(hostCheckRefusal({ host: 'localhost:3001', origin: 'http://localhost:3001' }, allowed)).toBeUndefined();
   });
 
-  it.each(['http://evil.example', 'null', 'https://evil.example:3001'])('refuses Origin %s even with an allowed Host', (origin) => {
+  it.each(['http://evil.example', 'null', 'https://evil.example:3001', 'file://', 'http://localhost@evil.example', 'http://localhost/path'])('refuses Origin %s even with an allowed Host', (origin) => {
     expect(hostCheckRefusal({ host: 'localhost:3001', origin }, allowed)).toBe('origin');
   });
 });
+
+/** A port nothing listens on right now. */
+function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const probe = net.createServer();
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+      const { port } = probe.address() as net.AddressInfo;
+      probe.close(() => resolve(port));
+    });
+  });
+}
 
 /** POST an MCP initialize with explicit headers (fetch can't set Host). */
 function post(port: number, path: string, headers: Record<string, string>): Promise<{ status: number; body: string }> {
@@ -90,13 +114,16 @@ describe('gateway', () => {
 describe('servers in HTTP mode', () => {
   it.each(SERVERS)('%s checks the host name before its MCP handler', (server) => {
     const source = readFileSync(join(ROOT, server, 'src', 'index.ts'), 'utf8');
-    const check = source.indexOf('app.use(hostCheck(allowedHosts(process.env.MCP_ALLOWED_HOSTS)');
+    const check = source.indexOf('app.use(hostCheck(hosts');
+    expect(source).toContain('const hosts = allowedHosts(process.env.MCP_ALLOWED_HOSTS');
     expect(check).toBeGreaterThan(-1);
+    // Before the body parser and the MCP handler, so a refused request isn't parsed first.
+    expect(check).toBeLessThan(source.indexOf('app.use(express.json())'));
     expect(check).toBeLessThan(source.indexOf('app.post("/mcp"'));
   });
 
   it('a built server refuses a rebinding host name and answers localhost', async () => {
-    const port = 39000 + Math.floor(Math.random() * 1000);
+    const port = await freePort();
     const child = spawn(process.execPath, [join(ROOT, 'bconnect-endpoints-mcp', 'build', 'index.js')], {
       env: {
         PATH: process.env.PATH ?? '', MCP_TRANSPORT: 'http', MCP_PORT: String(port),
@@ -108,6 +135,7 @@ describe('servers in HTTP mode', () => {
     try {
       await new Promise<void>((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error('server did not start')), 15000);
+        child.once('exit', (code) => { clearTimeout(timer); reject(new Error(`server exited with ${code}`)); });
         child.stderr.on('data', (chunk: Buffer) => {
           if (chunk.toString().includes('listening on')) { clearTimeout(timer); resolve(); }
         });

@@ -344,11 +344,14 @@ async function main(): Promise<void> {
 
   if (transportMode === "http") {
     const app = express();
-    app.use(express.json());
-    // Only requests addressed to an allowed host name (DNS-rebinding protection).
-    app.use(hostCheck(allowedHosts(process.env.MCP_ALLOWED_HOSTS), (reason) => {
+    // Only requests addressed to an allowed host name (DNS-rebinding protection), checked first.
+    const hosts = allowedHosts(process.env.MCP_ALLOWED_HOSTS, (entry) => {
+      console.error(`${serverName}: MCP_ALLOWED_HOSTS entry ${JSON.stringify(entry)} ignored: not a host name or address`);
+    });
+    app.use(hostCheck(hosts, (reason) => {
       console.error(`${serverName}: refused a request whose ${reason} isn't an allowed host name (MCP_ALLOWED_HOSTS)`);
     }));
+    app.use(express.json());
 
     app.post("/mcp", async (req, res) => {
       const { server } = createServer();

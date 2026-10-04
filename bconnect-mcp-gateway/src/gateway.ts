@@ -82,7 +82,10 @@ if (!isLoopbackBind && process.env.MCP_ALLOW_NO_AUTH !== "true") {
 app.listen(port, bind, () => {
   log.info("listening", { url: `http://${bind}:${port}`, servers: domains.length });
   log.info("domains", { domains: domains.join(",") });
-  log.info("allowed host names", { hosts: gatewayAllowedHosts().join(",") });
+  const hosts = gatewayAllowedHosts((entry) => {
+    log.warn("MCP_GATEWAY_ALLOWED_HOSTS entry ignored: not a host name or address", { entry: JSON.stringify(entry) });
+  });
+  log.info("allowed host names", { hosts: hosts.join(",") });
   log.warn(
     "no built-in auth — authentication is delegated to the fronting reverse proxy (ADR-0003); " +
       "the gateway uses a single BCONNECT_* service credential",
