@@ -44,6 +44,11 @@ import { createGuard } from './lib/guard.mjs';
 import { expectedAnswer } from './lib/expected.js';
 import { classifyByProfile, endpointTypesFrom, type Profile } from './lib/profile.js';
 import { CHILD_GUARD, readGuardLog, startupFailures, type LoggedRequest } from './lib/child.js';
+import { checkBuilds } from './lib/build.js';
+
+// An outdated or missing build (the core or a server) stops the run here, before any
+// request: it would test old code against the live bMS (lib/build.ts, #273).
+checkBuilds(ROOT, ['packages/mcp-core', ...SERVERS]);
 
 const ENV_FILE = process.env.BCONNECT_LIVE_ENV ?? join(ROOT, '.env.local');
 // A missing or incomplete env file fails the run here, before any test (lib/env.ts).

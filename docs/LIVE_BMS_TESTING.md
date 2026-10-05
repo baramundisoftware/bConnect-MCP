@@ -36,8 +36,11 @@ URL has no TLS at all: the servers refuse it for any host other than this machin
 
    ```bash
    npm ci
-   npm run build -w @bconnect/mcp-core && npm run build
+   npm run build    # the shared core, then every server
    ```
+
+   Build again after every pull: the tier refuses to start while the core's or a server's
+   build is older than its sources, naming the package.
 
 4. **Export the CA** that signed the bMS certificate to a PEM file. A bMS usually
    sends only its own certificate, so the CA comes from the server's certificate
@@ -90,6 +93,7 @@ README and client-config guards (`__tests__/lib/env-reads.ts`), not from a hand-
 list. Nothing comes in from the repo `.env` or the shell.
 
 The run fails before any test when:
+- the shared core's or a server's build is missing or older than its sources (run `npm run build`);
 - the env file doesn't exist;
 - it sets no `BCONNECT_BASE_URL`, or not an http(s) URL;
 - `BCONNECT_CA_CERT_PATH` names a missing file;

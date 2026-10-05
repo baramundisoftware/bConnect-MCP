@@ -26,14 +26,13 @@ first, see [README.md](README.md#getting-started-step-by-step).
 
 ```bash
 npm ci
-npm run build -w @bconnect/mcp-core   # the shared core first; `npm run build` doesn't build it
-npm run build                         # the 13 servers and the template
+npm run build                         # the shared core, then the 13 servers and the template
 npm test                              # unit tests and the suite-wide guards
 npm run lint
 ```
 
-After a change in `packages/mcp-core`, build the core and then all servers again: the server
-tests run against the servers' last build.
+After a change in `packages/mcp-core`, run `npm run build` again: the server tests run against
+the servers' last build, and the live tier refuses an outdated one.
 
 ## Server Naming Convention
 
