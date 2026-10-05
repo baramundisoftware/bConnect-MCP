@@ -31,8 +31,9 @@ npm test                              # unit tests and the suite-wide guards
 npm run lint
 ```
 
-After a change in `packages/mcp-core`, run `npm run build` again: the server tests run against
-the servers' last build, and the live tier refuses an outdated one.
+After a change in `packages/mcp-core` or a server, run `npm run build` again: the server tests
+run against the servers' last build, and `npm test` and the live tier refuse a build that is
+older than its sources.
 
 ## Server Naming Convention
 
