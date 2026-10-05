@@ -68,7 +68,7 @@
     "dotenv": "^16.4.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-arm64-gnu": "^4.63.6"
+    "@rollup/rollup-linux-arm64-gnu": "^4.64.0"
   },
   "devDependencies": {
     "@bconnect/mcp-core": "*",
