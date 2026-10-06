@@ -131,7 +131,10 @@ describe('HTTP mode bind address', () => {
     const exit = vi.fn((code: number) => { throw new Error(`exit ${code}`); }) as unknown as (code: number) => never;
     const entry = { name: 'bconnect-runtime-mcp', createServer: mcpServer, clients: serverClients(TestClient, env) };
     await expect(startServer(entry, { env, error: (l) => lines.push(l), exit, connectStdio: vi.fn(), listening })).rejects.toThrow('exit 1');
-    expect(lines.at(-1)).toMatch(new RegExp(`^bconnect-runtime-mcp: refusing to bind ${bind.replace(/\./g, '\\.')} — .*MCP_ALLOW_NO_AUTH=true`));
+    // Plain string checks: a pattern built from the address would need full escaping.
+    const line = lines.at(-1) ?? '';
+    expect(line.startsWith(`bconnect-runtime-mcp: refusing to bind ${bind} — `)).toBe(true);
+    expect(line).toContain('MCP_ALLOW_NO_AUTH=true');
     expect(listening).not.toHaveBeenCalled();
   });
 });
