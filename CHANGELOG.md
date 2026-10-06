@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [26.1.9] - 2026-10-07
+## [26.1.9] - 2026-10-06
 
 > There is no 26.1.8 release: changes merged under that label (#112) were reverted (#134).
 
