@@ -107,28 +107,6 @@ for dir in bconnect-*-mcp; do
   [ -f "${dir}/README.md" ] && cp "${dir}/README.md" "${PKG}/${dir}/" || true
 done
 
-cat > "${PKG}/INSTALL.md" <<'INSTALLEOF'
-# Installation
-
-## Prerequisites
-- Node.js 20 or later (https://nodejs.org/) — 22.15+ recommended (honors the OS/Windows CA trust store)
-- Your bMS server address and credentials
-
-## Steps
-1. Extract this archive.
-2. From the extracted root, install runtime dependencies for the whole suite:
-
-       npm ci --omit=dev
-
-   This wires the shared `@bconnect/mcp-core` package that every server imports.
-3. Copy `.env.example` to `.env` and fill in your credentials.
-4. Start a server, e.g.:
-
-       node bconnect-endpoints-mcp/build/index.js
-
-For the HTTP gateway and Docker options, see README.md and the docs/ folder.
-INSTALLEOF
-
 ( cd "${PKG}" && zip -qr "../${ARCHIVE}" . )
 sha256sum "${ARCHIVE}" > "${ARCHIVE}.sha256"
 log "Built ${ARCHIVE} ($(du -h "${ARCHIVE}" | cut -f1)) + .sha256"
