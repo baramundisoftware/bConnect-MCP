@@ -459,10 +459,9 @@ LOG_LEVEL=debug            # gateway only
 ### Run Tests
 
 ```bash
-# Build first: the shared core, then all servers + template
-# (`npm run build` alone doesn't rebuild the core, and tests of a server run
-# against its last build)
-npm run build -w @bconnect/mcp-core && npm run build
+# Build first: the shared core, then all servers + template (tests of a server
+# run against its last build, and `npm test` refuses an outdated one)
+npm run build
 
 # Unit tests across all 13 servers and the suite-wide checks (root aggregate)
 npm test

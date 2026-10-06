@@ -63,8 +63,7 @@ if [ "${SKIP_BUILD}" -eq 0 ]; then
   log "Installing workspaces (npm ci)"
   npm ci
   log "Building shared core + all servers"
-  npm run build -w @bconnect/mcp-core
-  npm run build
+  npm run build   # the shared core first, then every server and the template
 else
   warn "Skipping build — packaging whatever is already in build/ dirs"
 fi

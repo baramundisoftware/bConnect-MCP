@@ -18,9 +18,9 @@ COPY . .
 # Install every workspace from the root lockfile (reproducible).
 RUN npm ci
 
-# Build the shared core first, then all 13 servers (+ template).
-RUN npm run build -w @bconnect/mcp-core \
- && npm run build
+# The root build script builds the shared core first, then all 13 servers
+# (+ template), and stops at the first failure.
+RUN npm run build
 
 # The root .gitignore excludes build/, which npm honours when packing file:
 # deps. An empty .npmignore per package overrides that so the compiled build/
