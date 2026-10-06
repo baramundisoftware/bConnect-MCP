@@ -2,16 +2,19 @@
  * bconnect-mcp-gateway — file-based secrets (audit M2).
  */
 
-import { describe, it, expect, afterEach } from "vitest";
-import { writeFileSync, unlinkSync } from "node:fs";
+import { describe, it, expect, afterAll, afterEach } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync, unlinkSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
 import { resolveFileSecrets } from "../secrets.js";
 
+// A private directory per run (unique name, owner-only), not a fixed name in the shared temp dir.
+const dir = mkdtempSync(join(tmpdir(), "gw-secrets-"));
+
 function tmp(name: string, content: string): string {
-  const p = join(tmpdir(), name);
-  writeFileSync(p, content, "utf8");
+  const p = join(dir, name);
+  writeFileSync(p, content, { encoding: "utf8", mode: 0o600 });
   return p;
 }
 
@@ -20,6 +23,7 @@ describe("resolveFileSecrets", () => {
   afterEach(() => {
     for (const p of created.splice(0)) { try { unlinkSync(p); } catch { /* ignore */ } }
   });
+  afterAll(() => { rmSync(dir, { recursive: true, force: true }); });
 
   it("reads <KEY>_FILE into <KEY> and trims whitespace", () => {
     const p = tmp("m2-pw.secret", "  s3cr3t\n");

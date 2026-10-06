@@ -121,7 +121,16 @@ function literalText(file: string): string {
   return parts.join(' ');
 }
 
-const PRODUCTION = SOURCES.filter((f) => !/[\\/]__tests__[\\/]|\.test\.ts$/.test(f));
+/**
+ * Production code: no path segment below the repo root is `__tests__`, and the
+ * file is no `*.test.ts`. Judged below the root, so a checkout that itself lives
+ * under a directory named `__tests__` still has production code.
+ */
+function isProduction(file: string, root = ROOT): boolean {
+  return !relative(root, file).split(/[\\/]/).includes('__tests__') && !file.endsWith('.test.ts');
+}
+
+const PRODUCTION = SOURCES.filter((f) => isProduction(f));
 
 /** Words, without quotes, brackets and separators, so literal and doc text compare alike. */
 const words = (s: string): string[] =>
@@ -176,6 +185,19 @@ describe('docs — TROUBLESHOOTING.md quotes messages the code prints', () => {
     }
     // A comment or a test file doesn't count as printed.
     expect(PRODUCTION.some((f) => f.includes('__tests__'))).toBe(false);
+  });
+
+  it('tells production code from tests by the path below the repo root (self-check)', () => {
+    const root = join('/', 'work', 'repo');
+    expect(isProduction(join(root, 'packages', 'mcp-core', 'src', 'tool-errors.ts'), root)).toBe(true);
+    expect(isProduction(join(root, 'bconnect-jobs-mcp', 'src', '__tests__', 'x.ts'), root)).toBe(false);
+    expect(isProduction(join(root, 'bconnect-jobs-mcp', 'src', 'a.test.ts'), root)).toBe(false);
+    expect(isProduction(join(root, '__tests__', 'live', 'lib', 'env.ts'), root)).toBe(false);
+    // A name that only contains the word is not a test directory.
+    expect(isProduction(join(root, 'src', 'my__tests__notes.ts'), root)).toBe(true);
+    // A checkout that itself lives under a directory named __tests__ still has production code.
+    const nested = join('/', 'ci', '__tests__', 'repo');
+    expect(isProduction(join(nested, 'packages', 'mcp-core', 'src', 'tool-errors.ts'), nested)).toBe(true);
   });
 
   it('every quoted message occurs in the source', () => {
