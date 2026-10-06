@@ -19,137 +19,90 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 
 ---
 
+## Ways to Install
+
+There are three ways to get the suite. Pick one; the bMS settings are the same for all of them.
+
+| Way | What you get | Needs | Best for | How |
+| --- | --- | --- | --- | --- |
+| **Release download** | `bconnect-mcp-suite-<version>.zip` from the [Releases page](https://github.com/baramundisoftware/bConnect-MCP/releases), already built (with a `.sha256` checksum file) | Node.js | one user, a fixed version, no build tools | [Getting Started](#getting-started), [INSTALLATION.md](docs/INSTALLATION.md#from-the-release-download-no-build) |
+| **From source** | a `git clone` of this repository, built locally | Node.js, Git | the newest changes on `main`, contributing | [Getting Started](#getting-started), [INSTALLATION.md](docs/INSTALLATION.md#from-source) |
+| **Gateway container** | the image `ghcr.io/baramundisoftware/bconnect-mcp-gateway` from [GitHub Packages](https://github.com/orgs/baramundisoftware/packages?repo_name=bConnect-MCP) | Docker | several users or tools (e.g. n8n) sharing one HTTP endpoint | [Docker Deployment](#docker-deployment) |
+
+The first two run the 13 servers as local processes that your AI assistant starts over stdio. The
+container runs the HTTP gateway, which serves all 13 servers to clients over the network; the gateway
+can also run without Docker from a source build; the release download doesn't include it (see
+[Centralized Gateway](#centralized-gateway-http-multi-user)).
+
+The servers are not published to the npm registry, so `npx` / `npm install -g` don't apply.
+
+---
+
 ## What You Need
 
 - A **baramundi Management Suite** (25R2 or 26R1) with bConnect API enabled
 - Your **bMS server address** (e.g. `https://bms.company.com:443/bconnect`)
 - A **bMS user account** with API access, or an **API key**
   (generate one in the baramundi Management Center under **Server Management > API Keys**)
-- **Node.js 22.15 or 24** ([download](https://nodejs.org/)), the versions CI tests; 22.15 and later also honor the OS/Windows CA trust store. The packages still allow Node.js 20, but it isn't tested.
+- **Node.js 22.15 or 24** ([download](https://nodejs.org/)), the versions CI tests; 22.15 and later also honor the OS/Windows CA trust store. The packages still allow Node.js 20, but it isn't tested. Not needed for the gateway container, which brings its own.
 
 ### Network Requirements
 
 - Port **443** (HTTPS) must be open between the machine running the MCP server and your bMS server
   - 443 is the default. Some installations expose bConnect on a different port (e.g. **444** in older/test setups) — check the bConnect port in your baramundi Management Center and adjust the port in `BCONNECT_BASE_URL` accordingly.
-- Test connectivity: `curl -sS -o /dev/null -w '%{http_code}\n' https://bms.company.com:443/bconnect/`. Any HTTP status, even 401 or 404, means the network and the certificate are fine. Add `--cacert <your-ca.pem>` for an internal CA; don't use `-k`, it hides exactly the certificate problem the servers would hit.
+- Test connectivity:
+  ```bash
+  curl -sS -o /dev/null -w '%{http_code}\n' https://bms.company.com:443/bconnect/
+  ```
+  Any HTTP status, even 401 or 404, means the network and the certificate are fine. For an internal CA,
+  add `--cacert <your-ca.pem>` (the same file as `BCONNECT_CA_CERT_PATH`). Don't use `-k`: it hides exactly
+  the certificate problem the servers would hit.
+  - **Windows (Git Bash, MSYS2):** this curl uses Windows' TLS library (Schannel). With an internal CA it
+    usually also needs `--ssl-no-revoke`, otherwise it stops with `the revocation status is unknown`:
+    ```bash
+    curl -sS -o /dev/null -w '%{http_code}\n' --cacert C:/path/to/bms-ca.pem --ssl-no-revoke https://bms.company.com:443/bconnect/
+    ```
+    `--ssl-no-revoke` still checks the certificate against the CA; it only skips the revocation lookup,
+    which fails when the CA's revocation list can't be reached. The MCP servers (Node.js) don't do this
+    lookup, so they aren't affected.
 
 ---
 
-## Getting Started (Step by Step)
+## Getting Started
 
-### Step 1: Download
-
-**Prefer a pre-built download?** Grab the latest `bconnect-mcp-suite-<version>.zip` from the [**Releases page**](https://github.com/baramundisoftware/bConnect-MCP/releases) — it ships the compiled output, so you can **skip the build (Step 2)**: extract it, run `npm ci --omit=dev` at the extracted root, then jump to Step 3. See the bundled `INSTALL.md`.
+This is the short version. [docs/INSTALLATION.md](docs/INSTALLATION.md) is the full installation
+guide: checking the download, the `.env` file, starting and verifying a server, Claude Desktop, the
+gateway and certificates.
 
 > This README describes the current `main` branch. The latest release may predate some of it; the changes since then are listed under [Unreleased] in [CHANGELOG.md](CHANGELOG.md).
 
-To build from source instead:
+### 1. Get the suite
+
+**Release download** — extract `bconnect-mcp-suite-<version>.zip` from the [**Releases page**](https://github.com/baramundisoftware/bConnect-MCP/releases), then, from the extracted root:
+
+```bash
+npm ci --omit=dev   # runtime dependencies; the servers are already built
+```
+
+**From source** — the 13 servers share a common package (`@bconnect/mcp-core`), so they build
+**together from the repo root**; a single server directory can't be built on its own:
 
 ```bash
 git clone https://github.com/baramundisoftware/bConnect-MCP.git
 cd bConnect-MCP
-```
-
-### Step 2: Build the Suite
-
-The 13 servers share a common package (`@bconnect/mcp-core`), so they build **together from the repo root**. `npm run build` builds the shared core first, then the servers and the template, and stops at the first failure. Building a single server directory on its own fails with `Cannot find module '@bconnect/mcp-core'`.
-
-```bash
-# from the repo root (bConnect-MCP) — NOT a server subdirectory
 npm ci
 npm run build    # the shared core, then all servers
 ```
 
-> **On Windows:** `npm run build` loops over the server directories using bash syntax that `cmd.exe`
-> cannot parse (`d was unexpected at this time`). npm runs scripts with `cmd.exe` whichever shell you
-> type in, so make Git Bash npm's script shell once (it applies to all your npm projects):
-> `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
+> **On Windows:** the build scripts are bash, and npm runs scripts with `cmd.exe` whichever shell
+> you type in (`d was unexpected at this time`). Make Git Bash npm's script shell once (it applies
+> to all your npm projects): `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
 > Git Bash ships with [Git for Windows](https://gitforwindows.org/).
 
-> Only need one server? Build the core and just that one:
-> `npm run build -w @bconnect/mcp-core && npm run build -w bconnect-endpoints-mcp`.
+### 2. Connect your AI assistant
 
-### Step 3: Configure Your bMS Connection
-
-We'll start with `bconnect-endpoints-mcp` (endpoint management — the most common use case). Copy its example config and fill in your values:
-
-```bash
-cd bconnect-endpoints-mcp
-cp .env.example .env
-```
-
-Edit `.env`:
-
-```env
-# Your bMS server address (include /bconnect at the end)
-BCONNECT_BASE_URL=https://bms.company.com:443/bconnect
-
-# Option 1: API Key (recommended)
-BCONNECT_API_KEY=your-api-key-here
-
-# Option 2: Username + Password (use one or the other, not both)
-# BCONNECT_USERNAME=your-username
-# BCONNECT_PASSWORD=your-password
-
-# Your bMS version: 26R1 or 25R2, spelt exactly so
-BCONNECT_RELEASE=26R1
-```
-
-### Step 4: Start the Server
-
-From the `bconnect-endpoints-mcp` directory (where you are after Step 3 — it holds
-your `.env` and the `build/` output):
-
-```bash
-node build/index.js
-```
-
-You should see (these status lines go to **stderr**):
-
-```
-bconnect-endpoints-mcp: verifying bConnect API connectivity...
-bconnect-endpoints-mcp: API connectivity verified.
-bconnect-endpoints-mcp started on stdio
-```
-
-### Step 5: Verify It Works
-
-In another terminal, send a test request. Run this **from the repo root** and point at
-the server's build output — credentials are passed inline, so no `.env` is needed:
-
-```bash
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
-  BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
-  BCONNECT_API_KEY=your-api-key \
-  node bconnect-endpoints-mcp/build/index.js
-```
-
-You should see a JSON response listing all available tools (e.g. `list_windows_endpoints`, `get_windows_endpoint`, etc.). (`build/index.js` lives inside each **server** directory, never at the repo root.)
-
-### Step 6: Connect to Your AI Assistant
-
-**Claude Desktop** — edit `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "bconnect-endpoints": {
-      "command": "node",
-      "args": ["/path/to/bconnect-endpoints-mcp/build/index.js"],
-      "env": {
-        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
-        "BCONNECT_API_KEY": "your-api-key",
-        "BCONNECT_RELEASE": "26R1"
-      }
-    }
-  }
-}
-```
-
-These examples put the API key in the client's configuration. To keep it out, start the server
-with `node --env-file` instead, as shown in [docs/CLIENTS.md](docs/CLIENTS.md).
-
-**Claude Code (CLI)** — register the server with `claude mcp add` (use an **absolute** path to `build/index.js`):
+Register a server with its bMS settings. This is **Claude Code**, with an **absolute** path to
+`build/index.js`:
 
 ```bash
 claude mcp add bconnect-endpoints \
@@ -160,20 +113,22 @@ claude mcp add bconnect-endpoints \
   -- node /path/to/bconnect-endpoints-mcp/build/index.js
 ```
 
-> **Scope matters.** The default `--scope local` keys the config to the directory you
-> run `claude` from, so the server loads only in that project (and won't appear if you
-> start `claude` elsewhere). Use `--scope user` to make it available in every project,
-> or `--scope project` to commit it to the repo's `.mcp.json` for the team.
+`--scope user` makes it available in every project; the default `local` scope loads it only in the
+directory you ran the command from. Add one server per domain you need (see
+[Available Servers](#available-servers)).
 
-**VS Code / GitHub Copilot, Cursor, Continue, LibreChat and others** — see
-[docs/CLIENTS.md](docs/CLIENTS.md): the file, the top-level key (VS Code uses `servers`) and the
-`"type"` field differ per client. It also shows how to keep the credentials out of the client's
-configuration with `node --env-file`.
+- **Claude Desktop:** [docs/INSTALLATION.md → Claude Desktop](docs/INSTALLATION.md#claude-desktop-claude_desktop_configjson)
+- **VS Code / GitHub Copilot, Cursor, Continue, LibreChat and others:** [docs/CLIENTS.md](docs/CLIENTS.md)
+- **Keeping the API key out of the client's configuration** (`node --env-file`): [docs/CLIENTS.md](docs/CLIENTS.md)
+
+### 3. Ask
 
 Restart your AI assistant. You can now ask it questions like:
 - *"List all Windows endpoints"*
 - *"Show me endpoints that haven't been seen in 30 days"*
 - *"What software is installed on endpoint X?"*
+
+If a server doesn't show up or stops at startup, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 ---
 
@@ -183,9 +138,30 @@ The **gateway** (multi-user / n8n) is published as a multi-arch image (linux/amd
 
 ```bash
 docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
+# or pin a version: …/bconnect-mcp-gateway:26.1.9
 ```
 
-Only the gateway is distributed as a container; the 13 stdio servers run via Node.js / Claude Desktop (see [Getting Started](#getting-started-step-by-step) above). See [docs/DOCKER.md](docs/DOCKER.md) for the full gateway guide — Compose, `docker run`, TLS/auth, and mounted secrets.
+Start it with your bMS settings and check that it's up:
+
+```bash
+# The container binds 0.0.0.0, so it only starts with MCP_ALLOW_NO_AUTH=true: your assertion that a
+# proxy in front handles authentication. Publishing on 127.0.0.1 keeps it off the network until then.
+docker run -d --name bconnect-mcp-gateway \
+  -p 127.0.0.1:3001:3001 \
+  -e MCP_ALLOW_NO_AUTH=true \
+  -e BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
+  -e BCONNECT_API_KEY=your-service-key \
+  -e BCONNECT_RELEASE=26R1 \
+  ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
+
+curl http://localhost:3001/health
+# → {"status":"ok","servers":[…],"count":13}
+```
+
+Clients then connect to `http://localhost:3001/<server>/mcp`, e.g. `/endpoints/mcp`. For an internal CA,
+mount the CA file and set `BCONNECT_CA_CERT_PATH` (see [docs/DOCKER.md → Custom CA Certificates](docs/DOCKER.md#custom-ca-certificates)).
+
+Only the gateway is distributed as a container; the 13 stdio servers run via Node.js / Claude Desktop (see [Getting Started](#getting-started) above). See [docs/DOCKER.md](docs/DOCKER.md) for the full gateway guide — Compose, `docker run`, TLS/auth, and mounted secrets.
 
 ---
 
@@ -369,7 +345,7 @@ npm run build
 
 > **On Windows:** `npm run build`, `npm run audit` and `npm run sbom` use bash syntax that `cmd.exe`
 > cannot parse (`d was unexpected at this time`). Set Git Bash as npm's script shell once, as
-> described in [Getting Started](#getting-started-step-by-step).
+> described in [Getting Started](#getting-started).
 
 ## Testing
 

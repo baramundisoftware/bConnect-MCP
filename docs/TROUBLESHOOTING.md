@@ -243,6 +243,17 @@ connection, so anyone in the network path can pose as the bMS and receive the cr
 See [INSTALLATION.md](INSTALLATION.md) → "TLS / SSL Configuration" for the full guide and
 how to export the baramundi CA.
 
+**Testing with curl on Windows.** curl in Git Bash or MSYS2 uses Windows' TLS library (Schannel), so its
+errors differ from the servers':
+
+| curl says | Meaning | Fix |
+| --- | --- | --- |
+| `SEC_E_UNTRUSTED_ROOT` | Windows doesn't trust the bMS's CA | add `--cacert <your-ca.pem>` |
+| `the revocation status is unknown` | the CA's revocation list isn't reachable | add `--ssl-no-revoke` |
+
+Neither is a reason for `-k`. With both options, a status such as `401` means the network and the
+certificate are fine, which is what the servers need.
+
 ---
 
 ## API Errors (4xx / 5xx)
