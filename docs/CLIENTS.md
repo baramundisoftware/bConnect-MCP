@@ -1,7 +1,8 @@
 # Client Configuration
 
 How to register the bConnect MCP servers with each MCP client. All examples show
-`bconnect-endpoints-mcp`; add more servers by repeating the pattern. Build the servers first
+`bconnect-endpoints-mcp`; add more servers by repeating the pattern (for Claude Code, see
+[All servers at once](#all-servers-at-once-switched-on-and-off-in-mcp)). Build the servers first
 ([INSTALLATION.md](INSTALLATION.md)).
 
 Back to the [suite README](../README.md).
@@ -107,6 +108,45 @@ Or in `.mcp.json` in the project root:
 > `claude` from. `--scope user` makes it available in every project; `--scope project` writes
 > it to the project's `.mcp.json` for the team, and such a server needs a one-time trust
 > approval in Claude Code before it starts.
+
+### All servers at once, switched on and off in `/mcp`
+
+Claude Code can register all 13 servers and leave the unused ones disabled. From the suite's
+root folder (Linux, macOS, Git Bash on Windows):
+
+```bash
+for dir in "$PWD"/bconnect-*-mcp; do
+  name=$(basename "$dir" -mcp)                  # e.g. bconnect-endpoints
+  claude mcp add "$name" --scope user \
+    -- node --env-file=/path/to/bconnect.env "$dir/build/index.js"
+done
+claude mcp list
+```
+
+For a 25R2 bMS, leave out `bconnect-compliance` and `bconnect-universaldynamicgroups`: they
+exist only on 26R1 and stop at startup on 25R2.
+
+Then switch servers on and off in Claude Code with **`/mcp`** → select the server → **Disable**
+or **Enable**, without editing any configuration.
+
+**What it costs in tokens.** Claude Code loads MCP tool definitions on demand: until a tool is
+used, the model sees only its name. A disabled server isn't started and costs nothing. Measured
+with `/context` on 26.1.9 (`bconnect-endpoints`, 66 tools):
+
+| `bconnect-endpoints` | In context |
+|----------------------|-----------:|
+| All 66 tool definitions in full | ≈ 20,600 tokens |
+| Enabled, 3 tools used | ≈ 700 tokens for those 3, plus the 63 names |
+| Disabled | 0 |
+
+`/context` shows it for your setup: "MCP tools … (loaded on-demand)" lists the tools in context
+with their size, and the others under "Available". Disabling a server you don't use still pays
+off beyond tokens: no Node.js process and no startup check against the bMS, fewer similar tool
+names for the model to choose from, and its write tools out of reach.
+
+> **Check this per client.** A client that sends every tool definition with each request, such
+> as n8n's AI Agent, pays the full size of every server it loads; there, load only the servers
+> you need (see [N8N.md](N8N.md#never-connect-all-13-domains-to-a-single-ai-agent)).
 
 ## VS Code: GitHub Copilot agent mode (stdio)
 
