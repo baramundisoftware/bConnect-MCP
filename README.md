@@ -193,8 +193,8 @@ Install only the servers you need. Most users start with `bconnect-endpoints-mcp
 
 The counts include the write tools. While writes are off (the default, and always in the gateway),
 the tool list leaves them out: 178 tools on 26R1, 156 on 25R2. Every MCP client loads the whole
-tool list into the model's context, so this saves about 77 KB (≈ 20,000 tokens, −29 %) per
-session on 26R1, and 67 KB (−29 %) on 25R2. A write tool called by name is still refused.
+tool list into the model's context, so this saves about 77 KB (≈ 22,000 tokens at 3.5 characters
+per token, −29 %) per session on 26R1, and 67 KB (≈ 19,000 tokens, −29 %) on 25R2. A write tool called by name is still refused.
 
 ---
 
