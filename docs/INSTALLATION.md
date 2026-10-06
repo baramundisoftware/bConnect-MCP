@@ -176,9 +176,8 @@ BCONNECT_AUDIT_LEVEL=none            # Audit logging: none | security | write | 
 ALLOW_WRITE_OPERATIONS=false         # Enable write/destructive tools (default: off)
 ALLOW_SECRET_READ=false              # Enable secret-returning reads (default: off) — see below
 
-# Outbound rate limiting (server → bMS). Limits the requests one client sends and
-# fails a request over the limit. Each tool call still creates a new client, so the
-# limit applies only within one tool call for now (#160). Off by default.
+# Outbound rate limiting (server → bMS). Limits the requests a server sends, across
+# all its tool calls, and fails a request over the limit. Off by default.
 BCONNECT_RATE_LIMIT_ENABLED=false    # Enable the client-side rate limiter
 BCONNECT_RATE_LIMIT_MAX_REQUESTS=100 # Max requests per window (default: 100)
 BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min)
@@ -219,8 +218,8 @@ transport settings `MCP_TRANSPORT`, `MCP_PORT` and `MCP_BIND`.
 > service account is permitted to do.
 
 > **Two layers of rate limiting.** The `BCONNECT_RATE_LIMIT_*` vars above throttle
-> a server's **outbound** calls to bMS, but only within one tool call for now: each
-> tool call creates a new client, so the limit doesn't apply across calls yet (#160). They do **not** limit
+> a server's **outbound** calls to bMS, across all its tool calls (in the gateway: per
+> domain). They do **not** limit
 > **inbound** requests to the HTTP gateway — that is configured separately on the
 > gateway (`MCP_GATEWAY_RATE_LIMIT_*`, see the Gateway environment variables table).
 

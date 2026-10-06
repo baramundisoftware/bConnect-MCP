@@ -99,19 +99,11 @@ describe('failure messages', () => {
     expect(error?.message).not.toMatch(/didn't answer/);
   });
 
-  it('the startup check logs that it timed out', async () => {
-    const logged: string[] = [];
-    vi.spyOn(console, 'error').mockImplementation((...args: unknown[]) => { logged.push(args.map(String).join(' ')); });
+  it('the startup check reports that it timed out', async () => {
+    // The startup routine prints this reason in its one line (REQ-SRV-023 AC 2).
     replies = [async () => { await delay('infinite'); return HttpResponse.json({}); }];
     const probe = new BConnectClientBase({ baseUrl: BASE, apiKey: 'k', timeout: 300, healthCheckPath: '/endpoints/v2.0/Endpoints' });
-    const saved = process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK;
-    delete process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK;
-    try {
-      expect(await probe.testConnection()).toBe(false);
-    } finally {
-      if (saved !== undefined) {process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK = saved;}
-    }
-    expect(logged.join('\n')).toMatch(/didn't answer within 0\.3 s/);
+    expect(await probe.checkConnection()).toMatch(/didn't answer within 0\.3 s/);
   });
 
   describe('retries (BCONNECT_MAX_RETRIES=2)', () => {

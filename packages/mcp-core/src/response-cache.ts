@@ -33,6 +33,8 @@ export interface ResponseCacheConfig {
 
 export interface CacheEntry<T> {
   data: T;
+  /** The request path the entry answers; invalidation matches it by path segments. */
+  url: string;
   timestamp: number;
   expiresAt: number;
 }
@@ -56,6 +58,10 @@ export class ResponseCache {
   private stats: CacheStats;
 
   constructor(config: ResponseCacheConfig) {
+    // A negative TTL used to mean "never expires"; NaN or Infinity can't expire either.
+    if (config.ttl !== undefined && !(Number.isFinite(config.ttl) && config.ttl >= 0)) {
+      throw new RangeError(`Response cache TTL must be a number of milliseconds, 0 or more (0 = no expiry); got ${config.ttl}`);
+    }
     this.config = {
       enabled: config.enabled,
       maxSize: config.maxSize || 100,
@@ -174,6 +180,7 @@ export class ResponseCache {
 
     const entry: CacheEntry<T> = {
       data,
+      url,
       timestamp: now,
       expiresAt: this.config.ttl > 0 ? now + this.config.ttl : Number.MAX_SAFE_INTEGER,
     };
@@ -218,22 +225,18 @@ export class ResponseCache {
   }
 
   /**
-   * Invalidate cache entries by URL pattern
+   * Invalidate the entries for a path and everything below it, matched by
+   * whole path segments: "/x/v2.0/Things" covers "/x/v2.0/Things" and
+   * "/x/v2.0/Things/1", not "/x/v2.0/ThingsX".
    */
-  invalidateByPattern(pattern: RegExp): number {
+  invalidatePath(path: string): number {
+    // Trailing slashes off, without a regex: /\/+$/ backtracks on long runs of "/".
+    let end = path.length;
+    while (end > 0 && path[end - 1] === '/') {end--;}
+    const prefix = path.slice(0, end);
     let count = 0;
-    for (const key of this.cache.keys()) {
-      // Extract URL from key (format: METHOD:URL:PARAMS_JSON)
-      // URL may contain ':' (e.g. https://host:port/path). params are always
-      // JSON.stringify(object) so they start with '{', or empty string.
-      // Find method/URL boundary (first ':') and URL/params boundary (last ':{' or trailing ':').
-      const methodEnd = key.indexOf(':');
-      if (methodEnd === -1) {continue;}
-      const paramsColonIdx = key.lastIndexOf(':{');
-      const url = paramsColonIdx > methodEnd
-        ? key.slice(methodEnd + 1, paramsColonIdx)
-        : key.slice(methodEnd + 1).replace(/:$/, '');
-      if (pattern.test(url)) {
+    for (const [key, entry] of this.cache.entries()) {
+      if (entry.url === prefix || entry.url.startsWith(`${prefix}/`)) {
         this.cache.delete(key);
         count++;
       }

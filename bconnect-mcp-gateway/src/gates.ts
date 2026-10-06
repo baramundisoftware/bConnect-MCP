@@ -7,10 +7,10 @@
  * would get what those gates allow, so they stay closed until the gateway has
  * its own authentication (REQ-SRV-017 D3).
  *
- * Setting them to "" rather than deleting them matters: the servers call
- * dotenv.config() per request, and dotenv fills in a variable that is missing,
- * but never one that is set, so a .env file in the working directory can't
- * open them again.
+ * Setting them to "" rather than deleting them matters: the servers load the
+ * .env file of the working directory on their first tool call, and dotenv
+ * fills in a variable that is missing, but never one that is set, so that
+ * file can't open them again.
  */
 
 /** The gates the gateway keeps closed. */

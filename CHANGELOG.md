@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > release is 26.1.9.
 
 ### Upgrading from 26.1.7
+- **Set `BCONNECT_BASE_URL`.** Without it the server no longer starts (before, it fell back to a
+  placeholder address and failed later).
 - **`BCONNECT_BASE_URL` must use `https://`.** `http://` is refused except for this machine, or set
   `BCONNECT_ALLOW_INSECURE_HTTP=true` (credentials unencrypted). Behind a redirect, set the final address.
 - **Set `BCONNECT_RELEASE=25R2` on a 2025 R2 bMS.** The default is now `26R1`.
@@ -35,7 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reverse proxy that also checks `Host` and `Origin`. Behind a proxy, the
   gateway sees every request as coming from the proxy, so all callers share one rate limit and the
   access log shows the proxy's address.
-- **The outbound rate limit (`BCONNECT_RATE_LIMIT_*`) applies only within one tool call** (#160).
 - **Some reads are slow on a large or busy bMS.** On a test bMS 26R1 (26.1.161),
   `list_detected_vulnerabilities` and `list_vulnerabilities` took about 30 s and
   `list_installed_windows_software` about 50 s, so they can run into the default 30 s timeout. Set
@@ -151,6 +152,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
+- **One startup routine and one bConnect client per server (#160).** All 13 servers start the same
+  way, and every tool call of a server uses the same client, also in HTTP mode and in the gateway
+  (one per domain). The CA file is read once, and connections to bConnect are kept and reused; an
+  idle connection is closed after 5 s.
+- **`BCONNECT_BASE_URL` is required (#160).** Unset or empty, the server stops at startup with a
+  message naming it, and a tool call (gateway) returns that message as an error. The built-in
+  placeholder address is gone.
+- **Credentials passed per request are all or nothing (#160).** A request that brings its own
+  credentials uses only those (an API key, or username and password), never ones from the
+  environment, and an empty value counts as missing.
+- **Startup errors are one line** `<server>: <message>`, with the cause of a failed connectivity
+  check in brackets, and no stack trace.
 - **esbuild** dev dependency bumped `0.27.7` → `0.28.1` (dev-only).
 - **An invalid `BCONNECT_RELEASE` stops the server (breaking).** Only `26R1` and `25R2` (spelt exactly so) or
   leaving it unset (26R1) are accepted. Before, any other value, for example `26r1` or an empty
@@ -273,6 +286,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **The outbound rate limit works (#160).** With `BCONNECT_RATE_LIMIT_ENABLED=true`, the limit now
+  counts the requests of all tool calls of a server; a call over it fails at once. Before, each
+  tool call started with a full allowance, so the limit was never reached.
+- **A skipped connectivity check says so (#160).** With `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` the
+  server logs that the check was skipped, not "API connectivity verified".
+- **Response cache (#160).** A cache hit no longer sends the request, invalidation after a write
+  matches whole path segments, and a negative lifetime is refused. The cache stays off; there is no
+  setting for it.
 - **README, SECURITY, CONTRIBUTING, SUPPORT and the server READMEs match the code.** Server
   READMEs list every tool (six groups, two endpoints and one jobs tool were missing) with correct
   counts for 26R1 and 25R2, build from the repo root, and no longer link to a repository readers
@@ -396,9 +417,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Unset or empty still means `none`.
 - **The `BCONNECT_RATE_LIMIT_*` settings now reach every server's client.** Nine servers
   (compliance, defensecontrol, groups, operatingsystems, servermanagement, software,
-  universaldynamicgroups, updatemanagement, variables) never passed them on. Each tool call
-  still creates a new client, so the limit applies only within one tool call, not across
-  calls, until #160 is done.
+  universaldynamicgroups, updatemanagement, variables) never passed them on.
 - **Servers no longer exit at startup with "Resource not found" (#111).** The connectivity
   check requested `/v2.0/WindowsEndpoints` without a domain prefix, a route bConnect doesn't
   have, so every server stopped unless `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` was set. Each

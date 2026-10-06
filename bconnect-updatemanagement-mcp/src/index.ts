@@ -11,28 +11,27 @@
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import express from "express";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
   ErrorCode,
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
-import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, hostCheck, allowedHosts } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
 const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
-import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
+import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { UpdateManagementRules } from "./utils/mcp-tool-validation-rules.js";
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
 export type { BConnectCredentials } from "@bconnect/mcp-core";
+
+/** The server's bConnect clients: one shared by every tool call (REQ-SRV-023). */
+const clients = serverClients(BConnectClient);
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const server = new Server(
@@ -138,10 +137,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
 
     const getBconnect = (): BConnectClient => {
-      dotenv.config();
-      // A ClientConfigError (e.g. missing credentials) reaches the catch below
-      // and becomes a tool result (REQ-XC-001).
-      return new BConnectClient(clientConfigFromEnv(process.env, credentials));
+      // The server's shared client (REQ-SRV-023). A ClientConfigError (e.g. missing
+      // credentials) reaches the catch below and becomes a tool result (REQ-XC-001).
+      return clients.get(credentials);
     };
 
     try {
@@ -181,91 +179,4 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-async function main(): Promise<void> {
-  dotenv.config();
-
-
-  
-  // Startup connectivity check (REQ-SRV-013)
-  dotenv.config();
-  {
-    let _config: Readonly<BConnectConfig>;
-    try {
-      _config = clientConfigFromEnv(process.env);
-    } catch (error) {
-      if (!(error instanceof ClientConfigError)) { throw error; }
-      console.error(`bconnect-updatemanagement-mcp: ${error.message}`);
-      process.exit(1);
-    }
-    const _startupUrl = _config.baseUrl;
-    const _startupClient = new BConnectClient(_config);
-    console.error(`bconnect-updatemanagement-mcp: verifying bConnect API connectivity...`);
-    const _connected = await _startupClient.testConnection();
-    if (!_connected) {
-      console.error(`bconnect-updatemanagement-mcp: cannot reach bConnect API at ${_startupUrl}. Check BCONNECT_BASE_URL, credentials, and network.`);
-      process.exit(1);
-    }
-    console.error(`bconnect-updatemanagement-mcp: API connectivity verified.`);
-  }
-
-  const transportMode = process.env.MCP_TRANSPORT ?? "stdio";
-  const port = parseInt(process.env.MCP_PORT ?? "3000", 10);
-  const serverName = "bconnect-updatemanagement-mcp";
-
-  if (transportMode === "http") {
-    const app = express();
-    // Only requests addressed to an allowed host name (DNS-rebinding protection), checked first.
-    const hosts = allowedHosts(process.env.MCP_ALLOWED_HOSTS, (entry) => {
-      console.error(`${serverName}: MCP_ALLOWED_HOSTS entry ${JSON.stringify(entry)} ignored: not a host name or address`);
-    });
-    app.use(hostCheck(hosts, (reason) => {
-      console.error(`${serverName}: refused a request whose ${reason} isn't an allowed host name (MCP_ALLOWED_HOSTS)`);
-    }));
-    app.use(express.json());
-
-    app.post("/mcp", async (req, res) => {
-      const { server } = createServer();
-      const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-      res.on("close", () => { transport.close(); server.close(); });
-      await server.connect(transport);
-      await transport.handleRequest(req, res, req.body);
-    });
-
-    app.get("/mcp", async (req, res) => {
-      res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Use POST for MCP requests." }));
-    });
-
-    app.delete("/mcp", async (req, res) => {
-      res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Session management not supported in stateless mode." }));
-    });
-
-    const bind = process.env.MCP_BIND ?? "127.0.0.1";
-    // Standalone HTTP mode has no client authentication. Binding to a non-loopback
-    // address would expose an unauthenticated bConnect proxy, so fail closed unless
-    // the operator explicitly opts in (front it with the authenticated gateway instead).
-    const isLoopbackBind = bind === "127.0.0.1" || bind === "::1" || bind === "localhost";
-    if (!isLoopbackBind && process.env.MCP_ALLOW_NO_AUTH !== "true") {
-      console.error(
-        `${serverName}: refusing to bind ${bind} — standalone HTTP mode is unauthenticated. ` +
-          `Bind to loopback (the default) and front it with the authenticated gateway, ` +
-          `or set MCP_ALLOW_NO_AUTH=true to override.`,
-      );
-      process.exit(1);
-    }
-    app.listen(port, bind, () => {
-      console.error(`${serverName} listening on http://${bind}:${port}/mcp`);
-    });
-  } else {
-    const { server } = createServer();
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
-    console.error(`${serverName} started on stdio`);
-  }
-}
-
-if (!process.env.VITEST) {
-  main().catch((err) => {
-    console.error("Fatal error:", err);
-    process.exit(1);
-  });
-}
+runServer({ name: "bconnect-updatemanagement-mcp", createServer, clients });

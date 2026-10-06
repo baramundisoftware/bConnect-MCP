@@ -32,7 +32,8 @@ export class BConnectApiError extends Error {
 
 /** The request was sent but no answer came back (network, DNS, TLS). */
 export class BConnectConnectionError extends Error {
-  constructor(message: string) {
+  /** The system error code (e.g. ECONNREFUSED), for the operator's startup line; never shown to the model. */
+  constructor(message: string, readonly code?: string) {
     super(message);
     this.name = "BConnectConnectionError";
   }

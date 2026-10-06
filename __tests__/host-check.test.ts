@@ -9,7 +9,7 @@ import net from 'node:net';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { allowedHosts, hostCheckRefusal } from '../packages/mcp-core/src/host-check.js';
-import { ROOT, SERVERS } from './lib/exerciser.js';
+import { ROOT } from './lib/exerciser.js';
 
 describe('allowedHosts', () => {
   it('always allows the loopback names', () => {
@@ -112,10 +112,12 @@ describe('gateway', () => {
 });
 
 describe('servers in HTTP mode', () => {
-  it.each(SERVERS)('%s checks the host name before its MCP handler', (server) => {
-    const source = readFileSync(join(ROOT, server, 'src', 'index.ts'), 'utf8');
+  // Every server starts through the core's runServer() (client-config guard, REQ-SRV-023),
+  // so the HTTP mode of all of them is this one routine.
+  it('the shared startup routine checks the host name before its MCP handler', () => {
+    const source = readFileSync(join(ROOT, 'packages', 'mcp-core', 'src', 'server-runtime.ts'), 'utf8');
     const check = source.indexOf('app.use(hostCheck(hosts');
-    expect(source).toContain('const hosts = allowedHosts(process.env.MCP_ALLOWED_HOSTS');
+    expect(source).toContain('const hosts = allowedHosts(env.MCP_ALLOWED_HOSTS');
     expect(check).toBeGreaterThan(-1);
     // Before the body parser and the MCP handler, so a refused request isn't parsed first.
     expect(check).toBeLessThan(source.indexOf('app.use(express.json())'));

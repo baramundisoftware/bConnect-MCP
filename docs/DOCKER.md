@@ -151,7 +151,7 @@ are the code's; where Compose or the image sets another, the table says so.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `BCONNECT_BASE_URL` | bConnect V2.0 API base URL; must be `https://` | none useful: set it (Compose: `https://bms-server/bconnect`) |
+| `BCONNECT_BASE_URL` | bConnect V2.0 API base URL; must be `https://` | none: required, every tool call fails without it (Compose: `https://bms-server/bconnect`) |
 | `BCONNECT_ALLOW_INSECURE_HTTP` | `true` allows an `http://` base URL to another host (credentials unencrypted) | `false` |
 | `BCONNECT_API_KEY` | API key (or use username/password below) | *(one credential required)* |
 | `BCONNECT_USERNAME` / `BCONNECT_PASSWORD` | API username + password (alternative to the key); the password must be ASCII-only (bConnect rejects `§`, umlauts, `ß`) | — |
@@ -162,7 +162,7 @@ are the code's; where Compose or the image sets another, the table says so.
 | `BCONNECT_TIMEOUT_MS` | Wait per bMS request, 1000–600000 ms; slow reads on a busy bMS may need `90000` | `30000` |
 | `BCONNECT_MAX_RETRIES` | Retries for reads after a network error, timeout or 502/503/504 (0–5); writes are never retried | `0` |
 | `BCONNECT_SKIP_CONNECTIVITY_CHECK` | Accepted for compatibility; the gateway makes no startup call to bConnect | `false` |
-| `BCONNECT_RATE_LIMIT_ENABLED` / `_MAX_REQUESTS` / `_WINDOW_MS` | Outbound limit towards bMS, per tool call for now (#160) | `false` / `100` / `60000` |
+| `BCONNECT_RATE_LIMIT_ENABLED` / `_MAX_REQUESTS` / `_WINDOW_MS` | Outbound limit towards bMS, per domain across all requests | `false` / `100` / `60000` |
 | `MCP_ALLOW_NO_AUTH` | Allow a non-loopback gateway bind (asserts a proxy is in front) | `false` |
 | `MCP_GATEWAY_PORT` | Gateway listen port | `3001` |
 | `MCP_GATEWAY_ALLOWED_HOSTS` | Host names the gateway answers to besides `localhost`, `127.0.0.1` and `[::1]`, comma-separated (ports ignored); requests addressed to other names get 403. List the name your proxy passes on as `Host`, and the Docker service name for clients on the same network | — (Compose: `mcp-gateway`; setting it replaces that, so keep `mcp-gateway` in your list) |

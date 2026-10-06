@@ -236,7 +236,7 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `BCONNECT_ALLOW_INSECURE_HTTP` | — | `false` | `http://` base URLs are refused except for this machine; `true` allows them (credentials unencrypted) |
 | `BCONNECT_SKIP_CONNECTIVITY_CHECK` | — | `false` | `true` skips the startup call to bConnect |
 | `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `none`, `security`, `write` or `all`, in any case; levels are cumulative. Any other value stops the server. Entries go to stderr; what each level records: [docs/AUDIT.md](docs/AUDIT.md) |
-| `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Limit the requests one client sends. Each tool call still creates a new client, so the limit doesn't apply across calls yet (#160) |
+| `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Limit the requests a server sends to bConnect, across all its tool calls |
 | `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (binds loopback by default, no authentication) |
 | `MCP_PORT` | — | `3000` | HTTP port (when `MCP_TRANSPORT=http`) |
 | `MCP_BIND` | — | `127.0.0.1` | HTTP bind address (when `MCP_TRANSPORT=http`) |
@@ -395,7 +395,7 @@ against a real bMS).
 | **401 Unauthorized** | Verify your credentials. If using an API key, check it hasn't expired. If using Basic Auth, confirm the user has bConnect API access in the bMS console. |
 | **A tool answers with an error from bConnect** | The answer names the status, the call, what the bConnect API documentation says the status means for that call, and bConnect's own message. A 404 can mean a wrong id, missing read rights or, on some calls, "no data"; the documented meaning says which apply. |
 | **"The bConnect API didn't answer within 30 s" on vulnerability or installed-software lists** | These lists are slow on a large or busy bMS (30 to 50 s on a test bMS 26R1). Set `BCONNECT_TIMEOUT_MS=90000`; see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). |
-| **Server exits at startup with "cannot reach bConnect API"** | The startup call failed; the line before it names the cause (credentials, certificate, timeout, address). Check that `BCONNECT_BASE_URL` ends in `/bconnect`. See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#server-exits-at-startup). |
+| **Server exits at startup with "cannot reach bConnect API"** | The startup call failed; the cause is in brackets (credentials, certificate, timeout, address). Check that `BCONNECT_BASE_URL` ends in `/bconnect`. See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#server-exits-at-startup). |
 | **404 only on some tools** | They may need 26R1. On a 25R2 bMS set `BCONNECT_RELEASE=25R2`, which hides them. |
 | **compliance / universaldynamicgroups won't start** | These servers need 26R1: their startup check fails on a 25R2 bMS. Remove them from your config. |
 | **"BCONNECT_BASE_URL uses http://"** | Use `https://`. `http://` is allowed only for this machine or with `BCONNECT_ALLOW_INSECURE_HTTP=true` (credentials unencrypted). |
@@ -416,7 +416,7 @@ For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING
 - **Audit logging** (`BCONNECT_AUDIT_LEVEL=security`, `write` or `all`) writes to stderr; `security` records every call to a security-relevant route: credentials, API keys, object rights, security groups and profiles ([docs/AUDIT.md](docs/AUDIT.md))
 - **Write tools are off** unless `ALLOW_WRITE_OPERATIONS=true`, and off in the gateway. A write tool whose description ends with "Not yet verified against a live bMS." hasn't been checked against a real bMS yet. Try writes on a test system first
 - **Secret reads** (BitLocker keys/PIN, LAPS passwords) are off unless `ALLOW_SECRET_READ=true`, and off in the gateway
-- **Rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) applies only within one tool call for now; it does not protect the bConnect API across calls (#160)
+- **Rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) caps the requests each server sends to the bConnect API, across all its tool calls
 
 See [SECURITY.md](SECURITY.md) for the full security policy.
 

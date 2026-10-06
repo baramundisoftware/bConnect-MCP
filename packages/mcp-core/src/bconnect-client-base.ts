@@ -5,8 +5,9 @@
  * Supports multiple API modules: Endpoints, Assets, Software, etc.
  */
 
-import axios, { AxiosInstance, AxiosError, CreateAxiosDefaults, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosHeaders, AxiosInstance, AxiosError, CreateAxiosDefaults, InternalAxiosRequestConfig } from "axios";
 import axiosRetry from "axios-retry";
+import http from "http";
 import https from "https";
 import tls, { PeerCertificate } from "node:tls";
 import { BConnectApiError, BConnectConnectionError, BConnectRedirectError } from "./api-errors.js";
@@ -158,6 +159,21 @@ export interface BConnectConfig {
   disableHttpsAgent?: boolean;  // Disable HTTPS agent (for MSW testing)
 }
 
+/** What a client gets besides its config (REQ-SRV-023, ADR-0010). */
+export interface ClientOptions {
+  /** The server's one rate limiter, shared by all its clients; overrides config.rateLimit. */
+  rateLimiter?: RateLimiter;
+  /** How long an idle kept-alive connection stays open, in ms (default 5000). */
+  idleSocketMs?: number;
+}
+
+/**
+ * Idle connections are closed after this, below common server idle timeouts,
+ * so a reused connection is rarely one bMS is just closing (D2 = c). The
+ * request's own timeout still governs a slow answer.
+ */
+const DEFAULT_IDLE_SOCKET_MS = 5000;
+
 /**
  * Origin (scheme + host + port) a redirect points to, resolved against the
  * request URL. Path and query are left out: they could carry data, and the
@@ -271,6 +287,12 @@ function problemText(data: unknown, baseUrl: string): string | undefined {
   return cleanModelText(text);
 }
 
+/** A request that went out on a reused kept-alive connection which the server had already closed. */
+function staleReusedSocket(error: AxiosError): boolean {
+  const reused = (error.request as { reusedSocket?: boolean } | undefined)?.reusedSocket === true;
+  return reused && !error.response && (error.code === "ECONNRESET" || /socket hang up/i.test(error.message));
+}
+
 /** Responses the success step has handled; see the retry note there. */
 const processedResponses = new WeakSet<object>();
 
@@ -287,8 +309,9 @@ export class BConnectClientBase {
   private batchOperations: BatchOperations | null = null;
 
 
-  constructor(config: BConnectConfig) {
+  constructor(config: BConnectConfig, options: ClientOptions = {}) {
     this.config = config;
+    const idleSocketMs = options.idleSocketMs ?? DEFAULT_IDLE_SOCKET_MS;
 
     // Resolve the CA trust list. An explicit CA (e.g. BCONNECT_CA_CERT_PATH) always
     // wins. Otherwise, when verification is on, fall back to the OS trust store
@@ -300,6 +323,10 @@ export class BConnectClientBase {
 
     // Create HTTPS agent with SSL/TLS configuration
     const httpsAgentOptions: https.AgentOptions = {
+      // One client serves every tool call, so connections are kept and reused;
+      // idle ones are closed after idleSocketMs.
+      keepAlive: true,
+      timeout: idleSocketMs,
       // Default to secure (reject unauthorized certificates)
       rejectUnauthorized: config.rejectUnauthorized !== false,
 
@@ -333,6 +360,8 @@ export class BConnectClientBase {
     // Only add httpsAgent if not explicitly disabled (needed for MSW testing)
     if (!config.disableHttpsAgent) {
       axiosConfig.httpsAgent = new https.Agent(httpsAgentOptions);
+      // Loopback http (the bundled mock, local tests) reuses connections the same way.
+      axiosConfig.httpAgent = new http.Agent({ keepAlive: true, timeout: idleSocketMs });
     }
 
     this.client = axios.create(axiosConfig);
@@ -341,8 +370,11 @@ export class BConnectClientBase {
     this.setupAuth();
 
     // Setup retry logic with exponential backoff for V2.0 client
+    const maxRetries = config.maxRetries || 0; // Default: no retries (backward compatible)
     axiosRetry(this.client, {
-      retries: config.maxRetries || 0, // Default: no retries (backward compatible)
+      // One more than configured, used only for a read on a reused connection the
+      // server had already closed (see retryCondition).
+      retries: maxRetries + 1,
       retryDelay: (retryCount) => {
         // Exponential backoff: baseDelay * (2 ^ retryCount)
         const baseDelay = config.retryDelay || 100;
@@ -357,6 +389,12 @@ export class BConnectClientBase {
         if ((error.config?.method ?? "get").toUpperCase() !== "GET") {
           return false;
         }
+        const retried = (error.config as { "axios-retry"?: { retryCount?: number } } | undefined)?.["axios-retry"]?.retryCount ?? 0;
+        if (retried >= maxRetries) {
+          // Kept-alive connections (#160): a read that failed on a reused connection the
+          // server had closed in the meantime goes once more, on a new connection.
+          return retried === maxRetries && staleReusedSocket(error);
+        }
         if (!error.response) {
           return true;
         }
@@ -364,19 +402,21 @@ export class BConnectClientBase {
       },
     });
 
-    // Initialize rate limiter if enabled
-    if (config.rateLimit?.enabled) {
-      this.rateLimiter = new RateLimiter({
+    // The server's shared rate limiter, or one of the client's own (REQ-SRV-023 AC 1).
+    this.rateLimiter = options.rateLimiter ?? (config.rateLimit?.enabled
+      ? new RateLimiter({
         maxRequests: config.rateLimit.maxRequests || 100,
         windowMs: config.rateLimit.windowMs || 60000,
         enabled: true,
         message: config.rateLimit.message,
-      });
-
+      })
+      : null);
+    if (this.rateLimiter) {
       // Add rate limiting request interceptor for V2.0 client
       this.client.interceptors.request.use(
         (requestConfig: InternalAxiosRequestConfig) => {
-          if (this.rateLimiter) {
+          // A cache hit sends nothing, so it costs no token.
+          if (this.rateLimiter && (requestConfig as BConnectRequestConfig).__cachedResponse === undefined) {
             const rateLimitInfo = this.rateLimiter.tryConsume();
             if (!rateLimitInfo.allowed) {
               throw new RateLimitError(
@@ -439,8 +479,16 @@ export class BConnectClientBase {
             // Check cache for GET requests
             const cachedResponse = this.responseCache.get(method, url, params);
             if (cachedResponse) {
-              // Return cached response by throwing special marker
+              // Answer from the cache instead of sending the request (#160).
               (requestConfig as BConnectRequestConfig).__cachedResponse = cachedResponse;
+              requestConfig.adapter = async (adapterConfig) => ({
+                data: cachedResponse,
+                status: 200,
+                statusText: "OK",
+                headers: new AxiosHeaders(),
+                config: adapterConfig,
+                request: {},
+              });
             }
           }
           return requestConfig;
@@ -482,6 +530,11 @@ export class BConnectClientBase {
             // Return cached response
             response.data = cachedResponse;
             response.headers['X-Cache'] = 'HIT';
+            // The caller read the data: its answer is audited like any other.
+            if (this.auditLogger) {
+              const startTime = (response.config as BConnectRequestConfig).__auditStartTime || Date.now();
+              this.auditLogger.logResponse(response.config.method?.toUpperCase() || 'GET', response.config.url || '', response.status, startTime);
+            }
             return response;
           }
 
@@ -497,9 +550,10 @@ export class BConnectClientBase {
 
           // Invalidate cache on write operations
           if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
-            // Invalidate cache entries related to this URL
-            const urlPattern = new RegExp(url.replace(/\/[^\/]+$/, '')); // Remove last path segment
-            this.responseCache.invalidateByPattern(urlPattern);
+            // Forget the written resource's collection and everything below it,
+            // matched by path segments (the last segment removed).
+            const lastSlash = url.lastIndexOf('/');
+            this.responseCache.invalidatePath(lastSlash > 0 ? url.slice(0, lastSlash) : url);
           }
         }
 
@@ -713,7 +767,8 @@ export class BConnectClientBase {
       // do not expose internal hostname
       throw new BConnectConnectionError(
         "Cannot connect to the bConnect API. " +
-        "Check network connectivity and BCONNECT_BASE_URL configuration."
+        "Check network connectivity and BCONNECT_BASE_URL configuration.",
+        error.code,
       );
     } else {
       // Error in request configuration
@@ -725,19 +780,32 @@ export class BConnectClientBase {
    * Health check / test connection
    */
   async testConnection(): Promise<boolean> {
-    if (process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK === 'true') {return true;}
+    return (await this.checkConnection()) === undefined;
+  }
+
+  /**
+   * Sends the probe request; returns why it failed, or undefined when it
+   * succeeded. Whether to skip the check is the startup routine's decision
+   * (runServer), not the client's.
+   */
+  async checkConnection(): Promise<string | undefined> {
     const path = this.config.healthCheckPath ?? this.probeRoute;
     if (!path) {
-      console.error("Connection test failed: this server's client sets no probeRoute.");
-      return false;
+      return "this server's client sets no probeRoute";
     }
     try {
       await this.client.get(path, { params: { PageSize: 1 } });
-      return true;
+      return undefined;
     } catch (error) {
-      console.error("Connection test failed:", error);
-      return false;
+      // The system code (ECONNREFUSED, ENOTFOUND, …) tells the operator which network problem it is.
+      const code = error instanceof BConnectConnectionError && error.code ? ` [${error.code}]` : "";
+      return error instanceof Error ? `${error.message}${code}` : String(error);
     }
+  }
+
+  /** The bConnect address this client sends to (for startup messages). */
+  get baseUrl(): string {
+    return this.config.baseUrl;
   }
 
   /**

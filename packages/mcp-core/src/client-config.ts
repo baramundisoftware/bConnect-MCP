@@ -2,7 +2,11 @@ import fs from "fs";
 import type { AuditLevel } from "./audit-logger.js";
 import type { BConnectConfig } from "./bconnect-client-base.js";
 
-/** Credentials passed per request (gateway); each one overrides the environment. */
+/**
+ * Credentials passed per request (gateway). All or nothing: a request that
+ * brings any non-empty value uses only its own secrets, never the
+ * environment's (REQ-SRV-023 AC 6). Empty values count as missing.
+ */
 export interface BConnectCredentials {
   baseUrl?: string;
   username?: string;
@@ -23,10 +27,47 @@ export class ClientConfigError extends Error {
 
 /** Neither an API key nor both username and password are set. */
 export class MissingCredentialsError extends ClientConfigError {
-  constructor() {
-    super("Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
+  constructor(source: "environment" | "request" = "environment") {
+    super(source === "request"
+      ? "The request's credentials are incomplete: give an API key, or both a username and a password"
+      : "Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
     this.name = "MissingCredentialsError";
   }
+}
+
+/** BCONNECT_BASE_URL is unset or empty (REQ-SRV-023 AC 8): there is no address to send anything to. */
+export class MissingBaseUrlError extends ClientConfigError {
+  constructor() {
+    super("BCONNECT_BASE_URL isn't set. Set it to the bConnect address, for example https://bms.example.com/bconnect");
+    this.name = "MissingBaseUrlError";
+  }
+}
+
+/**
+ * Every variable clientConfigFromEnv reads. A server's shared client is
+ * rebuilt when one of them changes (serverClients); a test keeps the list
+ * equal to the reads.
+ */
+export const CLIENT_ENV_VARS = [
+  "BCONNECT_BASE_URL",
+  "BCONNECT_USERNAME",
+  "BCONNECT_PASSWORD",
+  "BCONNECT_API_KEY",
+  "BCONNECT_ALLOW_INSECURE_HTTP",
+  "BCONNECT_CA_CERT_PATH",
+  "NODE_TLS_REJECT_UNAUTHORIZED",
+  "BCONNECT_RELEASE",
+  "BCONNECT_AUDIT_LEVEL",
+  "BCONNECT_TIMEOUT_MS",
+  "BCONNECT_MAX_RETRIES",
+  "BCONNECT_RATE_LIMIT_ENABLED",
+  "BCONNECT_RATE_LIMIT_MAX_REQUESTS",
+  "BCONNECT_RATE_LIMIT_WINDOW_MS",
+] as const;
+
+/** Whether a request brings credentials of its own: any non-empty value. */
+export function hasRequestCredentials(credentials: BConnectCredentials | undefined): credentials is BConnectCredentials {
+  return !!credentials && [credentials.baseUrl, credentials.username, credentials.password, credentials.apiKey].some((v) => !!v);
 }
 
 /** The base URL would send credentials unencrypted, or isn't an http(s) URL (REQ-SRV-020). */
@@ -37,7 +78,6 @@ export class InsecureBaseUrlError extends ClientConfigError {
   }
 }
 
-const DEFAULT_BASE_URL = "https://bms.example.com:443/bconnect";
 const DEFAULT_RATE_LIMIT_MAX_REQUESTS = 100;
 const DEFAULT_RATE_LIMIT_WINDOW_MS = 60000;
 const AUDIT_LEVELS: readonly AuditLevel[] = ["none", "security", "write", "all"];
@@ -204,23 +244,30 @@ export function basicAuthHeader(username: string, password: string): string {
  *
  * Certificate verification is off only for NODE_TLS_REJECT_UNAUTHORIZED=0.
  * Throws a ClientConfigError: MissingCredentialsError when no way to
- * authenticate is set, InsecureBaseUrlError for a base URL that isn't https
+ * authenticate is set, MissingBaseUrlError without a base URL, InsecureBaseUrlError for a base URL that isn't https
  * (loopback http and BCONNECT_ALLOW_INSECURE_HTTP=true excepted), and the base
  * class when BCONNECT_CA_CERT_PATH can't be read or the file is empty.
  */
 export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConnectCredentials): Readonly<BConnectConfig> {
-  const baseUrl = credentials?.baseUrl || env.BCONNECT_BASE_URL || DEFAULT_BASE_URL;
-  const username = credentials?.username ?? env.BCONNECT_USERNAME;
-  const password = credentials?.password ?? env.BCONNECT_PASSWORD;
-  const apiKey = credentials?.apiKey ?? env.BCONNECT_API_KEY;
+  // All or nothing: a request's own credentials never borrow a secret from the
+  // environment, and its base URL never receives the environment's secrets.
+  const fromRequest = hasRequestCredentials(credentials);
+  const secrets = fromRequest ? credentials : { username: env.BCONNECT_USERNAME, password: env.BCONNECT_PASSWORD, apiKey: env.BCONNECT_API_KEY };
+  const username = secrets.username || undefined;
+  const password = secrets.password || undefined;
+  const apiKey = secrets.apiKey || undefined;
 
   if (!apiKey && (!username || !password)) {
-    throw new MissingCredentialsError();
+    throw new MissingCredentialsError(fromRequest ? "request" : "environment");
+  }
+  const baseUrl = ((fromRequest && credentials.baseUrl) || env.BCONNECT_BASE_URL || "").trim();
+  if (baseUrl === "") {
+    throw new MissingBaseUrlError();
   }
   assertSecureBaseUrl(baseUrl, env);
   if (!apiKey) {
-    assertLatin1Credential(credentials?.username !== undefined ? "The request's username" : "BCONNECT_USERNAME", username?.normalize("NFC"));
-    assertAsciiPassword(credentials?.password !== undefined ? "The request's password" : "BCONNECT_PASSWORD", password);
+    assertLatin1Credential(fromRequest ? "The request's username" : "BCONNECT_USERNAME", username?.normalize("NFC"));
+    assertAsciiPassword(fromRequest ? "The request's password" : "BCONNECT_PASSWORD", password);
   }
 
   const caCertPath = env.BCONNECT_CA_CERT_PATH;

@@ -7,16 +7,19 @@
  * here once instead of in 13 copies.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+  CLIENT_ENV_VARS,
   ClientConfigError,
+  MissingBaseUrlError,
   MissingCredentialsError,
   clientConfigFromEnv,
 } from '../packages/mcp-core/src/client-config.js';
 
-const BASIC = { BCONNECT_USERNAME: 'user', BCONNECT_PASSWORD: 'secret' };
+const BASE = { BCONNECT_BASE_URL: 'https://bms.internal/bconnect' };
+const BASIC = { ...BASE, BCONNECT_USERNAME: 'user', BCONNECT_PASSWORD: 'secret' };
 
 describe('clientConfigFromEnv', () => {
   describe('base URL and credentials', () => {
@@ -35,13 +38,22 @@ describe('clientConfigFromEnv', () => {
       });
     });
 
-    it('falls back to the placeholder base URL when none is set, as before', () => {
-      expect(clientConfigFromEnv(BASIC).baseUrl).toBe('https://bms.example.com:443/bconnect');
-      expect(clientConfigFromEnv({ ...BASIC, BCONNECT_BASE_URL: '' }).baseUrl)
-        .toBe('https://bms.example.com:443/bconnect');
+    it.each([
+      ['unset', {}],
+      ['empty', { BCONNECT_BASE_URL: '' }],
+      ['blank', { BCONNECT_BASE_URL: '   ' }],
+    ])('refuses a base URL that is %s, naming the variable (REQ-SRV-023 AC 8)', (_label, env) => {
+      const call = () => clientConfigFromEnv({ BCONNECT_USERNAME: 'user', BCONNECT_PASSWORD: 'secret', ...env });
+      expect(call).toThrow(MissingBaseUrlError);
+      expect(call).toThrow(ClientConfigError);
+      expect(call).toThrow(/BCONNECT_BASE_URL/);
     });
 
-    it('lets per-request credentials override each environment value', () => {
+    it('reports missing credentials before a missing base URL', () => {
+      expect(() => clientConfigFromEnv({})).toThrow(MissingCredentialsError);
+    });
+
+    it('takes only the request\'s credentials when a request brings them (REQ-SRV-023 AC 6)', () => {
       const config = clientConfigFromEnv(
         {
           BCONNECT_BASE_URL: 'https://env/bconnect',
@@ -49,38 +61,51 @@ describe('clientConfigFromEnv', () => {
           BCONNECT_PASSWORD: 'env-pass',
           BCONNECT_API_KEY: 'env-key',
         },
-        { baseUrl: 'https://req/bconnect', username: 'req-user', password: 'req-pass', apiKey: 'req-key' },
+        { baseUrl: 'https://req/bconnect', username: 'req-user', password: 'req-pass' },
       );
-      expect(config).toMatchObject({
-        baseUrl: 'https://req/bconnect',
-        username: 'req-user',
-        password: 'req-pass',
-        apiKey: 'req-key',
-      });
+      expect(config).toMatchObject({ baseUrl: 'https://req/bconnect', username: 'req-user', password: 'req-pass' });
+      expect(config.apiKey).toBeUndefined();
     });
 
-    it('takes a value from the environment when the credentials leave it out', () => {
-      const config = clientConfigFromEnv(
-        { BCONNECT_BASE_URL: 'https://env/bconnect', BCONNECT_API_KEY: 'env-key' },
-        { username: 'req-user', password: 'req-pass' },
-      );
-      expect(config).toMatchObject({
-        baseUrl: 'https://env/bconnect',
-        username: 'req-user',
-        password: 'req-pass',
-        apiKey: 'env-key',
-      });
+    it('never mixes a request\'s secret with one from the environment', () => {
+      const env = { ...BASE, BCONNECT_USERNAME: 'env-user', BCONNECT_PASSWORD: 'env-pass', BCONNECT_API_KEY: 'env-key' };
+      expect(() => clientConfigFromEnv(env, { username: 'req-user' })).toThrow(MissingCredentialsError);
+      expect(() => clientConfigFromEnv(env, { password: 'req-pass' })).toThrow(MissingCredentialsError);
+      const withKey = clientConfigFromEnv(env, { apiKey: 'req-key' });
+      expect(withKey).toMatchObject({ apiKey: 'req-key' });
+      expect(withKey.username).toBeUndefined();
+      expect(withKey.password).toBeUndefined();
     });
 
-    it('keeps an empty per-request API key as given (decision on empty per-request values: #160)', () => {
-      // Pins today's behaviour: credentials fields override with ?? (empty stays empty),
-      // only the base URL falls back with ||.
-      const config = clientConfigFromEnv({ ...BASIC, BCONNECT_API_KEY: 'env-key' }, { apiKey: '' });
-      expect(config.apiKey).toBe('');
+    it('never sends the environment\'s secrets to a base URL the request names', () => {
+      const env = { ...BASE, BCONNECT_API_KEY: 'env-key', BCONNECT_USERNAME: 'env-user', BCONNECT_PASSWORD: 'env-pass' };
+      expect(() => clientConfigFromEnv(env, { baseUrl: 'https://elsewhere/bconnect' })).toThrow(MissingCredentialsError);
+    });
+
+    it('uses the environment\'s base URL with the request\'s own secrets', () => {
+      const config = clientConfigFromEnv({ BCONNECT_BASE_URL: 'https://env/bconnect' }, { apiKey: 'req-key' });
+      expect(config).toMatchObject({ baseUrl: 'https://env/bconnect', apiKey: 'req-key' });
+    });
+
+    it('treats empty request values as missing: all empty means "no request credentials"', () => {
+      const env = { ...BASIC, BCONNECT_API_KEY: 'env-key' };
+      const config = clientConfigFromEnv(env, { baseUrl: '', username: '', password: '', apiKey: '' });
+      expect(config).toMatchObject({ baseUrl: BASE.BCONNECT_BASE_URL, apiKey: 'env-key', username: 'user' });
+      expect(clientConfigFromEnv(env, {}).apiKey).toBe('env-key');
+    });
+
+    it('treats an empty request value next to a real one as missing', () => {
+      expect(() => clientConfigFromEnv(BASIC, { username: 'req-user', password: '' })).toThrow(MissingCredentialsError);
+      const config = clientConfigFromEnv(BASIC, { apiKey: 'req-key', username: '' });
+      expect(config.username).toBeUndefined();
+    });
+
+    it('names the request, not the environment, when request credentials are incomplete', () => {
+      expect(() => clientConfigFromEnv(BASIC, { username: 'req-user' })).toThrow(/request/i);
     });
 
     it('accepts an API key alone', () => {
-      expect(clientConfigFromEnv({ BCONNECT_API_KEY: 'key' }).apiKey).toBe('key');
+      expect(clientConfigFromEnv({ ...BASE, BCONNECT_API_KEY: 'key' }).apiKey).toBe('key');
     });
 
     it('accepts username and password without an API key', () => {
@@ -263,7 +288,7 @@ describe('clientConfigFromEnv', () => {
       vi.stubEnv('BCONNECT_AUDIT_LEVEL', 'all');
       vi.stubEnv('BCONNECT_RATE_LIMIT_ENABLED', 'true');
       const config = clientConfigFromEnv(BASIC);
-      expect(config.baseUrl).toBe('https://bms.example.com:443/bconnect');
+      expect(config.baseUrl).toBe(BASE.BCONNECT_BASE_URL);
       expect(config.apiKey).toBeUndefined();
       expect(config.rejectUnauthorized).toBe(true);
       expect(config.auditLog?.level).toBe('none');
@@ -300,5 +325,13 @@ describe('BCONNECT_RELEASE', () => {
     const run = () => clientConfigFromEnv({ ...BASIC, BCONNECT_RELEASE: value });
     expect(run).toThrow(ClientConfigError);
     expect(run).toThrow(`BCONNECT_RELEASE ${JSON.stringify(value)} isn't valid. Use 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.`);
+  });
+});
+
+describe('CLIENT_ENV_VARS (the shared client\'s rebuild key, REQ-SRV-023)', () => {
+  it('lists exactly the variables clientConfigFromEnv reads', () => {
+    const source = readFileSync(join(__dirname, '..', 'packages', 'mcp-core', 'src', 'client-config.ts'), 'utf8');
+    const read = new Set([...source.matchAll(/\benv\.([A-Z_][A-Z0-9_]*)/g)].map((m) => m[1]));
+    expect([...CLIENT_ENV_VARS].sort()).toEqual([...read].sort());
   });
 });
