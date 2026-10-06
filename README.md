@@ -392,6 +392,7 @@ For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING
 - **Audit logging** (`BCONNECT_AUDIT_LEVEL=security`, `write` or `all`) writes to stderr; `security` records every call to a security-relevant route: credentials, API keys, object rights, security groups and profiles ([docs/AUDIT.md](docs/AUDIT.md))
 - **Write tools are off** unless `ALLOW_WRITE_OPERATIONS=true`, and off in the gateway. A write tool whose description ends with "Not yet verified against a live bMS." hasn't been checked against a real bMS yet. Try writes on a test system first
 - **Secret reads** (BitLocker keys/PIN, LAPS passwords) are off unless `ALLOW_SECRET_READ=true`, and off in the gateway
+- **Tool hints for clients**: every tool declares MCP annotations: a readable `title`, `readOnlyHint: true` on tools that only read, and on every other tool `destructiveHint` (true for tools that delete or whose effect can't be undone, such as running a job or replacing a BitLocker PIN). A client can use them to run reads without asking and to ask before destructive calls. They are derived from the API operations each tool calls and are hints only: the write and secret gates above are unchanged and still decide what runs
 - **Rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) caps the requests each server sends to the bConnect API, across all its tool calls
 
 See [SECURITY.md](SECURITY.md) for the full security policy.

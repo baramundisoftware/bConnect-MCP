@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Every tool tells clients whether it only reads or can destroy data.** Each tool in `tools/list`
+  now carries MCP annotations: a readable `title` ("List Windows endpoints by logical group"),
+  `readOnlyHint`, and on tools that change something `destructiveHint`. A tool that only reads is
+  marked read-only; a tool that deletes, or whose effect can't be undone (for example running a job,
+  replacing a BitLocker PIN or cleaning up managed-software files), is marked destructive. Clients
+  can use this to run reads without asking and to ask before destructive calls. The hints are
+  derived from the bConnect operations each tool calls, and a test checks them against the API
+  specification for both bMS releases. They are hints only: the write and secret gates
+  (`ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`) are unchanged and still decide what a tool may do.
+
 ## [26.1.9] - 2026-10-06
 
 > There is no 26.1.8 release: changes merged under that label (#112) were reverted (#134).
