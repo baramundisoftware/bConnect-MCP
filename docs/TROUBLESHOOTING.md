@@ -416,6 +416,12 @@ below it.
 
 These calls are refused by the server itself, before anything is sent to bConnect.
 
+**A write tool isn't in the tool list.** While `ALLOW_WRITE_OPERATIONS` isn't `true` (the
+default, and always in the gateway), the servers leave the write tools out of `tools/list`; the
+assistant only sees the read tools. To use them, an operator sets `ALLOW_WRITE_OPERATIONS=true` for
+that server, restarts it, and reconnects the client so it fetches the list again. A client that
+calls a write tool by name anyway gets the first answer below.
+
 | Answer | Why | What to do |
 |---|---|---|
 | `Write operation '<tool>' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.` | Write tools are off by default | An operator sets `ALLOW_WRITE_OPERATIONS=true` in the server's environment and restarts it. The HTTP gateway ignores it: it has no authentication (see [DOCKER.md](DOCKER.md#environment-variables)). |

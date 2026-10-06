@@ -19,6 +19,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`) are unchanged and still decide what a tool may do.
 
 ### Changed
+- **Breaking: while writes are off, the tool list shows only read tools.** With
+  `ALLOW_WRITE_OPERATIONS` not set to `true` (the default, and always in the gateway), `tools/list`
+  leaves out every tool that creates, changes, deletes or starts something. Every MCP client loads
+  the whole tool list into the model's context, so this saves 98 tools and 77 KB on bMS 26R1
+  (276 → 178 tools, about 20,000 tokens or 29 % per session) and 84 tools and 67 KB on 25R2
+  (240 → 156, 29 %). Which tools are left out is derived from the bConnect operations each tool
+  calls, the same classification as the tool annotations. With `ALLOW_WRITE_OPERATIONS=true` the
+  list is unchanged. A write tool called by name is still refused with the same message as before;
+  the refusal stays the control. **Who is affected:** a client or workflow that pre-approved or
+  selected write tools by name doesn't see them while writes are off. Set
+  `ALLOW_WRITE_OPERATIONS=true` where writes are wanted and reconnect the client.
 - **Tool results are compact JSON.** Results carry the same data without indentation, which keeps
   16–22 % of each result out of the model's context (measured on list results against the bMS 26R1
   mock, e.g. `list_endpoints` 28.4 KB → 23.5 KB). Lead lines such as "Network endpoint … updated:"

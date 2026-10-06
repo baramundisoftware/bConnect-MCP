@@ -160,7 +160,8 @@ settings (release, CA file, timeouts, audit level, rate limits) apply to all of 
 > and `ALLOW_SECRET_READ`, however it is started and wherever they are set (environment,
 > `.env.gateway`, a `.env` file): every write tool and every tool that returns credentials
 > (BitLocker keys and PIN, LAPS passwords) is refused, and the gateway logs a warning at startup
-> if either was set. This stays so until the gateway has its own authentication.
+> if either was set. Write tools are also left out of the tool list, so clients only see read
+> tools. This stays so until the gateway has its own authentication.
 
 > **Security:** front the gateway with an authenticating, TLS-terminating reverse proxy
 > before exposing it (see [DOCKER.md](DOCKER.md)). The gateway refuses a non-loopback
@@ -209,7 +210,7 @@ lockout. A username may contain Latin-1 characters such as `ö`.
 
 ```env
 BCONNECT_AUDIT_LEVEL=none            # Audit logging: none | security | write | all
-ALLOW_WRITE_OPERATIONS=false         # Enable write/destructive tools (default: off)
+ALLOW_WRITE_OPERATIONS=false         # Enable write/destructive tools (default: off; off, they're not in the tool list)
 ALLOW_SECRET_READ=false              # Enable secret-returning reads (default: off) — see below
 
 # Outbound rate limiting (server → bMS). Limits the requests a server sends, across
