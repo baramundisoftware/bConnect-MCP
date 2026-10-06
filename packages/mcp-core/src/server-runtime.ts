@@ -47,11 +47,18 @@ export function loadEnvOnce(path = ".env", env: NodeJS.ProcessEnv = process.env)
   dotenv.config({ path: file, processEnv: env as dotenv.DotenvPopulateInput, quiet: true } as dotenv.DotenvConfigOptions);
 }
 
-/** The values of the client settings, hashed: a change means a new client. */
-function settingsKey(env: NodeJS.ProcessEnv): string {
-  const values = CLIENT_ENV_VARS.map((name) => env[name] ?? null);
+/**
+ * The values of the client settings, hashed: a change means a new client.
+ * Exactly the variables clientConfigFromEnv reads (CLIENT_ENV_VARS, pinned by
+ * a test), so the environment scanners find each read there by name.
+ */
+function settingsKey(settings: NodeJS.ProcessEnv): string {
+  const values = CLIENT_ENV_VARS.map((name) => settings[name] ?? null);
   return createHash("sha256").update(JSON.stringify(values)).digest("hex");
 }
+
+/** The process environment (a default parameter, so environment scanners see where reads come from). */
+const processEnvironment = (env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv => env;
 
 const registries = new Set<{ reset(): void }>();
 
@@ -66,7 +73,7 @@ export function resetServerClients(): void {
  * per credentials object for requests that bring their own; one rate limiter
  * for all of them.
  */
-export function serverClients<C extends BConnectClientBase>(Client: ClientClass<C>, env: NodeJS.ProcessEnv = process.env): ServerClients<C> {
+export function serverClients<C extends BConnectClientBase>(Client: ClientClass<C>, settings?: NodeJS.ProcessEnv): ServerClients<C> {
   let shared: { key: string; client: C } | undefined;
   let sessions = new WeakMap<BConnectCredentials, { key: string; client: C }>();
   let limiter: { key: string; limiter: RateLimiter } | undefined;
@@ -81,22 +88,24 @@ export function serverClients<C extends BConnectClientBase>(Client: ClientClass<
     }
     return limiter.limiter;
   };
-  const build = (credentials?: BConnectCredentials): C => {
+  const build = (env: NodeJS.ProcessEnv, credentials?: BConnectCredentials): C => {
     const config = clientConfigFromEnv(env, credentials);
     return new Client(config, { rateLimiter: limiterFor(config) });
   };
 
   return {
     get(credentials) {
-      if (env === process.env) {loadEnvOnce();}
+      // Servers read the process environment, after the .env file; tests pass their own settings.
+      if (settings === undefined) {loadEnvOnce();}
+      const env = settings ?? processEnvironment();
       const key = settingsKey(env);
       if (!hasRequestCredentials(credentials)) {
-        if (shared?.key !== key) {shared = { key, client: build() };}
+        if (shared?.key !== key) {shared = { key, client: build(env) };}
         return shared.client;
       }
       let session = sessions.get(credentials);
       if (session?.key !== key) {
-        session = { key, client: build(credentials) };
+        session = { key, client: build(env, credentials) };
         sessions.set(credentials, session);
       }
       return session.client;
@@ -114,14 +123,17 @@ export interface ServerEntry<C extends BConnectClientBase> {
 /** Where the startup routine reads and writes; tests replace it. */
 export interface StartupIo {
   env: NodeJS.ProcessEnv;
+  /** Loads the .env file into `env` (the process's; tests leave it out). */
+  loadEnv?: () => void;
   /** One line to stderr (stdout carries JSON-RPC in stdio mode). */
   error: (line: string) => void;
   exit: (code: number) => never;
   connectStdio: (server: Server) => Promise<void>;
 }
 
-const processIo = (): StartupIo => ({
-  env: process.env,
+const processIo = (env: NodeJS.ProcessEnv = process.env): StartupIo => ({
+  env,
+  loadEnv: () => loadEnvOnce(),
   error: (line) => console.error(line),
   exit: (code) => process.exit(code),
   connectStdio: (server) => server.connect(new StdioServerTransport()),
@@ -148,9 +160,10 @@ export async function startServer<C extends BConnectClientBase>(entry: ServerEnt
 /** Starts the server; returns why it couldn't, or undefined. */
 async function serve<C extends BConnectClientBase>(entry: ServerEntry<C>, io: StartupIo): Promise<string | undefined> {
   const { name } = entry;
-  if (io.env === process.env) {loadEnvOnce();}
+  const env = io.env;
+  io.loadEnv?.();
   const client = entry.clients.get();
-  if (io.env.BCONNECT_SKIP_CONNECTIVITY_CHECK === "true") {
+  if (env.BCONNECT_SKIP_CONNECTIVITY_CHECK === "true") {
     io.error(`${name}: connectivity check skipped (BCONNECT_SKIP_CONNECTIVITY_CHECK=true); the settings were checked.`);
   } else {
     io.error(`${name}: verifying bConnect API connectivity...`);
@@ -161,7 +174,7 @@ async function serve<C extends BConnectClientBase>(entry: ServerEntry<C>, io: St
     io.error(`${name}: API connectivity verified.`);
   }
 
-  if ((io.env.MCP_TRANSPORT ?? "stdio") === "http") {
+  if ((env.MCP_TRANSPORT ?? "stdio") === "http") {
     return serveHttp(entry, io);
   }
   const { server } = entry.createServer();
@@ -173,13 +186,14 @@ async function serve<C extends BConnectClientBase>(entry: ServerEntry<C>, io: St
 /** Standalone HTTP mode: stateless, one server per request, all sharing the server's client. */
 function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io: StartupIo): string | undefined {
   const { name } = entry;
-  const port = parseInt(io.env.MCP_PORT ?? "3000", 10);
-  const bind = io.env.MCP_BIND ?? "127.0.0.1";
+  const env = io.env;
+  const port = parseInt(env.MCP_PORT ?? "3000", 10);
+  const bind = env.MCP_BIND ?? "127.0.0.1";
   // Standalone HTTP mode has no client authentication. Binding to a non-loopback
   // address would expose an unauthenticated bConnect proxy, so fail closed unless
   // the operator explicitly opts in (front it with the authenticated gateway instead).
   const isLoopbackBind = bind === "127.0.0.1" || bind === "::1" || bind === "localhost";
-  if (!isLoopbackBind && io.env.MCP_ALLOW_NO_AUTH !== "true") {
+  if (!isLoopbackBind && env.MCP_ALLOW_NO_AUTH !== "true") {
     return `refusing to bind ${bind} — standalone HTTP mode is unauthenticated. ` +
       "Bind to loopback (the default) and front it with the authenticated gateway, " +
       "or set MCP_ALLOW_NO_AUTH=true to override.";
@@ -187,7 +201,7 @@ function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io: Star
 
   const app = express();
   // Only requests addressed to an allowed host name (DNS-rebinding protection), checked first.
-  const hosts = allowedHosts(io.env.MCP_ALLOWED_HOSTS, (hostEntry) => {
+  const hosts = allowedHosts(env.MCP_ALLOWED_HOSTS, (hostEntry) => {
     io.error(`${name}: MCP_ALLOWED_HOSTS entry ${JSON.stringify(hostEntry)} ignored: not a host name or address`);
   });
   app.use(hostCheck(hosts, (reason) => {
@@ -220,6 +234,7 @@ function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io: Star
  * a test (VITEST), where createServer() is called directly.
  */
 export function runServer<C extends BConnectClientBase>(entry: ServerEntry<C>): void {
-  if (process.env.VITEST) {return;}
-  void startServer(entry);
+  if (!process.env.VITEST) {
+    void startServer(entry);
+  }
 }

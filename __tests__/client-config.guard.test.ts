@@ -324,7 +324,7 @@ describe('source: startup and clients come from the core', () => {
         'runs the connectivity check': 'await client.testConnection();',
         'loads .env': 'import * as dotenv from "dotenv";',
         'starts a stdio transport': 'const t = new StdioServerTransport();',
-        'starts an HTTP transport': 'import express from "express";',
+        'starts an HTTP transport': 'const app = express();',
       };
       expect(startupProblems([{ name: 'x.ts', text: sample[what] }], good)).toEqual([`x.ts ${what}`]);
     });

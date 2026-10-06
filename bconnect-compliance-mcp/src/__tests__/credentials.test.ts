@@ -79,7 +79,7 @@ describe("createServer credential injection", () => {
       expect.objectContaining({
         baseUrl: credentials.baseUrl,
         apiKey: credentials.apiKey,
-      })
+      }), expect.anything()
     );
   });
 
@@ -99,7 +99,7 @@ describe("createServer credential injection", () => {
         baseUrl: credentials.baseUrl,
         username: credentials.username,
         password: credentials.password,
-      })
+      }), expect.anything()
     );
   });
 
@@ -122,10 +122,10 @@ describe("createServer credential injection", () => {
 
       // Must use injected values, not env vars
       expect(vi.mocked(BConnectClient)).toHaveBeenCalledWith(
-        expect.objectContaining({ apiKey: "injected-api-key" })
+        expect.objectContaining({ apiKey: "injected-api-key" }), expect.anything()
       );
       expect(vi.mocked(BConnectClient)).not.toHaveBeenCalledWith(
-        expect.objectContaining({ apiKey: "env-var-api-key" })
+        expect.objectContaining({ apiKey: "env-var-api-key" }), expect.anything()
       );
     } finally {
       if (savedEnv.BCONNECT_BASE_URL !== undefined) {
@@ -156,7 +156,7 @@ describe("createServer credential injection", () => {
       expect(result.isError).toBeFalsy();
 
       expect(vi.mocked(BConnectClient)).toHaveBeenCalledWith(
-        expect.objectContaining({ apiKey: "env-only-api-key" })
+        expect.objectContaining({ apiKey: "env-only-api-key" }), expect.anything()
       );
     } finally {
       if (savedEnv.BCONNECT_BASE_URL !== undefined) {
@@ -172,7 +172,7 @@ describe("createServer credential injection", () => {
     }
   });
 
-  it("each tool call receives the same injected credentials (stateless per-request)", async () => {
+  it("both tool calls of a session use its one client with the injected credentials", async () => {
     const credentials = {
       baseUrl: "https://injected.example.com/bconnect",
       apiKey: "stateless-test-key",
@@ -184,8 +184,8 @@ describe("createServer credential injection", () => {
     const second = await client.callTool({ name: "list_mobile_device_rules", arguments: {} });
     expect(second.isError).toBeFalsy();
 
-    // BConnectClient constructed twice (once per tool call, lazy init)
-    expect(vi.mocked(BConnectClient)).toHaveBeenCalledTimes(2);
+    // One client per session: both calls use it (REQ-SRV-023; it was one per call before #160)
+    expect(vi.mocked(BConnectClient)).toHaveBeenCalledTimes(1);
     for (const call of vi.mocked(BConnectClient).mock.calls) {
       expect(call[0]).toMatchObject({ apiKey: "stateless-test-key" });
     }

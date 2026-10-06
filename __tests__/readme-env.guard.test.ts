@@ -28,11 +28,12 @@ const CORE_SRC = join(ROOT, 'packages', 'mcp-core', 'src');
  */
 const NOT_CONFIGURATION: Record<string, { reason: string; allowedAt: RegExp; allowedBody: RegExp }> = {
   VITEST: {
-    reason: 'set by the test runner and the gateway preload so main() does not run on import',
-    allowedAt: /^if \((?:!process\.env\.VITEST|process\.env\.VITEST === undefined)\) \{$/,
-    // The guarded block only starts main() and reports a fatal error.
+    reason: 'set by the test runner and the gateway preload so a server does not start on import',
+    allowedAt: /^\s*if \((?:!process\.env\.VITEST|process\.env\.VITEST === undefined)\) \{$/,
+    // The guarded block only starts the server: the core's runServer() (REQ-SRV-023), or
+    // a main() that reports a fatal error.
     allowedBody:
-      /^main\(\)\.catch\(\((\w+)\) => \{ (?:console\.error\("Fatal error:", \1\)|process\.stderr\.write\(`Fatal error: \$\{\1\.message\}\\n`\)); process\.exit\(1\); \}\);$/,
+      /^(?:void startServer\(entry\);|main\(\)\.catch\(\((\w+)\) => \{ (?:console\.error\("Fatal error:", \1\)|process\.stderr\.write\(`Fatal error: \$\{\1\.message\}\\n`\)); process\.exit\(1\); \}\);)$/,
   },
 };
 
@@ -48,15 +49,21 @@ const sourceFiles = (dirPath: string): string[] =>
     .map((e) => join(e.parentPath, e.name))
     .filter((f) => !/[\\/](__tests__|__mocks__)[\\/]/.test(f));
 
-/** Whether line `at` opens a top-level block matching `allowedAt` whose body matches `allowedBody`. */
+/** Whether line `at` opens a block matching `allowedAt` whose body matches `allowedBody`. */
 function isEntryGuard(lines: string[], at: number, exempt: { allowedAt: RegExp; allowedBody: RegExp }): boolean {
   if (!exempt.allowedAt.test(lines[at] ?? '')) return false;
-  const end = lines.findIndex((line, i) => i > at && line === '}');
+  // The block ends at the first `}` indented like the `if`.
+  const indent = /^\s*/.exec(lines[at] ?? '')?.[0] ?? '';
+  const end = lines.findIndex((line, i) => i > at && line === `${indent}}`);
   // No else: it would run exactly where VITEST is set (tests, and the gateway in production).
   if (end < 0 || /^\s*else\b/.test(lines[end + 1] ?? '')) return false;
   const body = lines.slice(at + 1, end).map((l) => l.trim()).join(' ');
   return exempt.allowedBody.test(body);
 }
+
+/** Where the entry guard may live: a server's index.ts, or the core's runServer() (REQ-SRV-023). */
+const ENTRY_FILES = (file: string): boolean =>
+  basename(file) === 'index.ts' || file === join(CORE_SRC, 'server-runtime.ts');
 
 /** Variables read by the given source directories; hidden reads are returned separately. */
 function variablesRead(dirs: string[]): { names: Set<string>; hidden: string[] } {
@@ -70,8 +77,8 @@ function variablesRead(dirs: string[]): { names: Set<string>; hidden: string[] }
       const exempt = read.name !== null ? NOT_CONFIGURATION[read.name] : undefined;
       if (read.name === null) hidden.push(where);
       else if (!exempt) names.add(read.name);
-      else if (!(basename(file) === 'index.ts' && isEntryGuard(lines, read.line - 1, exempt))) {
-        hidden.push(`${where} (${read.name} is allowed only as the main() entry guard)`);
+      else if (!(ENTRY_FILES(file) && isEntryGuard(lines, read.line - 1, exempt))) {
+        hidden.push(`${where} (${read.name} is allowed only as the entry guard)`);
       }
     }
   }
@@ -309,7 +316,7 @@ describe('guard self-tests', () => {
       ['as an entry guard whose body does more', 'index.ts', ENTRY.replace('process.exit(1);', 'process.exit(1);\n    disableGates();')],
       ['as an entry guard with an else', 'index.ts', `${ENTRY.trimEnd()}\nelse {\n  disableGates();\n}\n`],
     ])('reports VITEST used %s', (_label, name, text) => {
-      expect(scan({ [name]: text }).hidden).toEqual([expect.stringContaining('main() entry guard')]);
+      expect(scan({ [name]: text }).hidden).toEqual([expect.stringContaining('allowed only as the entry guard')]);
     });
 
     it('scans generated code, which is compiled into the build', () => {

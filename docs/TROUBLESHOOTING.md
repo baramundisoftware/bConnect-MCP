@@ -38,10 +38,11 @@ bconnect-endpoints-mcp: API connectivity verified.
 bconnect-endpoints-mcp started on stdio
 ```
 
-If the check fails, the server prints `Connection test failed: …` and
-`bconnect-endpoints-mcp: cannot reach bConnect API at <url>. Check BCONNECT_BASE_URL, credentials, and network.`
-and exits. The `Connection test failed` line names the cause (wrong credentials, untrusted
-certificate, timeout, unreachable host); the sections below explain each one.
+If the check fails, the server prints one line and exits:
+`bconnect-endpoints-mcp: cannot reach bConnect API at <url> (<cause>). Check BCONNECT_BASE_URL, credentials, and network.`
+The cause in brackets says what went wrong (wrong credentials, untrusted certificate, timeout,
+unreachable host); the sections below explain each one. Every startup error is one such line,
+starting with the server's name.
 
 ### Verify Configuration
 
@@ -78,12 +79,13 @@ failed or disconnected; the reason is in the client's MCP log.
 | Message (stderr) | Cause | Fix |
 |---|---|---|
 | `Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required` | No credential reached the server | Set them in the client config's `env` block (a `.env` file is read only from the working directory) |
+| `BCONNECT_BASE_URL isn't set. Set it to the bConnect address, …` | No base URL reached the server; there is no default address | Set `BCONNECT_BASE_URL`, e.g. `https://<bms>/bconnect` |
 | `BCONNECT_BASE_URL uses http:// for <host>, which would send the bConnect credentials unencrypted. …` | `http://` to a host other than this machine | Use `https://`; `BCONNECT_ALLOW_INSECURE_HTTP=true` only for a test setup |
 | `BCONNECT_TIMEOUT_MS="…" isn't valid. Use a whole number from 1000 to 600000.` (same for `BCONNECT_MAX_RETRIES`, 0 to 5) | Not a whole number, or out of range | Fix the value |
 | `BCONNECT_AUDIT_LEVEL "…" isn't valid. Use one of: none, security, write, all.` | Misspelt audit level | Fix the value; the server refuses to run with auditing in an unknown state |
 | `BCONNECT_RELEASE "…" isn't valid. Use 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.` | A release other than `26R1`/`25R2` (also `26r1` or an empty value) | Fix the value, or remove the line for 26R1 |
 | `BCONNECT_CA_CERT_PATH can't be read: <path> (<code>)` or `… points to an empty file` | CA file missing, unreadable or empty | Fix the path or the file |
-| `Connection test failed: …` then `<server>: cannot reach bConnect API at <url>. Check BCONNECT_BASE_URL, credentials, and network.` | The startup call failed. The first line names the cause: 401, TLS, timeout, unreachable | See [Authentication Errors](#authentication-errors), [TLS Certificate Errors](#tls-certificate-errors) or [Network & Connection Errors](#network--connection-errors) |
+| `<server>: cannot reach bConnect API at <url> (<cause>). Check BCONNECT_BASE_URL, credentials, and network.` | The startup call failed. The cause in brackets: 401, TLS, timeout, unreachable | See [Authentication Errors](#authentication-errors), [TLS Certificate Errors](#tls-certificate-errors) or [Network & Connection Errors](#network--connection-errors) |
 
 The startup call goes to a light list route of the server's domain. Two cases to know:
 
@@ -93,9 +95,10 @@ The startup call goes to a light list route of the server's domain. Two cases to
 - **26R1-only servers on 25R2:** compliance and universaldynamicgroups fail the check, because a
   25R2 bMS doesn't have their routes. Don't configure them for a 25R2 bMS.
 
-`BCONNECT_SKIP_CONNECTIVITY_CHECK=true` skips the startup call (the settings are still checked).
-The server then starts even if bConnect is unreachable, and the first tool call reports the
-problem instead.
+`BCONNECT_SKIP_CONNECTIVITY_CHECK=true` skips the startup call (the settings are still checked);
+the server then says `connectivity check skipped (BCONNECT_SKIP_CONNECTIVITY_CHECK=true); the settings were checked.`
+instead of "API connectivity verified". It starts even if bConnect is unreachable, and the first
+tool call reports the problem instead.
 
 ---
 
@@ -277,7 +280,7 @@ If the ID is right, check the rights of the bMS account the server uses.
 
 The bMS API is throttling requests. Reduce them with a smaller `PageSize` and fewer tool calls in parallel; behind the HTTP gateway, limit inbound requests with `MCP_GATEWAY_RATE_LIMIT_*`.
 
-The server's own **outbound** rate limiter doesn't help here yet: each tool call creates a new client, so the limit applies only within one call (#160), and when it is reached the call fails instead of waiting. Its settings, for reference:
+The server's own **outbound** rate limiter caps the requests one server sends to bMS, across all its tool calls (in the gateway: per domain). When the limit is reached, a tool call fails at once with `Rate limit exceeded. Please try again later.` instead of waiting; the next calls succeed as the allowance refills. Its settings:
 ```env
 BCONNECT_RATE_LIMIT_ENABLED=true
 BCONNECT_RATE_LIMIT_MAX_REQUESTS=100
@@ -425,7 +428,7 @@ Use filters and specific queries to reduce result set size.
 ### Frequent Timeouts
 
 - Use a smaller `PageSize` and page through results.
-- Reduce parallel tool calls if bursts overload the bMS server. The outbound rate limiter (`BCONNECT_RATE_LIMIT_*`) applies only within one tool call for now (#160) and fails the call instead of waiting.
+- Reduce parallel tool calls if bursts overload the bMS server. The outbound rate limiter (`BCONNECT_RATE_LIMIT_*`) caps the requests per server across calls and fails a call instead of waiting.
 - Check network latency between the MCP host and the bMS server.
 
 ---
