@@ -95,7 +95,6 @@ interface BConnectRequestConfig extends InternalAxiosRequestConfig {
 import { RateLimiter, RateLimitError } from "./rate-limiter.js";
 import { AuditLogger, AuditLevel, AuditLogEntry } from "./audit-logger.js";
 import { ResponseCache } from "./response-cache.js";
-import { BatchOperations, BatchOperation, BatchExecutionResult } from "./batch-operations.js";
 import { assertSecretRouteAllowed, SecretRouteBlockedError } from "./secret-routes.js";
 import { assertCanonicalRequestPath, RequestPathRefusedError } from "./request-path.js";
 
@@ -145,15 +144,6 @@ export interface BConnectConfig {
     ttl?: number;             // Time-to-live in ms (default: 300000 = 5 minutes, 0 = no expiration)
     getOnly?: boolean;        // Cache only GET requests (default: true)
   };
-
-  // Batch Operations Configuration
-  batch?: {
-    concurrency?: number;     // Maximum concurrent operations (default: 5)
-    stopOnError?: boolean;    // Stop on first error (default: false)
-    retries?: number;         // Retry failed operations (default: 0)
-    retryDelay?: number;      // Delay between retries in ms (default: 1000)
-  };
-
 
   // Testing Configuration
   disableHttpsAgent?: boolean;  // Disable HTTPS agent (for MSW testing)
@@ -306,7 +296,6 @@ export class BConnectClientBase {
   private rateLimiter: RateLimiter | null = null;
   private auditLogger: AuditLogger | null = null;
   private responseCache: ResponseCache | null = null;
-  private batchOperations: BatchOperations | null = null;
 
 
   constructor(config: BConnectConfig, options: ClientOptions = {}) {
@@ -495,16 +484,6 @@ export class BConnectClientBase {
         },
         (error) => Promise.reject(error)
       );
-    }
-
-    // Initialize batch operations
-    if (config.batch) {
-      this.batchOperations = new BatchOperations({
-        concurrency: config.batch.concurrency,
-        stopOnError: config.batch.stopOnError,
-        retries: config.batch.retries,
-        retryDelay: config.batch.retryDelay,
-      });
     }
 
     // Initialize domain module
@@ -813,52 +792,5 @@ export class BConnectClientBase {
    */
   getHttpClient(): AxiosInstance {
     return this.client;
-  }
-
-  /**
-   * Execute batch operations with concurrency control
-   *
-   * @param operations Array of batch operations to execute
-   * @returns Batch execution result with summary and individual results
-   * @throws Error if batch operations is not enabled
-   *
-   * @example
-   * ```typescript
-   * // Create batch operations for multiple endpoint updates
-   * const operations = createBatchOperations(
-   *   endpointIds,
-   *   (id) => client.endpoints.updateEndpoint(id, { comments: 'Updated' }),
-   *   'update-endpoint'
-   * );
-   *
-   * // Execute with progress tracking
-   * const result = await client.executeBatch(operations);
-   * console.log(`Success: ${result.summary.succeeded}/${result.summary.total}`);
-   * ```
-   */
-  async executeBatch<T, R>(
-    operations: BatchOperation<T, R>[]
-  ): Promise<BatchExecutionResult<T, R>> {
-    if (!this.batchOperations) {
-      throw new Error(
-        'Batch operations is not enabled. Initialize BConnectClient with batch configuration.'
-      );
-    }
-    return this.batchOperations.execute(operations);
-  }
-
-  /**
-   * Get batch operations configuration
-   *
-   * @returns Current batch operations configuration
-   * @throws Error if batch operations is not enabled
-   */
-  getBatchConfig(): { concurrency: number; stopOnError: boolean; retries: number; retryDelay: number } {
-    if (!this.batchOperations) {
-      throw new Error(
-        'Batch operations is not enabled. Initialize BConnectClient with batch configuration.'
-      );
-    }
-    return this.batchOperations.getConfig();
   }
 }
