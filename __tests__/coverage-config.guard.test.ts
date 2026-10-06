@@ -101,8 +101,8 @@ describe('coverage config', () => {
   });
 
   it('keeps the total floors', () => {
-    expect(thresholds.lines).toBeGreaterThanOrEqual(94);
-    expect(thresholds.branches).toBeGreaterThanOrEqual(83);
+    expect(thresholds.lines).toBeGreaterThanOrEqual(95);
+    expect(thresholds.branches).toBeGreaterThanOrEqual(85);
   });
 });
 

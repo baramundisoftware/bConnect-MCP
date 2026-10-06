@@ -59,10 +59,10 @@ export default defineConfig({
       // rises; lower one only with a reason in the PR. The total counts every
       // file, including those matched by a workspace glob.
       thresholds: {
-        lines: 94, // 96.14
-        branches: 83, // 85.95
-        'packages/mcp-core/src/**': { lines: 88, branches: 83 }, // 90.85 / 85.62
-        'bconnect-mcp-gateway/src/**': { lines: 76, branches: 71 }, // 78.23 / 73.75
+        lines: 95, // 97.74
+        branches: 85, // 87.67
+        'packages/mcp-core/src/**': { lines: 91, branches: 85 }, // 93.69 / 87.57
+        'bconnect-mcp-gateway/src/**': { lines: 97, branches: 91 }, // 99.19 / 93.75
         'bconnect-activedirectory-mcp/src/**': { lines: 98, branches: 81 }, // 100 / 83.10
         'bconnect-assets-mcp/src/**': { lines: 98, branches: 84 }, // 100 / 86.73
         'bconnect-compliance-mcp/src/**': { lines: 98, branches: 88 }, // 100 / 90.70
