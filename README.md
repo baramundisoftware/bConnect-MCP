@@ -19,13 +19,32 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 
 ---
 
+## Ways to Install
+
+There are three ways to get the suite. Pick one; the configuration (Step 3) is the same for all of them.
+
+| Way | What you get | Needs | Best for | How |
+| --- | --- | --- | --- | --- |
+| **Release download** | `bconnect-mcp-suite-<version>.zip` from the [Releases page](https://github.com/baramundisoftware/bConnect-MCP/releases), already built (with a `.sha256` checksum file) | Node.js | one user, a fixed version, no build tools | [Step 1](#step-1-download), then skip Step 2 |
+| **From source** | a `git clone` of this repository, built locally | Node.js, Git | the newest changes on `main`, contributing | [Steps 1–2](#step-1-download) |
+| **Gateway container** | the image `ghcr.io/baramundisoftware/bconnect-mcp-gateway` from [GitHub Packages](https://github.com/orgs/baramundisoftware/packages?repo_name=bConnect-MCP) | Docker | several users or tools (e.g. n8n) sharing one HTTP endpoint | [Docker Deployment](#docker-deployment) |
+
+The first two run the 13 servers as local processes that your AI assistant starts over stdio. The
+container runs the HTTP gateway, which serves all 13 servers to clients over the network; the gateway
+can also run without Docker, from a release download or a source build (see
+[Centralized Gateway](#centralized-gateway-http-multi-user)).
+
+The servers are not published to the npm registry, so `npx` / `npm install -g` don't apply.
+
+---
+
 ## What You Need
 
 - A **baramundi Management Suite** (25R2 or 26R1) with bConnect API enabled
 - Your **bMS server address** (e.g. `https://bms.company.com:443/bconnect`)
 - A **bMS user account** with API access, or an **API key**
   (generate one in the baramundi Management Center under **Server Management > API Keys**)
-- **Node.js 22.15 or 24** ([download](https://nodejs.org/)), the versions CI tests; 22.15 and later also honor the OS/Windows CA trust store. The packages still allow Node.js 20, but it isn't tested.
+- **Node.js 22.15 or 24** ([download](https://nodejs.org/)), the versions CI tests; 22.15 and later also honor the OS/Windows CA trust store. The packages still allow Node.js 20, but it isn't tested. Not needed for the gateway container, which brings its own.
 
 ### Network Requirements
 
@@ -197,7 +216,28 @@ The **gateway** (multi-user / n8n) is published as a multi-arch image (linux/amd
 
 ```bash
 docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
+# or pin a version: …/bconnect-mcp-gateway:26.1.9
 ```
+
+Start it with your bMS settings and check that it's up:
+
+```bash
+# The container binds 0.0.0.0, so it only starts with MCP_ALLOW_NO_AUTH=true: your assertion that a
+# proxy in front handles authentication. Publishing on 127.0.0.1 keeps it off the network until then.
+docker run -d --name bconnect-mcp-gateway \
+  -p 127.0.0.1:3001:3001 \
+  -e MCP_ALLOW_NO_AUTH=true \
+  -e BCONNECT_BASE_URL=https://bms.company.com:443/bconnect \
+  -e BCONNECT_API_KEY=your-service-key \
+  -e BCONNECT_RELEASE=26R1 \
+  ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
+
+curl http://localhost:3001/health
+# → {"status":"ok","servers":[…],"count":13}
+```
+
+Clients then connect to `http://localhost:3001/<server>/mcp`, e.g. `/endpoints/mcp`. For an internal CA,
+mount the CA file and set `BCONNECT_CA_CERT_PATH` (see [docs/DOCKER.md → Custom CA Certificates](docs/DOCKER.md#custom-ca-certificates)).
 
 Only the gateway is distributed as a container; the 13 stdio servers run via Node.js / Claude Desktop (see [Getting Started](#getting-started-step-by-step) above). See [docs/DOCKER.md](docs/DOCKER.md) for the full gateway guide — Compose, `docker run`, TLS/auth, and mounted secrets.
 
