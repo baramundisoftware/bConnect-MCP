@@ -31,7 +31,21 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 
 - Port **443** (HTTPS) must be open between the machine running the MCP server and your bMS server
   - 443 is the default. Some installations expose bConnect on a different port (e.g. **444** in older/test setups) — check the bConnect port in your baramundi Management Center and adjust the port in `BCONNECT_BASE_URL` accordingly.
-- Test connectivity: `curl -sS -o /dev/null -w '%{http_code}\n' https://bms.company.com:443/bconnect/`. Any HTTP status, even 401 or 404, means the network and the certificate are fine. Add `--cacert <your-ca.pem>` for an internal CA; don't use `-k`, it hides exactly the certificate problem the servers would hit.
+- Test connectivity:
+  ```bash
+  curl -sS -o /dev/null -w '%{http_code}\n' https://bms.company.com:443/bconnect/
+  ```
+  Any HTTP status, even 401 or 404, means the network and the certificate are fine. For an internal CA,
+  add `--cacert <your-ca.pem>` (the same file as `BCONNECT_CA_CERT_PATH`). Don't use `-k`: it hides exactly
+  the certificate problem the servers would hit.
+  - **Windows (Git Bash, MSYS2):** this curl uses Windows' TLS library (Schannel). With an internal CA it
+    usually also needs `--ssl-no-revoke`, otherwise it stops with `the revocation status is unknown`:
+    ```bash
+    curl -sS -o /dev/null -w '%{http_code}\n' --cacert C:/path/to/bms-ca.pem --ssl-no-revoke https://bms.company.com:443/bconnect/
+    ```
+    `--ssl-no-revoke` still checks the certificate against the CA; it only skips the revocation lookup,
+    which fails when the CA's revocation list can't be reached. The MCP servers (Node.js) don't do this
+    lookup, so they aren't affected.
 
 ---
 
