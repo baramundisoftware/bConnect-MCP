@@ -20,10 +20,8 @@ export default defineConfig({
         'build/**',
         'src/index.ts',
       ],
-      thresholds: {
-        statements: 60,
-        lines: 60,
-      }
+      // No floors here: this run sees only this server's own tests. The floors
+      // live in the root vitest.config.ts (`npm run test:coverage`).
     }
   }
 });
