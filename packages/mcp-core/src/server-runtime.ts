@@ -238,8 +238,12 @@ async function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io
   // A port in use or an address that can't be bound is a startup error like any other: one line.
   const listener = app.listen(port, bind);
   await new Promise<void>((resolveListen, reject) => {
-    listener.once("listening", resolveListen);
     listener.once("error", reject);
+    listener.once("listening", () => {
+      // Only startup errors are reported this way; a later error is not swallowed here.
+      listener.off("error", reject);
+      resolveListen();
+    });
   });
   io.error(`${name} listening on http://${bind}:${port}/mcp`);
   io.listening?.(listener);
