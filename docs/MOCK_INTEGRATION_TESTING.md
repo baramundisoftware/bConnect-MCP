@@ -3,19 +3,24 @@
 A per-server tier of integration tests that exercise the production
 `BConnectClient` HTTP path against a running `bConnect-Mock` instance.
 
-These tests catch the class of bug that unit tests can't see: wrong resource
-paths and HTTP methods below the domain segment, mistaken query shapes. They
-don't catch everything: the mock ignores the domain segment (`/endpoints/…`,
-`/compliance/…`) and serves a few routes that aren't in the API specification.
-`npm test` checks every route against the specification (the spec-conformance
-guard), which covers those cases.
+These tests catch the class of bug that unit tests can't see: a wrong domain
+segment (`/endpoints/…`, `/compliance/…`), wrong resource paths and HTTP methods
+below it, mistaken query shapes. Since bConnect-Mock 0.4.0 the mock answers each
+route only under the domain whose specification declares it, as a real bMS does:
+a missing or wrong domain segment, or a route the specification doesn't declare,
+gets 404, and an undeclared method gets 405. Older mock images, or a mock started
+with `BCONNECT_MODULE_ROUTING=lenient`, ignore the domain segment and serve a few
+routes that aren't in the specification. The tier covers only a few calls per
+server; `npm test` checks every route against the specification (the
+spec-conformance guard).
 The canonical example is `list_detected_vulnerabilities_for_endpoint`,
 which once called the wrong path (see the comment in
 `bconnect-compliance-mcp/src/__tests__/mock-integration/compliance.mock.test.ts`).
 
 ## Running
 
-The tests expect the mock at `http://127.0.0.1:13433` and a **26R1** mock: the
+The tests expect the mock at `http://127.0.0.1:13433`, version **0.4.0 or later**
+(for the domain check above), and a **26R1** mock: the
 compliance and software tests call 26R1-only routes (`/v2.0/Rules`, `Bundles`),
 which the mock's default 25R2 mode answers with 404. The mock listens on 3433
 inside the container, so map it to 13433:
