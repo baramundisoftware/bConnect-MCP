@@ -16,6 +16,13 @@
  *   5. Add the matching dispatch case (no inline argument validation —
  *      validateToolArguments has already done it).
  *   6. Populate WRITE_TOOLS with any tool that mutates state.
+ *   7. Declare the tool annotations (REQ-SRV-024): add `src/operations.ts`
+ *      (tool → operationId), run `node scripts/generate-query-parameters.mjs`
+ *      to generate `src/tool-methods.ts`, and register the tool list as
+ *      `withToolAnnotations(TOOL_METHODS, toolCatalog.list)`. A destructive
+ *      write without a DELETE goes into DESTRUCTIVE_WRITE_TOOLS in the core,
+ *      with its reason. __tests__/tool-annotations.guard.test.ts fails until
+ *      this is done.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
