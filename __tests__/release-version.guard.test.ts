@@ -58,6 +58,7 @@ describe('release version', () => {
 
   it('CHANGELOG has a section for the root version', () => {
     const changelog = readFileSync(join(ROOT, 'CHANGELOG.md'), 'utf8');
-    expect(changelog).toMatch(new RegExp(`^## \\[${VERSION.replace(/\./g, '\\.')}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm'));
+    const dated = changelog.split('\n').map((l) => /^## \[([^\]]+)\] - \d{4}-\d{2}-\d{2}$/.exec(l)?.[1]);
+    expect(dated).toContain(VERSION);
   });
 });
