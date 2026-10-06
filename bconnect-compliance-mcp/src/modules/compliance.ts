@@ -42,6 +42,14 @@ export class ComplianceModule {
     return response.data;
   }
 
+  /**
+   * Resolves if the endpoint exists, rejects otherwise (404 when it doesn't).
+   * `WindowsEndpoints` for the vulnerability route, `Endpoints` for rule violations.
+   */
+  async checkEndpointExists(route: 'WindowsEndpoints' | 'Endpoints', endpointId: string): Promise<void> {
+    await this.httpClient.get(`/endpoints/v2.0/${route}/${endpointId}`);
+  }
+
   async getAllMobileDeviceRules(params: GetAllMobileDeviceRulesParams = {}): Promise<RulePagedList> {
     const response = await this.httpClient.get(`${this.basePath}/Rules`, { params });
     return response.data;
