@@ -71,8 +71,12 @@ describe('toolJson', () => {
     expect(toolJson(undefined, { BCONNECT_PRETTY_JSON: 'true' })).toBe('null');
   });
 
-  it('refuses an invalid setting', () => {
-    expect(() => toolJson(VALUE, { BCONNECT_PRETTY_JSON: 'yes' })).toThrow(ClientConfigError);
+  it('never fails a call over the setting: an invalid value (refused at startup) gives compact JSON', () => {
+    expect(toolJson(VALUE, { BCONNECT_PRETTY_JSON: 'yes' })).toBe(JSON.stringify(VALUE));
+  });
+
+  it('ignores case and surrounding spaces, like the startup check', () => {
+    expect(toolJson(VALUE, { BCONNECT_PRETTY_JSON: ' TRUE ' })).toBe(JSON.stringify(VALUE, null, 2));
   });
 });
 

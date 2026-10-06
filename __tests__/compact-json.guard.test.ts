@@ -5,7 +5,10 @@
  * the format is chosen in one place. In each server's `src/` (and the
  * template's) the guard fails on:
  * - `JSON.stringify` with an indent argument, and
- * - a `text:` property set directly from `JSON.stringify(…)`.
+ * - a `JSON.stringify(…)` in a `text:` value outside a template literal (prose may
+ *   quote a value in one line, as the restart and Intune results do).
+ * A value built in a variable first (`const t = …; { text: t }`) isn't followed;
+ * the all-tools test (compact-json.test.ts) still checks the format of every result.
  * It walks the TypeScript syntax tree, so strings and comments don't count;
  * a plain substring check on `, null, 2)` also covers comments, so the
  * template's commented examples can't teach the old pattern. No regular
@@ -26,12 +29,19 @@ const sourceFiles = (dir: string): string[] =>
     return e.name.endsWith('.ts') && !e.name.endsWith('.d.ts') && !e.name.endsWith('.test.ts') ? [path] : [];
   });
 
-const isJsonStringify = (node: ts.Node): node is ts.CallExpression =>
-  ts.isCallExpression(node) &&
-  ts.isPropertyAccessExpression(node.expression) &&
-  ts.isIdentifier(node.expression.expression) &&
-  node.expression.expression.text === 'JSON' &&
-  node.expression.name.text === 'stringify';
+/** `JSON.stringify(…)` or `JSON["stringify"](…)`. */
+const isJsonStringify = (node: ts.Node): node is ts.CallExpression => {
+  if (!ts.isCallExpression(node)) return false;
+  const callee = node.expression;
+  const name = ts.isPropertyAccessExpression(callee) ? callee.name.text
+    : ts.isElementAccessExpression(callee) && ts.isStringLiteralLike(callee.argumentExpression) ? callee.argumentExpression.text
+      : undefined;
+  return name === 'stringify' && ts.isIdentifier(callee.expression) && callee.expression.text === 'JSON';
+};
+
+/** A `JSON.stringify` call in `node` that isn't part of a template literal (prose may quote a value). */
+const stringifyOutsideProse = (node: ts.Node): boolean =>
+  !ts.isTemplateExpression(node) && (isJsonStringify(node) || (ts.forEachChild(node, (child) => stringifyOutsideProse(child) || undefined) ?? false));
 
 /** True for an absent or `undefined` indent argument. */
 const noIndent = (arg: ts.Expression | undefined): boolean =>
@@ -47,10 +57,9 @@ export function selfFormatted(source: string, file = 'source.ts'): string[] {
   };
   const visit = (node: ts.Node): void => {
     if (isJsonStringify(node) && !noIndent(node.arguments[2])) report(node, 'indented JSON');
-    if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === 'text') {
-      let value: ts.Expression = node.initializer;
-      while (ts.isParenthesizedExpression(value)) value = value.expression;
-      if (isJsonStringify(value)) report(node, 'text set from JSON.stringify');
+    if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === 'text' &&
+      stringifyOutsideProse(node.initializer)) {
+      report(node, 'text set from JSON.stringify');
     }
     ts.forEachChild(node, visit);
   };
@@ -72,12 +81,16 @@ describe('the guard itself', () => {
     ['indent in a template literal', 'const t = `Updated:\\n${JSON.stringify(result, null, 2)}`;'],
     ['text from JSON.stringify', 'return { content: [{ type: "text", text: JSON.stringify(result) }] };'],
     ['text from JSON.stringify in parentheses', 'return { content: [{ type: "text", text: (JSON.stringify(result)) }] };'],
+    ['JSON["stringify"] with an indent', 'const t = JSON["stringify"](result, null, 2);'],
+    ['text from JSON.stringify in a ternary', 'return { content: [{ type: "text", text: ok ? "done" : JSON.stringify(result) }] };'],
+    ['text from JSON.stringify joined to prose', 'return { content: [{ type: "text", text: "Result: " + JSON.stringify(result) }] };'],
     ['commented example', '// return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };'],
   ])('finds %s', (_name, source) => {
     expect(selfFormatted(source)).toHaveLength(1);
   });
 
   it.each([
+    ['compact JSON quoted in prose inside text', 'return { content: [{ type: "text", text: `bMS answered ${JSON.stringify(result)}.` }] };'],
     ['compact JSON in prose', 'const t = `result unknown (bMS answered ${JSON.stringify(result)}).`;'],
     ['the core helper', 'return toolJsonResult(result, { lead: "Updated:" });'],
     ['no indent', 'const key = JSON.stringify(values, undefined, undefined);'],

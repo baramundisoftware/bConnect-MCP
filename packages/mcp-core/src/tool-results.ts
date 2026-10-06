@@ -6,9 +6,8 @@
  * context. BCONNECT_PRETTY_JSON=true restores the two-space format for
  * debugging. Error results come from `toolErrorResult` (tool-errors.ts).
  */
-import { prettyJsonSetting } from "./client-config.js";
-
 export interface ToolJsonResult {
+  /** The SDK's CallTool handler result type has an index signature. */
   [key: string]: unknown;
   content: Array<{ type: "text"; text: string }>;
 }
@@ -20,11 +19,13 @@ export interface ToolJsonOptions {
 
 /**
  * A tool's data as JSON text: compact, or indented with BCONNECT_PRETTY_JSON=true.
- * Read on every call, like the write gate. `undefined` becomes `null`, so a
- * result always has text.
+ * Read on every call, like the write gate. The strict check is at startup
+ * (prettyJsonSetting in clientConfigFromEnv); here an odd value just gives
+ * compact JSON, so formatting never fails a call whose bMS work is done.
+ * `undefined` becomes `null`, so a result always has text.
  */
 export function toolJson(value: unknown, env: NodeJS.ProcessEnv = process.env): string {
-  const indent = prettyJsonSetting(env.BCONNECT_PRETTY_JSON) ? 2 : undefined;
+  const indent = (env.BCONNECT_PRETTY_JSON ?? "").trim().toLowerCase() === "true" ? 2 : undefined;
   return JSON.stringify(value, null, indent) ?? "null";
 }
 
