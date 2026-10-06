@@ -19,9 +19,13 @@ export default defineConfig({
     // (unit) run the name points at the core's source instead, so every test
     // exercises the same copy and the report shows it. Child-process tests
     // start built servers with node and are not affected.
-    alias: {
-      '@bconnect/mcp-core': fileURLToPath(new URL('./packages/mcp-core/src/index.ts', import.meta.url)),
-    },
+    // Exact match only: a string key would also rewrite `@bconnect/mcp-core/x`.
+    alias: [
+      {
+        find: /^@bconnect\/mcp-core$/,
+        replacement: fileURLToPath(new URL('./packages/mcp-core/src/index.ts', import.meta.url)),
+      },
+    ],
   },
   test: {
     // Exclude mock-integration tier — those tests run against a live mock and
@@ -53,7 +57,9 @@ export default defineConfig({
       // Floors, in %. Each workspace's is 2 points under what it achieved when
       // it was set (measured value in the comment). Raise a floor when coverage
       // rises; lower one only with a reason in the PR. The total counts every
-      // file, including those matched by a workspace glob.
+      // file, including those matched by a workspace glob. Its floors (set
+      // 2026-10-06) are wider: 76 % branches still holds with the core measured
+      // through its build (78.57).
       thresholds: {
         lines: 85, // 88.59
         branches: 76, // 84.25

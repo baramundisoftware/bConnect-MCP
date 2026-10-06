@@ -28,7 +28,10 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 /** Not shipped: a starting point for new servers, never built into the image. */
 const NOT_SHIPPED = ['bconnect-server-template'];
 
-/** Directories with a package.json and a src/, at the root and under packages/. */
+/**
+ * Directories with a package.json and a src/, at the root and under packages/.
+ * A new one fails this guard until it gets a floor or is listed in NOT_SHIPPED.
+ */
 function shippedWorkspaces(): string[] {
   const dirs = (base: string) =>
     readdirSync(join(ROOT, base), { withFileTypes: true })
@@ -38,18 +41,21 @@ function shippedWorkspaces(): string[] {
   return [...dirs('.'), ...dirs('packages')].filter((d) => !NOT_SHIPPED.includes(d)).sort();
 }
 
-/** `**` spans directories, `*` stays within one segment: enough for the include list. */
+/** `**` spans directories, `*` stays within one segment: enough for the include and exclude lists. */
 function globToRegExp(glob: string): RegExp {
   const escaped = glob.replace(/[.+?^$()|[\]{}\\]/g, '\\$&');
-  return new RegExp('^' + escaped.replace(/\*\*\/?|\*/g, (m) => (m === '*' ? '[^/]*' : '(?:.*/)?')) + '$');
+  const parts: Record<string, string> = { '**/': '(?:.*/)?', '**': '.*', '*': '[^/]*' };
+  return new RegExp('^' + escaped.replace(/\*\*\/?|\*/g, (m) => parts[m]) + '$');
 }
 const isIncluded = (path: string) => COVERAGE_INCLUDE.some((g) => globToRegExp(g).test(path));
 
 const coverage = config.test?.coverage as {
   include?: string[];
+  exclude?: string[];
   thresholds?: Record<string, unknown>;
 };
 const thresholds = coverage.thresholds ?? {};
+const isExcluded = (path: string) => (coverage.exclude ?? []).some((g) => globToRegExp(g).test(path));
 const workspaceFloors = Object.keys(thresholds).filter((k) => k.endsWith('/src/**'));
 
 describe('coverage config', () => {
@@ -65,8 +71,9 @@ describe('coverage config', () => {
     expect(coverage.include).toEqual(COVERAGE_INCLUDE);
   });
 
-  it.each(workspaces)('%s is in the coverage include', (ws) => {
+  it.each(workspaces)('%s is in the coverage include, entry point not excluded', (ws) => {
     expect(isIncluded(`${ws}/src/index.ts`)).toBe(true);
+    expect(isExcluded(`${ws}/src/index.ts`)).toBe(false);
   });
 
   it.each(workspaces)('%s has a lines and a branches floor', (ws) => {
@@ -85,6 +92,8 @@ describe('coverage config', () => {
     expect(isIncluded('bconnect-mcp-gateway/src/app.ts')).toBe(true);
     expect(isIncluded('__tests__/host-check.test.ts')).toBe(false);
     expect(isIncluded('bconnect-jobs-mcp/build/index.js')).toBe(false);
+    expect(isExcluded('bconnect-jobs-mcp/src/__tests__/jobs.test.ts')).toBe(true);
+    expect(isExcluded('bconnect-jobs-mcp/src/generated/api.ts')).toBe(true);
   });
 
   it('the template is not measured', () => {
@@ -99,8 +108,10 @@ describe('coverage config', () => {
 
 describe('core alias', () => {
   it('@bconnect/mcp-core points at the core source', () => {
-    const alias = (config.resolve?.alias ?? {}) as Record<string, string>;
-    expect(alias['@bconnect/mcp-core']).toBe(join(ROOT, 'packages', 'mcp-core', 'src', 'index.ts'));
+    const alias = (config.resolve?.alias ?? []) as Array<{ find: RegExp; replacement: string }>;
+    const core = alias.filter((a) => a.find.test('@bconnect/mcp-core'));
+    expect(core.map((a) => a.replacement)).toEqual([join(ROOT, 'packages', 'mcp-core', 'src', 'index.ts')]);
+    expect(core[0].find.test('@bconnect/mcp-core/x')).toBe(false);
   });
 
   it('a server importing the core by name gets the source copy', async () => {
