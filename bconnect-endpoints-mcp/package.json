@@ -33,13 +33,13 @@
   },
   "dependencies": {
     "@bconnect/mcp-core": "*",
-    "@modelcontextprotocol/sdk": "^1.31.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "axios": "^1.20.0",
     "dotenv": "^16.4.0",
     "express": "^4.21.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-arm64-gnu": "^4.60.0"
+    "@rollup/rollup-linux-arm64-gnu": "^4.64.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

@@ -62,13 +62,13 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.31.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "axios": "^1.20.0",
     "axios-retry": "^4.5.0",
     "dotenv": "^16.4.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-arm64-gnu": "^4.63.6"
+    "@rollup/rollup-linux-arm64-gnu": "^4.64.0"
   },
   "devDependencies": {
     "@bconnect/mcp-core": "*",
