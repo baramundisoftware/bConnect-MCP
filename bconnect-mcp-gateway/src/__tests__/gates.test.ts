@@ -75,6 +75,30 @@ describe("gateway with the gates closed", () => {
     }
   });
 
+  it("lists only read tools even when ALLOW_WRITE_OPERATIONS=true was set (REQ-SRV-026)", async () => {
+    process.env.ALLOW_WRITE_OPERATIONS = "true";
+    closeGates();
+    const server = http.createServer(createApp());
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    try {
+      const { port } = server.address() as { port: number };
+      const res = await fetch(`http://127.0.0.1:${port}/endpoints/mcp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list", params: {} }),
+      });
+      const text = await res.text();
+      const data = text.split("\n").find((line) => line.startsWith("data: "));
+      const body = JSON.parse((data ?? "data: {}").slice(6)) as { result?: { tools?: Array<{ name: string; annotations?: { readOnlyHint?: boolean } }> } };
+      const tools = body.result?.tools ?? [];
+      expect(tools.length).toBeGreaterThan(20);
+      expect(tools.filter((t) => t.annotations?.readOnlyHint !== true).map((t) => t.name)).toEqual([]);
+      expect(tools.map((t) => t.name)).not.toContain("delete_endpoint");
+    } finally {
+      server.close();
+    }
+  });
+
   it("gateway.ts checks BCONNECT_RELEASE before it creates the app", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(here, "..", "gateway.ts"), "utf8");

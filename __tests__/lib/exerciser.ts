@@ -158,7 +158,10 @@ export interface ToolResult {
 }
 
 export interface ConnectedServer {
+  /** The tool list at connect time. */
   tools: Array<{ name: string; inputSchema: JsonSchema }>;
+  /** Lists the tools again, under the environment as it is now. */
+  list(): Promise<Array<{ name: string; inputSchema: JsonSchema; annotations?: Record<string, unknown> }>>;
   call(tool: string, args: Record<string, unknown>): Promise<ToolResult>;
   close(): Promise<void>;
 }
@@ -176,6 +179,7 @@ export async function connect(server: string, credentials?: Record<string, strin
   const tools = (await client.listTools()).tools as ConnectedServer['tools'];
   return {
     tools,
+    list: async () => (await client.listTools()).tools as Awaited<ReturnType<ConnectedServer['list']>>,
     async call(tool, args) {
       try {
         const result = await client.callTool({ name: tool, arguments: args });

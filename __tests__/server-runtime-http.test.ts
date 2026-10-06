@@ -13,6 +13,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { BConnectClientBase } from '../packages/mcp-core/src/bconnect-client-base.js';
 import { runServer, serverClients, startServer, type ServerEntry } from '../packages/mcp-core/src/server-runtime.js';
+import { createServer as createEndpointsServer } from '../bconnect-endpoints-mcp/src/index.js';
 
 const ENV = {
   BCONNECT_BASE_URL: 'http://bms.runtime-http.test/bconnect',
@@ -136,6 +137,41 @@ describe('HTTP mode bind address', () => {
     expect(line.startsWith(`bconnect-runtime-mcp: refusing to bind ${bind} — `)).toBe(true);
     expect(line).toContain('MCP_ALLOW_NO_AUTH=true');
     expect(listening).not.toHaveBeenCalled();
+  });
+});
+
+describe('standalone HTTP mode with a real server: write tools listed only with writes on (REQ-SRV-026)', () => {
+  let port = 0;
+  const listeners: HttpServer[] = [];
+  const names = async (id: number): Promise<string[]> => {
+    const res = await send(port, { method: 'POST', headers: MCP_HEADERS, body: rpc('tools/list', id) });
+    expect(res.status).toBe(200);
+    return (message(res.body).result?.tools as Array<{ name: string }>).map((t) => t.name);
+  };
+
+  beforeAll(async () => {
+    const env = { ...ENV, MCP_PORT: '0' };
+    const entry: ServerEntry<TestClient> = { name: 'bconnect-endpoints-mcp', createServer: createEndpointsServer, clients: serverClients(TestClient, env) };
+    const exit = vi.fn((code: number) => { throw new Error(`exit ${code}`); }) as unknown as (code: number) => never;
+    await startServer(entry, { env, error: () => undefined, exit, connectStdio: vi.fn(), listening: (s) => listeners.push(s) });
+    port = (listeners[0].address() as { port: number }).port;
+  });
+  afterAll(async () => {
+    vi.unstubAllEnvs();
+    for (const s of listeners) {await new Promise<void>((resolve) => s.close(() => resolve()));}
+  });
+
+  it('lists the 27 read tools of 26R1 with writes off, and all 66 with writes on, per request', async () => {
+    vi.stubEnv('BCONNECT_RELEASE', '26R1');
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', '');
+    const off = await names(1);
+    expect(off).toHaveLength(27);
+    expect(off).toContain('list_endpoints');
+    expect(off).not.toContain('delete_endpoint');
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
+    const on = await names(2);
+    expect(on).toHaveLength(66);
+    expect(on).toContain('delete_endpoint');
   });
 });
 

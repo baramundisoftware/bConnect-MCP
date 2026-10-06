@@ -1,12 +1,14 @@
 /**
  * Tool annotations from the core (REQ-SRV-024, #296): the read/write
- * classification, the titles and the tools/list wrapper. Which tool gets which
- * hint is checked against the specs and the traffic in
- * tool-annotations.guard.test.ts.
+ * classification, the titles and the tools/list wrappers, including the one
+ * that leaves out write tools while writes are off (REQ-SRV-026, #156). Which
+ * tool gets which hint is checked against the specs and the traffic in
+ * tool-annotations.guard.test.ts; which tools are listed, in
+ * write-tools-hidden.guard.test.ts.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
-  DESTRUCTIVE_WRITE_TOOLS, toolAnnotations, toolEffect, toolTitle, withToolAnnotations,
+  DESTRUCTIVE_WRITE_TOOLS, toolAnnotations, toolEffect, toolTitle, withToolAnnotations, withWriteToolsHidden,
 } from '../packages/mcp-core/src/tool-annotations.js';
 
 describe('toolEffect', () => {
@@ -116,5 +118,62 @@ describe('withToolAnnotations', () => {
   it('leaves an entry without a name alone', async () => {
     const list = withToolAnnotations(table, () => ({ tools: [{ description: 'x' }] }));
     expect((await list()).tools).toEqual([{ description: 'x' }]);
+  });
+});
+
+describe('withWriteToolsHidden', () => {
+  const table = { list_things: ['GET'], create_thing: ['POST'], delete_thing: ['DELETE'], get_more: ['GET'], msw_cleanup: ['POST'] };
+  const result = () => ({
+    nextCursor: 'c',
+    tools: [
+      { name: 'list_things', description: 'd1', annotations: { title: 'List things', readOnlyHint: true } },
+      { name: 'create_thing', description: 'd2' },
+      { name: 'delete_thing', description: 'd3' },
+      { name: 'get_more', description: 'd4', inputSchema: { type: 'object', required: ['id'] } },
+      { name: 'msw_cleanup', description: 'd5' },
+    ],
+  });
+
+  it('with writes off, leaves out every tool that is not read-only and keeps the reads unchanged, in order', async () => {
+    const list = withWriteToolsHidden(table, () => false, result);
+    const expected = result();
+    expect(await list()).toEqual({ nextCursor: 'c', tools: [expected.tools[0], expected.tools[3]] });
+  });
+
+  it('with writes on, returns the list unchanged', async () => {
+    const list = withWriteToolsHidden(table, () => true, result);
+    expect(JSON.stringify(await list())).toBe(JSON.stringify(result()));
+  });
+
+  it('asks whether writes are allowed on every request, not once', async () => {
+    const allowed = vi.fn().mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const list = withWriteToolsHidden(table, allowed, result);
+    expect((await list()).tools).toHaveLength(2);
+    expect((await list()).tools).toHaveLength(5);
+    expect(allowed).toHaveBeenCalledTimes(2);
+  });
+
+  it('works with an async handler', async () => {
+    const list = withWriteToolsHidden(table, () => false, async () => ({ tools: [{ name: 'create_thing' }, { name: 'list_things' }] }));
+    expect((await list()).tools).toEqual([{ name: 'list_things' }]);
+  });
+
+  it('refuses a tool missing from the table with writes off, naming the generator', async () => {
+    const list = withWriteToolsHidden(table, () => false, () => ({ tools: [{ name: 'get_other' }] }));
+    await expect(list()).rejects.toThrow(/get_other.*generate-query-parameters/);
+  });
+
+  it('leaves an entry without a name alone', async () => {
+    const list = withWriteToolsHidden(table, () => false, () => ({ tools: [{ description: 'x' }] }));
+    expect((await list()).tools).toEqual([{ description: 'x' }]);
+  });
+
+  it('wraps withToolAnnotations: the listed tools are exactly those marked read-only', async () => {
+    const list = withWriteToolsHidden(table, () => false, withToolAnnotations(table, () => ({
+      tools: Object.keys(table).map((name) => ({ name })),
+    })));
+    const tools = (await list()).tools as Array<{ name: string; annotations: { readOnlyHint: boolean } }>;
+    expect(tools.map((t) => t.name)).toEqual(['list_things', 'get_more']);
+    expect(tools.every((t) => t.annotations.readOnlyHint)).toBe(true);
   });
 });
