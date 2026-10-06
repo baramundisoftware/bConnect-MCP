@@ -7,9 +7,11 @@
  * And does NOT contain tools from any other domain server.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 
 import { createServer } from '../index.js';
+
+afterEach(() => { vi.unstubAllEnvs(); });
 
 // ── Expected tool sets ─────────────────────────────────────────────────────
 
@@ -267,6 +269,7 @@ async function getToolNames(): Promise<string[]> {
 describe('bconnect-jobs-mcp server — tool registration', () => {
   describe('listTools() response', () => {
     it('contains all expected jobs module tools', async () => {
+      vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
       const toolNames = await getToolNames();
 
       for (const expectedTool of JOBS_TOOLS) {
@@ -275,6 +278,7 @@ describe('bconnect-jobs-mcp server — tool registration', () => {
     });
 
     it('returns exactly 34 tools (jobs module only)', async () => {
+      vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
       const toolNames = await getToolNames();
 
       expect(toolNames).toHaveLength(ALL_EXPECTED_TOOLS.length);

@@ -23,6 +23,10 @@
  *      write without a DELETE goes into DESTRUCTIVE_WRITE_TOOLS in the core,
  *      with its reason. __tests__/tool-annotations.guard.test.ts fails until
  *      this is done.
+ *   8. If WRITE_TOOLS isn't empty, hide the write tools while writes are off
+ *      (REQ-SRV-026): wrap the list once more as
+ *      `withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true", …)`.
+ *      __tests__/write-tools-hidden.guard.test.ts fails until this is done.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";

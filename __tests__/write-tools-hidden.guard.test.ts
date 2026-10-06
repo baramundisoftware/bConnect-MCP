@@ -23,6 +23,13 @@ import { ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, requiredArg
 /** Tools listed per release: all of them with writes on, the reads with writes off (measured on d208ab0). */
 const COUNTS = { '26R1': { on: 276, off: 178 }, '25R2': { on: 240, off: 156 } } as const;
 
+/** Read tools per server on 26R1 (listed with writes off); the 4 servers without write tools are absent. */
+const READS_26R1: Record<string, number> = {
+  'bconnect-assets-mcp': 15, 'bconnect-defensecontrol-mcp': 10, 'bconnect-endpoints-mcp': 27, 'bconnect-jobs-mcp': 20,
+  'bconnect-operatingsystems-mcp': 5, 'bconnect-servermanagement-mcp': 16, 'bconnect-software-mcp': 11,
+  'bconnect-updatemanagement-mcp': 2, 'bconnect-variables-mcp': 9,
+};
+
 const refusal = (tool: string): string => JSON.stringify([{
   type: 'text', text: `Write operation '${tool}' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.`,
 }]);
@@ -104,6 +111,11 @@ describe.each(RELEASES)('bMS %s', (release) => {
     expect(seen.reduce((n, s) => n + s.off.length, 0)).toBe(COUNTS[release].off);
   });
 
+  it.runIf(release === '26R1')('lists the expected number of read tools per server with writes off', () => {
+    const counts = Object.fromEntries(seen.filter((s) => s.off.length !== s.on.length).map((s) => [s.server, s.off.length]));
+    expect(counts).toEqual(READS_26R1);
+  });
+
   it('with writes off, lists no tool whose operations use anything but GET, in either spec', () => {
     const wrong = seen.flatMap((s) => s.reads.filter((r) => r.methods.length === 0 || r.methods.some((m) => m !== 'GET'))
       .map((r) => `${s.server} ${r.tool} calls ${r.methods.join(', ') || 'no operation'}`));
@@ -126,9 +138,10 @@ describe.each(RELEASES)('bMS %s', (release) => {
 
   it('servers without write tools list the same tools either way', () => {
     const readOnly = seen.filter((s) => Object.values(s.effect).every((e) => e === 'read'));
-    expect(readOnly.map((s) => s.server).sort()).toEqual([
+    // These four have no write tools at all (they don't wrap their list); on 25R2 software lists none either.
+    expect(readOnly.map((s) => s.server)).toEqual(expect.arrayContaining([
       'bconnect-activedirectory-mcp', 'bconnect-compliance-mcp', 'bconnect-groups-mcp', 'bconnect-universaldynamicgroups-mcp',
-    ]);
+    ]));
     for (const s of readOnly) expect(JSON.stringify(s.off), s.server).toBe(JSON.stringify(s.on));
   });
 

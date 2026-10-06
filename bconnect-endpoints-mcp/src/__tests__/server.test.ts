@@ -7,9 +7,11 @@
  * And does NOT contain tools from any other domain server.
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 
 import { createServer } from '../index.js';
+
+afterEach(() => { vi.unstubAllEnvs(); });
 
 // ── Expected tool sets ─────────────────────────────────────────────────────
 
@@ -260,6 +262,7 @@ afterEach(() => {
 describe('bconnect-endpoints-mcp server — tool registration', () => {
   describe('listTools() response', () => {
     it('contains all expected endpoints module tools', async () => {
+      vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
       const toolNames = await getToolNames();
 
       for (const expectedTool of ENDPOINTS_TOOLS) {
@@ -268,6 +271,7 @@ describe('bconnect-endpoints-mcp server — tool registration', () => {
     });
 
     it('returns all endpoints tools in default (26R1) mode, including 26R1-only', async () => {
+      vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
       const toolNames = await getToolNames();
 
       // Default is BCONNECT_RELEASE=26R1, so the 26R1-only tools (unmanaged, EntraID) are included.
@@ -278,6 +282,7 @@ describe('bconnect-endpoints-mcp server — tool registration', () => {
     });
 
     it('excludes 26R1-only tools when BCONNECT_RELEASE=25R2', async () => {
+      vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
       process.env.BCONNECT_RELEASE = '25R2';
       const toolNames = await getToolNames();
 

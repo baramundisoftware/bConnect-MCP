@@ -55,10 +55,13 @@ function contentText(result: ToolResult): string {
 }
 
 async function exerciseAll(release: Release, gates: { writes: boolean; secretRead: boolean }): Promise<Call[]> {
-  Object.assign(process.env, guardEnv(release, gates), { BCONNECT_USERNAME: USERNAME, BCONNECT_PASSWORD: PASSWORD });
   const calls: Call[] = [];
   for (const server of SERVERS) {
+    // Listed with writes on, so every tool is called (tools/list hides write tools while
+    // writes are off, REQ-SRV-026); the gates read the settings on each call.
+    Object.assign(process.env, guardEnv(release, { ...gates, writes: true }));
     const conn = await connect(server);
+    Object.assign(process.env, guardEnv(release, gates), { BCONNECT_USERNAME: USERNAME, BCONNECT_PASSWORD: PASSWORD });
     for (const tool of conn.tools) {
       sent = [];
       const result = await conn.call(tool.name, requiredArguments(tool.inputSchema));
