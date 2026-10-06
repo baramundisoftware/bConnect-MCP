@@ -6,8 +6,8 @@
  * into the MCP text content, with an optional lead line before the JSON.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ClientConfigError } from '../packages/mcp-core/src/client-config.js';
-import { prettyJsonSetting, toolJson, toolJsonResult } from '../packages/mcp-core/src/tool-results.js';
+import { ClientConfigError, prettyJsonSetting } from '../packages/mcp-core/src/client-config.js';
+import { toolJson, toolJsonResult } from '../packages/mcp-core/src/tool-results.js';
 
 const VALUE = { data: [{ id: 'a', tags: ['x', 'y'], nested: { on: true, n: 1.5, none: null } }], totalItems: 1 };
 
