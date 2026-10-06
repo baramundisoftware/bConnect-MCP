@@ -108,10 +108,18 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
     violations.push(...checkBodies({ release, server, domain, table, calls: writeCalls, marker: MARKER, validate }));
   }
 
-  // Pass 3, writes off: no tool may send anything but GET.
-  Object.assign(process.env, guardEnv(release, { writes: false, secretRead: true }));
+  // Pass 3, writes off: no tool may send anything but GET. Every tool is called: listed with
+  // writes on (tools/list hides write tools while writes are off, REQ-SRV-026), then called with
+  // writes off (the gate reads the setting on each call).
   for (const server of SERVERS) {
+    Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
     const conn = await connect(server);
+    Object.assign(process.env, guardEnv(release, { writes: false, secretRead: true }));
+    for (const tool of registered.get(server) ?? []) {
+      if (!conn.tools.some((t) => t.name === tool)) {
+        violations.push({ check: 'writes-off-not-called', release, server, tool, detail: 'not listed with writes on' });
+      }
+    }
     const calls = [];
     for (const tool of conn.tools) {
       recorder.take();

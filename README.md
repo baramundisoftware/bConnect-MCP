@@ -191,6 +191,11 @@ there: don't configure those two servers for a 25R2 bMS.
 
 Install only the servers you need. Most users start with `bconnect-endpoints-mcp`.
 
+The counts include the write tools. While writes are off (the default, and always in the gateway),
+the tool list leaves them out: 178 tools on 26R1, 156 on 25R2. Every MCP client loads the whole
+tool list into the model's context, so this saves about 77 KB (≈ 22,000 tokens at 3.5 characters
+per token, −29 %) per session on 26R1, and 67 KB (≈ 19,000 tokens, −29 %) on 25R2. A write tool called by name is still refused.
+
 ---
 
 ## Configuration Reference
@@ -205,7 +210,7 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `BCONNECT_PASSWORD` | Yes* | — | Password for Basic Auth |
 | `BCONNECT_RELEASE` | — | `26R1` | bMS version: `25R2` or `26R1`, spelt exactly so |
 | `BCONNECT_CA_CERT_PATH` | — | — | Path to CA certificate (PEM) for self-signed certs |
-| `ALLOW_WRITE_OPERATIONS` | — | off | `true` enables the write tools (create, update, delete, start, assign …) |
+| `ALLOW_WRITE_OPERATIONS` | — | off | `true` enables the write tools (create, update, delete, start, assign …); off, they are left out of the tool list |
 | `ALLOW_SECRET_READ` | — | off | `true` enables the tools that return BitLocker keys/PIN or LAPS passwords (defensecontrol) |
 | `BCONNECT_TIMEOUT_MS` | — | `30000` | How long to wait for bConnect, 1000 to 600000 ms |
 | `BCONNECT_MAX_RETRIES` | — | `0` | Retries for reads after a network error, a timeout or 502/503/504, 0 to 5; writes are never retried |
@@ -398,7 +403,7 @@ For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING
 - **Use API keys** instead of username/password when possible
 - **Use `BCONNECT_CA_CERT_PATH`** for self-signed certificates instead of disabling TLS
 - **Audit logging** (`BCONNECT_AUDIT_LEVEL=security`, `write` or `all`) writes to stderr; `security` records every call to a security-relevant route: credentials, API keys, object rights, security groups and profiles ([docs/AUDIT.md](docs/AUDIT.md))
-- **Write tools are off** unless `ALLOW_WRITE_OPERATIONS=true`, and off in the gateway. A write tool whose description ends with "Not yet verified against a live bMS." hasn't been checked against a real bMS yet. Try writes on a test system first
+- **Write tools are off** unless `ALLOW_WRITE_OPERATIONS=true`, and off in the gateway. While they are off, the tool list leaves them out and a call by name is refused. A write tool whose description ends with "Not yet verified against a live bMS." hasn't been checked against a real bMS yet. Try writes on a test system first
 - **Secret reads** (BitLocker keys/PIN, LAPS passwords) are off unless `ALLOW_SECRET_READ=true`, and off in the gateway
 - **Tool hints for clients**: every tool declares MCP annotations: a readable `title`, `readOnlyHint: true` on tools that only read (they carry no `destructiveHint`), and on every other tool `readOnlyHint: false` plus `destructiveHint` (true for tools that delete or whose effect can't be undone, such as running a job or replacing a BitLocker PIN). A client can use them to run reads without asking and to ask before destructive calls. They are derived from the API operations each tool calls and are hints only: the write and secret gates above are unchanged and still decide what runs
 - **Rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) caps the requests each server sends to the bConnect API, across all its tool calls

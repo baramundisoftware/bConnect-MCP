@@ -22,7 +22,8 @@ afterAll(() => {
 });
 
 async function toolNames(server: string, release: '26R1' | '25R2'): Promise<string[]> {
-  Object.assign(process.env, guardEnv(release, { writes: false, secretRead: false }));
+  // Writes on: the README documents every tool, also those tools/list hides while writes are off (REQ-SRV-026).
+  Object.assign(process.env, guardEnv(release, { writes: true, secretRead: false }));
   const connected = await connect(server);
   try {
     return connected.tools.map((t) => t.name).sort();

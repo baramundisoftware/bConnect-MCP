@@ -18,7 +18,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -178,7 +178,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
     return { tools };
   })));
-  server.setRequestHandler(ListToolsRequestSchema, withToolAnnotations(TOOL_METHODS, toolCatalog.list));
+  // With writes off, tools/list leaves out the write tools; the gate still refuses them by name (REQ-SRV-026).
+  server.setRequestHandler(ListToolsRequestSchema, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
+    withToolAnnotations(TOOL_METHODS, toolCatalog.list)));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 

@@ -2,10 +2,12 @@
  * bconnect-updatemanagement-mcp — server isolation test
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
+
+afterEach(() => { vi.unstubAllEnvs(); });
 
 const EXPECTED_TOOLS = [
   'list_update_management_endpoints',
@@ -24,12 +26,14 @@ async function startServer(): Promise<void> {
 
 describe('bconnect-updatemanagement-mcp', () => {
   it('lists exactly 3 update management tools', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer();
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(3);
   });
 
   it('registers all expected tool names', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);

@@ -8,10 +8,12 @@
  * 4. Unknown tool calls return MethodNotFound
  */
 
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
+
+afterEach(() => { vi.unstubAllEnvs(); });
 
 const EXPECTED_TOOLS_25R2 = [
   // BitLocker (25R2)
@@ -52,6 +54,7 @@ afterEach(() => {
 
 describe('bconnect-defensecontrol-mcp', () => {
   it('lists exactly 11 defensecontrol tools in 25R2 mode', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     process.env.BCONNECT_RELEASE = '25R2';
     const { client } = await startServer();
     const { tools } = await client.listTools();
@@ -59,6 +62,7 @@ describe('bconnect-defensecontrol-mcp', () => {
   });
 
   it('registers all expected tool names (25R2)', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     process.env.BCONNECT_RELEASE = '25R2';
     const { client } = await startServer();
     const { tools } = await client.listTools();
@@ -69,6 +73,7 @@ describe('bconnect-defensecontrol-mcp', () => {
   });
 
   it('lists exactly 13 defensecontrol tools in the default (26R1) mode', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     // No BCONNECT_RELEASE set — default is now 26R1, so both BitLocker-secret tools register.
     const { client } = await startServer();
     const { tools } = await client.listTools();
@@ -76,6 +81,7 @@ describe('bconnect-defensecontrol-mcp', () => {
   });
 
   it('lists exactly 13 defensecontrol tools in 26R1 mode', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     process.env.BCONNECT_RELEASE = '26R1';
     const { client } = await startServer();
     const { tools } = await client.listTools();
@@ -83,6 +89,7 @@ describe('bconnect-defensecontrol-mcp', () => {
   });
 
   it('registers 26R1-only tools when BCONNECT_RELEASE=26R1', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     process.env.BCONNECT_RELEASE = '26R1';
     const { client } = await startServer();
     const { tools } = await client.listTools();

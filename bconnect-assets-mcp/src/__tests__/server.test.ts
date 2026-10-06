@@ -7,10 +7,12 @@
  * 3. Unknown tool calls return MethodNotFound
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
+
+afterEach(() => { vi.unstubAllEnvs(); });
 
 const EXPECTED_TOOLS = [
   'list_assets',
@@ -54,12 +56,14 @@ async function startServer(release = '26R1'): Promise<void> {
 
 describe('bconnect-assets-mcp', () => {
   it('lists exactly 26 asset tools (26R1)', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer();
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(26);
   });
 
   it('registers all expected tool names', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer();
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
@@ -69,6 +73,7 @@ describe('bconnect-assets-mcp', () => {
   });
 
   it('lists exactly 24 asset tools (25R2, without 26R1-only tools)', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('25R2');
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(24);

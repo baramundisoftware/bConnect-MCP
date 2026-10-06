@@ -27,10 +27,13 @@ afterAll(() => {
 
 describe.each(CASES)('%s %s with writes off', (server, tool) => {
   it('is refused with the write-gate message, and sends nothing', async () => {
-    Object.assign(process.env, guardEnv('26R1', { writes: false, secretRead: false }));
+    // Listed with writes on (tools/list hides write tools while writes are off, REQ-SRV-026);
+    // the gate reads the setting on each call.
+    Object.assign(process.env, guardEnv('26R1', { writes: true, secretRead: false }));
     const conn = await connect(server);
     const schema = conn.tools.find((t) => t.name === tool)?.inputSchema;
     expect(schema, `${tool} is not registered`).toBeDefined();
+    Object.assign(process.env, guardEnv('26R1', { writes: false, secretRead: false }));
     recorder.take();
     const result = await conn.call(tool, requiredArguments(schema!));
     const sent = recorder.take();

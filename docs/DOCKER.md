@@ -147,7 +147,8 @@ are the code's; where Compose or the image sets another, the table says so.
 > and `ALLOW_SECRET_READ`, however it is started and wherever they are set (environment,
 > `.env.gateway`, a `.env` file): every write tool and every tool that returns credentials
 > (BitLocker keys and PIN, LAPS passwords) is refused, and the gateway logs a warning at startup
-> if either was set. This stays so until the gateway has its own authentication.
+> if either was set. Write tools are also left out of the tool list, so clients only see read
+> tools. This stays so until the gateway has its own authentication.
 
 | Variable | Description | Default |
 |----------|-------------|---------|
@@ -209,8 +210,9 @@ export the CA.
 
 ## Server Compatibility
 
-The gateway serves all 13 servers on 26R1 (276 tools). On 25R2 it lists 240 tools, and two
-servers don't work (compliance's 8 tools are among the 240 but fail):
+The gateway serves all 13 servers on 26R1 (276 tools). On 25R2 the servers have 240 tools, and
+two servers don't work (compliance's 8 tools are among the 240 but fail). Because write tools are
+off in the gateway, its tool lists contain only the read tools: 178 on 26R1, 156 on 25R2.
 
 | Server | Requires 26R1 |
 |--------|--------------|

@@ -9,10 +9,12 @@
  * 5. Unknown tool calls return MethodNotFound
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
+
+afterEach(() => { vi.unstubAllEnvs(); });
 
 const INSTALLED_SOFTWARE_TOOLS = [
   'list_installed_windows_software',
@@ -87,6 +89,7 @@ describe('bconnect-software-mcp (26R1 mode)', () => {
   afterEach(() => { delete process.env.BCONNECT_RELEASE; });
 
   it('lists exactly 19 tools in 26R1', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('26R1');
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(19);
@@ -102,6 +105,7 @@ describe('bconnect-software-mcp (26R1 mode)', () => {
   });
 
   it('registers all 26R1 bundle and folder tools', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('26R1');
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);

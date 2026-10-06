@@ -8,6 +8,9 @@
  * each with its reason. The hints are for clients only: the write and secret
  * gates stay the control. __tests__/tool-annotations.guard.test.ts checks every
  * tool against the specs, its traffic and the write gate.
+ *
+ * withWriteToolsHidden (REQ-SRV-026, #156) uses the same classification to
+ * leave the write tools out of tools/list while writes are off.
  */
 
 /** Per tool: the HTTP methods of the operations it calls, in either bMS release. */
@@ -102,5 +105,36 @@ export function withToolAnnotations<Result extends { tools: object[] }>(
   return async () => {
     const result = await handler();
     return { ...result, tools: result.tools.map((tool) => annotate(tool, table)) };
+  };
+}
+
+/** Whether a listed tool may stay while writes are off: only read tools; an entry without a name stays. */
+function isReadTool(tool: object, table: ToolMethodTable): boolean {
+  if (!("name" in tool) || typeof tool.name !== "string") {
+    return true;
+  }
+  const methods = Object.hasOwn(table, tool.name) ? table[tool.name] : [];
+  return toolEffect(tool.name, methods) === "read";
+}
+
+/**
+ * Wraps a server's tools/list handler: while `writesAllowed()` is false, every
+ * tool whose effect isn't "read" is left out; otherwise the list is returned as
+ * is. Asked on every request, as the write gate asks on every call. Wrap only
+ * the tools/list handler: the gate and the argument check keep the full list,
+ * so a hidden tool called by name is refused as before. Hiding saves context;
+ * the gate stays the control.
+ */
+export function withWriteToolsHidden<Result extends { tools: object[] }>(
+  table: ToolMethodTable,
+  writesAllowed: () => boolean,
+  handler: () => Result | Promise<Result>,
+): () => Promise<Result> {
+  return async () => {
+    const result = await handler();
+    if (writesAllowed()) {
+      return result;
+    }
+    return { ...result, tools: result.tools.filter((tool) => isReadTool(tool, table)) };
   };
 }

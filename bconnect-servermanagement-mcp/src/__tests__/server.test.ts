@@ -9,10 +9,12 @@
  * 5. Unknown tool calls return MethodNotFound
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
+
+afterEach(() => { vi.unstubAllEnvs(); });
 
 const EXPECTED_25R2_TOOLS = [
   'get_management_server',
@@ -67,18 +69,21 @@ async function startServer(release?: string): Promise<{ client: InstanceType<typ
 
 describe('bconnect-servermanagement-mcp', () => {
   it('lists exactly 25 servermanagement tools in 25R2 mode', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('25R2');
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(25);
   });
 
   it('lists exactly 30 servermanagement tools in 26R1 mode', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('26R1');
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(30);
   });
 
   it('defaults to 26R1 when BCONNECT_RELEASE is unset, like the other servers', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer();
     const names = (await client.listTools()).tools.map((t) => t.name);
     expect(names).toHaveLength(30);
@@ -87,12 +92,14 @@ describe('bconnect-servermanagement-mcp', () => {
 
   // An empty value never gets this far: the startup check refuses it (client-config.ts checkRelease).
   it('builds the 25R2 list for an empty BCONNECT_RELEASE, the value the startup check refuses', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('');
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(25);
   });
 
   it('registers all expected 25R2 tool names', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('25R2');
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
@@ -102,6 +109,7 @@ describe('bconnect-servermanagement-mcp', () => {
   });
 
   it('registers 26R1-only tools in 26R1 mode', async () => {
+    vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('26R1');
     const { tools } = await client.listTools();
     const names = tools.map((t) => t.name);
