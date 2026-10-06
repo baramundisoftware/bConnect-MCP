@@ -57,21 +57,19 @@ export default defineConfig({
       // Floors, in %. Each workspace's is 2 points under what it achieved when
       // it was set (measured value in the comment). Raise a floor when coverage
       // rises; lower one only with a reason in the PR. The total counts every
-      // file, including those matched by a workspace glob. Its floors (set
-      // 2026-10-06) are wider: 76 % branches still holds with the core measured
-      // through its build (78.57).
+      // file, including those matched by a workspace glob.
       thresholds: {
-        lines: 85, // 88.59
-        branches: 76, // 84.25
-        'packages/mcp-core/src/**': { lines: 84, branches: 80 }, // 86.17 / 82.52
+        lines: 94, // 96.10
+        branches: 83, // 85.75
+        'packages/mcp-core/src/**': { lines: 88, branches: 83 }, // 90.85 / 85.62
         'bconnect-mcp-gateway/src/**': { lines: 76, branches: 71 }, // 78.23 / 73.75
         'bconnect-activedirectory-mcp/src/**': { lines: 98, branches: 81 }, // 100 / 83.10
         'bconnect-assets-mcp/src/**': { lines: 98, branches: 84 }, // 100 / 86.73
         'bconnect-compliance-mcp/src/**': { lines: 98, branches: 85 }, // 100 / 87.88
         'bconnect-defensecontrol-mcp/src/**': { lines: 95, branches: 89 }, // 97.26 / 91.67
-        'bconnect-endpoints-mcp/src/**': { lines: 78, branches: 89 }, // 80.67 / 91.08
+        'bconnect-endpoints-mcp/src/**': { lines: 96, branches: 89 }, // 98.24 / 91.08
         'bconnect-groups-mcp/src/**': { lines: 98, branches: 65 }, // 100 / 67.31
-        'bconnect-jobs-mcp/src/**': { lines: 60, branches: 75 }, // 62.21 / 77.01
+        'bconnect-jobs-mcp/src/**': { lines: 97, branches: 75 }, // 99.03 / 77.01
         'bconnect-operatingsystems-mcp/src/**': { lines: 98, branches: 91 }, // 100 / 93.75
         'bconnect-servermanagement-mcp/src/**': { lines: 98, branches: 94 }, // 100 / 96.51
         'bconnect-software-mcp/src/**': { lines: 98, branches: 91 }, // 100 / 93.24
