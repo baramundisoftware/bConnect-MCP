@@ -78,6 +78,15 @@ describe('withCountOnly, countOnly: true', () => {
     expect(textOf(result)).toBe('{\n  "totalItems": 7\n}');
   });
 
+  it('keeps a note the tool adds to its page (e.g. an unconfirmed parent), and only a string one', async () => {
+    const note = 'Could not confirm that the job definition exists.';
+    const { handler } = tool(() => toolJsonResult({ data: [], totalItems: 0, note }));
+    const result = await withCountOnly(TABLE, () => '26R1', handler)(request('list_things', { countOnly: true, Name: 'x' }));
+    expect(textOf(result)).toBe(`{"totalItems":0,"note":"${note}","filters":{"Name":"x"}}`);
+    const { handler: odd } = tool(() => toolJsonResult({ data: [], totalItems: 0, note: { x: 1 } }));
+    expect(textOf(await withCountOnly(TABLE, () => '26R1', odd)(request('list_things', { countOnly: true })))).toBe('{"totalItems":0}');
+  });
+
   it('counts zero items', async () => {
     const { handler } = tool(() => toolJsonResult({ data: [], totalItems: 0 }));
     expect(textOf(await withCountOnly(TABLE, () => '26R1', handler)(request('list_things', { countOnly: true })))).toBe('{"totalItems":0}');

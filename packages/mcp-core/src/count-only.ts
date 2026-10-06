@@ -9,6 +9,12 @@
  * unchanged, so its routes, its error answers and its special cases stay as
  * they are. `countOnly` never reaches bConnect: tools send only what
  * `queryParameters` names, and that leaves client-side options out.
+ *
+ * A tool that checks on an empty page or a 404 whether its parent object
+ * exists (jobs kiosk releases, compliance findings per endpoint) still does
+ * so, with one more request, and its `note` is kept in the count. A Page or
+ * page size the caller gives is replaced; every other argument the caller gave
+ * (path ids included) is echoed as `filters`.
  */
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { offersQueryProperty, type QueryParameterTable } from "./tool-arguments.js";
@@ -29,12 +35,8 @@ const UNAVAILABLE = "Count unavailable: bConnect's answer has no numeric totalIt
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-/**
- * `totalItems` from the page a tool returned as JSON text (written by
- * `toolJson`, compact or indented), or undefined when the result has no such
- * number. Never derived from the rows or `totalPages`.
- */
-function totalItemsOf(result: unknown): number | undefined {
+/** The page a tool returned as JSON text (written by `toolJson`, compact or indented), if it is an object. */
+function pageOf(result: unknown): Record<string, unknown> | undefined {
   if (!isRecord(result) || !Array.isArray(result.content)) {
     return undefined;
   }
@@ -42,13 +44,17 @@ function totalItemsOf(result: unknown): number | undefined {
   if (!isRecord(first) || typeof first.text !== "string") {
     return undefined;
   }
-  let page: unknown;
   try {
-    page = JSON.parse(first.text);
+    const page: unknown = JSON.parse(first.text);
+    return isRecord(page) ? page : undefined;
   } catch {
     return undefined;
   }
-  const total = isRecord(page) ? page.totalItems : undefined;
+}
+
+/** The page's `totalItems` when it is a count; never derived from the rows or `totalPages`. */
+function totalItemsOf(page: Record<string, unknown> | undefined): number | undefined {
+  const total = page?.totalItems;
   return typeof total === "number" && Number.isSafeInteger(total) && total >= 0 ? total : undefined;
 }
 
@@ -83,9 +89,11 @@ export function withCountOnly<Rest extends unknown[], Result>(
     }
     const notFilters = new Set(["Page", "PageSize", pageSize, "OrderBy"]);
     const filters = Object.fromEntries(Object.entries(callArgs).filter(([arg]) => !notFilters.has(arg)));
-    const totalItems = totalItemsOf(result);
+    const page = pageOf(result);
+    const totalItems = totalItemsOf(page);
     return toolJsonResult({
       ...(totalItems === undefined ? { countUnavailable: UNAVAILABLE } : { totalItems }),
+      ...(typeof page?.note === "string" && { note: page.note }),
       ...(Object.keys(filters).length > 0 && { filters }),
     });
   };
