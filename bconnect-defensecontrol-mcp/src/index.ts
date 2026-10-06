@@ -19,7 +19,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -349,12 +349,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_bitlocker_windows_endpoints": {
           const result = await dc.getBitLockerWindowsEndpoints(pickArguments(args ?? {}, sends("list_bitlocker_windows_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_bitlocker_windows_endpoint": {
           const result = await dc.getBitLockerWindowsEndpoint(args!.endpointId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_bitlocker_secrets": {
@@ -362,7 +362,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             throw new McpError(ErrorCode.MethodNotFound, "get_bitlocker_secrets is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
           }
           const result = await dc.getBitLockerSecrets(args!.endpointId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_bitlocker_pin": {
@@ -370,55 +370,55 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             throw new McpError(ErrorCode.MethodNotFound, "update_bitlocker_pin is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");
           }
           const result = await dc.updateBitLockerPin(args!.endpointId as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_local_admin_accounts": {
           const result = await dc.getLocalAdministrativeAccounts(args!.endpointId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "patch_local_admin_user_credentials": {
           const result = await dc.patchLocalAdminUserCredentials(args!.endpointId as string, args!.requestedExpirationDate as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "refresh_local_admin_account_expiry": {
           const timeout = typeof args?.timeout === "number" ? args.timeout : undefined;
           const result = await dc.triggerUpdateOnClient(args!.endpointId as string, timeout);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_defender_threats": {
           const result = await dc.getMicrosoftDefenderThreats(pickArguments(args ?? {}, sends("list_defender_threats")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_defender_threat": {
           const result = await dc.getMicrosoftDefenderThreat(args!.threatId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_defender_threats_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
           const result = await dc.getMicrosoftDefenderThreatsByEndpoint(endpointId as string, pickArguments(params, sends("list_defender_threats_by_endpoint")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_defender_threats_by_logical_group": {
           const { logicalGroupId, ...params } = args as Record<string, unknown>;
           const result = await dc.getMicrosoftDefenderThreatsByLogicalGroup(logicalGroupId as string, pickArguments(params, sends("list_defender_threats_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_defender_windows_endpoints": {
           const result = await dc.getMicrosoftDefenderWindowsEndpoints(pickArguments(args ?? {}, sends("list_defender_windows_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_defender_windows_endpoint": {
           const result = await dc.getMicrosoftDefenderWindowsEndpoint(args!.endpointId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         default:

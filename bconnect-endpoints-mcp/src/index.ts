@@ -18,7 +18,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, pageSizeProperty, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, pageSizeProperty, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 import { INTERVAL_RULE, checkIntervalRule, withIntervalRemoval } from "./maintenance-window.js";
@@ -733,12 +733,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Endpoints ───────────────────────────────────────────────────
         case "list_endpoints": {
           const result = await bconnect.endpoints.getEndpoints(pickArguments(args ?? {}, sends("list_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_endpoint": {
           const result = await bconnect.endpoints.getEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "search_endpoints": {
@@ -747,27 +747,27 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.pageSize as number | undefined,
             pickArguments(args ?? {}, sends("search_endpoints").filter((name) => !SEARCH_ALIASES.has(name)))
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_windows_endpoints": {
           const result = await bconnect.endpoints.getWindowsEndpoints(pickArguments(args ?? {}, sends("list_windows_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_windows_endpoint": {
           const result = await bconnect.endpoints.getWindowsEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_logical_groups": {
           const result = await bconnect.endpoints.getLogicalGroups(pickArguments(args ?? {}, sends("list_logical_groups")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_logical_group": {
           const result = await bconnect.endpoints.getLogicalGroup(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_group_endpoints": {
@@ -775,27 +775,27 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.logicalGroupId as string,
             pickArguments(args ?? {}, sends("list_group_endpoints"))
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_linux_endpoints": {
           const result = await bconnect.endpoints.getLinuxEndpoints(pickArguments(args ?? {}, sends("list_linux_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_mac_endpoints": {
           const result = await bconnect.endpoints.getMacEndpoints(pickArguments(args ?? {}, sends("list_mac_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_linux_endpoint": {
           const result = await bconnect.endpoints.getLinuxEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_mac_endpoint": {
           const result = await bconnect.endpoints.getMacEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_endpoints_by_logical_group": {
@@ -803,7 +803,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.logicalGroupId as string,
             pickArguments(args ?? {}, sends("list_endpoints_by_logical_group"))
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_windows_endpoints_by_logical_group": {
@@ -811,27 +811,27 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.logicalGroupId as string,
             pickArguments(args ?? {}, sends("list_windows_endpoints_by_logical_group"))
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_android_endpoints": {
           const result = await bconnect.endpoints.listAndroidEndpoints(pickArguments(args ?? {}, sends("list_android_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_android_endpoint": {
           const result = await bconnect.endpoints.getAndroidEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_ios_endpoints": {
           const result = await bconnect.endpoints.listIosEndpoints(pickArguments(args ?? {}, sends("list_ios_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_ios_endpoint": {
           const result = await bconnect.endpoints.getIosEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "start_android_enrollment": {
@@ -844,7 +844,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               includeWifiInQrCode: (args!.includeWifiInQrCode as boolean | undefined) ?? false,
             }
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "start_ios_enrollment": {
@@ -855,7 +855,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
               emailLanguageId: args!.emailLanguageId as string | undefined ?? null,
             }
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_android_endpoint": {
@@ -868,7 +868,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             registeredUser: args!.registeredUser as string | undefined
           };
           const result = await bconnect.endpoints.createAndroidEndpoint(data);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_android_endpoint": {
@@ -878,12 +878,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           if (args!.comment !== undefined) {patchOperations.push({ op: "replace", path: "/comment", value: args!.comment } as never);}
           if (args!.serialNumber !== undefined) {patchOperations.push({ op: "replace", path: "/serialNumber", value: args!.serialNumber } as never);}
           const result = await bconnect.endpoints.updateAndroidEndpoint(args!.id as string, patchOperations);
-          return { content: [{ type: "text", text: `Android endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
+          return toolJsonResult(result, { lead: `Android endpoint ${args!.id} updated:` });
         }
 
         case "delete_android_endpoint": {
           await bconnect.endpoints.deleteAndroidEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, message: `Android endpoint ${args!.id} deleted successfully` }, null, 2) }] };
+          return toolJsonResult({ success: true, message: `Android endpoint ${args!.id} deleted successfully` });
         }
 
         case "create_ios_endpoint": {
@@ -893,7 +893,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             comment: args!.comment as string | undefined,
           };
           const result = await bconnect.endpoints.createIosEndpoint(iosData as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_ios_endpoint": {
@@ -902,23 +902,23 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           if (args!.logicalGroupId !== undefined) {patchOps.push({ op: "replace", path: "/logicalGroupId", value: args!.logicalGroupId } as never);}
           if (args!.comment !== undefined) {patchOps.push({ op: "replace", path: "/comment", value: args!.comment } as never);}
           const result = await bconnect.endpoints.updateIosEndpoint(args!.id as string, patchOps);
-          return { content: [{ type: "text", text: `iOS endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
+          return toolJsonResult(result, { lead: `iOS endpoint ${args!.id} updated:` });
         }
 
         case "delete_ios_endpoint": {
           await bconnect.endpoints.deleteIosEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, message: `iOS endpoint ${args!.id} deleted successfully` }, null, 2) }] };
+          return toolJsonResult({ success: true, message: `iOS endpoint ${args!.id} deleted successfully` });
         }
 
         case "create_windows_endpoint": {
           const result = await bconnect.endpoints.createWindowsEndpoint(createBody("create_windows_endpoint", args!));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_windows_endpoint": {
           const patch = changes("update_windows_endpoint", args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateWindowsEndpoint(args!.id as string, patch);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_windows_endpoint": {
@@ -928,7 +928,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "start_windows_enrollment": {
           const result = await bconnect.endpoints.startWindowsEndpointEnrollment(args!.id as string, createBody("start_windows_enrollment", args!));
-          return { content: [{ type: "text", text: `Windows endpoint ${args!.id} enrollment started:\n${JSON.stringify(result, null, 2)}` }] };
+          return toolJsonResult(result, { lead: `Windows endpoint ${args!.id} enrollment started:` });
         }
 
         case "trigger_intune_installation": {
@@ -943,13 +943,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "create_linux_endpoint": {
           const result = await bconnect.endpoints.createLinuxEndpoint(createBody("create_linux_endpoint", args!));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_linux_endpoint": {
           const patch = changes("update_linux_endpoint", args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateLinuxEndpoint(args!.id as string, patch);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_linux_endpoint": {
@@ -959,13 +959,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "create_mac_endpoint": {
           const result = await bconnect.endpoints.createMacEndpoint(args! as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_mac_endpoint": {
           const patch = changes("update_mac_endpoint", args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateMacEndpoint(args!.id as string, patch);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_mac_endpoint": {
@@ -975,18 +975,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "start_mac_enrollment": {
           const result = await bconnect.endpoints.startMacEndpointEnrollment(args!.id as string, createBody("start_mac_enrollment", args!));
-          return { content: [{ type: "text", text: `Mac endpoint ${args!.id} enrollment started:\n${JSON.stringify(withoutQrImage(result), null, 2)}` }] };
+          return toolJsonResult(withoutQrImage(result), { lead: `Mac endpoint ${args!.id} enrollment started:` });
         }
 
         case "create_logical_group": {
           const result = await bconnect.endpoints.createLogicalGroup(args! as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_logical_group": {
           const patch = changes("update_logical_group", args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateLogicalGroup(args!.id as string, patch);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_logical_group": {
@@ -997,14 +997,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "create_maintenance_window_for_endpoint": {
           checkIntervalRule(args!);
           const result = await bconnect.endpoints.createMaintenanceWindowForEndpoint(args!.id as string, createBody("create_maintenance_window_for_endpoint", args!));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_maintenance_window_for_endpoint": {
           checkIntervalRule(args!);
           const patch = withIntervalRemoval(args!, changes("update_maintenance_window_for_endpoint", args!)); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateMaintenanceWindowForEndpoint(args!.id as string, patch);
-          return { content: [{ type: "text", text: `Maintenance window for endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
+          return toolJsonResult(result, { lead: `Maintenance window for endpoint ${args!.id} updated:` });
         }
 
         case "delete_maintenance_window_for_endpoint": {
@@ -1015,14 +1015,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "create_maintenance_window_for_logical_group": {
           checkIntervalRule(args!);
           const result = await bconnect.endpoints.createMaintenanceWindowForLogicalGroup(args!.id as string, createBody("create_maintenance_window_for_logical_group", args!));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_maintenance_window_for_logical_group": {
           checkIntervalRule(args!);
           const patch = withIntervalRemoval(args!, changes("update_maintenance_window_for_logical_group", args!)); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateMaintenanceWindowForLogicalGroup(args!.id as string, patch);
-          return { content: [{ type: "text", text: `Maintenance window for logical group ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
+          return toolJsonResult(result, { lead: `Maintenance window for logical group ${args!.id} updated:` });
         }
 
         case "delete_maintenance_window_for_logical_group": {
@@ -1032,13 +1032,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_industrial_endpoints": {
           const result = await bconnect.endpoints.listIndustrialEndpoints(pickArguments(args ?? {}, sends("list_industrial_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_industrial_endpoint": {
           if (!args?.id) {throw new McpError(ErrorCode.InvalidParams, "id is required");}
           const result = await bconnect.endpoints.getIndustrialEndpoint(args.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_industrial_endpoint": {
@@ -1049,7 +1049,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "update_industrial_endpoint": {
           const patch = changes("update_industrial_endpoint", args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateIndustrialEndpoint(args!.id as string, patch);
-          return { content: [{ type: "text", text: `Industrial endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
+          return toolJsonResult(result, { lead: `Industrial endpoint ${args!.id} updated:` });
         }
 
         case "delete_industrial_endpoint": {
@@ -1065,7 +1065,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "update_network_endpoint": {
           const patch = changes("update_network_endpoint", args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateNetworkEndpoint(args!.id as string, patch);
-          return { content: [{ type: "text", text: `Network endpoint ${args!.id} updated:\n${JSON.stringify(result, null, 2)}` }] };
+          return toolJsonResult(result, { lead: `Network endpoint ${args!.id} updated:` });
         }
 
         case "delete_network_endpoint": {
@@ -1081,36 +1081,36 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // Phase 24: Network READ
         case "list_network_endpoints": {
           const result = await bconnect.endpoints.listNetworkEndpoints(pickArguments(args ?? {}, sends("list_network_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_network_endpoint": {
           const result = await bconnect.endpoints.getNetworkEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // Phase 24: Maintenance Window GET
         case "get_maintenance_window_for_endpoint": {
           const result = await bconnect.endpoints.getMaintenanceWindowForEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_maintenance_window_for_logical_group": {
           const result = await bconnect.endpoints.getMaintenanceWindowForLogicalGroup(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // Phase 24: 26R1-only tools
         case "list_unmanaged_endpoints": {
           if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "list_unmanaged_endpoints is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           const result = await bconnect.endpoints.listUnmanagedEndpoints();
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_unmanaged_endpoint": {
           if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "get_unmanaged_endpoint is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           const result = await bconnect.endpoints.getUnmanagedEndpoint(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_unmanaged_endpoint": {
@@ -1122,7 +1122,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "get_entra_id_data": {
           if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "get_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
           const result = await bconnect.endpoints.getEntraIdData(args!.deviceId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "link_entra_id_data": {
@@ -1131,7 +1131,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.endpointId as string,
             pickArguments(args!, ["entraIdDeviceId", "entraIdTenantId", "entraIdUserId"])
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "unlink_entra_id_data": {

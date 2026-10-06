@@ -18,7 +18,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -584,137 +584,137 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Assets ─────────────────────────────────────────────────────────
         case "list_assets": {
           const result = await assets.getAssets(pickArguments(args ?? {}, sends("list_assets")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_asset": {
           const result = await assets.createAsset(pickArguments(args ?? {}, ASSET_FIELDS));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_asset": {
           const result = await assets.getAsset(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_asset": {
           const result = await assets.updateAsset(args!.id as string, args!.operations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_asset": {
           await assets.deleteAsset(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, id: args!.id }, null, 2) }] };
+          return toolJsonResult({ success: true, id: args!.id });
         }
 
         case "list_assets_in_asset_stock": {
           const result = await assets.getAssetsAssetStock(pickArguments(args ?? {}, sends("list_assets_in_asset_stock")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_assets_by_logical_group": {
           const result = await assets.getAssetsByLogicalGroup(args!.logicalGroupId as string, pickArguments(args ?? {}, sends("list_assets_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_assets_by_windows_endpoint": {
           const result = await assets.getAssetsByWindowsEndpoint(args!.endpointId as string, pickArguments(args ?? {}, sends("list_assets_by_windows_endpoint")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_assets_by_org_unit": {
           requires26R1();
           const result = await assets.getAssetsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_assets_by_org_unit")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_assets_by_ad_object": {
           requires26R1();
           const result = await assets.getAssetsByADObject(args!.adObjectId as string, pickArguments(args ?? {}, sends("list_assets_by_ad_object")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // ── Asset Stock Folders ────────────────────────────────────────────
         case "list_asset_stock_folders": {
           const result = await assets.getAssetStockFolders(pickArguments(args ?? {}, sends("list_asset_stock_folders")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_asset_stock_folder": {
           const result = await assets.createAssetStockFolder(args as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_asset_stock_folder": {
           const result = await assets.getAssetStockFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_asset_stock_folder": {
           const result = await assets.updateAssetStockFolder(args!.id as string, args!.operations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_asset_stock_folder": {
           await assets.deleteAssetStockFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, id: args!.id }, null, 2) }] };
+          return toolJsonResult({ success: true, id: args!.id });
         }
 
         case "list_asset_stock_subfolders": {
           const result = await assets.getAssetStockFoldersByParent(args!.folderId as string, pickArguments(args ?? {}, sends("list_asset_stock_subfolders")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // ── Asset Type Folders ─────────────────────────────────────────────
         case "list_asset_type_folders": {
           const result = await assets.getAssetTypeFolders(pickArguments(args ?? {}, sends("list_asset_type_folders")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_asset_type_folder": {
           const result = await assets.createAssetTypeFolder(args as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_asset_type_folder": {
           const result = await assets.getAssetTypeFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_asset_type_folder": {
           const result = await assets.updateAssetTypeFolder(args!.id as string, args!.operations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_asset_type_folder": {
           await assets.deleteAssetTypeFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, id: args!.id }, null, 2) }] };
+          return toolJsonResult({ success: true, id: args!.id });
         }
 
         case "list_asset_type_subfolders": {
           const result = await assets.getAssetTypeFoldersByParent(args!.folderId as string, pickArguments(args ?? {}, sends("list_asset_type_subfolders")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // ── Asset Types ────────────────────────────────────────────────────
         case "list_asset_types": {
           const result = await assets.getAssetTypes(pickArguments(args ?? {}, sends("list_asset_types")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_asset_type": {
           const result = await assets.createAssetType(args as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_asset_type": {
           const result = await assets.getAssetType(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_asset_type": {
           await assets.deleteAssetType(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true, id: args!.id }, null, 2) }] };
+          return toolJsonResult({ success: true, id: args!.id });
         }
 
         default:

@@ -17,7 +17,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -45,7 +45,7 @@ async function kioskReleasesOfJobDefinition(
   // Anything but an empty page passes through unchanged; an empty page beyond the
   // last one still has totalItems > 0: nothing to check.
   if (!page || !Array.isArray(page.data) || page.data.length > 0 || page.totalItems) {
-    return { content: [{ type: "text", text: JSON.stringify(answer, null, 2) }] };
+    return toolJsonResult(answer);
   }
   const result: Record<string, unknown> = { ...page };
   try {
@@ -62,7 +62,7 @@ async function kioskReleasesOfJobDefinition(
     result.note = "Could not confirm that the job definition exists; bMS answers with an empty list also " +
       `for a job definition that doesn't exist. ${reason}`;
   }
-  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+  return toolJsonResult(result);
 }
 
 // Type aliases for call-site casts (args are validated before use)
@@ -81,12 +81,13 @@ function assignmentBody(args: Record<string, unknown>): AssignJobDefinitionReque
  * succeeded") with a problem report that may list failed assignments; its
  * fields are passed on as they are. A list of created instances is counted.
  */
-function assignmentReport(result: unknown): string {
+function assignmentReport(result: unknown): ToolResult {
   if (Array.isArray(result)) {
-    return `Created ${result.length} job instances:\n${JSON.stringify(result, null, 2)}`;
+    return toolJsonResult(result, { lead: `Created ${result.length} job instances:` });
   }
-  return "Assignment finished: fully or partially succeeded (HTTP 207). " +
-    "Check the details below for assignments that failed.\n" + JSON.stringify(result ?? {}, null, 2);
+  return toolJsonResult(result ?? {}, {
+    lead: "Assignment finished: fully or partially succeeded (HTTP 207). Check the details below for assignments that failed.",
+  });
 }
 type FolderForCreation = JobsPaths["/v2.0/Folders"]["post"]["requestBody"]["content"]["application/json"];
 
@@ -517,22 +518,22 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Jobs ──────────────────────────────────────────────────────────
         case "list_job_definitions": {
           const result = await bconnect.jobs.getJobDefinitions(pickArguments(args ?? {}, sends("list_job_definitions")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_job_definition": {
           const result = await bconnect.jobs.getJobDefinition(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_job_instances": {
           const result = await bconnect.jobs.getJobInstances(pickArguments(args ?? {}, sends("list_job_instances")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_job_instance": {
           const result = await bconnect.jobs.getJobInstance(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_endpoint_job_instances": {
@@ -540,7 +541,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.endpointId as string,
             pickArguments(args ?? {}, sends("list_endpoint_job_instances"))
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_job_instances_by_definition": {
@@ -548,7 +549,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.jobDefinitionId as string,
             pickArguments(args ?? {}, sends("list_job_instances_by_definition"))
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_job_instances_by_logical_group": {
@@ -556,7 +557,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.logicalGroupId as string,
             pickArguments(args ?? {}, sends("list_job_instances_by_logical_group"))
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_job_definitions_by_folder": {
@@ -564,7 +565,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.folderId as string,
             pickArguments(args ?? {}, sends("list_job_definitions_by_folder"))
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_job_instance": {
@@ -573,7 +574,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             endpointId: args!.endpointId as string,
             ...(args!.startIfAlreadyAssigned !== undefined && { startIfAlreadyAssigned: args!.startIfAlreadyAssigned as boolean }),
           });
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "start_job_instance": {
@@ -598,7 +599,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "create_job_folder": {
           const result = await bconnect.jobs.createFolder(args as unknown as FolderForCreation);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_job_folder": {
@@ -609,7 +610,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             throw new McpError(ErrorCode.InvalidParams, "update_job_folder needs at least one field to change: name or comment.");
           }
           const result = await bconnect.jobs.updateFolder(args!.id as string, patch);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_job_folder": {
@@ -622,7 +623,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.logicalGroupId as string,
             assignmentBody(args!)
           );
-          return { content: [{ type: "text", text: assignmentReport(result) }] };
+          return assignmentReport(result);
         }
 
         case "assign_job_to_static_group": {
@@ -630,7 +631,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.staticGroupId as string,
             assignmentBody(args!)
           );
-          return { content: [{ type: "text", text: assignmentReport(result) }] };
+          return assignmentReport(result);
         }
 
         case "assign_job_to_dynamic_group": {
@@ -638,7 +639,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.dynamicGroupId as string,
             assignmentBody(args!)
           );
-          return { content: [{ type: "text", text: assignmentReport(result) }] };
+          return assignmentReport(result);
         }
 
         case "assign_job_to_universal_dynamic_group": {
@@ -646,7 +647,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             args!.universalDynamicGroupId as string,
             assignmentBody(args!)
           );
-          return { content: [{ type: "text", text: assignmentReport(result) }] };
+          return assignmentReport(result);
         }
 
         case "create_kiosk_release": {
@@ -654,7 +655,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             assignmentTargetId: args!.assignmentTargetId as string,
             jobDefinitionId: args!.jobDefinitionId as string,
           });
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "withdraw_kiosk_release": {
@@ -664,28 +665,28 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_kiosk_releases": {
           const result = await bconnect.jobs.getKioskReleases(pickArguments(args ?? {}, sends("list_kiosk_releases")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_kiosk_release": {
           const result = await bconnect.jobs.getKioskRelease(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // Phase 26: Folder navigation
         case "list_job_folders": {
           const result = await bconnect.jobs.getJobFolders(pickArguments(args ?? {}, sends("list_job_folders")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_job_folder": {
           const result = await bconnect.jobs.getJobFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_job_subfolders": {
           const result = await bconnect.jobs.getJobSubfolders(args!.folderId as string, pickArguments(args ?? {}, sends("list_job_subfolders")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // Phase 26: Kiosk releases by context
@@ -699,33 +700,33 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_kiosk_releases_by_endpoint": {
           const result = await bconnect.jobs.getKioskReleasesByEndpoint(args!.endpointId as string, pickArguments(args ?? {}, sends("list_kiosk_releases_by_endpoint")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_kiosk_releases_by_ad_object": {
           const result = await bconnect.jobs.getKioskReleasesByAdObject(args!.adObjectId as string, pickArguments(args ?? {}, sends("list_kiosk_releases_by_ad_object")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_kiosk_releases_by_logical_group": {
           const result = await bconnect.jobs.getKioskReleasesByLogicalGroup(args!.logicalGroupId as string, pickArguments(args ?? {}, sends("list_kiosk_releases_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // Phase 26: Job instances by group
         case "list_job_instances_by_static_group": {
           const result = await bconnect.jobs.getJobInstancesByStaticGroup(args!.staticGroupId as string, pickArguments(args ?? {}, sends("list_job_instances_by_static_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_job_instances_by_dynamic_group": {
           const result = await bconnect.jobs.getJobInstancesByDynamicGroup(args!.dynamicGroupId as string, pickArguments(args ?? {}, sends("list_job_instances_by_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_job_instances_by_universal_dynamic_group": {
           const result = await bconnect.jobs.getJobInstancesByUniversalDynamicGroup(args!.universalDynamicGroupId as string, pickArguments(args ?? {}, sends("list_job_instances_by_universal_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         default:

@@ -151,11 +151,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // case "list_DOMAIN": {
         //   // Build the request from the generated types, without type-defeating casts (REQ-QA-002).
         //   const result = await domain.listDomain({ Page: args?.Page as number | undefined });
-        //   return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        //   return toolJsonResult(result); // compact JSON from @bconnect/mcp-core (REQ-SRV-025)
         // }
         // case "get_DOMAIN": {
         //   const result = await domain.getDomain(args!.id as string);
-        //   return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+        //   return toolJsonResult(result);
         // }
 
         default:

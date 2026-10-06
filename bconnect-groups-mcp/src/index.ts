@@ -18,7 +18,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -269,180 +269,180 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_endpoints_by_logical_group": {
           const client = getClient();
           const data = await client.groups.getEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_endpoints_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_android_endpoints_by_logical_group": {
           const client = getClient();
           const data = await client.groups.getAndroidEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_android_endpoints_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_ios_endpoints_by_logical_group": {
           const client = getClient();
           const data = await client.groups.getIosEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_ios_endpoints_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_linux_endpoints_by_logical_group": {
           const client = getClient();
           const data = await client.groups.getLinuxEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_linux_endpoints_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_mac_endpoints_by_logical_group": {
           const client = getClient();
           const data = await client.groups.getMacEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_mac_endpoints_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_network_endpoints_by_logical_group": {
           const client = getClient();
           const data = await client.groups.getNetworkEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_network_endpoints_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_windows_endpoints_by_logical_group": {
           const client = getClient();
           const data = await client.groups.getWindowsEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_industrial_endpoints_by_logical_group": {
           const client = getClient();
           const data = await client.groups.getIndustrialEndpointsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_industrial_endpoints_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_logical_groups_by_logical_group": {
           const client = getClient();
           const data = await client.groups.getLogicalGroupsByLogicalGroup(a.logicalGroupId, pickArguments(a ?? {}, sends("list_logical_groups_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         // ── Static Group ──────────────────────────────────────────────────
         case "list_endpoints_by_static_group": {
           const client = getClient();
           const data = await client.groups.getEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_endpoints_by_static_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_android_endpoints_by_static_group": {
           const client = getClient();
           const data = await client.groups.getAndroidEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_android_endpoints_by_static_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_ios_endpoints_by_static_group": {
           const client = getClient();
           const data = await client.groups.getIosEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_ios_endpoints_by_static_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_linux_endpoints_by_static_group": {
           const client = getClient();
           const data = await client.groups.getLinuxEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_linux_endpoints_by_static_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_mac_endpoints_by_static_group": {
           const client = getClient();
           const data = await client.groups.getMacEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_mac_endpoints_by_static_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_network_endpoints_by_static_group": {
           const client = getClient();
           const data = await client.groups.getNetworkEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_network_endpoints_by_static_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_windows_endpoints_by_static_group": {
           const client = getClient();
           const data = await client.groups.getWindowsEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_static_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_industrial_endpoints_by_static_group": {
           const client = getClient();
           const data = await client.groups.getIndustrialEndpointsByStaticGroup(a.staticGroupId, pickArguments(a ?? {}, sends("list_industrial_endpoints_by_static_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         // ── Dynamic Group ─────────────────────────────────────────────────
         case "list_endpoints_by_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getEndpointsByDynamicGroup(a.dynamicGroupId, pickArguments(a ?? {}, sends("list_endpoints_by_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_windows_endpoints_by_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getWindowsEndpointsByDynamicGroup(a.dynamicGroupId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         // ── Universal Dynamic Group ───────────────────────────────────────
         case "list_endpoints_by_universal_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_endpoints_by_universal_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_android_endpoints_by_universal_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getAndroidEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_android_endpoints_by_universal_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_ios_endpoints_by_universal_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getIosEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_ios_endpoints_by_universal_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_linux_endpoints_by_universal_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getLinuxEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_linux_endpoints_by_universal_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_mac_endpoints_by_universal_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getMacEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_mac_endpoints_by_universal_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_network_endpoints_by_universal_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getNetworkEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_network_endpoints_by_universal_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_windows_endpoints_by_universal_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getWindowsEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_universal_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
         case "list_industrial_endpoints_by_universal_dynamic_group": {
           const client = getClient();
           const data = await client.groups.getIndustrialEndpointsByUDG(a.universalDynamicGroupId, pickArguments(a ?? {}, sends("list_industrial_endpoints_by_universal_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         // ── AD User ──────────────────────────────────────────────────────────
         case "list_endpoints_by_ad_user": {
           const client = getClient();
           const data = await client.groups.getEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_endpoints_by_ad_user")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         case "list_android_endpoints_by_ad_user": {
           const client = getClient();
           const data = await client.groups.getAndroidEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_android_endpoints_by_ad_user")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         case "list_ios_endpoints_by_ad_user": {
           const client = getClient();
           const data = await client.groups.getIosEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_ios_endpoints_by_ad_user")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         case "list_linux_endpoints_by_ad_user": {
           const client = getClient();
           const data = await client.groups.getLinuxEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_linux_endpoints_by_ad_user")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         case "list_mac_endpoints_by_ad_user": {
           const client = getClient();
           const data = await client.groups.getMacEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_mac_endpoints_by_ad_user")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         case "list_windows_endpoints_by_ad_user": {
           const client = getClient();
           const data = await client.groups.getWindowsEndpointsByADUser(a.adUserId, pickArguments(a ?? {}, sends("list_windows_endpoints_by_ad_user")));
-          return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
+          return toolJsonResult(data);
         }
 
         default:

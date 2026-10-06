@@ -19,7 +19,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -306,72 +306,72 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_variable_definitions": {
           const result = await vars.getVariableDefinitions(pickArguments(args ?? {}, sends("list_variable_definitions")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_variable_definition": {
           const result = await vars.getVariableDefinition(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_variable_definition": {
           const result = await vars.createVariableDefinition(pickArguments(args ?? {}, ["name", "category", "scopes", "type", "defaultValue", "comment"]));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_variable_definition": {
           const result = await vars.updateVariableDefinition(args!.id as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_variable_definition": {
           await vars.deleteVariableDefinition(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true }, null, 2) }] };
+          return toolJsonResult({ success: true });
         }
 
         case "list_variable_instances": {
           const result = await vars.getVariableInstances(pickArguments(args ?? {}, sends("list_variable_instances")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_variable_instance": {
           const result = await vars.getVariableInstance(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_variable_instances_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
           const result = await vars.getVariableInstancesByEndpoint(endpointId as string, pickArguments(params, sends("list_variable_instances_by_endpoint")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_variable_instances_by_logical_group": {
           const { logicalGroupId, ...params } = args as Record<string, unknown>;
           const result = await vars.getVariableInstancesByLogicalGroup(logicalGroupId as string, pickArguments(params, sends("list_variable_instances_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_variable_instances_by_ad_object": {
           const { adObjectId, ...params } = args as Record<string, unknown>;
           const result = await vars.getVariableInstancesByADObject(adObjectId as string, pickArguments(params, sends("list_variable_instances_by_ad_object")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_variable_instances_by_job_definition": {
           const { windowsJobDefinitionId, ...params } = args as Record<string, unknown>;
           const result = await vars.getVariableInstancesByWindowsJobDefinition(windowsJobDefinitionId as string, pickArguments(params, sends("list_variable_instances_by_job_definition")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_variable_instances_by_application": {
           const { windowsApplicationId, ...params } = args as Record<string, unknown>;
           const result = await vars.getVariableInstancesByWindowsApplication(windowsApplicationId as string, pickArguments(params, sends("list_variable_instances_by_application")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_variable_instance": {
           const result = await vars.updateVariableInstance(args!.id as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         default:
