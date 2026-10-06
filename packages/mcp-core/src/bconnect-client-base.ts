@@ -552,7 +552,8 @@ export class BConnectClientBase {
           if (['POST', 'PATCH', 'PUT', 'DELETE'].includes(method)) {
             // Forget the written resource's collection and everything below it,
             // matched by path segments (the last segment removed).
-            this.responseCache.invalidatePath(url.replace(/\/[^/]+$/, ''));
+            const lastSlash = url.lastIndexOf('/');
+            this.responseCache.invalidatePath(lastSlash > 0 ? url.slice(0, lastSlash) : url);
           }
         }
 

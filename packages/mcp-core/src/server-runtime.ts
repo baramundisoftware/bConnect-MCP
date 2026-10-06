@@ -146,7 +146,11 @@ const processIo = (env: NodeJS.ProcessEnv = process.env): StartupIo => ({
 
 /** An error as one line: no stack, no line breaks that could forge log lines. */
 const oneLine = (error: unknown): string =>
-  (error instanceof Error ? error.message : String(error)).replace(/\s*[\r\n]+\s*/g, " ").trim();
+  (error instanceof Error ? error.message : String(error))
+    .split(/[\r\n]+/)
+    .map((part) => part.trim())
+    .filter((part) => part !== "")
+    .join(" ");
 
 /**
  * The one startup routine (REQ-SRV-023 AC 2, AC 3): loads .env once, checks

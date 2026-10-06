@@ -177,6 +177,16 @@ describe('startServer: the one startup routine', () => {
     const boom = () => { throw new Error('boom\nsecond line'); };
     await expect(startServer(entry(env, boom), t.options)).rejects.toThrow('exit 1');
     expect(t.lines.at(-1)).toBe('bconnect-runtime-mcp: boom second line');
+  });
+
+  it('stays fast on a message with a long run of spaces and no line break', async () => {
+    const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true' };
+    const t = io(env);
+    const boom = () => { throw new Error(`a${' '.repeat(50000)}b`); };
+    const started = performance.now();
+    await expect(startServer(entry(env, boom), t.options)).rejects.toThrow('exit 1');
+    expect(performance.now() - started).toBeLessThan(500);
+    expect(t.lines.at(-1)).toMatch(/^bconnect-runtime-mcp: a +b$/);
     expect(t.lines.join('\n')).not.toMatch(/\n\s+at /);
   });
 });
@@ -253,6 +263,16 @@ describe('response cache, when enabled in the client config (AC 4, D3 = a)', () 
     expect(cache.get('GET', '/d/v2.0/Xa1')).toBe('other');
     expect(cache.get('GET', '/d/v2.0/ThingsX')).toBe('other');
     expect(cache.get('GET', '/d/v2.0/X.1/sub')).toBeNull();
+  });
+
+  it('ignores trailing slashes and stays fast on a path made of many slashes', () => {
+    const cache = new ResponseCache({ enabled: true, ttl: 60000 });
+    cache.set('GET', '/d/v2.0/Things/1', 'mine');
+    expect(cache.invalidatePath('/d/v2.0/Things///')).toBe(1);
+    const started = performance.now();
+    cache.invalidatePath(`${'/'.repeat(50000)}x`);
+    cache.invalidatePath('/'.repeat(50000));
+    expect(performance.now() - started).toBeLessThan(200);
   });
 
   it.each([[-1], [Number.NaN], [Number.POSITIVE_INFINITY]])('refuses a TTL of %s', (ttl) => {

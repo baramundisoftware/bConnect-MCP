@@ -230,7 +230,10 @@ export class ResponseCache {
    * "/x/v2.0/Things/1", not "/x/v2.0/ThingsX".
    */
   invalidatePath(path: string): number {
-    const prefix = path.replace(/\/+$/, '');
+    // Trailing slashes off, without a regex: /\/+$/ backtracks on long runs of "/".
+    let end = path.length;
+    while (end > 0 && path[end - 1] === '/') {end--;}
+    const prefix = path.slice(0, end);
     let count = 0;
     for (const [key, entry] of this.cache.entries()) {
       if (entry.url === prefix || entry.url.startsWith(`${prefix}/`)) {
