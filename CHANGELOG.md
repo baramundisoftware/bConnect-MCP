@@ -7,9 +7,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [26.1.9] - 2026-10-04
+## [26.1.9] - 2026-10-07
 
 > There is no 26.1.8 release: changes merged under that label (#112) were reverted (#134).
+
+### Security
+- **The gateway and the servers' HTTP mode answer only allowed host names.** A request addressed to
+  a host name other than `localhost`, `127.0.0.1`, `[::1]` or one listed in
+  `MCP_GATEWAY_ALLOWED_HOSTS` (gateway) / `MCP_ALLOWED_HOSTS` (a server's HTTP mode), or a browser
+  request from another origin, gets 403. `docker-compose.gateway.yml` allows `mcp-gateway`, its
+  service name; setting the variable replaces that default. **Breaking** for a proxy that passes
+  on the original `Host`: list that name (and keep `mcp-gateway`).
+- **The gateway keeps write tools and secret reads off, however it is started.** It has no
+  authentication of its own, so it now ignores `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ`
+  wherever they are set and logs a warning at startup if either was, whether it runs from
+  `docker-compose.gateway.yml`, the image or the sources.
+- **Unused runtime dependencies removed.** `limiter`, `node-cache`, `winston`, `openapi-fetch` and
+  `@types/node-cache` were declared (in the root and the servers) but imported nowhere, so they
+  were installed and shipped for nothing; `axios-retry` is now declared only where it is used. The
+  shared core now declares what it imports (`axios`, `axios-retry`, the MCP SDK) instead of relying
+  on another package's copy, and every package requires `axios` 1.20 or later. A test keeps each
+  package's runtime dependencies equal to its imports (replaces Dependabot #182).
+- **MCP SDK 1.32.0 in the servers, the core and the gateway image** (was 1.29.0). Its HTTP transport, used by the gateway, now
+  reads request bodies with a size limit, caps the length of JSON-RPC batches and checks the
+  Content-Type properly; SSE keep-alive is fixed. All manifests and both lockfiles move
+  together (replaces Dependabot #181, which updated only two of them and didn't install).
+- **Audit level `security` records every security-relevant call** (#168). At that level only
+  BitLocker and LAPS credential routes were recorded. Now it also records: listing API keys,
+  reading or changing object rights, every security-group and security-profile operation, LAPS
+  `TriggerUpdateOnClient`, enrollment starts, creating endpoints with passwords, restarting the
+  management server or a microservice, and changing variables (a variable can hold a password).
+  The list comes from the API specifications (a test checks it against 25R2 and 26R1, and every
+  other API area is classified with a reason) and is documented with the levels in `docs/AUDIT.md`.
+- **Hidden characters in bMS data no longer reach the model** (#167). Names, descriptions and
+  messages from bMS can contain characters a person doesn't see but a model reads: zero-width
+  characters, direction controls, variation selectors and Unicode tag characters. The shared client now removes every
+  format character and default-ignorable code point from every value and key of every response,
+  for all 13 servers, and shows `[hidden characters removed]` where they were. ZWJ, ZWNJ and the
+  emoji presentation selectors (needed by several scripts and emoji), tab and line feed are kept;
+  CRLF becomes LF. Responses without such characters are unchanged.
+- **Refused credential reads are audited.** A request the client refuses before sending it
+  (a BitLocker or LAPS credential route while `ALLOW_SECRET_READ` is off, or a path that isn't
+  in canonical form) is now recorded as a security audit entry at every
+  `BCONNECT_AUDIT_LEVEL` except `none`. Audit lines escape control characters, so each
+  entry stays one line.
+- **The credential-route gate and the path check are stricter.** Paths with malformed percent
+  escapes are refused.
+- **Credentials are only sent over HTTPS.** A `BCONNECT_BASE_URL` with `http://` is refused
+  unless the host is this machine (`localhost`, `127.x.x.x`, `[::1]`, e.g. the bundled mock) or
+  `BCONNECT_ALLOW_INSECURE_HTTP=true` is set, which logs a warning. **Breaking for `http://` setups:** switch to `https://`
+  (recommended) or set the opt-in. Configuration errors (missing credentials, an unreadable CA
+  file, an insecure base URL) now all stop the server with a clear message.
+- **Credentials are only sent to the configured bConnect host.** The client no longer follows
+  HTTP redirects; a redirect stops the call: the operator's log names the target address, the model is only
+  told that `BCONNECT_BASE_URL` needs the final address. **Behaviour change:** a bMS behind a front end that redirects (for
+  example from `http://` to `https://`) needs its final address in `BCONNECT_BASE_URL`.
+- **Local secret files are ignored by git.** `.gitignore` now covers every `.env` and `.env.*`
+  copy in any directory (for example the `.env.gateway` the gateway setup asks for) and a
+  `secrets/` directory. The `*.example` templates stay tracked.
+- **Every write tool is refused while write operations are disabled.** A few write tools were
+  missing from their server's write gate; they now return the same refusal as every other
+  write tool (#190).
+- **Updated dependencies with known advisories.** All updates stay within their major
+  version: axios 1.20.0, hono 4.13.12, @hono/node-server 1.19.17, js-yaml 4.3.2,
+  fast-uri 3.1.8, ip-address 10.7.2, qs 6.16.0, body-parser, proxy-addr 2.0.8, and express
+  4.22.3 in the gateway. `npm audit --omit=dev` now reports no vulnerabilities for the servers or the
+  gateway. `openapi-typescript`, a code generator, is now a development dependency, so a
+  production install (`npm ci --omit=dev`) no longer pulls it in. dotenv stays on 16:
+  from 17 on it writes to stdout, which breaks stdio MCP clients.
+- **Tool arguments are validated in every server.** All 13 servers check each tool's
+  arguments before sending a request; ID arguments must be GUIDs. Invalid input is refused
+  with an `Invalid parameters` error and nothing is sent.
+- **The shared client only sends request paths in canonical form**, whichever tool built
+  them. Query parameters are always passed separately.
+- **Every tool that returns credentials requires `ALLOW_SECRET_READ`**, write tools included
+  (those also need `ALLOW_WRITE_OPERATIONS`). The refusal says an operator must set the
+  variable and restart the server.
+- **Second lock in the shared client.** `@bconnect/mcp-core` refuses the BitLocker-secrets and
+  LAPS operations before sending unless `ALLOW_SECRET_READ=true`, whichever tool issues the
+  request, matching on the canonical request path.
+- **Guard test.** Derives the credential-returning operations from the 25R2/26R1 OpenAPI
+  response schemas, exercises every tool of every server, and fails if one reaches such an
+  operation without the gate, or calls a path the spec doesn't declare.
 
 ### Upgrading from 26.1.7
 - **Set `BCONNECT_BASE_URL`.** Without it the server no longer starts (before, it fell back to a
@@ -35,9 +114,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known issues
 - **The gateway has no built-in authentication.** Front it with an authenticating, TLS-terminating
-  reverse proxy that also checks `Host` and `Origin`. Behind a proxy, the
-  gateway sees every request as coming from the proxy, so all callers share one rate limit and the
-  access log shows the proxy's address.
+  reverse proxy that also checks `Host` and `Origin`.
+- **The gateway has no trust-proxy setting.** Behind a proxy it sees every request as coming from
+  the proxy, so all callers share one rate-limit bucket and the access log shows the proxy's address.
 - **Some reads are slow on a large or busy bMS.** On a test bMS 26R1 (26.1.161),
   `list_detected_vulnerabilities` and `list_vulnerabilities` took about 30 s and
   `list_installed_windows_software` about 50 s, so they can run into the default 30 s timeout. Set
@@ -68,89 +147,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `JobDefinitionId`, `Name` and `includeSubfolders`. Their `SearchQuery` and `OrderBy` descriptions
   now name the searchable fields and sort keys. The filters come from tables generated from the
   API specification (`scripts/generate-query-parameters.mjs`), per bMS release.
-
-### Security
-- **The gateway and the servers' HTTP mode answer only allowed host names.** A request addressed to
-  a host name other than `localhost`, `127.0.0.1`, `[::1]` or one listed in
-  `MCP_GATEWAY_ALLOWED_HOSTS` (gateway) / `MCP_ALLOWED_HOSTS` (a server's HTTP mode), or a browser
-  request from another origin, gets 403. `docker-compose.gateway.yml` allows `mcp-gateway`, its
-  service name; setting the variable replaces that default. **Breaking** for a proxy that passes
-  on the original `Host`: list that name (and keep `mcp-gateway`).
-- **The gateway keeps write tools and secret reads off, however it is started.** It has no
-  authentication of its own, so it now ignores `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ`
-  wherever they are set and logs a warning at startup if either was. Before, only
-  `docker-compose.gateway.yml` kept them out; started another way, the gateway honoured them.
-- **Unused runtime dependencies removed.** `limiter`, `node-cache`, `winston`, `openapi-fetch` and
-  `@types/node-cache` were declared (in the root and the servers) but imported nowhere, so they
-  were installed and shipped for nothing; `axios-retry` is now declared only where it is used. The
-  shared core now declares what it imports (`axios`, `axios-retry`, the MCP SDK) instead of relying
-  on another package's copy, and every package requires `axios` 1.20 or later. A test keeps each
-  package's runtime dependencies equal to its imports (replaces Dependabot #182).
-- **MCP SDK 1.31.0 in every package** (was 1.29.0). Its HTTP transport, used by the gateway, now
-  reads request bodies with a size limit, caps the length of JSON-RPC batches and checks the
-  Content-Type properly; SSE keep-alive is fixed. All manifests and both lockfiles move
-  together (replaces Dependabot #181, which updated only two of them and didn't install).
-- **Audit level `security` records every security-relevant call** (#168). At that level only
-  BitLocker and LAPS credential routes were recorded. Now it also records: listing API keys,
-  reading or changing object rights, every security-group and security-profile operation, LAPS
-  `TriggerUpdateOnClient`, enrollment starts, creating endpoints with passwords, restarting the
-  management server or a microservice, and changing variables (a variable can hold a password).
-  The list comes from the API specifications (a test checks it against 25R2 and 26R1, and every
-  other API area is classified with a reason) and is documented with the levels in `docs/AUDIT.md`.
-- **Hidden characters in bMS data no longer reach the model** (#167). Names, descriptions and
-  messages from bMS can contain characters a person doesn't see but a model reads: zero-width
-  characters, direction controls, variation selectors that hide bytes after an emoji, and Unicode
-  tag characters that can spell out hidden instructions. The shared client now removes every
-  format character and default-ignorable code point from every value and key of every response,
-  for all 13 servers, and shows `[hidden characters removed]` where they were. ZWJ, ZWNJ and the
-  emoji presentation selectors (needed by several scripts and emoji), tab and line feed are kept;
-  CRLF becomes LF. Responses without such characters are unchanged.
-- **Refused credential reads are audited.** A request the client refuses before sending it
-  (a BitLocker or LAPS credential route while `ALLOW_SECRET_READ` is off, or a path that isn't
-  in canonical form) is now recorded as a security audit entry at every
-  `BCONNECT_AUDIT_LEVEL` except `none`. Before, it left no audit entry at any level. Audit
-  lines escape control characters, so one entry can't forge another.
-- **The credential-route gate and the path check refuse more unusual path forms.** Paths with
-  malformed percent escapes are refused, and the gate recognises a credential route in more
-  encodings.
-- **Credentials are only sent over HTTPS.** A `BCONNECT_BASE_URL` with `http://` is refused
-  unless the host is this machine (`localhost`, `127.x.x.x`, `[::1]`, e.g. the bundled mock) or
-  `BCONNECT_ALLOW_INSECURE_HTTP=true` is set, which logs a warning. Before, credentials went in
-  cleartext over any `http://` address. **Breaking for `http://` setups:** switch to `https://`
-  (recommended) or set the opt-in. Configuration errors (missing credentials, an unreadable CA
-  file, an insecure base URL) now all stop the server with a clear message.
-- **Credentials are only sent to the configured bConnect host.** The client no longer follows
-  HTTP redirects. Before, a redirect could carry an API key (`X-Api-Key`) to another host. A
-  redirect now stops the call: the operator's log names the target address, the model is only
-  told that `BCONNECT_BASE_URL` needs the final address. **Behaviour change:** a bMS behind a front end that redirects (for
-  example from `http://` to `https://`) needs its final address in `BCONNECT_BASE_URL`.
-- **Local secret files are ignored by git.** `.gitignore` now covers every `.env` and `.env.*`
-  copy in any directory (for example the `.env.gateway` the gateway setup asks for) and a
-  `secrets/` directory. The `*.example` templates stay tracked.
-- **Every write tool is refused while write operations are disabled.** A few write tools were
-  missing from their server's write gate; they now return the same refusal as every other
-  write tool (#190).
-- **Updated dependencies with known advisories.** All updates stay within their major
-  version: axios 1.20.0, hono 4.13.12, @hono/node-server 1.19.17, js-yaml 4.3.2,
-  fast-uri 3.1.8, ip-address 10.7.2, qs 6.16.0, body-parser, and express 4.22.3 in the
-  gateway. `npm audit --omit=dev` now reports no vulnerabilities for the servers or the
-  gateway. `openapi-typescript`, a code generator, is now a development dependency, so a
-  production install (`npm ci --omit=dev`) no longer pulls it in. dotenv stays on 16:
-  from 17 on it writes to stdout, which breaks stdio MCP clients.
-- **Tool arguments are validated in every server.** All 13 servers check each tool's
-  arguments before sending a request; ID arguments must be GUIDs. Invalid input is refused
-  with an `Invalid parameters` error and nothing is sent.
-- **The shared client only sends request paths in canonical form**, whichever tool built
-  them. Query parameters are always passed separately.
-- **Every tool that returns credentials requires `ALLOW_SECRET_READ`**, write tools included
-  (those also need `ALLOW_WRITE_OPERATIONS`). The refusal says an operator must set the
-  variable and restart the server.
-- **Second lock in the shared client.** `@bconnect/mcp-core` refuses the BitLocker-secrets and
-  LAPS operations before sending unless `ALLOW_SECRET_READ=true`, whichever tool issues the
-  request, matching on the canonical request path.
-- **Guard test.** Derives the credential-returning operations from the 25R2/26R1 OpenAPI
-  response schemas, exercises every tool of every server, and fails if one reaches such an
-  operation without the gate, or calls a path the spec doesn't declare.
 
 ### Changed
 - **One startup routine and one bConnect client per server (#160).** All 13 servers start the same
@@ -284,6 +280,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`docker-compose.gateway.yml` + `bconnect-mcp-gateway/Dockerfile`) is unaffected.
 
 ### Fixed
+- **Per-endpoint findings and kiosk releases tell "nothing found" from "doesn't exist" (#166).**
+  `list_detected_vulnerabilities_for_endpoint` and `list_detected_rule_violations_for_endpoint`
+  get 404 from bConnect both for an endpoint without findings and for one that doesn't exist. They
+  now check the endpoint: if it exists, the result is empty with a note that no findings were
+  reported; if not, the result is an error saying so. `list_kiosk_releases_by_job_definition` checks
+  the job definition when bConnect returns an empty list, and reports a missing one as an error. If
+  the check itself fails, the tools say that existence couldn't be confirmed and never report "no
+  findings" for an endpoint that wasn't confirmed.
 - **The outbound rate limit works (#160).** With `BCONNECT_RATE_LIMIT_ENABLED=true`, the limit now
   counts the requests of all tool calls of a server; a call over it fails at once. Before, each
   tool call started with a full allowance, so the limit was never reached.
@@ -292,6 +296,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Response cache (#160).** A cache hit no longer sends the request, invalidation after a write
   matches whole path segments, and a negative lifetime is refused. The cache stays off; there is no
   setting for it.
+- **HTTP mode names the port it listens on.** With `MCP_PORT=0` the startup line showed `:0`; it now
+  shows the port the system assigned.
+- **`npm run build` builds the shared core first** (#273). A plain build after a pull could leave
+  an outdated `@bconnect/mcp-core` in place. The live test tier now stops before its first request
+  when a build is missing or older than its sources.
 - **README, SECURITY, CONTRIBUTING, SUPPORT and the server READMEs match the code.** Server
   READMEs list every tool (six groups, two endpoints and one jobs tool were missing) with correct
   counts for 26R1 and 25R2, build from the repo root, and no longer link to a repository readers
