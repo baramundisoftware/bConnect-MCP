@@ -26,7 +26,7 @@ class Exit extends Error {
 
 /** Every variable gateway.ts reads, cleared, so the host's environment can't leak in. */
 const READ = [
-  "ALLOW_WRITE_OPERATIONS", "ALLOW_SECRET_READ", "BCONNECT_RELEASE",
+  "ALLOW_WRITE_OPERATIONS", "ALLOW_SECRET_READ", "BCONNECT_RELEASE", "BCONNECT_PRETTY_JSON",
   "BCONNECT_USERNAME", "BCONNECT_PASSWORD", "BCONNECT_API_KEY",
   "BCONNECT_USERNAME_FILE", "BCONNECT_PASSWORD_FILE", "BCONNECT_API_KEY_FILE",
   "MCP_GATEWAY_PORT", "MCP_GATEWAY_BIND", "MCP_ALLOW_NO_AUTH", "MCP_GATEWAY_ALLOWED_HOSTS",
@@ -100,6 +100,20 @@ describe("gateway entry point", () => {
     expect(process.exit).toHaveBeenCalledWith(1);
     expect(listen).not.toHaveBeenCalled();
     expect(logged().find((m) => m.level === "error")?.msg).toMatch(/BCONNECT_RELEASE "26r1" isn't valid/);
+  });
+
+  it("stops with exit 1 on an invalid BCONNECT_PRETTY_JSON, before listening", async () => {
+    vi.stubEnv("BCONNECT_PRETTY_JSON", "yes");
+    await expect(start()).rejects.toThrow(Exit);
+    expect(process.exit).toHaveBeenCalledWith(1);
+    expect(listen).not.toHaveBeenCalled();
+    expect(logged().find((m) => m.level === "error")?.msg).toMatch(/BCONNECT_PRETTY_JSON "yes" isn't valid/);
+  });
+
+  it("starts with BCONNECT_PRETTY_JSON=true", async () => {
+    vi.stubEnv("BCONNECT_PRETTY_JSON", "true");
+    await start();
+    expect(listen).toHaveBeenCalledOnce();
   });
 
   it("reads a *_FILE secret into its variable", async () => {
