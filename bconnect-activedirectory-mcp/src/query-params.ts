@@ -4,9 +4,10 @@
  * change; __tests__/query-params.guard.test.ts fails when this table drifts.
  *
  * Per bMS release and tool: the query parameters of the tool's GET operation,
- * as the properties the tool offers (#179). Tools send exactly these.
+ * as the properties the tool offers (#179). Tools send exactly these, except
+ * the client-side countOnly (#165), which the core handles.
  */
-import { type QueryParameterTable, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { type QueryParameterTable, COUNT_ONLY_PROPERTY, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 
 export const QUERY_PARAMETERS: QueryParameterTable = {
   "25R2": {
@@ -15,6 +16,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, SID, Domain, Comment, Type, GUID in the ActiveDirectory."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_subgroups: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Id asc)."},
@@ -22,6 +24,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeIndirect: {"type":"boolean","description":"If this paramter is set to true, indirect group memberships are also returned. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_groups_by_org_unit: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Id asc)."},
@@ -29,12 +32,14 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubOrgUnit: {"type":"boolean","description":"If this paramter is set to true, sub organization units are also queried. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_objects: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, SID, Comment, Domain, Type, GUID in the ActiveDirectory."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_object_memberships: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are ADGroup and MembershipType (e.g. ADGroup asc)."},
@@ -42,6 +47,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeIndirect: {"type":"boolean","description":"If this paramter is set to true, indirect group memberships are also returned. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_objects_by_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Name asc)."},
@@ -49,6 +55,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeIndirect: {"type":"boolean","description":"If this paramter is set to true, indirect group memberships are also returned. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_objects_by_org_unit: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Name asc)."},
@@ -56,12 +63,14 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubOrgUnit: {"type":"boolean","description":"If this paramter is set to true, sub orginzation units are also queried. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_users: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, PrincipalName, SID, Domain, Mail or Type (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, PrincipalName, FirstName, LastName, ManagerName, SID, Domain, Comment, Mail, Type, GUID in the ActiveDirectory."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_users_by_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, PrincipalName, SID, Domain, Mail or Type (e.g. Name asc)."},
@@ -69,6 +78,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeIndirect: {"type":"boolean","description":"If this paramter is set to true, indirect group memberships are also returned. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_users_by_org_unit: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, PrincipalName, SID, Domain, Mail or Type (e.g. Name asc)."},
@@ -76,6 +86,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubOrgUnit: {"type":"boolean","description":"If this paramter is set to true, sub organizational units are also queried. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_org_units: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
@@ -83,6 +94,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_org_units_by_org_unit: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
@@ -91,6 +103,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubOrgUnits: {"type":"boolean","description":"If true, sub organization units are also queried (default false)."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
   "26R1": {
@@ -99,6 +112,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, SID, Domain, Comment, Type, GUID in the ActiveDirectory."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_subgroups: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Id asc)."},
@@ -106,6 +120,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeIndirect: {"type":"boolean","description":"If this paramter is set to true, indirect group memberships are also returned. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_groups_by_org_unit: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Id asc)."},
@@ -113,12 +128,14 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubOrgUnit: {"type":"boolean","description":"If this paramter is set to true, sub organization units are also queried. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_objects: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, SID, Comment, Domain, Type, GUID in the ActiveDirectory."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_object_memberships: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are ADGroup and MembershipType (e.g. ADGroup asc)."},
@@ -126,6 +143,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeIndirect: {"type":"boolean","description":"If this paramter is set to true, indirect group memberships are also returned. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_objects_by_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Name asc)."},
@@ -133,6 +151,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeIndirect: {"type":"boolean","description":"If this paramter is set to true, indirect group memberships are also returned. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_objects_by_org_unit: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, SID, Domain or Type (e.g. Name asc)."},
@@ -140,12 +159,14 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubOrgUnit: {"type":"boolean","description":"If this paramter is set to true, sub orginzation units are also queried. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_users: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, PrincipalName, SID, Domain, Mail or Type (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, PrincipalName, FirstName, LastName, ManagerName, SID, Domain, Comment, Mail, Type, GUID in the ActiveDirectory."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_users_by_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, PrincipalName, SID, Domain, Mail or Type (e.g. Name asc)."},
@@ -153,6 +174,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeIndirect: {"type":"boolean","description":"If this paramter is set to true, indirect group memberships are also returned. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ad_users_by_org_unit: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, PrincipalName, SID, Domain, Mail or Type (e.g. Name asc)."},
@@ -160,6 +182,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubOrgUnit: {"type":"boolean","description":"If this paramter is set to true, sub organizational units are also queried. Defaults to false."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_org_units: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
@@ -167,6 +190,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_org_units_by_org_unit: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
@@ -175,6 +199,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubOrgUnits: {"type":"boolean","description":"If true, sub organization units are also queried (default false)."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
 };

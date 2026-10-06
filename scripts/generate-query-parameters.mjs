@@ -18,6 +18,8 @@
  * Rules:
  * - Page and PageSize use the shared core definitions; includeSubfolders on a
  *   route below a logical group uses the shared sub-group definition.
+ * - A paged operation (Page and PageSize) whose 200 answer has totalItems also
+ *   gets the client-side countOnly (#165), last; tools never send it.
  * - Type from the spec (number → integer); an enum ($ref or allOf) is a string
  *   with its values listed.
  * - Description from the spec with HTML removed; a parameter the spec leaves
@@ -59,7 +61,7 @@ function loadSpecs(release) {
       for (const [method, op] of Object.entries(byMethod)) {
         if (!op || typeof op !== "object" || !op.operationId) {continue;}
         const list = byId.get(op.operationId) ?? [];
-        list.push({ domain, method: method.toUpperCase(), path, params: op.parameters ?? [], spec });
+        list.push({ domain, method: method.toUpperCase(), path, params: op.parameters ?? [], responses: op.responses ?? {}, spec });
         byId.set(op.operationId, list);
       }
     }
@@ -72,6 +74,11 @@ function deref(spec, schema) {
   if (Array.isArray(s.allOf) && s.allOf.length === 1) {s = s.allOf[0];}
   while (s && s.$ref) {s = s.$ref.replace(/^#\//, "").split("/").reduce((n, k) => n[k], spec);}
   return s;
+}
+
+/** The operation's 200 answer is an object with totalItems (a page). */
+function answersWithTotalItems(op) {
+  return Object.values(op.responses["200"]?.content ?? {}).some((c) => "totalItems" in (deref(op.spec, c.schema).properties ?? {}));
 }
 
 /** The property source text for one query parameter. */
@@ -117,14 +124,17 @@ function toolTable(server, specs) {
     const rows = [];
     for (const [tool, ids] of tools) {
       const params = new Map();
+      let page = false;
       for (const id of ids) {
         for (const op of operationsOf(specs, release, domain, id).filter((o) => o.method === "GET")) {
           for (const p of op.params) {
             if (p.in === "query" && !params.has(p.name)) {params.set(p.name, property(p, op.path, op.spec));}
           }
+          page ||= answersWithTotalItems(op);
         }
       }
       if (params.size === 0) {continue;}
+      if (page && params.has("Page") && params.has("PageSize")) {params.set("countOnly", "COUNT_ONLY_PROPERTY");}
       for (const v of params.values()) {if (/^[A-Z_]+$/.test(v)) {used.add(v);}}
       rows.push(`    ${tool}: {\n${[...params].map(([n, v]) => `      ${n}: ${v},`).join("\n")}\n    },`);
     }
@@ -137,7 +147,8 @@ function toolTable(server, specs) {
  * change; __tests__/query-params.guard.test.ts fails when this table drifts.
  *
  * Per bMS release and tool: the query parameters of the tool's GET operation,
- * as the properties the tool offers (#179). Tools send exactly these.
+ * as the properties the tool offers (#179). Tools send exactly these, except
+ * the client-side countOnly (#165), which the core handles.
  */
 import { ${imports.join(", ")} } from "@bconnect/mcp-core";
 

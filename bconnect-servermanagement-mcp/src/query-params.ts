@@ -4,9 +4,10 @@
  * change; __tests__/query-params.guard.test.ts fails when this table drifts.
  *
  * Per bMS release and tool: the query parameters of the tool's GET operation,
- * as the properties the tool offers (#179). Tools send exactly these.
+ * as the properties the tool offers (#179). Tools send exactly these, except
+ * the client-side countOnly (#165), which the core handles.
  */
-import { type QueryParameterTable, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { type QueryParameterTable, COUNT_ONLY_PROPERTY, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 
 export const QUERY_PARAMETERS: QueryParameterTable = {
   "25R2": {
@@ -16,6 +17,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Name: {"type":"string","description":"Filters results by exactly matching name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_security_profiles: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Only Name is supported (e. g. Name asc)."},
@@ -23,6 +25,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Name: {"type":"string","description":"Filters results by exactly matching name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
   "26R1": {
@@ -32,6 +35,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Name: {"type":"string","description":"Filters results by exactly matching name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_security_profiles: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Only Name is supported (e. g. Name asc)."},
@@ -39,6 +43,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Name: {"type":"string","description":"Filters results by exactly matching name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_download_jobs: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or LastExecution (e. g. Name asc)."},
@@ -48,6 +53,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       LastExecution: {"type":"string","description":"Filters on lastExecution. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
 };

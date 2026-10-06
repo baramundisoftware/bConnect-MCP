@@ -22,3 +22,13 @@ export function pageSizeProperty(defaultSize = 20): PagingProperty {
 }
 
 export const PAGE_SIZE_PROPERTY: PagingProperty = pageSizeProperty();
+
+/**
+ * The client-side countOnly option of every paged list tool whose answer has
+ * totalItems (#165, REQ-SRV-027). It is listed on ~120 tools, so the text stays
+ * one short sentence. Never sent to bConnect: see CLIENT_OPTIONS.
+ */
+export const COUNT_ONLY_PROPERTY = {
+  type: "boolean",
+  description: "Return only totalItems, no rows.",
+} as const;

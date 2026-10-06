@@ -4,8 +4,9 @@
  * For both bMS releases and all 13 servers, through the MCP client the way a
  * model calls them. Which tools must offer `countOnly` is derived here from the
  * bundled specs and each server's src/operations.ts, never from a hand list: a
- * tool whose GET operation has Page and PageSize and whose 200 answer has
- * totalItems.
+ * listed tool whose GET operation has Page and PageSize and whose 200 answer has
+ * totalItems. Like its other query parameters, a tool whose route only the other
+ * release has takes that release's operation (#179).
  * - AC 1: each such tool, called with `countOnly: true`, sends exactly one
  *   request with Page=0 and PageSize=1 and returns only totalItems and the
  *   filters that were applied;
@@ -20,8 +21,11 @@ import { pathToFileURL } from 'node:url';
 import { RELEASES, loadOperations, type Schema } from './lib/spec.js';
 import { ID, ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, requiredArguments, type RecordedRequest } from './lib/exerciser.js';
 
-/** Countable tools per release, counted from the specs on b787881 (all 13 servers). */
-const COUNTABLE = { '25R2': 107, '26R1': 119 } as const;
+/**
+ * Tools offering countOnly per release (b787881 specs): 107 / 119 with a paged route in that
+ * release, plus 4 / 4 listed tools whose route only the other release has.
+ */
+const COUNTABLE = { '25R2': 111, '26R1': 123 } as const;
 const TOTAL = 4242;
 const INVALID_PARAMS = -32602;
 /** Arguments that page or sort; everything else the caller gives is a filter. */
@@ -36,11 +40,15 @@ const deref = (spec: Schema, s: Schema | undefined): Schema => {
 
 /** The tools of `server` whose GET operation (own domain first) is paged and answers with totalItems. */
 function countableTools(server: string, release: (typeof RELEASES)[number], operations: Record<string, string[]>): string[] {
-  const ops = loadOperations(release);
-  return Object.entries(operations).filter(([, ids]) => {
-    const all = ops.filter((o) => ids.includes(o.operationId) && o.method === 'GET');
+  const getsIn = (r: (typeof RELEASES)[number], ids: string[]) => {
+    const all = loadOperations(r).filter((o) => ids.includes(o.operationId) && o.method === 'GET');
     const own = all.filter((o) => o.domain === server.replace(/^bconnect-|-mcp$/g, ''));
-    const gets = own.length ? own : all;
+    return own.length ? own : all;
+  };
+  const other = release === '25R2' ? '26R1' : '25R2';
+  return Object.entries(operations).filter(([, ids]) => {
+    const selected = getsIn(release, ids);
+    const gets = selected.length ? selected : getsIn(other, ids);
     const query = new Set(gets.flatMap((o) => o.queryParams));
     return query.has('Page') && query.has('PageSize') && gets.some((o) => {
       const content: Schema = o.spec.paths[o.path].get.responses?.['200']?.content ?? {};
@@ -82,8 +90,8 @@ describe.each(RELEASES)('bMS %s', (release) => {
     Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
     for (const server of SERVERS) {
       const { TOOL_OPERATIONS } = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
-      expected[server] = countableTools(server, release, TOOL_OPERATIONS).sort();
       const conn = await connect(server);
+      expected[server] = countableTools(server, release, TOOL_OPERATIONS).filter((t) => conn.tools.some((l) => l.name === t)).sort();
       offering[server] = conn.tools.filter((t) => 'countOnly' in (t.inputSchema.properties ?? {})).map((t) => t.name).sort();
       recorder.take();
       for (const tool of conn.tools) {
@@ -152,7 +160,8 @@ describe.each(RELEASES)('bMS %s', (release) => {
 
   it('every server is covered and the domain segment is kept', () => {
     const servers = new Set(counted.map((c) => c.server));
-    expect(servers.size).toBe(release === '25R2' ? 12 : 13);
+    // Universal Dynamic Groups are 26R1 only: on 25R2 that server lists no countable tool.
+    expect(servers.size).toBe(release === '25R2' ? SERVERS.length - 1 : SERVERS.length);
     const wrong = counted.filter((c) => c.count.sent.length === 1 && !c.count.sent[0].path.startsWith(`/${domainOf(c.server)}/`)).map((c) => `${c.server} ${c.tool} ${c.count.sent[0].path}`);
     expect(wrong).toEqual([]);
   });

@@ -116,6 +116,12 @@ describe('withCountOnly, count unavailable (AC 4)', () => {
     expect(JSON.parse(textOf(result))).toEqual({ countUnavailable: UNAVAILABLE });
   });
 
+  it('a result without content → count unavailable', async () => {
+    const handler = vi.fn(async () => ({}));
+    const result = await withCountOnly(TABLE, () => '26R1', handler)(request('list_things', { countOnly: true }));
+    expect(JSON.parse(textOf(result as ToolJsonResult))).toEqual({ countUnavailable: UNAVAILABLE });
+  });
+
   it('an error result passes through unchanged', async () => {
     const failed = { content: [{ type: 'text' as const, text: 'bConnect API error (404): not found' }], isError: true };
     const { handler } = tool(() => failed);

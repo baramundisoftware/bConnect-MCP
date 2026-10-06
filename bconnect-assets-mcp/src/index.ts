@@ -18,7 +18,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -542,7 +542,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
   }
 
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  // countOnly (#165): count with one 1-row request instead of loading a page.
+  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async (request) => {
     const { name, arguments: args } = request.params;
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
@@ -727,7 +728,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // model can read; only McpErrors stay protocol errors (REQ-XC-001).
       return toolErrorResult(error, release);
     }
-  });
+  }));
 
   return { server };
 }

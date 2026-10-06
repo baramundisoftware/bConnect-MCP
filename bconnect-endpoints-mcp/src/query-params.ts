@@ -4,9 +4,10 @@
  * change; __tests__/query-params.guard.test.ts fails when this table drifts.
  *
  * Per bMS release and tool: the query parameters of the tool's GET operation,
- * as the properties the tool offers (#179). Tools send exactly these.
+ * as the properties the tool offers (#179). Tools send exactly these, except
+ * the client-side countOnly (#165), which the core handles.
  */
-import { type QueryParameterTable, INCLUDE_SUBFOLDERS_PROPERTY, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { type QueryParameterTable, COUNT_ONLY_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 
 export const QUERY_PARAMETERS: QueryParameterTable = {
   "25R2": {
@@ -17,6 +18,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     search_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc)."},
@@ -25,6 +27,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_windows_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc)."},
@@ -34,6 +37,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_logical_groups: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value are Name and Dip."},
@@ -43,6 +47,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Domain: {"type":"string","description":"Filters result by matching the exact value against Domain."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_group_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc)."},
@@ -52,6 +57,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
       includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_linux_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc)."},
@@ -60,6 +66,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_mac_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc)."},
@@ -68,6 +75,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_endpoints_by_logical_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc)."},
@@ -77,6 +85,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
       includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_windows_endpoints_by_logical_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc)."},
@@ -87,6 +96,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
       includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_android_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc)."},
@@ -94,6 +104,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ios_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc)."},
@@ -101,6 +112,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_industrial_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc)."},
@@ -109,6 +121,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_network_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, UpTime and LastSeen (e.g. displayName asc)."},
@@ -117,6 +130,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
   "26R1": {
@@ -127,6 +141,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     search_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc)."},
@@ -135,6 +150,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_windows_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc)."},
@@ -145,6 +161,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_logical_groups: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value are Name and Dip."},
@@ -154,6 +171,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Domain: {"type":"string","description":"Filters result by matching the exact value against Domain."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_group_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc)."},
@@ -163,6 +181,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
       includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_linux_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc)."},
@@ -171,6 +190,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_mac_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc)."},
@@ -179,6 +199,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_endpoints_by_logical_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem and LastSeen (e.g. displayName asc)."},
@@ -188,6 +209,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
       includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_windows_endpoints_by_logical_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, LastUser and LastSeen (e.g. displayName asc)."},
@@ -199,6 +221,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
       includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_android_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc)."},
@@ -206,6 +229,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_ios_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, ManagementState and LastSeen (e.g. displayName asc)."},
@@ -213,6 +237,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_network_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are DisplayName, HostName, OperatingSystem, UpTime and LastSeen (e.g. displayName asc)."},
@@ -221,6 +246,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       HostName: {"type":"string","description":"Filters result by matching the exact value against HostName."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
 };

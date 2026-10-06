@@ -27,6 +27,11 @@
  *      (REQ-SRV-026): wrap the list once more as
  *      `withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true", …)`.
  *      __tests__/write-tools-hidden.guard.test.ts fails until this is done.
+ *   9. Paged list tools (REQ-SRV-027): the generator also writes
+ *      `src/query-params.ts`; list tools offer `withQueryProperties(QUERY_PARAMETERS, …)`
+ *      and send `pickArguments(args, queryParameters(QUERY_PARAMETERS, …))`. Wrap the
+ *      CallTool handler as `withCountOnly(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, …)`
+ *      so they answer `countOnly`. __tests__/count-only.guard.test.ts fails until this is done.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
