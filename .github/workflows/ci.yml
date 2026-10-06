@@ -8,7 +8,7 @@
 # gate that runs without asking them to trust — or reproduce — someone's
 # local shell.
 #
-# ── Two jobs, and the split is deliberate ──────────────────────────────────
+# ── Three jobs, and the split is deliberate ────────────────────────────────
 # `gate` runs on BOTH Linux and Windows. That is not box-ticking. This repo
 # shipped a defect where a clone on Windows with core.autocrlf=true failed its
 # own test suite, aborted a package's build, and cascaded into failures in two
@@ -22,6 +22,9 @@
 # 2026-08-04), so this is a standing policy rather than an untriaged backlog.
 # See the rationale on the `strict` job for why a clean audit is not by itself
 # a reason to promote it into `gate`.
+#
+# `coverage` measures every shipped workspace in one run and fails below a
+# floor; it is not one of the required checks (see the job).
 #
 # ── Relationship to scripts/ci-local.sh ────────────────────────────────────
 # That script remains the richer local gate (jscpd, semgrep). Neither it nor
@@ -186,15 +189,20 @@ jobs:
           node "$LIB/test-catalog-drift.mjs"
 
   coverage:
-    name: coverage floors (reported, not blocking)
+    name: coverage floors
     runs-on: ubuntu-latest
-    # Reported, not blocking: the current code is below the 60% floors its
-    # vitest configs declare. Make this blocking again once coverage is raised.
+    # One root run over every shipped workspace: the shared core, the 13 servers
+    # and the gateway, entry points included. The floors are in the root
+    # vitest.config.ts (total, and one per workspace a little under what it
+    # achieves); below any of them this job fails. It is not one of the
+    # ruleset's required checks: a red result here is read and acted on, it
+    # does not block a merge on its own.
     #
-    # Not via job-level `continue-on-error`: that let the run pass while this
-    # check stayed red on every PR, and a permanent red mark teaches everyone to
-    # ignore red (REQ-CI-001). A workspace below its floor is now a warning
-    # annotation plus a job-summary line; a failed install or build still fails.
+    # It replaced a loop of per-workspace runs. Each of those saw only its own
+    # few test files, skipped index.ts and never measured the core (servers
+    # load the core's build), so it reported 4–31 % for servers that are at
+    # 100 %. `__tests__/coverage-config.guard.test.ts` fails when a workspace
+    # is missing from the root include list or has no floor.
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -203,45 +211,18 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
+      # Some tests start the built servers as child processes.
       - run: npm run build
+      - run: npm run test:coverage
 
-      # Per-workspace floors are the ones that bite: each is pinned a few points
-      # under what that workspace actually achieves, so this fails on a real
-      # regression rather than against an aspiration nothing could hit.
-      #
-      # The list is spelled out because a glob cannot express it. `bconnect-*-mcp`
-      # matches the 13 servers and NOTHING else: `bconnect-mcp-gateway` ends in
-      # `-gateway`, and `packages/mcp-core` is not at the root. Both were
-      # silently uncovered here for the life of this file — the gateway is the
-      # only component that listens on a socket and mcp-core is the kernel all
-      # 13 servers link against, so between them the glob excluded the two
-      # workspaces where a regression costs the most. Same shape as the
-      # workspace glob that hid the gateway from `npm audit`; `__tests__/
-      # suite-coverage-floors.test.ts` now fails if this list and the set of
-      # workspaces carrying a floor ever drift apart again.
-      - name: Per-workspace coverage floors
-        # NOT `set -e`. It was, and that made this step report the FIRST failing
-        # workspace and never measure the rest — assets is second of sixteen, so
-        # the first CI run named it and stopped, while groups (50.16% against a
-        # 74 floor), universaldynamicgroups and software were never reached.
-        # A gate that reports one of four failures is the defect this repository
-        # keeps finding. Every workspace now runs; the step reports at the END,
-        # as one warning naming all of them (reported, not blocking).
-        run: |
-          failed=""
-          for d in bconnect-*-mcp bconnect-mcp-gateway packages/mcp-core; do
-            [ -f "$d/vitest.config.ts" ] || continue
-            echo "── $d"
-            if ! ( cd "$d" && npx vitest run --coverage --coverage.reporter=text-summary ); then
-              failed="$failed $d"
-            fi
-          done
-          if [ -n "$failed" ]; then
-            echo "::warning::workspaces below their coverage floor (reported, not blocking):$failed"
-            echo "⚠️ Coverage floors not met (reported, not blocking):$failed" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "✅ All workspaces meet their coverage floors." >> "$GITHUB_STEP_SUMMARY"
-          fi
+      # The report is kept when the floors fail too: that is when it is read.
+      - name: Upload the HTML coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
 
   strict:
     name: dependency audit (reported, not blocking)
