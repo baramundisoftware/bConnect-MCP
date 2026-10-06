@@ -37,8 +37,10 @@ describe("createServer credential injection", () => {
     // Reset mock state before each test
     vi.mocked(BConnectClient).mockReset();
 
-    // Provide a minimal compliance stub so tool calls resolve instead of throwing
-    vi.mocked(BConnectClient).mockImplementation(() => ({
+    // Provide a minimal compliance stub so tool calls resolve instead of throwing.
+    // A `function`, not an arrow: the server calls `new BConnectClient(...)`, and
+    // vitest 4 throws "is not a constructor" when `new` hits an arrow implementation.
+    vi.mocked(BConnectClient).mockImplementation(function () { return {
       compliance: {
         getDetectedRuleViolations: vi.fn().mockResolvedValue({ data: [], totalItems: 0 }),
         getAllDetectedVulnerabilities: vi.fn().mockResolvedValue({ data: [], totalItems: 0 }),
@@ -49,7 +51,7 @@ describe("createServer credential injection", () => {
         getMobileDeviceRule: vi.fn().mockResolvedValue({}),
         getVulnerability: vi.fn().mockResolvedValue({}),
       },
-    }) as never);
+    } as never; });
   });
 
   afterEach(() => {
@@ -70,7 +72,8 @@ describe("createServer credential injection", () => {
     };
 
     const client = await connectClient(credentials);
-    await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
+    const result = await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
+    expect(result.isError).toBeFalsy();
 
     expect(vi.mocked(BConnectClient)).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -88,7 +91,8 @@ describe("createServer credential injection", () => {
     };
 
     const client = await connectClient(credentials);
-    await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
+    const result = await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
+    expect(result.isError).toBeFalsy();
 
     expect(vi.mocked(BConnectClient)).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -113,7 +117,8 @@ describe("createServer credential injection", () => {
         baseUrl: "https://injected.example.com/bconnect",
         apiKey: "injected-api-key",
       });
-      await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
+      const result = await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
+      expect(result.isError).toBeFalsy();
 
       // Must use injected values, not env vars
       expect(vi.mocked(BConnectClient)).toHaveBeenCalledWith(
@@ -147,7 +152,8 @@ describe("createServer credential injection", () => {
 
     try {
       const client = await connectClient(); // no credentials
-      await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
+      const result = await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
+      expect(result.isError).toBeFalsy();
 
       expect(vi.mocked(BConnectClient)).toHaveBeenCalledWith(
         expect.objectContaining({ apiKey: "env-only-api-key" })
@@ -173,8 +179,10 @@ describe("createServer credential injection", () => {
     };
 
     const client = await connectClient(credentials);
-    await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
-    await client.callTool({ name: "list_mobile_device_rules", arguments: {} });
+    const result = await client.callTool({ name: "list_detected_rule_violations", arguments: {} });
+    expect(result.isError).toBeFalsy();
+    const second = await client.callTool({ name: "list_mobile_device_rules", arguments: {} });
+    expect(second.isError).toBeFalsy();
 
     // BConnectClient constructed twice (once per tool call, lazy init)
     expect(vi.mocked(BConnectClient)).toHaveBeenCalledTimes(2);
