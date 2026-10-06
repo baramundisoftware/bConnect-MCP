@@ -6,8 +6,10 @@
  * - only GET → readOnlyHint true, no destructiveHint (the spec ignores it there);
  * - anything else → readOnlyHint false, and destructiveHint true for any DELETE
  *   or a tool in DESTRUCTIVE_WRITE_TOOLS (each with its reason), false otherwise.
- * A tool whose operation only the other release's spec has uses that spec, as
- * the query-parameter tables do. Two more checks need no spec: the traffic
+ * The methods are those of both releases' specs together, as in the generated
+ * src/tool-methods.ts: a tool that writes in one release is a write tool in
+ * both (the safe side). The release only decides which tools/list is checked.
+ * Two more checks need no spec: the traffic
  * (a tool that sends anything but GET is not read-only, one that sends DELETE is
  * destructive) and the write gate (with writes off, exactly the tools that
  * aren't read-only are refused), so the hint and the gate can't drift apart.
@@ -35,10 +37,9 @@ function methodsIn(release: Release, domain: string, ids: readonly string[]): st
   });
 }
 
-/** The tool's methods for `release`, or the other release's when this one's spec lacks the operations. */
-function methodsOf(release: Release, domain: string, ids: readonly string[]): string[] {
-  const here = methodsIn(release, domain, ids);
-  return here.length > 0 ? here : methodsIn(release === '25R2' ? '26R1' : '25R2', domain, ids);
+/** The tool's methods in either release. */
+function methodsOf(domain: string, ids: readonly string[]): string[] {
+  return RELEASES.flatMap((release) => methodsIn(release, domain, ids));
 }
 
 /** What is wrong with a tool's annotations, given the methods it calls; empty when nothing is. */
@@ -103,7 +104,7 @@ describe('DESTRUCTIVE_WRITE_TOOLS', () => {
     for (const server of SERVERS) {
       const { TOOL_OPERATIONS } = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
       for (const [tool, ids] of Object.entries<readonly string[]>(TOOL_OPERATIONS)) {
-        if (RELEASES.some((r) => methodsOf(r, domainOf(server), ids).some((m) => m !== 'GET'))) writes.add(tool);
+        if (methodsOf(domainOf(server), ids).some((m) => m !== 'GET')) writes.add(tool);
       }
     }
     expect([...DESTRUCTIVE_WRITE_TOOLS.keys()].filter((t) => !writes.has(t))).toEqual([]);
@@ -148,7 +149,7 @@ describe.each(RELEASES)('bMS %s', (release) => {
         seen.push({
           server, tool: tool.name, sent, gated: WRITE_GATE.test(text),
           annotations: (tool as { annotations?: Record<string, unknown> }).annotations,
-          methods: methodsOf(release, domainOf(server), TOOL_OPERATIONS[tool.name] ?? []),
+          methods: methodsOf(domainOf(server), TOOL_OPERATIONS[tool.name] ?? []),
         });
       }
       await conn.close();
@@ -161,6 +162,11 @@ describe.each(RELEASES)('bMS %s', (release) => {
 
   it('annotates every tool as its operations say (title, readOnlyHint, destructiveHint on writes)', () => {
     expect(seen.flatMap((s) => annotationProblems(s.tool, s.annotations, s.methods).map((p) => `${s.server} ${p}`))).toEqual([]);
+  });
+
+  it('sees traffic: with writes on, every tool that is not read-only sends a request (the next check is not vacuous)', () => {
+    const silent = seen.filter((s) => s.annotations?.readOnlyHint === false && s.sent.length === 0);
+    expect(silent.map((s) => `${s.server} ${s.tool}`)).toEqual([]);
   });
 
   it('agrees with the traffic: a tool that sends anything but GET is not read-only, one that sends DELETE is destructive', () => {

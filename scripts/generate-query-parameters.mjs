@@ -94,7 +94,7 @@ function property(param, route, spec) {
 /** [tool, operationIds] for every line of the server's src/operations.ts. */
 function toolsOf(server) {
   const ops = readFileSync(join(ROOT, server, "src", "operations.ts"), "utf8");
-  return [...ops.matchAll(/^\s*([a-z0-9_]+):\s*\[([^\]]*)\]/gm)].map((m) => [m[1], [...m[2].matchAll(/'([^']+)'/g)].map((x) => x[1])]);
+  return [...ops.matchAll(/^[ \t]*([a-z0-9_]+):[ \t]*\[([^\]]*)\]/gm)].map((m) => [m[1], [...m[2].matchAll(/'([^']+)'/g)].map((x) => x[1])]);
 }
 
 /**
