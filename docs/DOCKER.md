@@ -157,6 +157,7 @@ are the code's; where Compose or the image sets another, the table says so.
 | `BCONNECT_USERNAME` / `BCONNECT_PASSWORD` | API username + password (alternative to the key); the password must be ASCII-only (bConnect rejects `§`, umlauts, `ß`) | — |
 | `BCONNECT_RELEASE` | API release: `25R2` or `26R1` | `26R1` |
 | `BCONNECT_AUDIT_LEVEL` | `none`, `security`, `write`, `all` | `none` |
+| `BCONNECT_PRETTY_JSON` | `true` writes tool results as indented JSON, for debugging; default compact JSON | `false` |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | Leave unset: `0` turns off certificate checks for every bMS call. For an internal CA, use `BCONNECT_CA_CERT_PATH` | — |
 | `BCONNECT_CA_CERT_PATH` | Path to a CA certificate inside the container | — |
 | `BCONNECT_TIMEOUT_MS` | Wait per bMS request, 1000–600000 ms; slow reads on a busy bMS may need `90000` | `30000` |

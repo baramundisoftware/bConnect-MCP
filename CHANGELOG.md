@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   specification for both bMS releases. They are hints only: the write and secret gates
   (`ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`) are unchanged and still decide what a tool may do.
 
+### Changed
+- **Tool results are compact JSON.** Results carry the same data without indentation, which keeps
+  16–22 % of each result out of the model's context (measured on list results against the bMS 26R1
+  mock, e.g. `list_endpoints` 28.4 KB → 23.5 KB). Lead lines such as "Network endpoint … updated:"
+  and error messages are unchanged. Consumers that parse the JSON see no difference; if you compare
+  result text, set the new `BCONNECT_PRETTY_JSON=true` to get the earlier indented format. The
+  setting accepts `true` or `false`; any other value stops the server and the gateway.
+
 ## [26.1.9] - 2026-10-06
 
 > There is no 26.1.8 release: changes merged under that label (#112) were reverted (#134).
