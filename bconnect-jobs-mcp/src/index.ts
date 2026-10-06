@@ -17,7 +17,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
@@ -25,6 +25,44 @@ const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, proc
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 import type { paths as JobsPaths } from "./generated/jobs-types.js";
+
+type ToolResult = { content: Array<{ type: "text"; text: string }>; isError?: true };
+
+/**
+ * Kiosk releases of one job definition (REQ-XC-005 AC 5, #166 AC 3). bMS 26R1
+ * answers 200 with an empty list also for a job definition that doesn't exist
+ * (live check 2026-10-02), so an empty answer leads to an existence check: it
+ * exists → the empty result with a note; it doesn't → say so; the check fails
+ * → the empty result with a note that existence is unconfirmed.
+ */
+async function kioskReleasesOfJobDefinition(
+  list: () => Promise<unknown>,
+  jobDefinitionExists: () => Promise<unknown>,
+): Promise<ToolResult> {
+  const answer = await list();
+  const page = answer !== null && typeof answer === "object" && !Array.isArray(answer) ? answer as Record<string, unknown> : undefined;
+  // Anything but an empty page passes through unchanged; an empty page beyond the
+  // last one still has totalItems > 0: nothing to check.
+  if (!page || !Array.isArray(page.data) || page.data.length > 0 || page.totalItems) {
+    return { content: [{ type: "text", text: JSON.stringify(answer, null, 2) }] };
+  }
+  const result: Record<string, unknown> = { ...page };
+  try {
+    await jobDefinitionExists();
+    result.note = "The job definition exists and has no kiosk releases.";
+  } catch (checkError) {
+    const release = process.env.BCONNECT_RELEASE ?? "26R1";
+    if (checkError instanceof BConnectApiError && checkError.status === 404) {
+      const missing = toolErrorResult(checkError, release);
+      missing.content[0].text = `No job definition with this id exists, or it is not visible to the configured user.\n${missing.content[0].text}`;
+      return missing;
+    }
+    const reason = toolErrorResult(checkError, release).content[0].text.split("\n")[0];
+    result.note = "Could not confirm that the job definition exists; bMS answers with an empty list also " +
+      `for a job definition that doesn't exist. ${reason}`;
+  }
+  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+}
 
 // Type aliases for call-site casts (args are validated before use)
 type AssignJobDefinitionRequest = JobsPaths["/v2.0/LogicalGroups/{logicalGroupId}/AssignJobDefinition"]["post"]["requestBody"]["content"]["application/json"];
@@ -651,8 +689,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // Phase 26: Kiosk releases by context
         case "list_kiosk_releases_by_job_definition": {
-          const result = await bconnect.jobs.getKioskReleasesByJobDefinition(args!.jobDefinitionId as string, pickArguments(args ?? {}, sends("list_kiosk_releases_by_job_definition")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          // `return await`, so an error reaches the catch below.
+          return await kioskReleasesOfJobDefinition(
+            () => bconnect.jobs.getKioskReleasesByJobDefinition(args!.jobDefinitionId as string, pickArguments(args ?? {}, sends("list_kiosk_releases_by_job_definition"))),
+            () => bconnect.jobs.getJobDefinition(args!.jobDefinitionId as string),
+          );
         }
 
         case "list_kiosk_releases_by_endpoint": {

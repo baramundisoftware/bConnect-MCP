@@ -18,13 +18,56 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
 const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { ComplianceRules } from "./utils/mcp-tool-validation-rules.js";
+
+type ToolResult = { content: Array<{ type: "text"; text: string }>; isError?: true };
+
+/**
+ * Findings for one endpoint (REQ-XC-005 AC 4, #166). bConnect answers 404 both
+ * for an endpoint that doesn't exist and for one without findings, so a 404
+ * leads to an existence check: the endpoint exists → an empty result with a
+ * note; it doesn't → say so; the check fails → the original 404, never "no
+ * findings". Needed while the release answers "no findings" with 404 (#159).
+ */
+async function findingsForEndpoint(
+  list: () => Promise<unknown>,
+  endpointExists: () => Promise<void>,
+  missingText: string,
+): Promise<ToolResult> {
+  const release = process.env.BCONNECT_RELEASE ?? "26R1";
+  let result: unknown;
+  try {
+    result = await list();
+  } catch (error) {
+    if (!(error instanceof BConnectApiError && error.status === 404)) {throw error;}
+    try {
+      await endpointExists();
+    } catch (checkError) {
+      if (checkError instanceof BConnectApiError && checkError.status === 404) {
+        const missing = toolErrorResult(checkError, release);
+        missing.content[0].text = `${missingText}\n${missing.content[0].text}`;
+        return missing;
+      }
+      const original = toolErrorResult(error, release);
+      const reason = toolErrorResult(checkError, release).content[0].text.split("\n")[0];
+      original.content[0].text += `\nCould not check whether the endpoint exists: ${reason}`;
+      return original;
+    }
+    result = {
+      data: [],
+      totalItems: 0,
+      hasNextPage: false,
+      note: "bConnect answered 404 and the endpoint exists: no findings were reported for it.",
+    };
+  }
+  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+}
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
@@ -208,8 +251,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_detected_rule_violations_for_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await compliance.getDetectedRuleViolationsForEndpoint(endpointId as string, pickArguments(params, sends("list_detected_rule_violations_for_endpoint")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          // `return await`, so a rethrown error reaches the catch below.
+          return await findingsForEndpoint(
+            () => compliance.getDetectedRuleViolationsForEndpoint(endpointId as string, pickArguments(params, sends("list_detected_rule_violations_for_endpoint"))),
+            () => compliance.checkEndpointExists("Endpoints", endpointId as string),
+            "No endpoint with this id exists.",
+          );
         }
 
         // ── Detected Vulnerabilities ────────────────────────────────────
@@ -220,8 +267,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_detected_vulnerabilities_for_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
-          const result = await compliance.getDetectedVulnerabilitiesByEndpoint(endpointId as string, pickArguments(params, sends("list_detected_vulnerabilities_for_endpoint")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          // `return await`, so a rethrown error reaches the catch below.
+          return await findingsForEndpoint(
+            () => compliance.getDetectedVulnerabilitiesByEndpoint(endpointId as string, pickArguments(params, sends("list_detected_vulnerabilities_for_endpoint"))),
+            () => compliance.checkEndpointExists("WindowsEndpoints", endpointId as string),
+            "No Windows endpoint with this id exists, or it is not visible to the configured user.",
+          );
         }
 
         // ── Mobile Device Rules ─────────────────────────────────────────
