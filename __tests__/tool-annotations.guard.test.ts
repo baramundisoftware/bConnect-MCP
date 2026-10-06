@@ -70,8 +70,8 @@ describe('annotationProblems (known-bad fixtures)', () => {
   });
 
   it('flags a read-only tool that sends a non-GET request', () => {
-    expect(annotationProblems('create_thing', read, ['POST'])).toHaveLength(1);
-    expect(annotationProblems('create_thing', read, ['GET', 'POST'])).toHaveLength(1);
+    expect(annotationProblems('create_thing', read, ['POST'])).toContainEqual(expect.stringContaining('readOnlyHint true, calls POST'));
+    expect(annotationProblems('create_thing', read, ['GET', 'POST'])).toContainEqual(expect.stringContaining('readOnlyHint true, calls GET, POST'));
   });
 
   it('flags a DELETE tool not marked destructive, and a listed destructive write marked harmless', () => {
