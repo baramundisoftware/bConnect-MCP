@@ -41,6 +41,11 @@ services:
       # auth — the gateway has no built-in auth (ADR-0003).
       MCP_GATEWAY_BIND: "0.0.0.0"
       MCP_ALLOW_NO_AUTH: "true"
+      # Host names the gateway answers to, besides localhost / 127.0.0.1 / [::1]:
+      # the service name, for clients on the same Docker network (e.g. n8n), and
+      # whatever your proxy sends as Host. Other host names get 403. Setting the
+      # variable replaces the default: keep mcp-gateway in your list.
+      MCP_GATEWAY_ALLOWED_HOSTS: ${MCP_GATEWAY_ALLOWED_HOSTS:-mcp-gateway}
       # Single bConnect service credential (bMS RBAC governs it).
       BCONNECT_BASE_URL: ${BCONNECT_BASE_URL:-https://bms-server/bconnect}
       # http:// to a host other than the container itself needs this opt-in (credentials unencrypted).

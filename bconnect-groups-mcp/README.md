@@ -111,6 +111,7 @@ Run inside the HTTP gateway, the server's own startup code doesn't run: `MCP_TRA
 | `MCP_TRANSPORT` | No | `stdio` | `http` serves MCP over HTTP instead of stdio. |
 | `MCP_PORT` | No | `3000` | Port in HTTP mode. |
 | `MCP_BIND` | No | `127.0.0.1` | Address to bind in HTTP mode. HTTP mode has no client authentication: keep it on loopback, or put an authenticating reverse proxy in front. |
+| `MCP_ALLOWED_HOSTS` | No | — | HTTP mode answers only requests addressed to `localhost`, `127.0.0.1`, `[::1]` or a host name listed here (comma-separated, ports ignored); others get 403. |
 | `MCP_ALLOW_NO_AUTH` | No | off | `true` allows binding HTTP mode to an address other than loopback, without authentication. Not recommended. |
 <!-- env:end -->
 

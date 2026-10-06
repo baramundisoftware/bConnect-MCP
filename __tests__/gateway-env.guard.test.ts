@@ -31,6 +31,7 @@ const NOT_FORWARDED: Record<string, string> = {
   MCP_PORT: "a standalone server's own HTTP transport; the gateway serves all domains itself",
   MCP_BIND: "a standalone server's own HTTP transport; the gateway serves all domains itself",
   MCP_TRANSPORT: "a standalone server's own transport switch; not used when the gateway hosts the servers",
+  MCP_ALLOWED_HOSTS: "a standalone server's own HTTP transport; the gateway has MCP_GATEWAY_ALLOWED_HOSTS",
   VITEST: 'set by the test runner and the gateway preload so a server main() does not run on import',
   ...Object.fromEntries(SECRET_ENV_KEYS.map((key) => [`${key}_FILE`,
     'Docker-secret file for the credential; the shipped compose file mounts no secrets (docs/DOCKER.md shows an override file), so .env.gateway does not offer it'])),

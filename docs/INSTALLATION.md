@@ -107,6 +107,7 @@ curl http://localhost:3001/health
 |----------|---------|-------------|
 | `BCONNECT_BASE_URL` + `BCONNECT_API_KEY` (or `BCONNECT_USERNAME`+`BCONNECT_PASSWORD`) | — | The single bConnect service credential |
 | `MCP_GATEWAY_PORT` | `3001` | Listen port |
+| `MCP_GATEWAY_ALLOWED_HOSTS` | — | Host names the gateway answers to besides `localhost`, `127.0.0.1`, `[::1]` (comma-separated); others get 403. List the name your proxy passes on as `Host` |
 | `MCP_GATEWAY_BIND` | `127.0.0.1` | Bind address (loopback-only unless behind a proxy) |
 | `MCP_ALLOW_NO_AUTH` | `false` | Allow a non-loopback bind; asserts an authenticating proxy is in front |
 | `MCP_GATEWAY_RATE_LIMIT_ENABLED` | `true` | Per-client-IP inbound rate limiting; set `false` to disable |

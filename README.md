@@ -243,6 +243,7 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `MCP_BIND` | — | `127.0.0.1` | HTTP bind address (when `MCP_TRANSPORT=http`) |
 | `MCP_GATEWAY_PORT` | — | `3001` | Gateway listen port (when using `bconnect-mcp-gateway`) |
 | `MCP_GATEWAY_BIND` | — | `127.0.0.1` | Gateway bind address (loopback-only unless behind a proxy) |
+| `MCP_GATEWAY_ALLOWED_HOSTS` / `MCP_ALLOWED_HOSTS` | — | — | Host names the gateway / a server's HTTP mode answers to besides `localhost`, `127.0.0.1`, `[::1]`; others get 403 |
 | `MCP_ALLOW_NO_AUTH` | — | `false` | Allow a non-loopback bind (gateway or HTTP mode); asserts an authenticating proxy is in front |
 
 > \* **Authentication**: provide either `BCONNECT_API_KEY` alone, or both `BCONNECT_USERNAME` and `BCONNECT_PASSWORD`. API key takes precedence if both are set. The password must be ASCII only (bConnect rejects `§`, umlauts or `ß`; the servers refuse such a password before signing in).

@@ -30,7 +30,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import * as dotenv from "dotenv";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly } from "@bconnect/mcp-core";
+import { validateOrThrow, clientConfigFromEnv, ClientConfigError, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, hostCheck, allowedHosts } from "@bconnect/mcp-core";
 import type { BConnectConfig, BConnectCredentials } from "@bconnect/mcp-core";
 import { DomainRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -200,6 +200,13 @@ async function main(): Promise<void> {
 
   if (transportMode === "http") {
     const app = express();
+    // Only requests addressed to an allowed host name (DNS-rebinding protection), checked first.
+    const hosts = allowedHosts(process.env.MCP_ALLOWED_HOSTS, (entry) => {
+      console.error(`${serverName}: MCP_ALLOWED_HOSTS entry ${JSON.stringify(entry)} ignored: not a host name or address`);
+    });
+    app.use(hostCheck(hosts, (reason) => {
+      console.error(`${serverName}: refused a request whose ${reason} isn't an allowed host name (MCP_ALLOWED_HOSTS)`);
+    }));
     app.use(express.json());
 
     app.post("/mcp", async (req, res) => {
