@@ -43,6 +43,7 @@ const READ_ELSEWHERE: Record<string, string> = {
   SSL_CERT_FILE: 'read by OpenSSL in Node.js; the live tier refuses it',
   SSL_CERT_DIR: 'read by OpenSSL in Node.js; the live tier refuses it',
   BCONNECT_BMS_VERSION: 'a bConnect-Mock setting',
+  BCONNECT_MODULE_ROUTING: 'a bConnect-Mock setting',
   BCONNECT_LIVE_MDM: "read from the live tier's env file, not the process environment (live/lib/env.ts)",
   BCONNECT_LIVE_ENTRA_ID: "read from the live tier's env file, not the process environment (live/lib/env.ts)",
   NODE_ENV: "set in the mock tier's vitest config, which MOCK_INTEGRATION_TESTING.md shows",
