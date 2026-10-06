@@ -19,14 +19,38 @@ This guide covers installing and configuring the bConnect MCP Suite (13 servers 
 OS/Windows CA trust store (see [TLS / SSL Configuration](#tls--ssl-configuration)). The
 packages still allow Node 20, but nobody tests it.
 
+#### From the release download (no build)
+
+`bconnect-mcp-suite-<version>.zip` on the [Releases page](https://github.com/baramundisoftware/bConnect-MCP/releases)
+ships the compiled servers, so there is nothing to build:
+
+```bash
+# 1. Check the download against its checksum file (Linux, Git Bash), then extract it
+sha256sum -c bconnect-mcp-suite-<version>.zip.sha256
+#    PowerShell: compare (Get-FileHash bconnect-mcp-suite-<version>.zip).Hash with the .sha256 file
+
+# 2. From the extracted root, install the runtime dependencies for the whole suite. This also
+#    wires the shared @bconnect/mcp-core package that every server imports.
+npm ci --omit=dev
+
+# 3. Configure credentials (see Configuration below), then add the servers to Claude
+#    (see Claude Configuration below)
+```
+
+The download doesn't include the gateway; for that, use the container (Option B) or a source
+build (Option C).
+
+#### From source
+
 > **On Windows:** the build scripts are bash. Install [Git for Windows](https://gitforwindows.org/)
 > and make Git Bash npm's script shell once, because npm runs scripts with `cmd.exe` otherwise,
 > whichever shell you type in (the setting applies to all your npm projects):
-> `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`
+> `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
+> Without it, `npm run build` stops with `d was unexpected at this time`.
 
 ```bash
-# 1. Clone or extract the suite
-git clone <repository-url> bConnect-MCP
+# 1. Clone the repository
+git clone https://github.com/baramundisoftware/bConnect-MCP.git
 cd bConnect-MCP
 
 # 2. Build from the repo ROOT. The servers import the shared @bconnect/mcp-core
@@ -39,15 +63,27 @@ npm run build                            # all servers (or -w bconnect-endpoints
 # 3. Configure credentials (see Configuration section below)
 ```
 
+The servers are not published to the npm registry, so `npx` / `npm install -g` don't apply.
+
 ### Option B — Docker (gateway only)
 
-Only the HTTP gateway (Option C) ships as a container image; the 13 servers run as local
-processes over stdio. See [DOCKER.md](DOCKER.md).
+Only the HTTP gateway (Option C) ships as a container image, a multi-arch image (linux/amd64 +
+arm64) on GitHub Packages; the 13 servers run as local processes over stdio. Node.js isn't
+needed, the image brings its own:
+
+```bash
+docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest   # or pin a version, e.g. :26.1.9
+```
+
+The [README](../README.md#docker-deployment) shows a `docker run` with the bMS settings and the
+health check; [DOCKER.md](DOCKER.md) is the full guide (Compose, TLS and authentication, an
+internal CA, mounted secrets).
 
 ### Option C — Gateway (HTTP, multi-user)
 
 `bconnect-mcp-gateway` serves all 13 bConnect MCP servers on a single HTTP port —
-for teams and n8n.
+for teams and n8n. This option runs it from a **source build** (the release download doesn't
+include the gateway); for the container image, see Option B.
 
 > **⚠️ Security: the gateway has no built-in authentication.** You MUST front it with a
 > TLS-terminating, authenticating reverse proxy / IdP (nginx, Caddy, Traefik, Entra
@@ -377,6 +413,12 @@ curl --cacert /etc/ssl/certs/bms-ca.pem -u "username" -w '\nHTTP %{http_code}\n'
 
 curl asks for the password, so it doesn't end up in your shell history. `HTTP 200` confirms the CA cert is correct and `BCONNECT_CA_CERT_PATH` will work.
 
+On Windows (Git Bash, MSYS2), curl uses Windows' TLS library (Schannel) and usually also needs
+`--ssl-no-revoke` with an internal CA, or it stops with `the revocation status is unknown`. That
+option only skips the revocation lookup; the certificate is still checked against the CA. The MCP
+servers (Node.js) don't do this lookup. See
+[TROUBLESHOOTING.md → TLS Certificate Errors](TROUBLESHOOTING.md#tls-certificate-errors).
+
 **Common TLS errors:**
 
 | Error code | Cause | Fix |
@@ -499,6 +541,18 @@ node build/index.js
 The server then waits for an MCP client on stdin; stop it with Ctrl+C. If it exits instead, the
 message says why; see [TROUBLESHOOTING.md](TROUBLESHOOTING.md#server-exits-at-startup).
 
+List the tools without an MCP client. Run this from the suite's root folder; the credentials are
+passed inline, so no `.env` is needed:
+
+```bash
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
+  BCONNECT_BASE_URL=https://your-bms-server:443/bconnect \
+  BCONNECT_API_KEY=your-api-key \
+  node bconnect-endpoints-mcp/build/index.js
+```
+
+The answer is a JSON list of the server's tools (`list_windows_endpoints`, `get_windows_endpoint`, …).
+
 Test API connectivity:
 
 ```bash
@@ -509,7 +563,8 @@ curl --cacert /path/to/bms-ca.pem -u "username" -w '\nHTTP %{http_code}\n' \
 curl asks for the password, so it doesn't end up in your shell history. With an API key,
 use `-H "X-Api-Key: <key>"` instead of `-u`. Leave out `--cacert` if your system already
 trusts the bMS certificate. Don't add `-k`: it skips the certificate check, so curl would
-succeed where the MCP servers fail.
+succeed where the MCP servers fail. On Windows with an internal CA, add `--ssl-no-revoke` (see
+[Verifying TLS Is Working](#verifying-tls-is-working)).
 
 ---
 
