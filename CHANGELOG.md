@@ -249,15 +249,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now reads the connection settings (base URL, credentials, API key, CA certificate, TLS,
   audit level, rate limit) for the tool client and the startup check of all 13 servers, so
   the servers can't drift apart again (#197). Effects:
-  - The groups server no longer refuses to start without `BCONNECT_BASE_URL`. Like the other
-    servers, it falls back to the placeholder URL `https://bms.example.com:443/bconnect`;
-    run alone, its startup check then fails against it. In the gateway, where no startup
-    check runs, groups tool calls now go to the placeholder URL instead of being refused,
-    as the other servers' calls already did.
-  - Ten servers used `https://bms-server/bconnect` as the tool calls' fallback base URL and
-    a different one for the startup check; all now use the same placeholder.
-  - An empty `BCONNECT_BASE_URL`, or an empty base URL passed per request, now counts as
-    unset (it used to be passed on as an empty URL).
+  - Every server, groups included, uses the same base URL for its tool calls and its startup
+    check. Before, servers fell back to placeholder addresses, and ten of them used one for tool
+    calls and another for the startup check. Now none has a fallback: `BCONNECT_BASE_URL` is
+    required (see Changed).
+  - An empty `BCONNECT_BASE_URL`, or an empty base URL passed per request, counts as unset, so
+    as missing (it used to be passed on as an empty URL).
   - Missing credentials give the same error in every server: tool calls return a tool error
     naming both ways to authenticate (groups returned an invalid-request error), and
     the server exits at startup with one line naming both ways to authenticate (endpoints
