@@ -57,6 +57,7 @@ export const CLIENT_ENV_VARS = [
   "BCONNECT_CA_CERT_PATH",
   "NODE_TLS_REJECT_UNAUTHORIZED",
   "BCONNECT_RELEASE",
+  "BCONNECT_PRETTY_JSON",
   "BCONNECT_AUDIT_LEVEL",
   "BCONNECT_TIMEOUT_MS",
   "BCONNECT_MAX_RETRIES",
@@ -115,6 +116,21 @@ export function checkRelease(value: string | undefined): void {
   }
   const shown = JSON.stringify(value.length > 64 ? `${value.slice(0, 64)}…` : value);
   throw new ClientConfigError(`BCONNECT_RELEASE ${shown} isn't valid. Use 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.`);
+}
+
+/**
+ * BCONNECT_PRETTY_JSON: `true` or `false`, ignoring case and surrounding
+ * spaces; unset or empty is false (compact). Any other value stops the server
+ * (REQ-XC-002 AC 1). Tool results read it through toolJson (tool-results.ts).
+ */
+export function prettyJsonSetting(value: string | undefined): boolean {
+  const raw = value ?? "";
+  const normalised = raw.trim().toLowerCase();
+  if (normalised === "" || normalised === "false") {return false;}
+  if (normalised === "true") {return true;}
+  // Quoted with escapes and shortened, so a newline or terminal escape in the value can't forge log lines.
+  const shown = JSON.stringify(raw.length > 64 ? `${raw.slice(0, 64)}…` : raw);
+  throw new ClientConfigError(`BCONNECT_PRETTY_JSON ${shown} isn't valid. Use true or false, or leave it unset for compact JSON.`);
 }
 
 const isLoopback = (hostname: string): boolean =>
@@ -282,6 +298,8 @@ export function clientConfigFromEnv(env: NodeJS.ProcessEnv, credentials?: BConne
     throw new ClientConfigError(`BCONNECT_CA_CERT_PATH points to an empty file: ${caCertPath}`);
   }
   checkRelease(env.BCONNECT_RELEASE);
+  // Read again per call by toolJson; checked here so a typo stops the server at startup.
+  prettyJsonSetting(env.BCONNECT_PRETTY_JSON);
   const auditLevel = auditLevelOf(env.BCONNECT_AUDIT_LEVEL);
   const timeout = boundedInt("BCONNECT_TIMEOUT_MS", env.BCONNECT_TIMEOUT_MS, 1000, 600000, DEFAULT_TIMEOUT_MS);
   // Retries apply to reads only, whatever this says (REQ-XC-003 AC 2).

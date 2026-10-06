@@ -18,7 +18,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -251,48 +251,48 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_os_folders": {
           const result = await os.getFolders(pickArguments(args ?? {}, sends("list_os_folders")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_os_folder": {
           const result = await os.getFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_os_folders_by_folder": {
           const { folderId, ...params } = args as Record<string, unknown>;
           const result = await os.getFoldersByFolderId(folderId as string, pickArguments(params, sends("list_os_folders_by_folder")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_os_windows_endpoints": {
           const result = await os.getWindowsEndpoints(pickArguments(args ?? {}, sends("list_os_windows_endpoints")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_os_windows_endpoint": {
           const result = await os.getWindowsEndpoint(args!.endpointId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_os_folder": {
           const result = await os.createFolder(args!.folderData as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_os_folder": {
           const result = await os.updateFolder(args!.id as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_os_folder": {
           await os.deleteFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true }, null, 2) }] };
+          return toolJsonResult({ success: true });
         }
 
         case "update_os_windows_endpoint": {
           const result = await os.updateWindowsEndpoint(args!.endpointId as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         default:

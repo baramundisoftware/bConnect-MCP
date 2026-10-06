@@ -18,7 +18,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -67,7 +67,7 @@ async function findingsForEndpoint(
       note: "bConnect answered 404 and the endpoint exists: no findings were reported for it.",
     };
   }
-  return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+  return toolJsonResult(result);
 }
 
 // ─── Factory exported for testing ───────────────────────────────────────────
@@ -247,7 +247,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Rule Violations ─────────────────────────────────────────────
         case "list_detected_rule_violations": {
           const result = await compliance.getDetectedRuleViolations(pickArguments(args ?? {}, sends("list_detected_rule_violations")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_detected_rule_violations_for_endpoint": {
@@ -263,7 +263,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Detected Vulnerabilities ────────────────────────────────────
         case "list_detected_vulnerabilities": {
           const result = await compliance.getAllDetectedVulnerabilities(pickArguments(args ?? {}, sends("list_detected_vulnerabilities")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_detected_vulnerabilities_for_endpoint": {
@@ -279,23 +279,23 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Mobile Device Rules ─────────────────────────────────────────
         case "list_mobile_device_rules": {
           const result = await compliance.getAllMobileDeviceRules(pickArguments(args ?? {}, sends("list_mobile_device_rules")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_mobile_device_rule": {
           const result = await compliance.getMobileDeviceRule(args!.ruleId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // ── Vulnerabilities (CVE Library) ───────────────────────────────
         case "list_vulnerabilities": {
           const result = await compliance.getAllVulnerabilities(pickArguments(args ?? {}, sends("list_vulnerabilities")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_vulnerability": {
           const result = await compliance.getVulnerability(args!.vulnerabilityId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         default:

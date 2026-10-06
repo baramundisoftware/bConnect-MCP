@@ -19,7 +19,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -399,38 +399,38 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── Installed Software ─────────────────────────────────────────
         case "list_installed_windows_software": {
           const result = await sw.getInstalledWindowsSoftware(pickArguments(args ?? {}, sends("list_installed_windows_software")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_installed_software_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
           const result = await sw.getInstalledSoftwareByEndpoint(endpointId as string, pickArguments(params, sends("list_installed_software_by_endpoint")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_installed_software_by_logical_group": {
           const { logicalGroupId, ...params } = args as Record<string, unknown>;
           const result = await sw.getInstalledSoftwareByLogicalGroup(logicalGroupId as string, pickArguments(params, sends("list_installed_software_by_logical_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_installed_software_by_dynamic_group": {
           const { universalDynamicGroupId, ...params } = args as Record<string, unknown>;
           const result = await sw.getInstalledSoftwareByUniversalDynamicGroup(universalDynamicGroupId as string, pickArguments(params, sends("list_installed_software_by_dynamic_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // ── Software Bundles (26R1) ────────────────────────────────────
         case "list_software_bundles": {
           requires26R1();
           const result = await sw.getSoftwareBundles(pickArguments(args ?? {}, sends("list_software_bundles")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_software_bundle": {
           requires26R1();
           const result = await sw.getSoftwareBundle(args!.bundleId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_software_bundle": {
@@ -439,65 +439,65 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           const result = await sw.createSoftwareBundle(
             pickArguments(args!, ["name", "folderId", "type", "ignoreDependencies", "comment"], { folderId: "parentId" })
           );
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_software_bundle": {
           requires26R1();
           await sw.deleteSoftwareBundle(args!.bundleId as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true }, null, 2) }] };
+          return toolJsonResult({ success: true });
         }
 
         // ── Bundle Applications (26R1) ─────────────────────────────────
         case "list_bundle_applications": {
           requires26R1();
           const result = await sw.getBundleApplications(pickArguments(args ?? {}, sends("list_bundle_applications")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_bundle_applications_by_bundle": {
           requires26R1();
           const { bundleId, ...params } = args as Record<string, unknown>;
           const result = await sw.getBundleApplicationsByBundle(bundleId as string, pickArguments(params, sends("list_bundle_applications_by_bundle")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "add_application_to_bundle": {
           requires26R1();
           const result = await sw.addApplicationToBundle(args!.bundleId as string, pickArguments(args!, ["applicationId"]));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_bundle_application": {
           requires26R1();
           await sw.deleteBundleApplication(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true }, null, 2) }] };
+          return toolJsonResult({ success: true });
         }
 
         case "replace_application_in_bundle": {
           requires26R1();
           const result = await sw.replaceApplicationInBundle(args!.bundleId as string, args!.id as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // ── Bundle Folders (26R1) ──────────────────────────────────────
         case "list_bundle_folders": {
           requires26R1();
           const result = await sw.getBundleFolders(pickArguments(args ?? {}, sends("list_bundle_folders")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_bundle_folder": {
           requires26R1();
           const result = await sw.getBundleFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_bundle_folders_by_folder": {
           requires26R1();
           const { folderId, ...params } = args as Record<string, unknown>;
           const result = await sw.getBundleFoldersByFolder(folderId as string, pickArguments(params, sends("list_bundle_folders_by_folder")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_bundle_folder": {
@@ -506,19 +506,19 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           if (typeof args!.parentId === "string") {body.parentId = args!.parentId;}
           if (typeof args!.comment === "string") {body.comment = args!.comment;}
           const result = await sw.createBundleFolder(body as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_bundle_folder": {
           requires26R1();
           await sw.deleteBundleFolder(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify({ success: true }, null, 2) }] };
+          return toolJsonResult({ success: true });
         }
 
         case "update_bundle_folder": {
           requires26R1();
           const result = await sw.updateBundleFolder(args!.id as string, args!.patchOperations as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         default:

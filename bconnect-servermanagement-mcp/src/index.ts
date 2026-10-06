@@ -19,7 +19,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, jsonPatchArgument, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, jsonPatchArgument, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -481,32 +481,32 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "get_management_server": {
           const result = await sm.getManagementServer();
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_gateway": {
           const result = await sm.getGateway();
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_dip_status": {
           const result = await sm.getDipStatus();
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_vpn_appliance": {
           const result = await sm.getVpnAppliance();
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_microservices": {
           const result = await sm.getMicroservices();
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_microservice": {
           const result = await sm.getMicroservice(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "start_microservice": {
@@ -526,32 +526,32 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_cloud_connectors": {
           const result = await sm.getCloudConnectors();
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_pxe_relays": {
           const result = await sm.getPxeRelays();
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_security_groups": {
           const result = await sm.getSecurityGroups(pickArguments(args ?? {}, sends("list_security_groups")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_security_group": {
           const result = await sm.getSecurityGroup(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_security_group": {
           const result = await sm.createSecurityGroup(args!.groupData as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_security_group": {
           const result = await sm.updateSecurityGroup(args!.id as string, jsonPatchArgument(args!.patchOperations, "patchOperations"));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_security_group": {
@@ -561,22 +561,22 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "list_security_profiles": {
           const result = await sm.getSecurityProfiles(pickArguments(args ?? {}, sends("list_security_profiles")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_security_profile": {
           const result = await sm.getSecurityProfile(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "create_security_profile": {
           const result = await sm.createSecurityProfile(args!.profileData as never);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_security_profile": {
           const result = await sm.updateSecurityProfile(args!.id as string, jsonPatchArgument(args!.patchOperations, "patchOperations"));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "delete_security_profile": {
@@ -586,12 +586,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "get_access_rights": {
           const result = await sm.getAccessRights(args!.objectId as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "update_object_permission": {
           const result = await sm.updateObjectPermission(args!.id as string, jsonPatchArgument(args!.patchOperations, "patchOperations"));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "restart_management_server": {
@@ -613,31 +613,31 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_api_keys": {
           requires26R1();
           const result = await sm.getApiKeys();
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "simulate_msw_cleanup": {
           requires26R1();
           const result = await sm.simulateMSWCleanup();
-          return { content: [{ type: "text", text: `MSW cleanup simulation completed:\n${JSON.stringify(result, null, 2)}` }] };
+          return toolJsonResult(result, { lead: "MSW cleanup simulation completed:" });
         }
 
         case "msw_cleanup": {
           requires26R1();
           const result = await sm.mswCleanup();
-          return { content: [{ type: "text", text: `MSW cleanup executed:\n${JSON.stringify(result, null, 2)}` }] };
+          return toolJsonResult(result, { lead: "MSW cleanup executed:" });
         }
 
         case "list_download_jobs": {
           requires26R1();
           const result = await sm.getDownloadJobs(pickArguments(args ?? {}, sends("list_download_jobs")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_download_job": {
           requires26R1();
           const result = await sm.getDownloadJob(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         default:

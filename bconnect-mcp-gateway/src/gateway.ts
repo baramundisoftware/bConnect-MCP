@@ -23,7 +23,7 @@
  *   ALLOW_WRITE_OPERATIONS / ALLOW_SECRET_READ — ignored: kept off (see gates.ts).
  */
 
-import { checkRelease } from "@bconnect/mcp-core";
+import { checkRelease, prettyJsonSetting } from "@bconnect/mcp-core";
 import { createApp, domains, gatewayAllowedHosts } from "./app.js";
 import { closeGates } from "./gates.js";
 import { createLogger } from "./logger.js";
@@ -43,9 +43,10 @@ if (ignoredGates.length > 0) {
 
 // The servers build their tool list from BCONNECT_RELEASE before any client checks
 // it, so an invalid value would quietly serve the 25R2 list. Stop instead, as a
-// stdio server does.
+// stdio server does; likewise for the result format (BCONNECT_PRETTY_JSON).
 try {
   checkRelease(process.env.BCONNECT_RELEASE);
+  prettyJsonSetting(process.env.BCONNECT_PRETTY_JSON);
 } catch (err) {
   log.error((err as Error).message);
   process.exit(1);

@@ -16,7 +16,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -350,85 +350,85 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // ── AD Groups ─────────────────────────────────────────────────────
         case "list_ad_groups": {
           const result = await ad.getADGroups(pickArguments(args ?? {}, sends("list_ad_groups")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_ad_group": {
           const result = await ad.getADGroup(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_ad_subgroups": {
           const result = await ad.getADGroupsByAdGroup(args!.adGroupId as string, pickArguments(args ?? {}, sends("list_ad_subgroups")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_ad_groups_by_org_unit": {
           const result = await ad.getADGroupsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_ad_groups_by_org_unit")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // ── AD Objects ────────────────────────────────────────────────────
         case "list_ad_objects": {
           const result = await ad.getADObjects(pickArguments(args ?? {}, sends("list_ad_objects")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_ad_object": {
           const result = await ad.getADObject(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_ad_object_memberships": {
           const result = await ad.getADObjectMemberships(args!.id as string, pickArguments(args ?? {}, sends("list_ad_object_memberships")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_ad_objects_by_group": {
           const result = await ad.getADObjectsByAdGroup(args!.adGroupId as string, pickArguments(args ?? {}, sends("list_ad_objects_by_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_ad_objects_by_org_unit": {
           const result = await ad.getADObjectsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_ad_objects_by_org_unit")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // ── AD Users ──────────────────────────────────────────────────────
         case "list_ad_users": {
           const result = await ad.getADUsers(pickArguments(args ?? {}, sends("list_ad_users")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_ad_user": {
           const result = await ad.getADUser(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_ad_users_by_group": {
           const result = await ad.getADUsersByGroup(args!.adGroupId as string, pickArguments(args ?? {}, sends("list_ad_users_by_group")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_ad_users_by_org_unit": {
           const result = await ad.getADUsersByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_ad_users_by_org_unit")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         // ── Org Units ─────────────────────────────────────────────────────
         case "list_org_units": {
           const result = await ad.getOrgUnits(pickArguments(args ?? {}, sends("list_org_units")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "get_org_unit": {
           const result = await ad.getOrgUnit(args!.id as string);
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         case "list_org_units_by_org_unit": {
           const result = await ad.getOrgUnitsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_org_units_by_org_unit")));
-          return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+          return toolJsonResult(result);
         }
 
         default:

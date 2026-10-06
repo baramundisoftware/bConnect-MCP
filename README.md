@@ -212,6 +212,7 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `BCONNECT_ALLOW_INSECURE_HTTP` | — | `false` | `http://` base URLs are refused except for this machine; `true` allows them (credentials unencrypted) |
 | `BCONNECT_SKIP_CONNECTIVITY_CHECK` | — | `false` | `true` skips the startup call to bConnect |
 | `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `none`, `security`, `write` or `all`, in any case; levels are cumulative. Any other value stops the server. Entries go to stderr; what each level records: [docs/AUDIT.md](docs/AUDIT.md) |
+| `BCONNECT_PRETTY_JSON` | — | `false` | `true` writes tool results as indented JSON, for debugging; by default they are compact JSON (see below) |
 | `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Limit the requests a server sends to bConnect, across all its tool calls |
 | `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (binds loopback by default, no authentication) |
 | `MCP_PORT` | — | `3000` | HTTP port (when `MCP_TRANSPORT=http`) |
@@ -222,6 +223,13 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `MCP_ALLOW_NO_AUTH` | — | `false` | Allow a non-loopback bind (gateway or HTTP mode); asserts an authenticating proxy is in front |
 
 > \* **Authentication**: provide either `BCONNECT_API_KEY` alone, or both `BCONNECT_USERNAME` and `BCONNECT_PASSWORD`. API key takes precedence if both are set. The password must be ASCII only (bConnect rejects `§`, umlauts or `ß`; the servers refuse such a password before signing in).
+
+**Compact tool results.** Tool results are compact JSON: the same data without indentation. Each
+result stays in the model's context for the rest of the conversation, and the indentation alone was
+16–22 % of it. Measured against the bConnect mock (bMS 26R1): `list_endpoints` (31 endpoints) 28.4 KB → 23.5 KB,
+`list_windows_endpoints` (10) 10.5 KB → 8.8 KB, `list_job_instances` (5) 5.4 KB → 4.5 KB,
+`list_job_definitions` (5) 2.2 KB → 1.7 KB. Set `BCONNECT_PRETTY_JSON=true` to get the indented
+format back, for example while debugging.
 
 ### How to Find Your bMS Server URL
 

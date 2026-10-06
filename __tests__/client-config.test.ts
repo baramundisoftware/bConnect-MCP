@@ -229,6 +229,22 @@ describe('clientConfigFromEnv', () => {
     });
   });
 
+  describe('pretty JSON (REQ-SRV-025)', () => {
+    it.each(['true', 'false', ' TRUE ', ''])('accepts %j', (value) => {
+      expect(() => clientConfigFromEnv({ ...BASIC, BCONNECT_PRETTY_JSON: value })).not.toThrow();
+    });
+
+    it.each(['yes', '1', 'pretty'])('refuses %j, naming the variable and the allowed values', (value) => {
+      const run = () => clientConfigFromEnv({ ...BASIC, BCONNECT_PRETTY_JSON: value });
+      expect(run).toThrow(ClientConfigError);
+      expect(run).toThrow(`BCONNECT_PRETTY_JSON "${value}" isn't valid. Use true or false, or leave it unset for compact JSON.`);
+    });
+
+    it('is part of the shared client\'s rebuild key', () => {
+      expect(CLIENT_ENV_VARS).toContain('BCONNECT_PRETTY_JSON');
+    });
+  });
+
   describe('rate limit', () => {
     it('is off unless BCONNECT_RATE_LIMIT_ENABLED=true', () => {
       expect(clientConfigFromEnv(BASIC).rateLimit).toBeUndefined();
