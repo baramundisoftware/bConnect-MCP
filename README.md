@@ -236,6 +236,14 @@ result stays in the model's context for the rest of the conversation, and the in
 `list_job_definitions` (5) 2.2 KB → 1.7 KB. Set `BCONNECT_PRETTY_JSON=true` to get the indented
 format back, for example while debugging.
 
+**Counting without loading pages.** Every list tool that pages its results accepts `countOnly: true`.
+The tool then asks bConnect for a single row with the same filters and returns only the total and the
+filters it applied, for example `{"totalItems":10,"filters":{"DisplayName":"x"}}`. If bConnect's answer
+has no total, the result says the count is unavailable instead of guessing. Measured against the
+bConnect mock (bMS 26R1): `list_windows_endpoints` 8.8 KB for one page of 10 endpoints, 17 bytes with
+`countOnly`. The option adds one short property to each paged list tool, about 9.8 KB to the tool
+list on 26R1 (123 tools) and 8.9 KB on 25R2 (111 tools).
+
 ### How to Find Your bMS Server URL
 
 1. Open the **baramundi Management Center** on your bMS server
