@@ -19,7 +19,7 @@
  * - Description from the spec with HTML removed; a parameter the spec leaves
  *   undescribed gets a short one from FALLBACK.
  */
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -131,17 +131,41 @@ ${RELEASES.map((r) => `  "${r}": {\n${releases[r].join("\n")}\n  },`).join("\n")
 `;
 }
 
+/** The file's text, or "" when it doesn't exist; no separate existence check that could go stale. */
+function readIfPresent(file) {
+  try {
+    return readFileSync(file, "utf8");
+  } catch (error) {
+    if (error.code === "ENOENT") {return "";}
+    throw error;
+  }
+}
+
+/** Writes through a temporary file in the same directory, then renames it into place. */
+function writeAtomically(file, text) {
+  const temporary = `${file}.${process.pid}.tmp`;
+  writeFileSync(temporary, text, { flag: "wx" });
+  try {
+    renameSync(temporary, file);
+  } catch (error) {
+    // E.g. the target is locked on Windows: leave no temporary file in src/.
+    rmSync(temporary, { force: true });
+    throw error;
+  }
+}
+
 const specs = Object.fromEntries(RELEASES.map((r) => [r, loadSpecs(r)]));
 const servers = readdirSync(ROOT).filter((d) => /^bconnect-.+-mcp$/.test(d) && existsSync(join(ROOT, d, "src", "operations.ts"))).sort();
 const stale = [];
 for (const server of servers) {
   const file = join(ROOT, server, "src", "query-params.ts");
   const text = toolTable(server, specs);
-  // Compare without line-ending differences: a Windows checkout has CRLF.
-  const current = existsSync(file) ? readFileSync(file, "utf8").replace(/\r\n/g, "\n") : "";
+  // Read once (a missing file counts as empty) and compare without line-ending
+  // differences: a Windows checkout has CRLF.
+  const current = readIfPresent(file).replace(/\r\n/g, "\n");
   if (current === text) {continue;}
   stale.push(server);
-  if (!CHECK) {writeFileSync(file, text);}
+  if (!CHECK) {writeAtomically(file, text);}
 }
 if (CHECK) {
   if (stale.length) {
