@@ -184,7 +184,7 @@ describe('docs — TROUBLESHOOTING.md quotes messages the code prints', () => {
       expect(found(invented), invented).toBe(false);
     }
     // A comment or a test file doesn't count as printed.
-    expect(PRODUCTION.some((f) => f.includes('__tests__'))).toBe(false);
+    expect(PRODUCTION.some((f) => relative(ROOT, f).split(/[\\/]/).includes('__tests__'))).toBe(false);
   });
 
   it('tells production code from tests by the path below the repo root (self-check)', () => {

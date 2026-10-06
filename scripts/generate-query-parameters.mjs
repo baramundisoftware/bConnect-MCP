@@ -19,7 +19,7 @@
  * - Description from the spec with HTML removed; a parameter the spec leaves
  *   undescribed gets a short one from FALLBACK.
  */
-import { existsSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -145,7 +145,13 @@ function readIfPresent(file) {
 function writeAtomically(file, text) {
   const temporary = `${file}.${process.pid}.tmp`;
   writeFileSync(temporary, text, { flag: "wx" });
-  renameSync(temporary, file);
+  try {
+    renameSync(temporary, file);
+  } catch (error) {
+    // E.g. the target is locked on Windows: leave no temporary file in src/.
+    rmSync(temporary, { force: true });
+    throw error;
+  }
 }
 
 const specs = Object.fromEntries(RELEASES.map((r) => [r, loadSpecs(r)]));

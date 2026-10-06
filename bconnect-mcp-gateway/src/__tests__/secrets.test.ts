@@ -2,8 +2,8 @@
  * bconnect-mcp-gateway — file-based secrets (audit M2).
  */
 
-import { describe, it, expect, afterAll, afterEach } from "vitest";
-import { mkdtempSync, rmSync, writeFileSync, unlinkSync } from "node:fs";
+import { describe, it, expect, afterAll } from "vitest";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -19,15 +19,10 @@ function tmp(name: string, content: string): string {
 }
 
 describe("resolveFileSecrets", () => {
-  const created: string[] = [];
-  afterEach(() => {
-    for (const p of created.splice(0)) { try { unlinkSync(p); } catch { /* ignore */ } }
-  });
   afterAll(() => { rmSync(dir, { recursive: true, force: true }); });
 
   it("reads <KEY>_FILE into <KEY> and trims whitespace", () => {
     const p = tmp("m2-pw.secret", "  s3cr3t\n");
-    created.push(p);
     const env: NodeJS.ProcessEnv = { BCONNECT_PASSWORD_FILE: p };
     resolveFileSecrets(["BCONNECT_PASSWORD"], env);
     expect(env.BCONNECT_PASSWORD).toBe("s3cr3t");
@@ -35,7 +30,6 @@ describe("resolveFileSecrets", () => {
 
   it("does not overwrite an explicit env var (env wins over _FILE)", () => {
     const p = tmp("m2-pw2.secret", "from-file");
-    created.push(p);
     const env: NodeJS.ProcessEnv = { BCONNECT_PASSWORD: "from-env", BCONNECT_PASSWORD_FILE: p };
     resolveFileSecrets(["BCONNECT_PASSWORD"], env);
     expect(env.BCONNECT_PASSWORD).toBe("from-env");
