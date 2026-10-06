@@ -127,11 +127,8 @@ jobs:
       - name: Install from the lockfile
         run: npm ci
 
-      # The shared core first: the root build script does not build it on
-      # every tree, and every server imports it.
-      - name: Build shared core
-        run: npm run build -w @bconnect/mcp-core
-
+      # The root build script builds the shared core first, then every server
+      # and the template, and stops at the first failure (#273).
       - name: Build all workspaces
         run: npm run build
 
@@ -206,7 +203,6 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
-      - run: npm run build -w @bconnect/mcp-core
       - run: npm run build
 
       # Per-workspace floors are the ones that bite: each is pinned a few points

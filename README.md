@@ -52,13 +52,12 @@ cd bConnect-MCP
 
 ### Step 2: Build the Suite
 
-The 13 servers share a common package (`@bconnect/mcp-core`), so they build **together from the repo root** — the shared core first, then the servers. Building a single server directory on its own fails with `Cannot find module '@bconnect/mcp-core'`.
+The 13 servers share a common package (`@bconnect/mcp-core`), so they build **together from the repo root**. `npm run build` builds the shared core first, then the servers and the template, and stops at the first failure. Building a single server directory on its own fails with `Cannot find module '@bconnect/mcp-core'`.
 
 ```bash
 # from the repo root (bConnect-MCP) — NOT a server subdirectory
 npm ci
-npm run build -w @bconnect/mcp-core   # build the shared core first
-npm run build                          # then all servers
+npm run build    # the shared core, then all servers
 ```
 
 > **On Windows:** `npm run build` loops over the server directories using bash syntax that `cmd.exe`
@@ -67,8 +66,8 @@ npm run build                          # then all servers
 > `npm config set script-shell "C:\Program Files\Git\bin\bash.exe"`.
 > Git Bash ships with [Git for Windows](https://gitforwindows.org/).
 
-> Only need one server? After the `npm ci` + core build above, build just that one:
-> `npm run build -w bconnect-endpoints-mcp`.
+> Only need one server? Build the core and just that one:
+> `npm run build -w @bconnect/mcp-core && npm run build -w bconnect-endpoints-mcp`.
 
 ### Step 3: Configure Your bMS Connection
 
@@ -360,12 +359,12 @@ For using the gateway from **n8n workflows**, see [docs/N8N.md](docs/N8N.md).
 
 ## Build All Servers
 
-From the repo root — install the workspace once, build the shared core, then all servers:
+From the repo root — install the workspace once, then build (the shared core first, then all
+servers and the template; it stops at the first failure):
 
 ```bash
 npm ci
-npm run build -w @bconnect/mcp-core   # shared core first
-npm run build                          # all servers
+npm run build
 ```
 
 > **On Windows:** `npm run build`, `npm run audit` and `npm run sbom` use bash syntax that `cmd.exe`

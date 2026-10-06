@@ -29,7 +29,7 @@
   },
   "scripts": {
     "ci": "bash scripts/ci-local.sh",
-    "build": "for d in bconnect-*-mcp bconnect-server-template; do (cd \"$d\" && npm run build) || exit 1; done",
+    "build": "npm run build -w @bconnect/mcp-core && for d in bconnect-*-mcp bconnect-server-template; do (cd \"$d\" && npm run build) || exit 1; done",
     "test": "vitest run",
     "test:live": "vitest run -c vitest.live.config.ts",
     "check:spec": "vitest run __tests__/spec-conformance.guard.test.ts",

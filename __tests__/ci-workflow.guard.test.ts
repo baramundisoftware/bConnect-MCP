@@ -155,8 +155,8 @@ describe('ci.yml — every npm script a step runs exists (REQ-QA-002)', () => {
   const runs = npmRuns();
   const allRunText = Object.values(workflow.jobs).flatMap((j) => (j.steps ?? []).map((st) => st.run ?? '')).join('\n');
 
-  it('finds the npm script steps, including the workspace build (self-check)', () => {
-    expect(runs.some((r) => r.script === 'build' && r.workspace === '@bconnect/mcp-core')).toBe(true);
+  it('finds the npm script steps, including the root build (self-check)', () => {
+    expect(runs.some((r) => r.job === 'gate' && r.script === 'build' && !r.workspace)).toBe(true);
     expect(workspaceDirs()).toContain('packages/mcp-core');
   });
 
