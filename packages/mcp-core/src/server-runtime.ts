@@ -11,6 +11,7 @@ import { resolve } from "node:path";
 import * as dotenv from "dotenv";
 import express, { type NextFunction, type Request, type Response } from "express";
 import type { Server as HttpServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -249,7 +250,9 @@ async function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io
       resolveListen();
     });
   });
-  io.error(`${name} listening on http://${bind}:${port}/mcp`);
+  // The port it really listens on: with MCP_PORT=0 the system picks one.
+  const listening = (listener.address() as AddressInfo | null)?.port ?? port;
+  io.error(`${name} listening on http://${bind}:${listening}/mcp`);
   io.listening?.(listener);
   return undefined;
 }

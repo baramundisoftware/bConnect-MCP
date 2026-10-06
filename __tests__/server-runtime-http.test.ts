@@ -75,7 +75,9 @@ describe('standalone HTTP mode', () => {
   });
 
   it('says where it listens and that the check was skipped', () => {
-    expect(lines).toContain('bconnect-runtime-mcp listening on http://127.0.0.1:0/mcp');
+    // MCP_PORT=0: the line names the port the system picked, not 0.
+    expect(lines).toContain(`bconnect-runtime-mcp listening on http://127.0.0.1:${port}/mcp`);
+    expect(port).toBeGreaterThan(0);
     expect(lines.some((l) => /connectivity check skipped/.test(l))).toBe(true);
   });
 
