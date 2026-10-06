@@ -99,8 +99,10 @@ export function createApp(): express.Application {
       return;
     }
 
-    // Express 4 doesn't catch a rejected promise from an async handler; Node
-    // would then terminate the whole gateway. Fail this request only (REQ-GW-002).
+    // Express 4 doesn't catch a rejected promise from an async handler: Node
+    // would then terminate the whole gateway. The image (root install) runs
+    // Express 5, which would catch it, but the manifest and the gateway's own
+    // lockfile still allow 4. Either way, fail this request only (REQ-GW-002).
     let server: { connect: (t: unknown) => Promise<void>; close: () => Promise<void> } | undefined;
     let transport: StreamableHTTPServerTransport | undefined;
     // close() returns a promise; a rejection during cleanup must not become an
