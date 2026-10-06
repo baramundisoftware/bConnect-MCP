@@ -317,3 +317,117 @@ describe('connection reuse (AC 9, D2 = c)', () => {
     expect(agent.options).toMatchObject({ keepAlive: true, timeout: 5000 });
   });
 });
+
+describe('review follow-ups (REQ-SRV-023)', () => {
+  const freePort = async (): Promise<number> => {
+    const probe = createHttpServer();
+    await new Promise<void>((resolve) => probe.listen(0, '127.0.0.1', resolve));
+    const address = probe.address();
+    await new Promise<void>((resolve) => probe.close(() => resolve()));
+    return typeof address === 'object' && address ? address.port : 0;
+  };
+  function io(env: NodeJS.ProcessEnv) {
+    const lines: string[] = [];
+    const servers: HttpServer[] = [];
+    const exit = vi.fn((code: number) => { throw new Error(`exit ${code}`); }) as unknown as (code: number) => never;
+    return { lines, servers, options: { env, error: (line: string) => lines.push(line), exit, connectStdio: vi.fn(), listening: (s: HttpServer) => servers.push(s) } };
+  }
+  const httpEntry = (env: NodeJS.ProcessEnv) => ({ name: 'bconnect-runtime-mcp', createServer: () => ({ server: {} as never }), clients: serverClients(TestClient, env) });
+
+  it('reports a port that is already in use as one line, exit 1', async () => {
+    const busy = createHttpServer();
+    await new Promise<void>((resolve) => busy.listen(0, '127.0.0.1', resolve));
+    const port = (busy.address() as { port: number }).port;
+    const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', MCP_TRANSPORT: 'http', MCP_PORT: String(port) };
+    const t = io(env);
+    try {
+      await expect(startServer(httpEntry(env), t.options)).rejects.toThrow('exit 1');
+      expect(t.lines.at(-1)).toMatch(/^bconnect-runtime-mcp: .*EADDRINUSE/);
+    } finally {
+      await new Promise<void>((resolve) => busy.close(() => resolve()));
+    }
+  });
+
+  it('answers malformed JSON in HTTP mode with a JSON-RPC error, no stack or paths', async () => {
+    const port = await freePort();
+    const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', MCP_TRANSPORT: 'http', MCP_PORT: String(port) };
+    const t = io(env);
+    await startServer(httpEntry(env), t.options);
+    try {
+      msw.close();
+      const res = await fetch(`http://127.0.0.1:${port}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{bad' });
+      const text = await res.text();
+      expect(res.status).toBe(400);
+      expect(JSON.parse(text)).toMatchObject({ jsonrpc: '2.0', error: { code: -32700 } });
+      expect(text).not.toMatch(/\bat |node_modules|\/build\//);
+    } finally {
+      for (const s of t.servers) {await new Promise<void>((resolve) => s.close(() => resolve()));}
+      msw.listen({ onUnhandledRequest: 'error' });
+    }
+  });
+
+  it('names the network cause of a failed connectivity check, without the host', async () => {
+    msw.close();
+    try {
+      const port = await freePort();
+      const client = new TestClient({ baseUrl: `http://127.0.0.1:${port}/bconnect`, apiKey: 'k' });
+      const reason = await client.checkConnection();
+      expect(reason).toMatch(/ECONNREFUSED/);
+      expect(reason).not.toContain('127.0.0.1');
+    } finally {
+      msw.listen({ onUnhandledRequest: 'error' });
+    }
+  });
+
+  describe('a kept-alive connection the server dropped', () => {
+    let server: HttpServer;
+    let base = '';
+    let received: string[] = [];
+    beforeAll(async () => {
+      msw.close();
+      const perSocket = new WeakMap<object, number>();
+      server = createHttpServer((req, res) => {
+        const n = (perSocket.get(req.socket) ?? 0) + 1;
+        perSocket.set(req.socket, n);
+        received.push(`${req.method} #${n}`);
+        // The second request on a reused connection finds it closed, as when bMS or a proxy timed it out.
+        if (n === 2) {req.socket.destroy(); return;}
+        res.setHeader('content-type', 'application/json');
+        res.end('[]');
+      });
+      server.keepAliveTimeout = 60000;
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      base = `http://127.0.0.1:${(server.address() as { port: number }).port}/bconnect`;
+    });
+    afterAll(async () => {
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      msw.listen({ onUnhandledRequest: 'error' });
+    });
+    afterEach(() => { received = []; });
+
+    it('retries a read once on a new connection, even with retries off', async () => {
+      const client = new TestClient({ baseUrl: base, apiKey: 'k' });
+      await client.get('/runtime/v2.0/Things');
+      await expect(client.get('/runtime/v2.0/Things')).resolves.toBeDefined();
+      expect(received).toEqual(['GET #1', 'GET #2', 'GET #1']);
+    });
+
+    it('never repeats a write: it is reported as outcome unknown', async () => {
+      const client = new TestClient({ baseUrl: base, apiKey: 'k' });
+      await client.get('/runtime/v2.0/Things');
+      await expect(client.patch('/runtime/v2.0/Things/1')).rejects.toThrow(/may still|outcome/i);
+      expect(received).toEqual(['GET #1', 'PATCH #2']);
+    });
+  });
+
+  it('audits the answer of a cache hit as well as the request', async () => {
+    const entries: string[] = [];
+    const client = new TestClient({ baseUrl: BASE_URL, apiKey: 'k', cache: { enabled: true, ttl: 60000 },
+      auditLog: { level: 'all', logHandler: (entry) => { entries.push(`${entry.method} ${entry.statusCode ?? 'request'}`); } } });
+    await client.get('/runtime/v2.0/Things');
+    await client.get('/runtime/v2.0/Things');
+    expect(entries.filter((e) => e.startsWith('GET 200'))).toHaveLength(2);
+  });
+
+});

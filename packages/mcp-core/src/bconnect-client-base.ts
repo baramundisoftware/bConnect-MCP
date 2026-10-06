@@ -287,6 +287,12 @@ function problemText(data: unknown, baseUrl: string): string | undefined {
   return cleanModelText(text);
 }
 
+/** A request that went out on a reused kept-alive connection which the server had already closed. */
+function staleReusedSocket(error: AxiosError): boolean {
+  const reused = (error.request as { reusedSocket?: boolean } | undefined)?.reusedSocket === true;
+  return reused && !error.response && (error.code === "ECONNRESET" || /socket hang up/i.test(error.message));
+}
+
 /** Responses the success step has handled; see the retry note there. */
 const processedResponses = new WeakSet<object>();
 
@@ -364,8 +370,11 @@ export class BConnectClientBase {
     this.setupAuth();
 
     // Setup retry logic with exponential backoff for V2.0 client
+    const maxRetries = config.maxRetries || 0; // Default: no retries (backward compatible)
     axiosRetry(this.client, {
-      retries: config.maxRetries || 0, // Default: no retries (backward compatible)
+      // One more than configured, used only for a read on a reused connection the
+      // server had already closed (see retryCondition).
+      retries: maxRetries + 1,
       retryDelay: (retryCount) => {
         // Exponential backoff: baseDelay * (2 ^ retryCount)
         const baseDelay = config.retryDelay || 100;
@@ -379,6 +388,12 @@ export class BConnectClientBase {
       retryCondition: (error: AxiosError) => {
         if ((error.config?.method ?? "get").toUpperCase() !== "GET") {
           return false;
+        }
+        const retried = (error.config as { "axios-retry"?: { retryCount?: number } } | undefined)?.["axios-retry"]?.retryCount ?? 0;
+        if (retried >= maxRetries) {
+          // Kept-alive connections (#160): a read that failed on a reused connection the
+          // server had closed in the meantime goes once more, on a new connection.
+          return retried === maxRetries && staleReusedSocket(error);
         }
         if (!error.response) {
           return true;
@@ -515,6 +530,11 @@ export class BConnectClientBase {
             // Return cached response
             response.data = cachedResponse;
             response.headers['X-Cache'] = 'HIT';
+            // The caller read the data: its answer is audited like any other.
+            if (this.auditLogger) {
+              const startTime = (response.config as BConnectRequestConfig).__auditStartTime || Date.now();
+              this.auditLogger.logResponse(response.config.method?.toUpperCase() || 'GET', response.config.url || '', response.status, startTime);
+            }
             return response;
           }
 
@@ -746,7 +766,8 @@ export class BConnectClientBase {
       // do not expose internal hostname
       throw new BConnectConnectionError(
         "Cannot connect to the bConnect API. " +
-        "Check network connectivity and BCONNECT_BASE_URL configuration."
+        "Check network connectivity and BCONNECT_BASE_URL configuration.",
+        error.code,
       );
     } else {
       // Error in request configuration
@@ -775,7 +796,9 @@ export class BConnectClientBase {
       await this.client.get(path, { params: { PageSize: 1 } });
       return undefined;
     } catch (error) {
-      return error instanceof Error ? error.message : String(error);
+      // The system code (ECONNREFUSED, ENOTFOUND, …) tells the operator which network problem it is.
+      const code = error instanceof BConnectConnectionError && error.code ? ` [${error.code}]` : "";
+      return error instanceof Error ? `${error.message}${code}` : String(error);
     }
   }
 

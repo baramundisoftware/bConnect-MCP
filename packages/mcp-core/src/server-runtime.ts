@@ -9,7 +9,8 @@
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import * as dotenv from "dotenv";
-import express from "express";
+import express, { type NextFunction, type Request, type Response } from "express";
+import type { Server as HttpServer } from "node:http";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -33,6 +34,8 @@ export interface ServerClients<C extends BConnectClientBase> {
 }
 
 const loadedEnvFiles = new Set<string>();
+/** The working directory's .env, resolved on first use: a later directory change loads nothing new. */
+let defaultEnvFile: string | undefined;
 
 /**
  * Loads a .env file (default: the working directory's) once per process,
@@ -40,8 +43,8 @@ const loadedEnvFiles = new Set<string>();
  * variable that is already set, so a value set to "" (the gateway's closed
  * gates) stays as it is.
  */
-export function loadEnvOnce(path = ".env", env: NodeJS.ProcessEnv = process.env): void {
-  const file = resolve(path);
+export function loadEnvOnce(path?: string, env: NodeJS.ProcessEnv = process.env): void {
+  const file = path === undefined ? (defaultEnvFile ??= resolve(".env")) : resolve(path);
   if (loadedEnvFiles.has(file)) {return;}
   loadedEnvFiles.add(file);
   dotenv.config({ path: file, processEnv: env as dotenv.DotenvPopulateInput, quiet: true } as dotenv.DotenvConfigOptions);
@@ -129,6 +132,8 @@ export interface StartupIo {
   error: (line: string) => void;
   exit: (code: number) => never;
   connectStdio: (server: Server) => Promise<void>;
+  /** Hears about the HTTP listener once it listens (tests close it). */
+  listening?: (server: HttpServer) => void;
 }
 
 const processIo = (env: NodeJS.ProcessEnv = process.env): StartupIo => ({
@@ -175,7 +180,7 @@ async function serve<C extends BConnectClientBase>(entry: ServerEntry<C>, io: St
   }
 
   if ((env.MCP_TRANSPORT ?? "stdio") === "http") {
-    return serveHttp(entry, io);
+    return await serveHttp(entry, io);
   }
   const { server } = entry.createServer();
   await io.connectStdio(server);
@@ -184,7 +189,7 @@ async function serve<C extends BConnectClientBase>(entry: ServerEntry<C>, io: St
 }
 
 /** Standalone HTTP mode: stateless, one server per request, all sharing the server's client. */
-function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io: StartupIo): string | undefined {
+async function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io: StartupIo): Promise<string | undefined> {
   const { name } = entry;
   const env = io.env;
   const port = parseInt(env.MCP_PORT ?? "3000", 10);
@@ -223,9 +228,21 @@ function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io: Star
     res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Session management not supported in stateless mode." }));
   });
 
-  app.listen(port, bind, () => {
-    io.error(`${name} listening on http://${bind}:${port}/mcp`);
+  // Malformed JSON and other request errors: a JSON-RPC error, never Express's HTML page with a stack.
+  app.use((error: { status?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {
+    const parse = error.type === "entity.parse.failed";
+    const status = typeof error.status === "number" && error.status >= 400 && error.status < 600 ? error.status : 500;
+    res.status(status).json({ jsonrpc: "2.0", error: { code: parse ? -32700 : -32603, message: parse ? "Parse error" : "Internal error" }, id: null });
   });
+
+  // A port in use or an address that can't be bound is a startup error like any other: one line.
+  const listener = app.listen(port, bind);
+  await new Promise<void>((resolveListen, reject) => {
+    listener.once("listening", resolveListen);
+    listener.once("error", reject);
+  });
+  io.error(`${name} listening on http://${bind}:${port}/mcp`);
+  io.listening?.(listener);
   return undefined;
 }
 

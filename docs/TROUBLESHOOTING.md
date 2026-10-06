@@ -41,7 +41,7 @@ bconnect-endpoints-mcp started on stdio
 If the check fails, the server prints one line and exits:
 `bconnect-endpoints-mcp: cannot reach bConnect API at <url> (<cause>). Check BCONNECT_BASE_URL, credentials, and network.`
 The cause in brackets says what went wrong (wrong credentials, untrusted certificate, timeout,
-unreachable host); the sections below explain each one. Every startup error is one such line,
+or a network error with its code, e.g. `[ECONNREFUSED]` or `[ENOTFOUND]`); the sections below explain each one. Every startup error is one such line,
 starting with the server's name.
 
 ### Verify Configuration
@@ -234,6 +234,8 @@ or, without changing the server config, use Node's own env var:
 ```env
 NODE_EXTRA_CA_CERTS=/path/to/bms-ca.pem
 ```
+The server reads the CA file once, when it builds its client. After replacing the file, restart
+the server (or the gateway).
 
 Don't set `NODE_TLS_REJECT_UNAUTHORIZED=0` instead: it turns off certificate checks for every
 connection, so anyone in the network path can pose as the bMS and receive the credentials.
