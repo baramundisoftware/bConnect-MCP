@@ -16,8 +16,9 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, serverClients, runServer, withToolAnnotations } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
+import { TOOL_METHODS } from "./tool-methods.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
 const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
@@ -277,7 +278,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       ]
     };
   }));
-  server.setRequestHandler(ListToolsRequestSchema, toolCatalog.list);
+  server.setRequestHandler(ListToolsRequestSchema, withToolAnnotations(TOOL_METHODS, toolCatalog.list));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
