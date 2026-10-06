@@ -1,16 +1,17 @@
 /**
- * Client-config guard (REQ-SRV-019, issue #197).
+ * Client-config guard (REQ-SRV-019, issue #197; REQ-SRV-023, #160).
  *
- * Every tool call (stdio, HTTP and the gateway alike) builds its BConnectClient
- * in `createServer()`; `main()` builds another one for the startup probe. Both
- * must come from the shared `clientConfigFromEnv()`, so the documented
- * environment reaches every client of every server the same way.
+ * Every server gets its bConnect client from the core's `serverClients()` and
+ * starts through the core's `runServer()`, so the documented environment
+ * reaches every client of every server the same way, and the startup check
+ * uses the same client as the tool calls.
  *
  * - Through the real call path: one tool per server via `createServer()`; the
- *   config of the client it builds must carry the CA, TLS, credential, audit and
+ *   config of the client it uses must carry the CA, TLS, credential, audit and
  *   rate-limit settings.
- * - In the source: no server reads a client variable itself, and `createServer()`
- *   and `main()` both call the helper (the probe can't run under test).
+ * - In the source: no server reads a client variable itself, builds a client,
+ *   loads .env or starts a transport; each calls `serverClients()` and `runServer()`.
+ * - Through the built servers: startup messages (missing settings, skipped check).
  *
  * The groups server once read an undocumented BCONNECT_REJECT_UNAUTHORIZED here
  * and ignored the CA: its probe passed and every tool failed TLS.
@@ -24,9 +25,9 @@ import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import type { BConnectConfig } from '@bconnect/mcp-core';
+import { resetServerClients, type BConnectConfig } from '@bconnect/mcp-core';
 import { ROOT, SERVERS, connect, createRecorder, guardEnv, requiredArguments, type ToolResult } from './lib/exerciser.js';
-import { clientConstructions, envReads, functionCalls, helperCalls, helperProvenance } from './lib/env-reads.js';
+import { envReads } from './lib/env-reads.js';
 
 const built = vi.hoisted(() => [] as BConnectConfig[]);
 
@@ -57,7 +58,6 @@ const CLIENT_VARS = [
   // Removed (REQ-SRV-019 AC 3); no server may bring it back.
   'BCONNECT_REJECT_UNAUTHORIZED',
 ];
-const HELPER = 'clientConfigFromEnv';
 const MISSING_CREDENTIALS = 'Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required';
 
 const CA = '-----BEGIN CERTIFICATE-----\nguard-test-ca\n-----END CERTIFICATE-----\n';
@@ -109,6 +109,8 @@ async function clientConfig(
   opts: { credentials?: Record<string, string>; tools?: string[] } = {},
 ): Promise<BConnectConfig> {
   setEnv(env);
+  // Each server keeps one client per process; forget it so this call builds one from `env`.
+  resetServerClients();
   const conn = await connect(server, opts.credentials);
   try {
     const tools = opts.tools
@@ -137,34 +139,6 @@ const sourceFiles = (dirPath: string): string[] =>
 const SOURCE_PACKAGES = [...SERVERS, 'bconnect-server-template'].filter((d) =>
   existsSync(join(ROOT, d, 'src', 'index.ts')),
 );
-
-/** Every BConnectClient must get the helper's result unchanged; at least two (tool calls, startup probe). */
-function constructionProblems(sources: Array<{ name: string; text: string }>): string[] {
-  const constructions = sources.flatMap(({ name, text }) =>
-    clientConstructions(text, 'BConnectClient', HELPER, name).map((c) => ({ ...c, where: `${name}:${c.line}` })),
-  );
-  return [
-    ...(constructions.length < 2 ? [`only ${constructions.length} BConnectClient construction(s); expected tool client and startup probe`] : []),
-    ...constructions.filter((c) => !c.fromHelper).map((c) => `${c.where} ${c.text}`),
-  ];
-}
-
-/**
- * Every helper call in the package passes only process.env, except in createServer(),
- * which passes process.env and its own credentials parameter.
- */
-function helperArgumentProblems(sources: Array<{ name: string; text: string }>): string[] {
-  const problems: string[] = [];
-  for (const { name, text } of sources) {
-    // That main() and createServer() call it at all is checked with functionCalls().
-    for (const call of helperCalls(text, HELPER, name)) {
-      const args = call.args.join(', ');
-      const expected = call.fn === 'createServer' ? `process.env, ${call.parameters[0] ?? '<no parameter>'}` : 'process.env';
-      if (args !== expected) problems.push(`${name}: ${call.fn ?? '<top level>'}(): ${HELPER}(${args})`);
-    }
-  }
-  return problems;
-}
 
 describe('guard self-tests', () => {
   it('finds the servers from the repo', () => {
@@ -257,182 +231,6 @@ describe('guard self-tests', () => {
     });
   });
 
-  describe('functionCalls', () => {
-    const source = [
-      'export function createServer() {',
-      '  const getBconnect = () => new BConnectClient(core.clientConfigFromEnv(process.env));',
-      '}',
-      'async function main() {',
-      '  // clientConfigFromEnv(process.env) is not called here',
-      '  const s = "clientConfigFromEnv(process.env)";',
-      '  new BConnectClient({ baseUrl: process.env.BCONNECT_BASE_URL });',
-      '}',
-    ].join('\n');
-
-    it('finds a call inside a nested closure', () => {
-      expect(functionCalls(source, 'createServer', HELPER)).toBe(true);
-    });
-
-    it('does not count a comment or a string as a call', () => {
-      expect(functionCalls(source, 'main', HELPER)).toBe(false);
-    });
-
-    it('reports a missing function as undefined', () => {
-      expect(functionCalls(source, 'start', HELPER)).toBeUndefined();
-    });
-
-    it('does not count a mere reference as a call', () => {
-      const ref = 'async function main() { const f = clientConfigFromEnv; f(process.env); }';
-      expect(functionCalls(ref, 'main', HELPER)).toBe(false);
-    });
-  });
-
-  describe('clientConstructions', () => {
-    const fromHelper = (source: string) =>
-      clientConstructions(source, 'BConnectClient', HELPER).map((c) => c.fromHelper);
-
-    it.each([
-      ['the helper call directly', 'new BConnectClient(clientConfigFromEnv(process.env, credentials));'],
-      ['a variable assigned only the helper', 'const config = clientConfigFromEnv(process.env); new BConnectClient(config);'],
-      ['the helper call in parentheses or with a type assertion', 'new BConnectClient((clientConfigFromEnv(process.env) as BConnectConfig));'],
-      ['a variable whose members are read', 'const c = clientConfigFromEnv(process.env); const url = c.baseUrl; new BConnectClient(c);'],
-      ['a plain member passed to a call', 'const c = clientConfigFromEnv(process.env); log("probing", c.baseUrl); new URL(c.baseUrl); new BConnectClient(c);'],
-      ['optional chaining and a type query', 'const c = clientConfigFromEnv(process.env); let u: typeof c | undefined; void c?.baseUrl; new BConnectClient(c);'],
-      ['satisfies at the constructor', 'const c = clientConfigFromEnv(process.env); new BConnectClient(c satisfies BConnectConfig);'],
-      [
-        'a variable declared first and assigned the helper in a try',
-        'let c: BConnectConfig; try { c = clientConfigFromEnv(process.env); } catch { process.exit(1); } new BConnectClient(c);',
-      ],
-    ])('accepts %s', (_label, source) => {
-      expect(fromHelper(source)).toEqual([true]);
-    });
-
-    it.each([
-      ['a hand-built object', 'new BConnectClient({ baseUrl: url, rejectUnauthorized: true });'],
-      ['the helper result with overrides', 'new BConnectClient({ ...clientConfigFromEnv(process.env), rejectUnauthorized: true });'],
-      [
-        'a variable that overrides the helper result',
-        'let c; c = { ...clientConfigFromEnv(process.env), ca: undefined }; new BConnectClient(c);',
-      ],
-      [
-        'a variable assigned the helper and then something else',
-        'let c = clientConfigFromEnv(process.env); c = { baseUrl: "x" }; new BConnectClient(c);',
-      ],
-      ['a variable never assigned', 'let c: BConnectConfig; new BConnectClient(c);'],
-      ['a helper result changed in place', 'const c = clientConfigFromEnv(process.env); c.ca = undefined; new BConnectClient(c);'],
-      ['a helper result changed by Object.assign', 'const c = clientConfigFromEnv(process.env); Object.assign(c, { rejectUnauthorized: false }); new BConnectClient(c);'],
-      ['a helper result with a member deleted', 'const c = clientConfigFromEnv(process.env); delete c.ca; new BConnectClient(c);'],
-      ['a helper result changed through a copy', 'const c = clientConfigFromEnv(process.env); const a = c; a.ca = undefined; new BConnectClient(c);'],
-      ['a nested member written', 'const c = clientConfigFromEnv(process.env); c.rateLimit.maxRequests = 1; new BConnectClient(c);'],
-      ['a compound assignment', 'let c = clientConfigFromEnv(process.env); c ||= other; new BConnectClient(c);'],
-      ['a second argument', 'new BConnectClient(clientConfigFromEnv(process.env), extra);'],
-      ['a member incremented', 'const c = clientConfigFromEnv(process.env); c.rateLimit.maxRequests++; new BConnectClient(c);'],
-      ['a member assigned with ??=', 'const c = clientConfigFromEnv(process.env); c.ca ??= x; new BConnectClient(c);'],
-      ['a nested member written through !', 'const c = clientConfigFromEnv(process.env); c.rateLimit!.maxRequests = 1; new BConnectClient(c);'],
-      ['a nested member handed to Object.assign', 'const c = clientConfigFromEnv(process.env); Object.assign(c.rateLimit, { maxRequests: 1 }); new BConnectClient(c);'],
-      [
-        'a parameter of the same name',
-        'const c = clientConfigFromEnv(process.env); function probe(c: BConnectConfig) { return new BConnectClient(c); } probe({ ...c, ca: undefined });',
-      ],
-      [
-        'an arrow parameter of the same name',
-        'const c = clientConfigFromEnv(process.env); const probe = (c: BConnectConfig) => new BConnectClient(c); probe({ ...c, ca: undefined });',
-      ],
-      ['a nested member spread', 'const c = clientConfigFromEnv(process.env); const r = { ...c.rateLimit }; new BConnectClient(c);'],
-      ...['auditLog', 'cache', 'batch'].map((m) => [
-        `the nested member ${m} handed to a call`,
-        `const c = clientConfigFromEnv(process.env); Object.assign(c.${m}, {}); new BConnectClient(c);`,
-      ]),
-      ['a catch variable of the same name', 'let c = clientConfigFromEnv(process.env); try { f(); } catch (c) { new BConnectClient(c); }'],
-      ['a for-in variable of the same name', 'let c = clientConfigFromEnv(process.env); for (const c in other) new BConnectClient(c);'],
-      ['a destructured name of the same name', 'let c = clientConfigFromEnv(process.env); const { c } = other; new BConnectClient(c);'],
-      // A helper-assigned local elsewhere in the file must not vouch for an imported name.
-      ['an imported name of the same name', 'import { c } from "./other.js"; function f() { const c = clientConfigFromEnv(process.env); void c.baseUrl; } new BConnectClient(c);'],
-      ['a default import of the same name', 'import c from "./other.js"; function f() { const c = clientConfigFromEnv(process.env); void c.baseUrl; } new BConnectClient(c);'],
-      ['a namespace import of the same name', 'import * as c from "./other.js"; function f() { const c = clientConfigFromEnv(process.env); void c.baseUrl; } new BConnectClient(c);'],
-      ['a nested write behind a type assertion', 'const c = clientConfigFromEnv(process.env); (c.rateLimit!.window as W).ms = 1; new BConnectClient(c);'],
-      ['a function of the same name', 'let c = clientConfigFromEnv(process.env); function c() {} new BConnectClient(c);'],
-      ['a class of the same name', 'let c = clientConfigFromEnv(process.env); class c {} new BConnectClient(c);'],
-      [
-        'a loop variable of the same name',
-        'let c = clientConfigFromEnv(process.env); for (const c of [{ ...other }]) new BConnectClient(c);',
-      ],
-      ['no argument', 'new BConnectClient();'],
-    ])('rejects %s', (_label, source) => {
-      expect(fromHelper(source)).toEqual([false]);
-    });
-  });
-
-  describe('helperProvenance', () => {
-    const IMPORT = 'import { clientConfigFromEnv } from "@bconnect/mcp-core";';
-    const check = (source: string) => helperProvenance(source, HELPER, '@bconnect/mcp-core');
-
-    it('accepts the helper imported from the core', () => {
-      expect(check(`${IMPORT}\nnew BConnectClient(clientConfigFromEnv(process.env));`)).toEqual([]);
-    });
-
-    it.each([
-      ['a local function of the same name', `${IMPORT}\nfunction clientConfigFromEnv(e) { return {}; }`],
-      ['a local variable of the same name', `${IMPORT}\nconst clientConfigFromEnv = (e) => ({});`],
-      ['an import from elsewhere', 'import { clientConfigFromEnv } from "./config.js"; clientConfigFromEnv(process.env);'],
-      ['a renamed import', 'import { other as clientConfigFromEnv } from "@bconnect/mcp-core"; clientConfigFromEnv(process.env);'],
-      ['no import at all', 'clientConfigFromEnv(process.env);'],
-    ])('rejects %s', (_label, source) => {
-      expect(check(source)).not.toEqual([]);
-    });
-  });
-
-  it('reports a server with fewer than two client constructions', () => {
-    const one = [{ name: 'index.ts', text: 'new BConnectClient(clientConfigFromEnv(process.env));' }];
-    expect(constructionProblems(one)).toEqual([expect.stringContaining('only 1')]);
-    expect(constructionProblems([...one, ...one])).toEqual([]);
-  });
-
-  describe('helper arguments', () => {
-    const index = (mainArgs: string, createArgs: string, extra = '') => [
-      {
-        name: 'index.ts',
-        text: [
-          `export function createServer(creds?: BConnectCredentials) { new BConnectClient(clientConfigFromEnv(${createArgs})); }`,
-          `async function main() { new BConnectClient(clientConfigFromEnv(${mainArgs})); }`,
-          extra,
-        ].join('\n'),
-      },
-    ];
-
-    it('accepts process.env in main() and process.env plus the credentials parameter in createServer()', () => {
-      expect(helperArgumentProblems(index('process.env', 'process.env, creds'))).toEqual([]);
-    });
-
-    it('accepts multi-line arguments with a trailing comma', () => {
-      expect(helperArgumentProblems(index('\n  process.env,\n', 'process.env, creds'))).toEqual([]);
-    });
-
-    it('rejects a third function building a client with other arguments', () => {
-      const extra = 'function probe() { return new BConnectClient(clientConfigFromEnv(process.env, { baseUrl: "x" })); }';
-      expect(helperArgumentProblems(index('process.env', 'process.env, creds', extra))).toEqual([
-        expect.stringContaining('probe()'),
-      ]);
-    });
-
-    it('rejects a helper call in another file with other arguments', () => {
-      const other = { name: 'probe.ts', text: 'export const c = clientConfigFromEnv({ BCONNECT_API_KEY: "x" });' };
-      expect(helperArgumentProblems([...index('process.env', 'process.env, creds'), other])).toEqual([
-        expect.stringContaining('probe.ts'),
-      ]);
-    });
-
-    it.each([
-      ['main() passing credentials', 'process.env, { baseUrl: "https://other/bconnect" }', 'process.env, credentials'],
-      ['main() passing a hand-made env', '{ BCONNECT_API_KEY: "x" }', 'process.env, credentials'],
-      ['createServer() dropping the credentials', 'process.env', 'process.env'],
-      ['createServer() passing another variable', 'process.env', 'process.env, credentials'],
-      ['createServer() passing other credentials', 'process.env', 'process.env, { apiKey: "x" }'],
-    ])('rejects %s', (_label, mainArgs, createArgs) => {
-      expect(helperArgumentProblems(index(mainArgs, createArgs))).not.toEqual([]);
-    });
-  });
-
   describe('stale build', () => {
     const tree = (buildAge: number, sourceAges: number[]) => {
       const root = mkdtempSync(join(dir, 'stale-'));
@@ -490,7 +288,51 @@ describe('guard self-tests', () => {
   });
 });
 
-describe('source: only the core helper reads the client variables', () => {
+/** Source without comments, so a mention in a comment neither counts nor hides. */
+const code = (text: string): string => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+/** What a server leaves to the core: building clients, loading .env, starting transports (REQ-SRV-023 AC 2). */
+const CORE_ONLY: Array<[string, RegExp]> = [
+  ['builds a BConnectClient', /\bnew\s+BConnectClient\b/],
+  ['calls clientConfigFromEnv', /\bclientConfigFromEnv\b/],
+  ['runs the connectivity check', /\btestConnection\b/],
+  ['loads .env', /\bdotenv\b/],
+  ['starts a stdio transport', /\bStdioServerTransport\b/],
+  ['starts an HTTP transport', /\bStreamableHTTPServerTransport\b|\bexpress\b/],
+];
+
+/** Why a server's sources don't leave startup and clients to the core. */
+function startupProblems(files: Array<{ name: string; text: string }>, index: string): string[] {
+  const problems = files.flatMap(({ name, text }) =>
+    CORE_ONLY.filter(([, pattern]) => pattern.test(code(text))).map(([what]) => `${name} ${what}`),
+  );
+  if (!/\bserverClients\s*\(/.test(code(index))) {problems.push('index.ts doesn\'t call serverClients()');}
+  if (!/\brunServer\s*\(/.test(code(index))) {problems.push('index.ts doesn\'t call runServer()');}
+  return problems;
+}
+
+describe('source: startup and clients come from the core', () => {
+  describe('self-test', () => {
+    const good = 'const clients = serverClients(BConnectClient);\nrunServer({ name, createServer, clients });';
+    it('accepts a server that uses serverClients() and runServer(), mentioning the rest in comments only', () => {
+      expect(startupProblems([{ name: 'index.ts', text: `${good}\n// no new BConnectClient, dotenv or express here\n/* testConnection */` }], good)).toEqual([]);
+    });
+    it.each(CORE_ONLY.map(([what]) => what))('reports a server that %s', (what) => {
+      const sample: Record<string, string> = {
+        'builds a BConnectClient': 'const c = new BConnectClient(config);',
+        'calls clientConfigFromEnv': 'const config = clientConfigFromEnv(process.env);',
+        'runs the connectivity check': 'await client.testConnection();',
+        'loads .env': 'import * as dotenv from "dotenv";',
+        'starts a stdio transport': 'const t = new StdioServerTransport();',
+        'starts an HTTP transport': 'import express from "express";',
+      };
+      expect(startupProblems([{ name: 'x.ts', text: sample[what] }], good)).toEqual([`x.ts ${what}`]);
+    });
+    it('reports an index.ts without serverClients() or runServer()', () => {
+      expect(startupProblems([], 'main();')).toEqual(["index.ts doesn't call serverClients()", "index.ts doesn't call runServer()"]);
+    });
+  });
+
   describe.each(SOURCE_PACKAGES)('%s', (pkg) => {
     const files = sourceFiles(join(ROOT, pkg, 'src'));
     const index = readFileSync(join(ROOT, pkg, 'src', 'index.ts'), 'utf8');
@@ -504,31 +346,9 @@ describe('source: only the core helper reads the client variables', () => {
       expect(offending).toEqual([]);
     });
 
-    it(`builds the tool client with ${HELPER}() in createServer()`, () => {
-      expect(functionCalls(index, 'createServer', HELPER)).toBe(true);
-    });
-
-    it(`builds the startup-probe client with ${HELPER}() in main()`, () => {
-      expect(functionCalls(index, 'main', HELPER)).toBe(true);
-    });
-
-    it(`passes every BConnectClient the ${HELPER}() result unchanged`, () => {
-      const sources = files.map((file) => ({ name: file.slice(ROOT.length + 1), text: readFileSync(file, 'utf8') }));
-      expect(constructionProblems(sources)).toEqual([]);
-    });
-
-    it(`calls ${HELPER}(process.env), or (process.env, <its credentials>) in createServer(), and nothing else`, () => {
+    it('leaves clients, .env and transports to the core: serverClients() and runServer()', () => {
       const sources = files.map((file) => ({ name: relative(ROOT, file), text: readFileSync(file, 'utf8') }));
-      expect(helperArgumentProblems(sources)).toEqual([]);
-    });
-
-    it(`imports ${HELPER} from the core and doesn't declare its own`, () => {
-      const problems = files.flatMap((file) =>
-        helperProvenance(readFileSync(file, 'utf8'), HELPER, '@bconnect/mcp-core', file).map(
-          (p) => `${file.slice(ROOT.length + 1)}: ${p}`,
-        ),
-      );
-      expect(problems).toEqual([]);
+      expect(startupProblems(sources, index)).toEqual([]);
     });
   });
 });
@@ -628,6 +448,16 @@ describe('startup without credentials', () => {
     expect(run.status).toBe(1);
     expect(run.stdout).toBe('');
     expect(run.stderr.trim()).toBe(`${server}: ${MISSING_CREDENTIALS}`);
+  });
+});
+
+describe('startup without a base URL (REQ-SRV-023 AC 2, AC 8)', () => {
+  it.each(SERVERS)('%s exits 1 with one line naming BCONNECT_BASE_URL', (server) => {
+    const run = startServer(server, { BCONNECT_API_KEY: 'guard-key', BCONNECT_BASE_URL: '' });
+    expect(run.status).toBe(1);
+    expect(run.stdout).toBe('');
+    expect(run.stderr.trim().split('\n')).toHaveLength(1);
+    expect(run.stderr.trim()).toMatch(new RegExp(`^${server}: BCONNECT_BASE_URL `));
   });
 });
 
@@ -731,6 +561,13 @@ describe('audit output in stdio mode', () => {
   it('accepts the level in any case and with surrounding spaces', async () => {
     const session = await stdioSession('bconnect-groups-mcp', { BCONNECT_AUDIT_LEVEL: ' ALL ' });
     expect(auditProblems(session)).toEqual([]);
+  }, 30_000);
+
+  it.each(SERVERS)('%s with the check skipped: says skipped, never verified (REQ-SRV-023 AC 3)', async (server) => {
+    const session = await stdioSession(server, { BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true' });
+    expect(session.requests).toEqual([]);
+    expect(session.stderr).toMatch(/skipped/i);
+    expect(session.stderr).not.toMatch(/verified/i);
   }, 30_000);
 
   describe('self-test', () => {

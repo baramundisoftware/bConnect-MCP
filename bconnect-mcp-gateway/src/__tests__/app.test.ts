@@ -291,3 +291,50 @@ describe("REQ-GW-002 — hostile domain names and handler errors", () => {
   });
 });
 
+
+// ─── REQ-SRV-023 AC 1: one client per domain across requests ────────────────
+
+describe("REQ-SRV-023 — requests to one domain share one client and its rate limit", () => {
+  let gateway: { baseUrl: string; close: () => void };
+  let bms: http.Server;
+  let sent = 0;
+
+  beforeAll(async () => {
+    bms = http.createServer((_req, res) => {
+      sent++;
+      res.setHeader("content-type", "application/json");
+      res.end("[]");
+    });
+    await new Promise<void>((resolve) => bms.listen(0, "127.0.0.1", resolve));
+    const { port } = bms.address() as { port: number };
+    vi.stubEnv("BCONNECT_BASE_URL", `http://127.0.0.1:${port}/bconnect`);
+    vi.stubEnv("BCONNECT_API_KEY", "gateway-test-key");
+    vi.stubEnv("BCONNECT_RELEASE", "26R1");
+    vi.stubEnv("BCONNECT_RATE_LIMIT_ENABLED", "true");
+    vi.stubEnv("BCONNECT_RATE_LIMIT_MAX_REQUESTS", "2");
+    vi.stubEnv("BCONNECT_RATE_LIMIT_WINDOW_MS", "600000");
+    gateway = await startApp();
+  });
+  afterAll(async () => {
+    gateway.close();
+    bms.closeAllConnections();
+    await new Promise<void>((resolve) => bms.close(() => resolve()));
+    vi.unstubAllEnvs();
+  });
+
+  it("refuses the third tool call in the window, although each request builds its own server", async () => {
+    const outcomes: string[] = [];
+    for (let id = 1; id <= 3; id++) {
+      const res = await fetch(`${gateway.baseUrl}/compliance/mcp`, {
+        method: "POST",
+        headers: MCP_HEADERS,
+        body: JSON.stringify({ jsonrpc: "2.0", id, method: "tools/call", params: { name: "list_vulnerabilities", arguments: {} } }),
+      });
+      const body = await parseMcpResponse(res) as { result?: { isError?: boolean; content?: Array<{ text: string }> } };
+      const text = body.result?.content?.[0]?.text ?? JSON.stringify(body);
+      outcomes.push(body.result?.isError ? (/rate limit/i.test(text) ? "refused" : text) : "ok");
+    }
+    expect(outcomes).toEqual(["ok", "ok", "refused"]);
+    expect(sent).toBe(2);
+  });
+});
