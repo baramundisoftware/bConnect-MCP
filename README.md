@@ -31,7 +31,7 @@ There are three ways to get the suite. Pick one; the configuration (Step 3) is t
 
 The first two run the 13 servers as local processes that your AI assistant starts over stdio. The
 container runs the HTTP gateway, which serves all 13 servers to clients over the network; the gateway
-can also run without Docker, from a release download or a source build (see
+can also run without Docker from a source build; the release download doesn't include it (see
 [Centralized Gateway](#centralized-gateway-http-multi-user)).
 
 The servers are not published to the npm registry, so `npx` / `npm install -g` don't apply.
@@ -72,7 +72,7 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 
 ### Step 1: Download
 
-**Prefer a pre-built download?** Grab the latest `bconnect-mcp-suite-<version>.zip` from the [**Releases page**](https://github.com/baramundisoftware/bConnect-MCP/releases) — it ships the compiled output, so you can **skip the build (Step 2)**: extract it, run `npm ci --omit=dev` at the extracted root, then jump to Step 3. See the bundled `INSTALL.md`.
+**Prefer a pre-built download?** Grab the latest `bconnect-mcp-suite-<version>.zip` from the [**Releases page**](https://github.com/baramundisoftware/bConnect-MCP/releases) — it ships the compiled output, so you can **skip the build (Step 2)**: extract it, run `npm ci --omit=dev` at the extracted root, then jump to Step 3. The extracted folder also has a short `INSTALL.md`; the longer guide is [docs/INSTALLATION.md](docs/INSTALLATION.md), also in the download.
 
 > This README describes the current `main` branch. The latest release may predate some of it; the changes since then are listed under [Unreleased] in [CHANGELOG.md](CHANGELOG.md).
 
