@@ -158,7 +158,8 @@ describe('README entry point', () => {
   });
 
   it('has a quick start: install, credentials in an env file, a first server that answers', () => {
-    const text = readme();
+    // The commands are fenced code, so read the section as written, not as visible() leaves it.
+    const text = read(join(ROOT, 'README.md'));
     const at = text.indexOf('\n## Quick start\n');
     expect(at).toBeGreaterThan(0);
     const quick = text.slice(at, text.indexOf('\n## ', at + 5));
