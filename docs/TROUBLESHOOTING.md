@@ -365,9 +365,16 @@ cp .env.example .env
 
 `bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` are **26R1 only**. A 25R2 bMS
 doesn't have their routes, so their startup check fails ("cannot reach bConnect API at …") and they
-exit. Don't configure them for a 25R2 bMS. Set `BCONNECT_RELEASE` to the bMS release (default
-`26R1`): with `25R2`, tools that exist only in 26R1 answer
-`<tool> is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.`
+exit. Don't configure them for a 25R2 bMS.
+
+Each server reads the release from the bMS at startup and logs it, for example
+`bMS 26.1.161.0 → release 26R1`. A `BCONNECT_RELEASE` that differs is overridden:
+`bMS 25.2.0.0 → release 25R2; BCONNECT_RELEASE=26R1 is ignored`. When the version can't be read —
+most often because the account has no read access to server management — the server starts with
+`BCONNECT_RELEASE` (default `26R1`) and warns: `could not detect the bMS release (…); using …`.
+Then set `BCONNECT_RELEASE` to the release of your bMS, or give the account that read access. On a
+25R2 bMS, tools that exist only in 26R1 answer
+`<tool> is only available in bMS <release>; this server uses <release> (…).`
 
 ---
 

@@ -156,7 +156,7 @@ are the code's; where Compose or the image sets another, the table says so.
 | `BCONNECT_ALLOW_INSECURE_HTTP` | `true` allows an `http://` base URL to another host (credentials unencrypted) | `false` |
 | `BCONNECT_API_KEY` | API key (or use username/password below) | *(one credential required)* |
 | `BCONNECT_USERNAME` / `BCONNECT_PASSWORD` | API username + password (alternative to the key); the password must be ASCII-only (bConnect rejects `§`, umlauts, `ß`) | — |
-| `BCONNECT_RELEASE` | API release: `25R2` or `26R1` | `26R1` |
+| `BCONNECT_RELEASE` | Fallback for the bMS release: `25R2` or `26R1`; the gateway reads the release from the bMS at startup with its service credential and uses this only when it can't | `26R1` |
 | `BCONNECT_AUDIT_LEVEL` | `none`, `security`, `write`, `all` | `none` |
 | `BCONNECT_PRETTY_JSON` | `true` writes tool results as indented JSON, for debugging; default compact JSON | `false` |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | Leave unset: `0` turns off certificate checks for every bMS call. For an internal CA, use `BCONNECT_CA_CERT_PATH` | — |
@@ -217,7 +217,7 @@ off in the gateway, its tool lists contain only the read tools: 178 on 26R1, 156
 | Server | Requires 26R1 |
 |--------|--------------|
 | bconnect-compliance-mcp | Yes: its tools are always offered and fail against 25R2, where the compliance API doesn't exist |
-| bconnect-universaldynamicgroups-mcp | Yes: with `BCONNECT_RELEASE=25R2` it offers no tools |
+| bconnect-universaldynamicgroups-mcp | Yes: on a 25R2 bMS it offers no tools |
 | All others | No (works with 25R2 and 26R1) |
 
 ---

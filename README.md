@@ -186,8 +186,9 @@ Only the gateway is distributed as a container; the 13 stdio servers run via Nod
 
 — means the server needs 26R1. (Compliance still lists its 8 tools with `BCONNECT_RELEASE=25R2`, but they fail on a 25R2 bMS.)
 
-Set `BCONNECT_RELEASE=25R2` for a 2025 R2 bMS. Compliance and universal dynamic groups don't exist
-there: don't configure those two servers for a 25R2 bMS.
+Each server reads the release from the bMS at startup and logs it (for example
+`bMS 26.1.161.0 → release 26R1`); `BCONNECT_RELEASE` is only the fallback. Compliance and universal
+dynamic groups don't exist in 2025 R2: don't configure those two servers for a 25R2 bMS.
 
 Install only the servers you need. Most users start with `bconnect-endpoints-mcp`.
 
@@ -208,7 +209,7 @@ The variables most deployments set. Each server's README lists exactly the varia
 | `BCONNECT_API_KEY` | Yes* | — | API key for authentication |
 | `BCONNECT_USERNAME` | Yes* | — | Username for Basic Auth |
 | `BCONNECT_PASSWORD` | Yes* | — | Password for Basic Auth |
-| `BCONNECT_RELEASE` | — | `26R1` | bMS version: `25R2` or `26R1`, spelt exactly so |
+| `BCONNECT_RELEASE` | — | `26R1` | Fallback for the bMS release: `25R2` or `26R1`, spelt exactly so. Each server reads the release from the bMS at startup and uses this only when it can't; a different value is overridden, with a warning |
 | `BCONNECT_CA_CERT_PATH` | — | — | Path to CA certificate (PEM) for self-signed certs |
 | `ALLOW_WRITE_OPERATIONS` | — | off | `true` enables the write tools (create, update, delete, start, assign …); off, they are left out of the tool list |
 | `ALLOW_SECRET_READ` | — | off | `true` enables the tools that return BitLocker keys/PIN or LAPS passwords (defensecontrol) |
@@ -394,7 +395,7 @@ against a real bMS).
 | **A tool answers with an error from bConnect** | The answer names the status, the call, what the bConnect API documentation says the status means for that call, and bConnect's own message. A 404 can mean a wrong id, missing read rights or, on some calls, "no data"; the documented meaning says which apply. |
 | **"The bConnect API didn't answer within 30 s" on vulnerability or installed-software lists** | These lists are slow on a large or busy bMS (30 to 50 s on a test bMS 26R1). Set `BCONNECT_TIMEOUT_MS=90000`; see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). |
 | **Server exits at startup with "cannot reach bConnect API"** | The startup call failed; the cause is in brackets (credentials, certificate, timeout, address). Check that `BCONNECT_BASE_URL` ends in `/bconnect`. See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#server-exits-at-startup). |
-| **404 only on some tools** | They may need 26R1. On a 25R2 bMS set `BCONNECT_RELEASE=25R2`, which hides them. |
+| **404 only on some tools** | They may need 26R1. Check the release the server logged at startup; if it says it could not detect the release, set `BCONNECT_RELEASE=25R2` for a 25R2 bMS, which hides them. |
 | **compliance / universaldynamicgroups won't start** | These servers need 26R1: their startup check fails on a 25R2 bMS. Remove them from your config. |
 | **"BCONNECT_BASE_URL uses http://"** | Use `https://`. `http://` is allowed only for this machine or with `BCONNECT_ALLOW_INSECURE_HTTP=true` (credentials unencrypted). |
 | **"Redirects are not followed"** | bConnect or a proxy redirected the call. Set `BCONNECT_BASE_URL` to the final address. |

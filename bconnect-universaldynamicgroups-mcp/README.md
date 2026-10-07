@@ -5,7 +5,7 @@ Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST 
 **Domain:** Universal Dynamic Groups — UDG definitions and folder hierarchy (requires baramundi 2026 R1)  
 **Tools:** 6 (none with `BCONNECT_RELEASE=25R2`)
 
-> **Note:** This server is only functional when `BCONNECT_RELEASE=26R1` (the default). Universal Dynamic Groups do not exist in baramundi 25R2; with `BCONNECT_RELEASE=25R2`, no tools are exposed.
+> **Note:** This server is only functional on a bMS 2026 R1. Universal Dynamic Groups do not exist in baramundi 25R2; on a 25R2 bMS (detected at startup, or `BCONNECT_RELEASE=25R2` as the fallback), no tools are exposed.
 
 ---
 
@@ -49,7 +49,7 @@ Claude Desktop (`claude_desktop_config.json`) and other clients: see
 
 All tools are read-only.
 
-All tools require `BCONNECT_RELEASE=26R1`.
+All tools require bMS 2026 R1.
 
 | Tool | Description |
 |------|-------------|
@@ -78,7 +78,7 @@ Run inside the HTTP gateway, the server's own startup code doesn't run: `MCP_TRA
 | `BCONNECT_CA_CERT_PATH` | No | — | PEM file with the CA certificate that signed the bMS server certificate (internal CA). When set, only this CA is trusted; when unset, Node's default and (Node 22.15 or later) the operating system's trusted CAs are used. The server fails if the file can't be read or is empty. |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | No | verify | Leave unset. `0` turns certificate verification off for every TLS connection of the process, so anyone in the network path can pose as the bMS and receive the credentials. Trust the CA instead: Node ≥ 22.15 (OS store) or `BCONNECT_CA_CERT_PATH`. |
 | `BCONNECT_ALLOW_INSECURE_HTTP` | No | off | `true` allows an `http://` base URL to a host other than this machine, which sends the bConnect credentials unencrypted; the server warns once at startup. Test setups only. `http://` to `localhost`, `127.x.x.x` or `[::1]` (the bundled mock) needs no opt-in. |
-| `BCONNECT_RELEASE` | No | `26R1` | The release of your bMS: `26R1` or `25R2`, spelt exactly so. It selects the tools and list filters for that release and the API documentation used to explain an error. With `25R2`, the tools marked **(26R1)** are hidden. |
+| `BCONNECT_RELEASE` | No | `26R1` | Fallback for the release of your bMS: `26R1` or `25R2`, spelt exactly so. The server reads the release from the bMS at startup and uses this value only when it can't; a different value is overridden, with a warning. The release selects the tools and list filters for that release and the API documentation used to explain an error. With `25R2`, the tools marked **(26R1)** are hidden. |
 | `ALLOW_SECRET_READ` | No | off | `true` lets the shared client call the BitLocker-secret and LAPS operations. This server has no tool that calls them, so the setting has no effect here. |
 | `BCONNECT_AUDIT_LEVEL` | No | `none` | `none`, `security`, `write` or `all`, in any case. Levels are cumulative: `security` records security-relevant calls (credentials, API keys, rights, security groups and profiles, enrollments, restarts; see [docs/AUDIT.md](../docs/AUDIT.md)) and refused requests, `write` adds every write, `all` records every request. Any other value stops the server. Entries go to stderr. |
 | `BCONNECT_PRETTY_JSON` | No | `false` | `true` writes tool results as indented JSON, as earlier versions did, for debugging. By default they are compact JSON, which keeps 16–22 % of each result out of the model's context (measured on list results). `true` or `false`, in any case; any other value stops the server. |
@@ -107,9 +107,10 @@ that serves all 13 servers.
 
 ## Compatibility
 
-Releases are numbered `26.1.x` and support **bMS 2026 R1 and 2025 R2**: set `BCONNECT_RELEASE`
-to the release of your bMS (default `26R1`). See [CHANGELOG.md](../CHANGELOG.md) for what each
+Releases are numbered `26.1.x` and support **bMS 2026 R1 and 2025 R2**. The server reads the
+release from the bMS at startup (`version` of the management server; the account needs read access
+to server management) and logs it; `BCONNECT_RELEASE` is the fallback when it can't (default `26R1`). See [CHANGELOG.md](../CHANGELOG.md) for what each
 release changed.
 
-This server needs **bMS 2026 R1**: universal dynamic groups don't exist in 2025 R2. With
-`BCONNECT_RELEASE=25R2` it offers no tools. Don't configure it for a 25R2 bMS.
+This server needs **bMS 2026 R1**: universal dynamic groups don't exist in 2025 R2. On a 25R2
+bMS it offers no tools. Don't configure it for a 25R2 bMS.
