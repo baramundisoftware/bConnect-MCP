@@ -45,8 +45,30 @@ const SETTINGS = [...new Set([
 ])].filter((name): name is string => typeof name === 'string' && !NOT_CONFIGURATION.has(name)).sort();
 
 const read = (file: string): string => readFileSync(file, 'utf8');
-/** The guide without fenced code and HTML comments, so a heading there doesn't count. */
-const guide = (): string => read(GUIDE).replace(/```[\s\S]*?```/g, '').replace(/<!--[\s\S]*?-->/g, '');
+/**
+ * The lines of a Markdown text outside fenced code and HTML comments, so a heading there doesn't
+ * count. One pass over the lines, no pattern removal: a comment runs from its `<!--` line to the
+ * line with `-->`, a fence from a ```` ``` ```` line to the next.
+ */
+function visible(text: string): string {
+  const out: string[] = [];
+  let fence = false;
+  let comment = false;
+  for (const line of text.split('\n')) {
+    if (!comment && line.trimStart().startsWith('```')) {
+      fence = !fence;
+      continue;
+    }
+    if (fence) continue;
+    if (comment || line.includes('<!--')) {
+      comment = !line.includes('-->') || line.lastIndexOf('<!--') > line.lastIndexOf('-->');
+      continue;
+    }
+    out.push(line);
+  }
+  return out.join('\n');
+}
+const guide = (): string => visible(read(GUIDE));
 /** The variables the guide gives a heading of their own. */
 const headings = (text: string): string[] => [...text.matchAll(/^### `([A-Z][A-Z0-9_]*)`$/gm)].map((m) => m[1]);
 
@@ -103,9 +125,10 @@ describe('the other documents link to the guide instead of repeating the setting
     expect(settingRows('| `BCONNECT_CA_CERT_PATH can\'t be read: <path>` | x |\n| Tool | Description |\n| `list_endpoints` | x |\n| `26R1` | All 13 servers |')).toEqual([]);
   });
 
-  it('self-check: a heading inside fenced code doesn\'t count, and an empty setting is caught despite the next group\'s intro', () => {
-    const fenced = '```\n### `BCONNECT_BASE_URL`\n```';
-    expect(fenced.replace(/```[\s\S]*?```/g, '').match(/^### `/m)).toBeNull();
+  it('self-check: a heading inside fenced code or a comment doesn\'t count, and an empty setting is caught despite the next group\'s intro', () => {
+    expect(headings(visible('```\n### `BCONNECT_BASE_URL`\n```'))).toEqual([]);
+    expect(headings(visible('<!--\n### `BCONNECT_BASE_URL`\n-->\n### `MCP_PORT`'))).toEqual(['MCP_PORT']);
+    expect(headings(visible('<!-- one line --> \n### `MCP_BIND`'))).toEqual(['MCP_BIND']);
     const text = '### `A`\n\n## Next group\n\nLong introduction text of the next group, well over twenty characters.\n';
     const section = text.split(/^### /m).slice(1).map((s) => s.split(/^#{1,3} /m)[0])[0];
     expect(section.split('\n').slice(1).join('\n').trim().length).toBeLessThan(20);
