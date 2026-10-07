@@ -14,12 +14,17 @@
  *   holds one express and one @types/express; the gateway, which isn't a workspace
  *   member and runs on the root install, has no lockfile of its own, and every
  *   version it declares is the one the root lockfile installs.
+ * - A package the root both overrides and declares directly has its majors ignored
+ *   by Dependabot: npm requires an override of a direct dependency to match it, so
+ *   a major update of the declared version alone fails the whole Dependabot run
+ *   (EOVERRIDE; js-yaml 4 → 5, 2026-10).
  */
 import { describe, expect, it } from 'vitest';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import yaml from 'js-yaml';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -191,5 +196,25 @@ describe('one Express major, declared as it runs (REQ-DEP-002, #69)', () => {
     const config = readFileSync(join(ROOT, '.github', 'dependabot.yml'), 'utf8');
     expect(config).not.toMatch(/^\s*-\s*"\/bconnect-mcp-gateway"\s*$/m);
     expect(config).not.toMatch(/dependency-name:\s*"(@types\/)?express"/);
+  });
+});
+
+describe('Dependabot and the root overrides', () => {
+  interface Ignore { 'dependency-name'?: string; 'update-types'?: string[] }
+  interface Update { 'package-ecosystem'?: string; ignore?: Ignore[] }
+  const config = yaml.load(readFileSync(join(ROOT, '.github', 'dependabot.yml'), 'utf8')) as { updates: Update[] };
+  const npm = config.updates.find((u) => u['package-ecosystem'] === 'npm');
+  const majorsIgnored = new Set((npm?.ignore ?? [])
+    .filter((i) => (i['update-types'] ?? []).includes('version-update:semver-major'))
+    .map((i) => i['dependency-name']));
+  const root = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
+    overrides?: Record<string, string>; dependencies?: Record<string, string>; devDependencies?: Record<string, string>;
+  };
+
+  it('ignores the majors of every package the root both overrides and declares directly', () => {
+    const declared = { ...root.dependencies, ...root.devDependencies };
+    const both = Object.keys(root.overrides ?? {}).filter((name) => name in declared);
+    expect(both).toContain('js-yaml');
+    expect(both.filter((name) => !majorsIgnored.has(name))).toEqual([]);
   });
 });
