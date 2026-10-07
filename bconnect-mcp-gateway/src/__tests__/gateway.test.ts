@@ -2,8 +2,8 @@
  * bconnect-mcp-gateway — the entry point (gateway.ts)
  *
  * gateway.ts runs at import: it closes the write and secret gates, checks
- * BCONNECT_RELEASE, reads *_FILE secrets, refuses a non-loopback bind without
- * MCP_ALLOW_NO_AUTH=true, then listens. Each test imports it afresh with
+ * BCONNECT_RELEASE, reads *_FILE secrets, detects the bMS release (#159),
+ * refuses a non-loopback bind without MCP_ALLOW_NO_AUTH=true, then listens. Each test imports it afresh with
  * createApp() replaced by a stub, so nothing listens; process.exit throws, so
  * a refused start stops the import where the real process would stop.
  */
@@ -12,6 +12,8 @@ import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { setupServer } from "msw/node";
+import { http, HttpResponse } from "msw";
 
 const listen = vi.fn((_port: number, _bind: string, onListening: () => void) => { onListening(); });
 
@@ -30,8 +32,12 @@ const READ = [
   "BCONNECT_USERNAME", "BCONNECT_PASSWORD", "BCONNECT_API_KEY",
   "BCONNECT_USERNAME_FILE", "BCONNECT_PASSWORD_FILE", "BCONNECT_API_KEY_FILE",
   "MCP_GATEWAY_PORT", "MCP_GATEWAY_BIND", "MCP_ALLOW_NO_AUTH", "MCP_GATEWAY_ALLOWED_HOSTS",
-  "LOG_LEVEL", "LOG_FORMAT",
+  "LOG_LEVEL", "LOG_FORMAT", "BCONNECT_BASE_URL", "BCONNECT_SKIP_CONNECTIVITY_CHECK", "BCONNECT_ALLOW_INSECURE_HTTP",
 ];
+
+/** The bMS the gateway's service credential reaches in the detection tests. */
+let managementServer: () => Response = () => HttpResponse.json({ name: "bMS", version: "25.2.0.0" });
+const bms = setupServer(http.get("https://bms.gateway.test/bconnect/servermanagement/v2.0/ManagementServer", () => managementServer()));
 
 let lines: string[];
 
@@ -52,6 +58,53 @@ afterEach(() => {
 const start = () => import("../gateway.js");
 // Log lines only: anything else on stderr (a Node warning) is not the gateway's.
 const logged = () => lines.filter((l) => l.startsWith("{")).map((l) => JSON.parse(l) as { level: string; msg: string } & Record<string, unknown>);
+
+describe("gateway entry point: release detection (#159)", () => {
+  beforeEach(() => {
+    managementServer = () => HttpResponse.json({ name: "bMS", version: "25.2.0.0" });
+    bms.listen({ onUnhandledRequest: "error" });
+  });
+  afterEach(() => { bms.close(); });
+  const withService = () => {
+    vi.stubEnv("BCONNECT_BASE_URL", "https://bms.gateway.test/bconnect");
+    vi.stubEnv("BCONNECT_API_KEY", "service-key");
+  };
+
+  it("detects the release with the service credential before it listens", async () => {
+    withService();
+    vi.stubEnv("BCONNECT_RELEASE", "26R1");
+    const { selectedRelease } = await import("@bconnect/mcp-core");
+    await start();
+    const msgs = logged().map((m) => m.msg);
+    const detected = msgs.indexOf("bMS 25.2.0.0 → release 25R2; BCONNECT_RELEASE=26R1 is ignored");
+    expect(detected).toBeGreaterThan(-1);
+    expect(detected).toBeLessThan(msgs.indexOf("listening"));
+    expect(selectedRelease()).toBe("25R2");
+  });
+
+  it("starts with the setting and a warning when the version can't be read", async () => {
+    withService();
+    vi.stubEnv("BCONNECT_RELEASE", "25R2");
+    managementServer = () => HttpResponse.json({ title: "Forbidden" }, { status: 403 });
+    await start();
+    expect(listen).toHaveBeenCalledOnce();
+    expect(logged().find((m) => m.level === "warn" && /could not detect the bMS release/.test(m.msg))?.msg).toMatch(/using 25R2 \(from BCONNECT_RELEASE\)/);
+  });
+
+  it("starts with a warning when there is no service credential to read it with", async () => {
+    await start();
+    expect(listen).toHaveBeenCalledOnce();
+    expect(logged().some((m) => m.level === "warn" && /could not detect the bMS release/.test(m.msg))).toBe(true);
+  });
+
+  it("sends nothing with BCONNECT_SKIP_CONNECTIVITY_CHECK=true", async () => {
+    withService();
+    vi.stubEnv("BCONNECT_SKIP_CONNECTIVITY_CHECK", "true");
+    managementServer = () => { throw new Error("must not be called"); };
+    await start();
+    expect(logged().some((m) => /release detection skipped/.test(m.msg))).toBe(true);
+  });
+});
 
 describe("gateway entry point", () => {
   it("listens on 127.0.0.1:3001 by default and says so", async () => {

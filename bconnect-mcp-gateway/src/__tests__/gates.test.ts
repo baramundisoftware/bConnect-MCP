@@ -102,7 +102,7 @@ describe("gateway with the gates closed", () => {
   it("gateway.ts checks BCONNECT_RELEASE before it creates the app", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(join(here, "..", "gateway.ts"), "utf8");
-    const check = source.search(/^  checkRelease\(process\.env\.BCONNECT_RELEASE\);$/m);
+    const check = source.search(/^  checkReleaseSetting\(\);$/m);
     expect(check).toBeGreaterThan(-1);
     expect(check).toBeLessThan(source.indexOf("createApp()"));
   });

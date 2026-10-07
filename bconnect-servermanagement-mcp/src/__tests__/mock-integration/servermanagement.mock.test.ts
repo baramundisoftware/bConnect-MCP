@@ -4,10 +4,12 @@
  */
 
 import { describe, it, beforeAll, expect } from 'vitest';
+import { detectRelease, forgetDetectedRelease } from '@bconnect/mcp-core';
 import { BConnectClient } from '../../bconnect-client.js';
 import {
   checkMockAvailable,
   createClient,
+  getMockHealth,
   MOCK_BASE_URL,
   NONEXISTENT_GUID,
 } from './helpers.js';
@@ -22,6 +24,23 @@ beforeAll(async () => {
     return;
   }
   client = createClient();
+});
+
+describe('release detection (#159, needs bConnect-Mock 0.5.0 or later)', () => {
+  it('selects the release the mock serves, from ManagementServer.version', async () => {
+    if (!available) {return;}
+    const health = await getMockHealth();
+    const expected = health!.bmsVersion.toUpperCase();
+    const lines: string[] = [];
+    try {
+      const release = await detectRelease(client, { info: (l) => lines.push(l), warn: (l) => lines.push(`warn ${l}`) }, {});
+      expect(lines, lines.join('\n')).toHaveLength(1);
+      expect(lines[0]).toMatch(new RegExp(`^bMS \\d+\\.\\d+[.\\d]* → release ${expected}$`));
+      expect(release).toBe(expected);
+    } finally {
+      forgetDetectedRelease();
+    }
+  });
 });
 
 describe('ServerManagement — list SecurityGroups', () => {
