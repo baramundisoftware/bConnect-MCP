@@ -22,7 +22,7 @@ import { envReads } from './lib/env-reads.js';
 
 /** The guides published under docs/ (the rest of docs/ is git-ignored), and the root documents. */
 const GUIDES = [
-  ...['AUDIT', 'CLIENTS', 'DOCKER', 'INSTALLATION', 'LIVE_BMS_TESTING', 'MOCK_INTEGRATION_TESTING', 'N8N', 'TROUBLESHOOTING']
+  ...['AUDIT', 'CLIENTS', 'CONFIGURATION', 'DOCKER', 'INSTALLATION', 'LIVE_BMS_TESTING', 'MOCK_INTEGRATION_TESTING', 'N8N', 'TROUBLESHOOTING']
     .map((name) => join(ROOT, 'docs', `${name}.md`)),
   ...['README', 'SECURITY', 'CONTRIBUTING', 'SUPPORT'].map((name) => join(ROOT, `${name}.md`)),
 ];
