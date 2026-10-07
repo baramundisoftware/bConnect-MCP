@@ -22,7 +22,7 @@ let answer: () => Response | Promise<Response> = () => HttpResponse.json({ name:
 let sent: string[] = [];
 const msw = setupServer(http.all('*', ({ request }) => { sent.push(`${request.method} ${new URL(request.url).pathname}`); return answer(); }));
 beforeAll(() => msw.listen({ onUnhandledRequest: 'error' }));
-afterEach(() => { sent = []; forgetDetectedRelease(); });
+afterEach(() => { sent = []; forgetDetectedRelease(); answer = () => HttpResponse.json({ name: 'bMS', version: '26.1.161.0' }); });
 afterAll(() => msw.close());
 
 const client = () => new BConnectClientBase({ baseUrl: BASE, apiKey: 'k', timeout: 200 });

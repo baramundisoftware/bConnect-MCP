@@ -768,7 +768,7 @@ export class BConnectClientBase {
    * (runServer), not the client's.
    */
   async checkConnection(): Promise<string | undefined> {
-    const path = this.config.healthCheckPath ?? this.probeRoute;
+    const path = this.config.healthCheckPath ?? this.probePath();
     if (!path) {
       return "this server's client sets no probeRoute";
     }
@@ -780,6 +780,25 @@ export class BConnectClientBase {
       const code = error instanceof BConnectConnectionError && error.code ? ` [${error.code}]` : "";
       return error instanceof Error ? `${error.message}${code}` : String(error);
     }
+  }
+
+  /**
+   * The route the startup check probes, asked at check time: a server whose
+   * route depends on the bMS release overrides this, so the probe follows the
+   * release detected after the client was built (#159).
+   */
+  protected probePath(): string | undefined {
+    return this.probeRoute;
+  }
+
+  /**
+   * `version` of the connected bMS (GET /servermanagement/v2.0/ManagementServer),
+   * or undefined when the answer has none; for release detection (#159).
+   */
+  async managementServerVersion(): Promise<unknown> {
+    const response = await this.client.get<unknown>("/servermanagement/v2.0/ManagementServer");
+    const data: unknown = response.data;
+    return typeof data === "object" && data !== null && "version" in data ? data.version : undefined;
   }
 
   /** The bConnect address this client sends to (for startup messages). */

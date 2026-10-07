@@ -141,12 +141,15 @@ describe('bconnect-servermanagement-mcp', () => {
     process.env.BCONNECT_BASE_URL = 'https://bms.test/bconnect';
     try {
       const { client } = await startServer('25R2');
+      // The refusal names the release in use when it is called, as a running server has it.
+      process.env.BCONNECT_RELEASE = '25R2';
       await expect(client.callTool({ name: 'list_api_keys', arguments: {} })).rejects.toThrow(
         'list_api_keys is only available in bMS 26R1; this server uses 25R2 (from BCONNECT_RELEASE).',
       );
     } finally {
       delete process.env.BCONNECT_API_KEY;
       delete process.env.BCONNECT_BASE_URL;
+      delete process.env.BCONNECT_RELEASE;
     }
   });
 

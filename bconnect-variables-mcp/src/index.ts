@@ -19,12 +19,12 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
-const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, selectedRelease(), tool);
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { VariablesRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -59,7 +59,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "update_variable_instance",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => selectedRelease(), withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
 
       // ── Variable Definitions ─────────────────────────────────────────
@@ -274,7 +274,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   }
 
   // countOnly (#165): count with one 1-row request instead of loading a page.
-  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
@@ -383,7 +383,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     } catch (error) {
       // API errors, gate refusals and configuration errors are tool results the
       // model can read; only McpErrors stay protocol errors (REQ-XC-001).
-      return toolErrorResult(error, process.env.BCONNECT_RELEASE ?? "26R1");
+      return toolErrorResult(error, selectedRelease());
     }
   }));
 
