@@ -9,7 +9,7 @@
 
 import express, { Request, Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { allowedHosts, hostCheck } from "@bconnect/mcp-core";
+import { allowedHosts, hostCheck, jsonRpcRequestErrors } from "@bconnect/mcp-core";
 
 import { createServer as createActivedirectoryServer } from "bconnect-activedirectory-mcp";
 import { createServer as createAssetsServer } from "bconnect-assets-mcp";
@@ -26,7 +26,7 @@ import { createServer as createUpdatemanagementServer } from "bconnect-updateman
 import { createServer as createVariablesServer } from "bconnect-variables-mcp";
 
 import { createRateLimitMiddleware } from "./rate-limit.js";
-import { createLogger } from "./logger.js";
+import { createLogger, type Logger } from "./logger.js";
 import { createAccessLogMiddleware } from "./access-log.js";
 
 // ─── Server factory registry ──────────────────────────────────────────────────
@@ -64,6 +64,18 @@ export function getServerFactory(domain: string): Function | undefined {
  */
 export function gatewayAllowedHosts(onIgnored?: (entry: string) => void): string[] {
   return allowedHosts(process.env.MCP_GATEWAY_ALLOWED_HOSTS, onIgnored);
+}
+
+/**
+ * For the request-error handler: logs a failure answered with a 5xx (message only).
+ * A body error (4xx) is the caller's mistake and shows in the access log alone.
+ */
+export function logServerErrors(logger: Pick<Logger, "error">): (status: number, error: unknown) => void {
+  return (status, error) => {
+    if (status >= 500) {
+      logger.error("request failed", { status, error: error instanceof Error ? error.message : String(error) });
+    }
+  };
 }
 
 // ─── App factory ──────────────────────────────────────────────────────────────
@@ -152,6 +164,16 @@ export function createApp(): express.Application {
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", servers: domains, count: domains.length });
   });
+
+  // A path no route matches: JSON, not Express's HTML page. This also answers OPTIONS
+  // (the gateway offers no CORS), which Express would otherwise answer with an Allow list.
+  app.use((_req: Request, res: Response) => {
+    res.status(404).json({ error: "Not found" });
+  });
+  // A body that can't be read (malformed JSON, over MCP_GATEWAY_MAX_BODY, an unsupported
+  // charset or encoding) or a failure that reaches Express: a JSON-RPC error, as in a
+  // server's HTTP mode. A body error shows in the access log; a 5xx is logged as well.
+  app.use(jsonRpcRequestErrors(logServerErrors(logger)));
 
   return app;
 }

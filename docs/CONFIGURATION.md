@@ -282,7 +282,8 @@ Host names the gateway answers to besides `localhost`, `127.0.0.1` and `[::1]`, 
 
 ### `MCP_GATEWAY_MAX_BODY`
 
-**Default:** `1mb`. Largest request body the gateway accepts.
+**Default:** `1mb`. Largest request body the gateway accepts; a larger one gets HTTP 413 with a
+JSON-RPC error.
 
 ### `LOG_LEVEL`
 
