@@ -54,7 +54,8 @@ describe('Endpoints — list Endpoints', () => {
     expect(typeof result.totalItems).toBe('number');
     expect(result.data!.length).toBeGreaterThanOrEqual(1);
     expect(result.data![0]).toHaveProperty('id');
-    expect(result.data![0]).toHaveProperty('endpointType');
+    // The spec's Endpoint (and a live bMS) names the kind of endpoint `type`
+    expect(result.data![0]).toHaveProperty('type');
   });
 });
 
