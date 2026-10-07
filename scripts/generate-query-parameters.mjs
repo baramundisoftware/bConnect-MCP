@@ -142,7 +142,33 @@ function variantOf(key) {
 }
 
 /** `type "WindowsEndpoint"` / `without type`, as the core says it. */
-const describeVariant = (select) => Object.entries(select).map(([n, v]) => (v === null ? `without ${n}` : `${n} "${v}"`)).join(" and ");
+const describeVariant = (select) => Object.entries(select).map(([n, v]) => (v === null ? `without ${n}` : `${n} "${v}"`))
+  .reduce((text, part) => (text === "" ? part : `${text}${part.startsWith("without ") ? " " : " and "}${part}`), "");
+
+/**
+ * Variants of a merged tool, named as briefly as the tool's variants in the release
+ * (`universe`) allow, the same way the core names them: with two or more selectors, the
+ * whole slices of one selector are named by the slice (`memberType "WindowsEndpoint",
+ * "MacEndpoint"` = every variant with one of those member types; `without memberType`),
+ * the rest one by one. A tool with one selector names each variant (REQ-SRV-029).
+ */
+function describeVariants(selects, universe) {
+  const names = Object.keys(universe[0] ?? {});
+  if (names.length < 2) {return selects.map(describeVariant).join(", ");}
+  const same = (a, b) => names.every((n) => a[n] === b[n]);
+  const chosen = (u) => selects.some((s) => same(s, u));
+  let best = { covered: [], parts: [] };
+  for (const n of names) {
+    const values = [...new Set(universe.map((u) => u[n]))].filter((v) => universe.filter((u) => u[n] === v).every(chosen));
+    const covered = universe.filter((u) => values.includes(u[n]));
+    if (covered.length > best.covered.length) {
+      const named = values.filter((v) => v !== null);
+      best = { covered, parts: [...(named.length > 0 ? [`${n} ${named.map((v) => `"${v}"`).join(", ")}`] : []), ...(values.includes(null) ? [`without ${n}`] : [])] };
+    }
+  }
+  const rest = selects.filter((s) => !best.covered.some((u) => same(s, u)));
+  return [...best.parts, ...rest.map(describeVariant)].join("; ");
+}
 
 /** Per merged tool, its variant keys in operations.ts order. */
 function mergedOf(keys) {
@@ -224,7 +250,8 @@ function difference(base, other) {
 /**
  * A merged tool's row in one release: the union of its variants' rows (those the release
  * has), in variant order, countOnly last. A property's definition is the first variant's;
- * where other variants describe it differently, the differing words follow, named by variant.
+ * where other variants describe it differently, the differing words follow, named by variant
+ * (by slice, when a tool has two or more selectors: describeVariants).
  */
 function mergedRow(keys, rows) {
   const out = new Map();
@@ -236,14 +263,15 @@ function mergedRow(keys, rows) {
       if (value.startsWith("{") && value !== out.get(name)) {
         const text = JSON.parse(value).description;
         const others = texts.get(name);
-        others.set(text, [...(others.get(text) ?? []), describeVariant(variantOf(key).select)]);
+        others.set(text, [...(others.get(text) ?? []), variantOf(key).select]);
       }
     }
   }
   for (const [name, others] of texts) {
     if (others.size === 0) {continue;}
     const first = JSON.parse(out.get(name));
-    first.description = [first.description, ...[...others].map(([text, labels]) => `For ${labels.join(", ")}: ${difference(first.description, text)}`)].join(" ");
+    const universe = keys.map((key) => variantOf(key).select);
+    first.description = [first.description, ...[...others].map(([text, selects]) => `For ${describeVariants(selects, universe)}: ${difference(first.description, text)}`)].join(" ");
     out.set(name, JSON.stringify(first));
   }
   if (keys.some((key) => rows.get(key)?.has("countOnly"))) {out.set("countOnly", "COUNT_ONLY_PROPERTY");}

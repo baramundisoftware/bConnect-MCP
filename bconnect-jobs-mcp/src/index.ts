@@ -360,7 +360,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // Assignment operations
         {
           name: "assign_job_to_logical_group",
-          description: "Assign a job definition to every endpoint in a logical group in baramundi, including the endpoints in all of its sub-groups (a parent group with no direct members can still reach many endpoints). A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first with list_endpoints_by_logical_group (includeSubfolders: true, PageSize: 1): its totalItems is the number of endpoints the assignment reaches, at all levels. Confirm it with the user before assigning. The answer lists the assignments that failed. WARNING: Triggers deployment on all of these endpoints.",
+          description: "Assign a job definition to every endpoint in a logical group in baramundi, including the endpoints in all of its sub-groups (a parent group with no direct members can still reach many endpoints). A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first with list_group_members (groupKind: \"LogicalGroup\", includeSubfolders: true, countOnly: true): its totalItems is the number of endpoints the assignment reaches, at all levels. Confirm it with the user before assigning. The answer lists the assignments that failed. WARNING: Triggers deployment on all of these endpoints.",
           inputSchema: {
             type: "object",
             properties: {
@@ -373,7 +373,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         },
         {
           name: "assign_job_to_static_group",
-          description: "Assign a job definition to every endpoint in a static group in baramundi. A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first with list_endpoints_by_static_group (PageSize: 1): its totalItems is the number of endpoints the assignment reaches. Confirm it with the user before assigning. The answer lists the assignments that failed. WARNING: Triggers deployment on all of these endpoints.",
+          description: "Assign a job definition to every endpoint in a static group in baramundi. A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first with list_group_members (groupKind: \"StaticGroup\", countOnly: true): its totalItems is the number of endpoints the assignment reaches. Confirm it with the user before assigning. The answer lists the assignments that failed. WARNING: Triggers deployment on all of these endpoints.",
           inputSchema: {
             type: "object",
             properties: {
@@ -386,7 +386,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         },
         {
           name: "assign_job_to_dynamic_group",
-          description: "Assign a job definition to every endpoint matching a Windows dynamic group in baramundi. A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first with list_endpoints_by_dynamic_group (PageSize: 1): its totalItems is the number of endpoints the assignment reaches. Confirm it with the user before assigning. The answer lists the assignments that failed. WARNING: Triggers deployment on all of these endpoints.",
+          description: "Assign a job definition to every endpoint matching a Windows dynamic group in baramundi. A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first with list_group_members (groupKind: \"DynamicGroup\", countOnly: true): its totalItems is the number of endpoints the assignment reaches. Confirm it with the user before assigning. The answer lists the assignments that failed. WARNING: Triggers deployment on all of these endpoints.",
           inputSchema: {
             type: "object",
             properties: {
@@ -399,7 +399,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         },
         {
           name: "assign_job_to_universal_dynamic_group",
-          description: "Assign a job definition to every endpoint matching a universal dynamic group in baramundi. A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first with list_endpoints_by_universal_dynamic_group (PageSize: 1): its totalItems is the number of endpoints the assignment reaches. Confirm it with the user before assigning. The answer lists the assignments that failed. WARNING: Triggers deployment on all of these endpoints.",
+          description: "Assign a job definition to every endpoint matching a universal dynamic group in baramundi. A job instance is created for every member, and each starts unless the job definition defers it. Check the reach first with list_group_members (groupKind: \"UniversalDynamicGroup\", countOnly: true): its totalItems is the number of endpoints the assignment reaches. Confirm it with the user before assigning. The answer lists the assignments that failed. WARNING: Triggers deployment on all of these endpoints.",
           inputSchema: {
             type: "object",
             properties: {

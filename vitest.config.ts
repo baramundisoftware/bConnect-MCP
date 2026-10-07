@@ -68,7 +68,7 @@ export default defineConfig({
         'bconnect-compliance-mcp/src/**': { lines: 98, branches: 88 }, // 100 / 90.70
         'bconnect-defensecontrol-mcp/src/**': { lines: 95, branches: 89 }, // 97.26 / 91.67
         'bconnect-endpoints-mcp/src/**': { lines: 96, branches: 89 }, // 98.24 / 91.08
-        'bconnect-groups-mcp/src/**': { lines: 98, branches: 65 }, // 100 / 67.31
+        'bconnect-groups-mcp/src/**': { lines: 98, branches: 98 }, // 100 / 100 (2 tools since #174)
         'bconnect-jobs-mcp/src/**': { lines: 97, branches: 78 }, // 99.10 / 80.77
         'bconnect-operatingsystems-mcp/src/**': { lines: 98, branches: 91 }, // 100 / 93.75
         'bconnect-servermanagement-mcp/src/**': { lines: 98, branches: 94 }, // 100 / 96.51

@@ -1,10 +1,11 @@
 /**
  * Server tool registration tests for bconnect-groups-mcp
  *
- * Asserts that listTools() returns the group-scoped endpoint query tools: 33 in
- * all (27 group-type queries + 6 ADUser queries), 30 on 26R1 (the default), where
- * the 3 industrial-endpoint queries have no route (#159). All tools are read-only
- * GET operations.
+ * Asserts that listTools() returns the two group-scoped tools in both releases:
+ * list_group_members (group kind, group id, member type) and
+ * list_ad_user_endpoints (AD user, endpoint type). They replace the 33 per-kind,
+ * per-type tools (REQ-SRV-029, #174); the industrial-endpoint routes are a
+ * member type on 25R2 only (#159). All tools are read-only GET operations.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -12,46 +13,7 @@ import { createServer } from '../index.js';
 
 // ── Expected tool set ──────────────────────────────────────────────────────
 
-const GROUPS_TOOLS = [
-  // Logical Group queries (9)
-  'list_endpoints_by_logical_group',
-  'list_android_endpoints_by_logical_group',
-  'list_ios_endpoints_by_logical_group',
-  'list_linux_endpoints_by_logical_group',
-  'list_mac_endpoints_by_logical_group',
-  'list_network_endpoints_by_logical_group',
-  'list_windows_endpoints_by_logical_group',
-  'list_industrial_endpoints_by_logical_group',
-  'list_logical_groups_by_logical_group',
-  // Static Group queries (8)
-  'list_endpoints_by_static_group',
-  'list_android_endpoints_by_static_group',
-  'list_ios_endpoints_by_static_group',
-  'list_linux_endpoints_by_static_group',
-  'list_mac_endpoints_by_static_group',
-  'list_network_endpoints_by_static_group',
-  'list_windows_endpoints_by_static_group',
-  'list_industrial_endpoints_by_static_group',
-  // Dynamic Group queries (2)
-  'list_endpoints_by_dynamic_group',
-  'list_windows_endpoints_by_dynamic_group',
-  // Universal Dynamic Group queries (8)
-  'list_endpoints_by_universal_dynamic_group',
-  'list_android_endpoints_by_universal_dynamic_group',
-  'list_ios_endpoints_by_universal_dynamic_group',
-  'list_linux_endpoints_by_universal_dynamic_group',
-  'list_mac_endpoints_by_universal_dynamic_group',
-  'list_network_endpoints_by_universal_dynamic_group',
-  'list_windows_endpoints_by_universal_dynamic_group',
-  'list_industrial_endpoints_by_universal_dynamic_group',
-  // AD User queries (6) — Phase 25 addition
-  'list_endpoints_by_ad_user',
-  'list_android_endpoints_by_ad_user',
-  'list_ios_endpoints_by_ad_user',
-  'list_linux_endpoints_by_ad_user',
-  'list_mac_endpoints_by_ad_user',
-  'list_windows_endpoints_by_ad_user',
-] as const;
+const GROUPS_TOOLS = ['list_group_members', 'list_ad_user_endpoints'] as const;
 
 // Tools from other servers that must NOT be present
 const ENDPOINTS_CRUD_TOOLS = [
@@ -78,24 +40,12 @@ async function getToolNames(): Promise<string[]> {
 
 describe('bconnect-groups-mcp server', () => {
   describe('listTools()', () => {
-    it('returns exactly 30 group-scoped tools on 26R1 (33 less the 3 industrial-endpoint queries)', async () => {
-      const toolNames = await getToolNames();
-      expect(toolNames).toHaveLength(30);
-    });
-
-    it('contains all expected groups tools, the industrial-endpoint queries only on 25R2', async () => {
-      const on26 = await getToolNames();
-      for (const tool of GROUPS_TOOLS) {
-        if (tool.includes('industrial')) {
-          expect(on26, `"${tool}" has no route in 26R1`).not.toContain(tool);
-        } else {
-          expect(on26, `Expected tool "${tool}" to be registered`).toContain(tool);
-        }
-      }
+    it('returns exactly the 2 group-scoped tools on 26R1 and on 25R2', async () => {
+      expect([...await getToolNames()].sort()).toEqual([...GROUPS_TOOLS].sort());
       const before = process.env.BCONNECT_RELEASE;
       process.env.BCONNECT_RELEASE = '25R2';
       try {
-        expect(await getToolNames()).toEqual(expect.arrayContaining(GROUPS_TOOLS.filter((t) => t.includes('industrial'))));
+        expect([...await getToolNames()].sort()).toEqual([...GROUPS_TOOLS].sort());
       } finally {
         if (before === undefined) {delete process.env.BCONNECT_RELEASE;} else {process.env.BCONNECT_RELEASE = before;}
       }

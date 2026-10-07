@@ -75,15 +75,21 @@ describe('#186 the path id and undeclared arguments stay out of the query', () =
 describe('#170 logical-group tools reach sub-groups', () => {
   it.each([
     ['endpoints', 'list_endpoints_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/Endpoints`],
-    ['groups', 'list_endpoints_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/Endpoints`],
-    ['groups', 'list_windows_endpoints_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/WindowsEndpoints`],
-    ['groups', 'list_logical_groups_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/LogicalGroups`],
     ['defensecontrol', 'list_defender_threats_by_logical_group', `/defensecontrol/v2.0/MicrosoftDefender/LogicalGroups/${G}/Threats`],
     ['jobs', 'list_job_instances_by_logical_group', `/jobs/v2.0/LogicalGroups/${G}/JobInstances`],
     ['software', 'list_installed_software_by_logical_group', `/software/v2.0/LogicalGroups/${G}/InstalledWindowsSoftware`],
   ])('%s %s offers and sends includeSubfolders', async (server, name, path) => {
     expect(await propsOf(server, name)).toContain('includeSubfolders');
     expect(await call(server, name, { logicalGroupId: G, includeSubfolders: true })).toEqual([{ path, query: { includeSubfolders: 'true' } }]);
+  });
+
+  it.each([
+    [{}, `/endpoints/v2.0/LogicalGroups/${G}/Endpoints`],
+    [{ memberType: 'WindowsEndpoint' }, `/endpoints/v2.0/LogicalGroups/${G}/WindowsEndpoints`],
+    [{ memberType: 'LogicalGroup' }, `/endpoints/v2.0/LogicalGroups/${G}/LogicalGroups`],
+  ])('groups list_group_members of a logical group %j offers and sends includeSubfolders (REQ-SRV-029)', async (select, path) => {
+    expect(await propsOf('groups', 'list_group_members')).toContain('includeSubfolders');
+    expect(await call('groups', 'list_group_members', { groupKind: 'LogicalGroup', ...select, groupId: G, includeSubfolders: true })).toEqual([{ path, query: { includeSubfolders: 'true' } }]);
   });
 
   it('endpoints list_endpoints_by_logical_group with type WindowsEndpoint sends includeSubfolders (REQ-SRV-029)', async () => {

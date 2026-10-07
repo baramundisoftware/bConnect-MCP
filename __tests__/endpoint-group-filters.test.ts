@@ -72,16 +72,21 @@ describe('endpoints', () => {
   });
 });
 
-describe('groups', () => {
-  it('list_windows_endpoints_by_static_group offers and sends HostName and Domain', async () => {
-    expect(await propsOf('groups', 'list_windows_endpoints_by_static_group')).toEqual(expect.arrayContaining(['HostName', 'Domain', 'DisplayName']));
-    expect(await call('groups', 'list_windows_endpoints_by_static_group', { staticGroupId: G, HostName: 'pc01' }))
-      .toEqual([{ path: `/endpoints/v2.0/StaticGroups/${G}/WindowsEndpoints`, query: { HostName: 'pc01' } }]);
+describe('groups (one tool per operation, REQ-SRV-029)', () => {
+  it('list_group_members of a static group\'s Windows endpoints offers and sends HostName and Domain', async () => {
+    expect(await propsOf('groups', 'list_group_members')).toEqual(expect.arrayContaining(['groupKind', 'groupId', 'memberType', 'HostName', 'Domain', 'DisplayName']));
+    expect(await call('groups', 'list_group_members', { groupKind: 'StaticGroup', memberType: 'WindowsEndpoint', groupId: G, HostName: 'pc01', Domain: 'corp' }))
+      .toEqual([{ path: `/endpoints/v2.0/StaticGroups/${G}/WindowsEndpoints`, query: { HostName: 'pc01', Domain: 'corp' } }]);
   });
 
-  it('list_logical_groups_by_logical_group offers Name, Dip and Domain', async () => {
-    expect(await propsOf('groups', 'list_logical_groups_by_logical_group')).toEqual(expect.arrayContaining(['Name', 'Dip', 'Domain', 'includeSubfolders']));
-    expect(await call('groups', 'list_logical_groups_by_logical_group', { logicalGroupId: G, Name: 'Berlin' }))
-      .toEqual([{ path: `/endpoints/v2.0/LogicalGroups/${G}/LogicalGroups`, query: { Name: 'Berlin' } }]);
+  it('list_group_members of a logical group\'s child groups offers and sends Name, Dip and Domain', async () => {
+    expect(await propsOf('groups', 'list_group_members')).toEqual(expect.arrayContaining(['Name', 'Dip', 'Domain', 'includeSubfolders']));
+    expect(await call('groups', 'list_group_members', { groupKind: 'LogicalGroup', memberType: 'LogicalGroup', groupId: G, Name: 'Berlin', Dip: 'd1' }))
+      .toEqual([{ path: `/endpoints/v2.0/LogicalGroups/${G}/LogicalGroups`, query: { Name: 'Berlin', Dip: 'd1' } }]);
+  });
+
+  it('list_ad_user_endpoints sends the Windows filters with endpointType WindowsEndpoint', async () => {
+    expect(await call('groups', 'list_ad_user_endpoints', { endpointType: 'WindowsEndpoint', adUserId: G, Domain: 'corp' }))
+      .toEqual([{ path: `/endpoints/v2.0/ADUsers/${G}/WindowsEndpoints`, query: { Domain: 'corp' } }]);
   });
 });

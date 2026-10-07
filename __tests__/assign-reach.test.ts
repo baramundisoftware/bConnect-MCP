@@ -27,15 +27,18 @@ afterAll(async () => { await client.close(); process.env = saved; });
 const description = async (name: string) => (await client.listTools()).tools.find((t) => t.name === name)?.description ?? '';
 
 describe.each([
-  ['assign_job_to_logical_group', 'list_endpoints_by_logical_group'],
-  ['assign_job_to_static_group', 'list_endpoints_by_static_group'],
-  ['assign_job_to_dynamic_group', 'list_endpoints_by_dynamic_group'],
-  ['assign_job_to_universal_dynamic_group', 'list_endpoints_by_universal_dynamic_group'],
-])('%s', (tool, members) => {
+  ['assign_job_to_logical_group', 'LogicalGroup'],
+  ['assign_job_to_static_group', 'StaticGroup'],
+  ['assign_job_to_dynamic_group', 'DynamicGroup'],
+  ['assign_job_to_universal_dynamic_group', 'UniversalDynamicGroup'],
+])('%s', (tool, groupKind) => {
+  // The member listing is list_group_members with the group kind (REQ-SRV-029); countOnly
+  // counts with one 1-row request (#165) instead of PageSize: 1.
   it('names the call that counts its reach', async () => {
     const d = await description(tool);
-    expect(d).toContain(members);
-    expect(d).toContain('PageSize: 1');
+    expect(d).toContain(`list_group_members (groupKind: "${groupKind}"`);
+    expect(d).toContain('countOnly: true');
+    expect(d).not.toContain('PageSize');
     expect(d).toMatch(/totalItems/);
   });
 

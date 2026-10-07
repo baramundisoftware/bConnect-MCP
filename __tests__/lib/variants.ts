@@ -31,3 +31,35 @@ export function describeVariant(select: Record<string, string | null>): string {
 export function selectorArguments(key: string): Record<string, string> {
   return Object.fromEntries(Object.entries(variantOf(key).select).filter(([, v]) => v !== null)) as Record<string, string>;
 }
+
+/**
+ * Whether one part of an "Only for …" / "Not for …" note names the route `select`: its full
+ * label (`groupKind "LogicalGroup" and memberType "MacEndpoint"`), or, for a tool with two or
+ * more selectors, a whole slice of one selector (`memberType "WindowsEndpoint", "MacEndpoint"`,
+ * `without memberType`).
+ */
+export function partNames(part: string, select: Record<string, string | null>): boolean {
+  if (part === describeVariant(select)) return true;
+  if (part.includes(' and ')) return false;
+  if (part.startsWith('without ')) {
+    const name = part.slice('without '.length);
+    return !name.includes(' ') && name in select && select[name] === null;
+  }
+  const space = part.indexOf(' ');
+  const name = part.slice(0, space);
+  if (space < 0 || !(name in select) || part.includes(' without ')) return false;
+  const values: unknown[] = JSON.parse(`[${part.slice(space + 1)}]`);
+  return values.includes(select[name]);
+}
+
+/** Whether a property with this description is taken by the route `select`: true without a note. */
+export function routeTakes(description: unknown, select: Record<string, string | null>): boolean {
+  // The core appends the note last: read from the last "Only for " / "Not for ", so a spec text
+  // that happens to contain those words earlier isn't taken for the note.
+  const text = String(description ?? '');
+  const at = Math.max(text.lastIndexOf('Only for '), text.lastIndexOf('Not for '));
+  if (at < 0 || !text.endsWith('.')) return true;
+  const only = text.startsWith('Only for ', at);
+  const named = text.slice(at + (only ? 'Only for '.length : 'Not for '.length), -1).split('; ').some((part) => partNames(part, select));
+  return only ? named : !named;
+}
