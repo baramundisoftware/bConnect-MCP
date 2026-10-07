@@ -151,6 +151,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and error messages are unchanged. Consumers that parse the JSON see no difference; if you compare
   result text, set the new `BCONNECT_PRETTY_JSON=true` to get the earlier indented format. The
   setting accepts `true` or `false`; any other value stops the server and the gateway.
+- **Every pull request is tested against the bConnect mock, for bMS 26R1 and 25R2.** The
+  mock-integration tests, which send each server's requests to bConnect-Mock's real routes and
+  fixtures, ran only by hand. CI now runs them in a `mock` job, once per release, against a pinned
+  mock version (26R1: all 13 servers; 25R2: the 11 whose APIs exist there). A run where the mock
+  wasn't reachable fails instead of passing untested. By hand: `node scripts/mock-tier.mjs 26r1`
+  (docs/MOCK_INTEGRATION_TESTING.md).
 
 ### Fixed
 - **The gateway answers request errors with JSON-RPC, not an HTML page.** A request body that isn't
