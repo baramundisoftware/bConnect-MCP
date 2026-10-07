@@ -603,9 +603,6 @@ export class BConnectClientBase {
       },
       (error) => Promise.reject(error)
     );
-
-    // TODO: Initialize V2.0 module
-    // Example: this.domain = new DomainModule(this.client);
   }
 
   /**

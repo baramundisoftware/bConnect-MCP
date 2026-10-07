@@ -291,7 +291,7 @@ function toolTable(server, specs) {
       for (const v of params.values()) {if (/^[A-Z_]+$/.test(v)) {used.add(v);}}
       lines.push(`    ${keyText(key)}: {\n${[...params].map(([n, v]) => `      ${n}: ${v},`).join("\n")}\n    },`);
     };
-    for (const [key, ids] of tools) {
+    for (const [key] of tools) {
       const { tool } = variantOf(key);
       // The merged tool's row comes right before its first variant's.
       if (merged.get(tool)?.[0] === key) {

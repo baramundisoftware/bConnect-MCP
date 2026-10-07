@@ -6,7 +6,6 @@
  */
 
 import { spawn } from 'child_process';
-import { createInterface } from 'readline';
 
 // Start the MCP server
 console.log('🚀 Starting bConnect MCP Server...\n');
@@ -169,7 +168,7 @@ async function main() {
 }
 
 // Handle server stderr
-server.stderr.on('data', (data) => {
+server.stderr.on('data', () => {
   // Suppress server initialization messages
 });
 
