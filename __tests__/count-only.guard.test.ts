@@ -22,10 +22,11 @@ import { RELEASES, loadOperations, type Schema } from './lib/spec.js';
 import { ID, ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, requiredArguments, type RecordedRequest } from './lib/exerciser.js';
 
 /**
- * Tools offering countOnly per release (b787881 specs): 107 / 119 with a paged route in that
- * release, plus 4 / 4 listed tools whose route only the other release has.
+ * Tools offering countOnly per release: the paged tools with a route in that release (bundled
+ * specs). Since #159 a tool whose route only the other release has is not listed (it was, with
+ * that release's parameters: +6 on 25R2, +4 on 26R1).
  */
-const COUNTABLE = { '25R2': 111, '26R1': 123 } as const;
+const COUNTABLE = { '25R2': 105, '26R1': 119 } as const;
 const TOTAL = 4242;
 const INVALID_PARAMS = -32602;
 /** Arguments that page or sort; everything else the caller gives is a filter. */
@@ -160,8 +161,8 @@ describe.each(RELEASES)('bMS %s', (release) => {
 
   it('every server is covered and the domain segment is kept', () => {
     const servers = new Set(counted.map((c) => c.server));
-    // Universal Dynamic Groups are 26R1 only: on 25R2 that server lists no countable tool.
-    expect(servers.size).toBe(release === '25R2' ? SERVERS.length - 1 : SERVERS.length);
+    // Compliance and universal dynamic groups are 26R1 only: on 25R2 those servers list no tool.
+    expect(servers.size).toBe(release === '25R2' ? SERVERS.length - 2 : SERVERS.length);
     const wrong = counted.filter((c) => c.count.sent.length === 1 && !c.count.sent[0].path.startsWith(`/${domainOf(c.server)}/`)).map((c) => `${c.server} ${c.tool} ${c.count.sent[0].path}`);
     expect(wrong).toEqual([]);
   });

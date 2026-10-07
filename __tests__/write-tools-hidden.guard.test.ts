@@ -20,12 +20,15 @@ import { toolEffect } from '../packages/mcp-core/src/tool-annotations.js';
 import { RELEASES, loadOperations } from './lib/spec.js';
 import { ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, requiredArguments } from './lib/exerciser.js';
 
-/** Tools listed per release: all of them with writes on, the reads with writes off (measured on d208ab0). */
-const COUNTS = { '26R1': { on: 276, off: 178 }, '25R2': { on: 240, off: 156 } } as const;
+/**
+ * Tools listed per release: all of them with writes on, the reads with writes off (measured on d208ab0;
+ * since #159 without the tools whose routes the release lacks: 26R1 −8 (5 reads), 25R2 −10 (8 reads)).
+ */
+const COUNTS = { '26R1': { on: 268, off: 173 }, '25R2': { on: 230, off: 148 } } as const;
 
 /** Read tools per server on 26R1 (listed with writes off); the 4 servers without write tools are absent. */
 const READS_26R1: Record<string, number> = {
-  'bconnect-assets-mcp': 15, 'bconnect-defensecontrol-mcp': 10, 'bconnect-endpoints-mcp': 27, 'bconnect-jobs-mcp': 20,
+  'bconnect-assets-mcp': 15, 'bconnect-defensecontrol-mcp': 10, 'bconnect-endpoints-mcp': 25, 'bconnect-jobs-mcp': 20,
   'bconnect-operatingsystems-mcp': 5, 'bconnect-servermanagement-mcp': 16, 'bconnect-software-mcp': 11,
   'bconnect-updatemanagement-mcp': 2, 'bconnect-variables-mcp': 9,
 };
