@@ -38,10 +38,11 @@ describe('DefenseControl — get BitLocker endpoint by id', () => {
   it('returns the same endpoint surfaced by the list', async () => {
     if (!available) {return;}
     const list = await client.defenseControl.getBitLockerWindowsEndpoints({ PageSize: 1 } as never);
-    const id = list.data?.[0]?.id;
+    // BitLockerWindowsEndpoint has no id field in the spec (or on a live bMS), only endpointId
+    const id = list.data?.[0]?.endpointId;
     if (!id) {throw new Error('mock returned empty BitLocker list');}
     const item = await client.defenseControl.getBitLockerWindowsEndpoint(id);
-    expect(item.id).toBe(id);
+    expect(item.endpointId).toBe(id);
   });
 });
 
