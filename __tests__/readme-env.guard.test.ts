@@ -15,6 +15,7 @@ import { describe, expect, it } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, join, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { ROOT, SERVERS } from './lib/exerciser.js';
 import { envReads } from './lib/env-reads.js';
 
@@ -107,7 +108,8 @@ function withoutComments(text: string): string {
   }
 }
 
-function listedVariables(original: string): string[] | null {
+/** The table rows of the README's marked block as a reader sees them, or `null` when the block is missing. */
+function blockRows(original: string): string[] | null {
   const readme = lf(original);
   const start = readme.indexOf(START);
   const end = readme.indexOf(END);
@@ -118,11 +120,52 @@ function listedVariables(original: string): string[] | null {
     // at least as long; an unclosed fence runs to the end.
     .replace(/^ {0,3}((`|~)\2{2,})[^\n]*\n[\s\S]*?(?:^ {0,3}\1\2*[ \t]*$|$(?![\s\S]))/gm, '');
   // A table row starts with | after at most three spaces; four or more make it code.
-  const rows = block.split('\n').filter((line) => /^ {0,3}\|/.test(line));
-  const names = rows
-    .map((row) => /^\s*\|\s*`([A-Z][A-Z0-9_]*)`/.exec(row)?.[1])
+  return block.split('\n').filter((line) => /^ {0,3}\|/.test(line));
+}
+
+function listedVariables(original: string): string[] | null {
+  const rows = blockRows(original);
+  if (rows === null) return null;
+  // `NAME`, or `NAME` linked to the configuration guide (REQ-DOC-001).
+  return rows
+    .map((row) => /^\s*\|\s*\[?`([A-Z][A-Z0-9_]*)`/.exec(row)?.[1])
     .filter((name): name is string => name !== undefined);
-  return names;
+}
+
+/** The block's header row (REQ-DOC-001): the description is in the guide, the README says only what differs here. */
+const FORM_HEADER = '| Variable | In this server |';
+/** A remark says what is different in this server; the description itself is in the guide. */
+const REMARK_MAX = 160;
+
+/**
+ * Rows of the block that aren't in the form REQ-DOC-001 sets: the header, the separator, then one
+ * row per variable, `| [\`NAME\`](../docs/CONFIGURATION.md#name) | remark |`, the remark short or empty.
+ */
+function rowFormProblems(original: string): string[] {
+  const rows = blockRows(original);
+  if (rows === null) return ['no block'];
+  const [header, separator, ...data] = rows.map((r) => r.trim());
+  const problems: string[] = [];
+  if (header !== FORM_HEADER) problems.push(`header: ${header ?? '-'}`);
+  if (!/^\|\s*-{3,}\s*\|\s*-{3,}\s*\|$/.test(separator ?? '')) problems.push(`separator: ${separator ?? '-'}`);
+  for (const row of data) {
+    const m = /^\| \[`([A-Z][A-Z0-9_]*)`\]\(\.\.\/docs\/CONFIGURATION\.md#([a-z0-9_]+)\) \|(.*)\|$/.exec(row);
+    if (!m) {
+      problems.push(`row: ${row}`);
+      continue;
+    }
+    const [, name, anchor, remark] = m;
+    if (anchor !== name.toLowerCase()) problems.push(`anchor: ${name} → #${anchor}`);
+    if (remark.includes('|')) problems.push(`cells: ${name}`);
+    if (remark.trim().length > REMARK_MAX) problems.push(`remark too long: ${name} (${remark.trim().length})`);
+  }
+  return problems;
+}
+
+/** The remark of one variable in the block, '' when it has none, undefined when it isn't listed. */
+function remarkOf(original: string, name: string): string | undefined {
+  const row = (blockRows(original) ?? []).find((r) => r.includes(`[\`${name}\`]`));
+  return row === undefined ? undefined : row.trim().split('|').slice(2, -1).join('|').trim();
 }
 
 /** Every variable name the README mentions, anywhere. */
@@ -167,6 +210,27 @@ function assertPackageClean(sourceDirs: string[], readme: string): void {
 }
 
 const PACKAGES = [...SERVERS, 'bconnect-server-template'].filter((d) => existsSync(join(ROOT, d, 'src')));
+
+describe('row form self-tests (REQ-DOC-001)', () => {
+  const block = (rows: string[]) => [START, FORM_HEADER, '|---|---|', ...rows, END].join('\n');
+  const row = (name: string, remark = '') => `| [\`${name}\`](../docs/CONFIGURATION.md#${name.toLowerCase()}) | ${remark} |`;
+
+  it('accepts names linked to their guide anchor, with or without a short remark', () => {
+    expect(rowFormProblems(block([row('BCONNECT_BASE_URL'), row('ALLOW_SECRET_READ', 'No effect: no tool here returns secrets.')]))).toEqual([]);
+    expect(listedVariables(block([row('BCONNECT_BASE_URL')]))).toEqual(['BCONNECT_BASE_URL']);
+    expect(remarkOf(block([row('ALLOW_SECRET_READ', 'No effect.')]), 'ALLOW_SECRET_READ')).toBe('No effect.');
+    expect(remarkOf(block([row('MCP_PORT')]), 'MCP_PORT')).toBe('');
+  });
+
+  it('reports the old four-column table, a wrong anchor, an unlinked name and a long remark', () => {
+    const old = [START, '| Variable | Required | Default | Description |', '|---|---|---|---|', '| `MCP_PORT` | No | 3000 | Port |', END].join('\n');
+    expect(rowFormProblems(old)).toEqual(expect.arrayContaining([expect.stringContaining('header'), expect.stringContaining('row: | `MCP_PORT`')]));
+    expect(rowFormProblems(block(['| [`MCP_PORT`](../docs/CONFIGURATION.md#mcp_bind) |  |']))).toEqual(['anchor: MCP_PORT → #mcp_bind']);
+    expect(rowFormProblems(block(['| `MCP_PORT` |  |']))).toEqual(['row: | `MCP_PORT` |  |']);
+    expect(rowFormProblems(block([row('MCP_PORT', 'x'.repeat(REMARK_MAX + 1))]))).toEqual([`remark too long: MCP_PORT (${REMARK_MAX + 1})`]);
+    expect(rowFormProblems(block([row('MCP_PORT', 'a | b')]))).toEqual(['cells: MCP_PORT']);
+  });
+});
 
 describe('guard self-tests', () => {
   const read = new Set(['BCONNECT_BASE_URL', 'ALLOW_WRITE_OPERATIONS']);
@@ -344,10 +408,44 @@ describe('guard self-tests', () => {
 });
 
 describe.each(PACKAGES)('%s README', (pkg) => {
+  const path = join(ROOT, pkg, 'README.md');
+  const readme = (): string => (existsSync(path) ? readFileSync(path, 'utf8') : '');
+
   it('documents exactly the environment variables the server reads', () => {
-    const path = join(ROOT, pkg, 'README.md');
-    const readme = existsSync(path) ? readFileSync(path, 'utf8') : '';
     expect.assertions(1);
-    assertPackageClean([join(ROOT, pkg, 'src'), CORE_SRC], readme);
+    assertPackageClean([join(ROOT, pkg, 'src'), CORE_SRC], readme());
+  });
+
+  it('links each one to the configuration guide and adds only what differs here (REQ-DOC-001)', () => {
+    expect(rowFormProblems(readme())).toEqual([]);
+  });
+});
+
+/**
+ * The remarks that state a real per-server fact, derived from the code rather than written by hand
+ * (REQ-DOC-001): where ALLOW_SECRET_READ does nothing, and what the release changes for the server.
+ */
+describe.each(SERVERS)('%s README remarks', (server) => {
+  const readme = (): string => readFileSync(join(ROOT, server, 'README.md'), 'utf8');
+  const domain = server.replace(/^bconnect-|-mcp$/g, '');
+
+  it('says ALLOW_SECRET_READ has no effect exactly where no tool returns secrets', async () => {
+    const { SECRET_ROUTES } = await import('../packages/mcp-core/src/secret-routes.js');
+    const hasSecrets = SECRET_ROUTES.some((r: { domain: string }) => r.domain === domain);
+    const remark = remarkOf(readme(), 'ALLOW_SECRET_READ') ?? '';
+    expect(remark.startsWith('No effect'), remark).toBe(!hasSecrets);
+  });
+
+  it('says what the release changes: marked tools, or that the server stops on 25R2', async () => {
+    const { TOOL_RELEASES } = await import(pathToFileURL(join(ROOT, server, 'src', 'tool-releases.ts')).href);
+    const rows: string[][] = Object.values(TOOL_RELEASES);
+    const remark = remarkOf(readme(), 'BCONNECT_RELEASE') ?? '';
+    const text = readme().slice(0, readme().indexOf(START));
+    if (!rows.some((r) => r.includes('25R2'))) {
+      expect(remark).toContain('stops at startup');
+      return;
+    }
+    expect(remark.includes('**(26R1)**'), remark).toBe(text.includes('**(26R1)**'));
+    expect(remark.includes('**(25R2)**'), remark).toBe(text.includes('**(25R2)**'));
   });
 });
