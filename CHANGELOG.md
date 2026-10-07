@@ -27,6 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`) are unchanged and still decide what a tool may do.
 
 ### Changed
+- **A server whose APIs the bMS release lacks says so at startup.** Started against a bMS 2025 R2,
+  the compliance and universaldynamicgroups servers stopped with `cannot reach bConnect API … Check
+  BCONNECT_BASE_URL, credentials, and network.`, although the bMS was reachable: their APIs exist
+  only in 26R1 (#310). They now stop before the connectivity check, also when it is skipped, with one
+  line that names the release they need and the one in use, for example `bconnect-compliance-mcp:
+  needs bMS 26R1; this server uses 25R2 (detected: bMS 25.2.0.0). None of its APIs exist in that
+  release.` Which release a server needs comes from its generated release table. On 26R1, and for
+  the other 11 servers, nothing changes; the HTTP gateway still serves both domains with empty tool
+  lists on 25R2. Not breaking.
 - **Breaking: the endpoint and groups tools are one tool per operation, with the type as an argument.**
   The endpoints server had a copy of each operation per device type; the copies are merged into one
   tool with a `type` argument (#174). Its values are the API's endpoint type names, the same as the

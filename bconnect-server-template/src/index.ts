@@ -37,6 +37,9 @@
  *      `withReleaseTools(TOOL_RELEASES, …)` and call `refuseUnavailableTool(TOOL_RELEASES, name)`
  *      right after `refuseUndeclared`; never check the release by hand.
  *      __tests__/release-tools.guard.test.ts fails until this is done.
+ *      Pass the table to `runServer` as `releases: TOOL_RELEASES` (REQ-SRV-030): a release
+ *      that lists none of the server's tools then stops it at startup with a line naming
+ *      the release it needs. __tests__/needs-release.guard.test.ts fails until this is done.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -187,4 +190,5 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-runServer({ name: "bconnect-DOMAIN-mcp", createServer, clients });
+// Replace with TOOL_RELEASES from the generated src/tool-releases.ts (step 10).
+runServer({ name: "bconnect-DOMAIN-mcp", createServer, clients, releases: { example_tool: ["25R2", "26R1"] } });

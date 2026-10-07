@@ -17,6 +17,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
+import { TOOL_RELEASES } from "./tool-releases.js";
 import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -769,4 +770,4 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-runServer({ name: "bconnect-jobs-mcp", createServer, clients });
+runServer({ name: "bconnect-jobs-mcp", createServer, clients, releases: TOOL_RELEASES });

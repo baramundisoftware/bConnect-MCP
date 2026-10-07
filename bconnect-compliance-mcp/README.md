@@ -5,7 +5,7 @@ Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST 
 **Domain:** Compliance rules, CVE vulnerabilities, and mobile device rule violations (requires baramundi 2026 R1)  
 **Tools:** 8 (none on bMS 25R2) — the compliance API needs bMS 2026 R1
 
-> **Note:** This server requires baramundi Management Suite 2026 R1 or later. The compliance API does not exist in 25R2.
+> **Note:** This server requires baramundi Management Suite 2026 R1 or later. The compliance API does not exist in 25R2: on a 25R2 bMS (detected at startup, or `BCONNECT_RELEASE=25R2` as the fallback) the server stops at startup with `needs bMS 26R1; this server uses 25R2 (…)`.
 
 ---
 

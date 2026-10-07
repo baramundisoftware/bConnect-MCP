@@ -46,6 +46,8 @@ beforeAll(() => msw.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => { requests = []; TestClient.built = []; forgetDetectedRelease(); msw.resetHandlers(); });
 
 const DETECT = 'GET /bconnect/servermanagement/v2.0/ManagementServer';
+/** A server's generated release table (src/tool-releases.ts) with tools in both releases. */
+const BOTH = { list_things: ['25R2', '26R1'] } as const;
 afterAll(() => msw.close());
 
 describe('serverClients: one client per server process (D1 = a)', () => {
@@ -129,6 +131,7 @@ describe('startServer: the one startup routine', () => {
     name: 'bconnect-runtime-mcp',
     createServer,
     clients: serverClients(TestClient, env),
+    releases: BOTH,
   });
 
   it('checks the connection with the shared client and says it verified it', async () => {
@@ -207,6 +210,7 @@ describe('startServer: the bMS release is detected first (REQ-SRV-028, #159)', (
     name: 'bconnect-runtime-mcp',
     createServer: () => { order.push(`createServer ${selectedRelease(env)}`); return { server: {} as never }; },
     clients: serverClients(TestClient, env),
+    releases: BOTH,
   });
   afterEach(() => { order = []; });
 
@@ -238,6 +242,102 @@ describe('startServer: the bMS release is detected first (REQ-SRV-028, #159)', (
     await startServer(entry(env), t.options);
     expect(requests).toEqual([]);
     expect(t.lines).toContain('bconnect-runtime-mcp: release detection skipped (BCONNECT_SKIP_CONNECTIVITY_CHECK=true); using 26R1 (default)');
+  });
+});
+
+describe('startServer: a server whose APIs the release lacks says so (REQ-SRV-030, #310)', () => {
+  function io(env: NodeJS.ProcessEnv) {
+    const lines: string[] = [];
+    const exit = vi.fn((code: number) => { throw new Error(`exit ${code}`); }) as unknown as (code: number) => never;
+    const connectStdio = vi.fn(async () => undefined);
+    return { lines, connectStdio, options: { env, error: (line: string) => lines.push(line), exit, connectStdio } };
+  }
+  /** Like compliance: every tool (a merged one with its variants too) only in 26R1. */
+  const ONLY_26R1 = { list_rules: ['26R1'], list_items: ['26R1'], 'list_items[type=]': ['26R1'], 'list_items[type=Red]': ['26R1'] } as const;
+  let created = 0;
+  const entry = (env: NodeJS.ProcessEnv, releases: Readonly<Record<string, readonly string[]>> = ONLY_26R1) => ({
+    name: 'bconnect-runtime-mcp',
+    createServer: () => { created++; return { server: {} as never }; },
+    clients: serverClients(TestClient, env),
+    releases,
+  });
+  const version = (v: string) => msw.use(http.get('*/servermanagement/v2.0/ManagementServer', () => {
+    requests.push(DETECT);
+    return HttpResponse.json({ name: 'bMS', version: v });
+  }));
+  afterEach(() => { created = 0; });
+
+  it('on a detected 25R2 bMS: exits 1 with one line naming the release it needs, before the probe', async () => {
+    version('25.2.0.0');
+    const env = { ...ENV };
+    const t = io(env);
+    await expect(startServer(entry(env), t.options)).rejects.toThrow('exit 1');
+    expect(requests).toEqual([DETECT]);
+    expect(t.lines.at(-1)).toBe('bconnect-runtime-mcp: needs bMS 26R1; this server uses 25R2 (detected: bMS 25.2.0.0). None of its APIs exist in that release.');
+    expect(t.lines.join('\n')).not.toMatch(/cannot reach|verifying/);
+    expect(created).toBe(0);
+    expect(t.connectStdio).not.toHaveBeenCalled();
+  });
+
+  it('with BCONNECT_RELEASE=25R2 when the version can\'t be read: names the setting', async () => {
+    msw.use(http.get('*/servermanagement/v2.0/ManagementServer', () => HttpResponse.json({ title: 'Forbidden' }, { status: 403 })));
+    const env = { ...ENV, BCONNECT_RELEASE: '25R2' };
+    const t = io(env);
+    await expect(startServer(entry(env), t.options)).rejects.toThrow('exit 1');
+    expect(requests.filter((r) => r !== DETECT)).toEqual([]);
+    expect(t.lines.at(-1)).toBe('bconnect-runtime-mcp: needs bMS 26R1; this server uses 25R2 (from BCONNECT_RELEASE). None of its APIs exist in that release.');
+  });
+
+  it('stops as well with the connectivity check skipped (Q1), sending nothing', async () => {
+    const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', BCONNECT_RELEASE: '25R2' };
+    const t = io(env);
+    await expect(startServer(entry(env), t.options)).rejects.toThrow('exit 1');
+    expect(requests).toEqual([]);
+    expect(t.lines.at(-1)).toBe('bconnect-runtime-mcp: needs bMS 26R1; this server uses 25R2 (from BCONNECT_RELEASE). None of its APIs exist in that release.');
+    expect(t.lines.join('\n')).not.toMatch(/connectivity check skipped/);
+  });
+
+  it('names every release that has a tool', async () => {
+    // 26R2 stands in for a future release (#280): the needed releases are listed sorted.
+    const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', BCONNECT_RELEASE: '25R2' };
+    const t = io(env);
+    await expect(startServer(entry(env, { a: ['26R1'], b: ['26R2', '26R1'] }), t.options)).rejects.toThrow('exit 1');
+    expect(t.lines.at(-1)).toMatch(/^bconnect-runtime-mcp: needs bMS 26R1 or 26R2; this server uses 25R2/);
+  });
+
+  it('starts with an empty table (nothing to name), as before', async () => {
+    const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', BCONNECT_RELEASE: '25R2' };
+    const t = io(env);
+    await startServer(entry(env, {}), t.options);
+    expect(t.connectStdio).toHaveBeenCalledOnce();
+    expect(t.lines.join('\n')).not.toContain('needs bMS');
+  });
+
+  it('starts as before on 26R1, probing once', async () => {
+    version('26.1.161.0');
+    const env = { ...ENV };
+    const t = io(env);
+    await startServer(entry(env), t.options);
+    expect(requests).toEqual([DETECT, 'GET /bconnect/runtime/v2.0/Things']);
+    expect(t.connectStdio).toHaveBeenCalledOnce();
+  });
+
+  it('starts as before on 25R2 when one tool (or one variant of a merged tool) has a route there', async () => {
+    version('25.2.0.0');
+    const env = { ...ENV };
+    const t = io(env);
+    await startServer(entry(env, { ...ONLY_26R1, list_items: ['25R2', '26R1'], 'list_items[type=Red]': ['25R2', '26R1'] }), t.options);
+    expect(requests).toEqual([DETECT, 'GET /bconnect/runtime/v2.0/Things']);
+    expect(t.connectStdio).toHaveBeenCalledOnce();
+  });
+
+  it('keeps today\'s message for a real connectivity failure on 26R1', async () => {
+    msw.use(http.get('*/runtime/v2.0/Things', () => HttpResponse.json({ title: 'Unauthorized' }, { status: 401 })));
+    version('26.1.161.0');
+    const env = { ...ENV };
+    const t = io(env);
+    await expect(startServer(entry(env), t.options)).rejects.toThrow('exit 1');
+    expect(t.lines.at(-1)).toMatch(/^bconnect-runtime-mcp: cannot reach bConnect API at /);
   });
 });
 
@@ -402,7 +502,7 @@ describe('review follow-ups (REQ-SRV-023)', () => {
     const exit = vi.fn((code: number) => { throw new Error(`exit ${code}`); }) as unknown as (code: number) => never;
     return { lines, servers, options: { env, error: (line: string) => lines.push(line), exit, connectStdio: vi.fn(), listening: (s: HttpServer) => servers.push(s) } };
   }
-  const httpEntry = (env: NodeJS.ProcessEnv) => ({ name: 'bconnect-runtime-mcp', createServer: () => ({ server: {} as never }), clients: serverClients(TestClient, env) });
+  const httpEntry = (env: NodeJS.ProcessEnv) => ({ name: 'bconnect-runtime-mcp', createServer: () => ({ server: {} as never }), clients: serverClients(TestClient, env), releases: BOTH });
 
   it('reports a port that is already in use as one line, exit 1', async () => {
     const busy = createHttpServer();

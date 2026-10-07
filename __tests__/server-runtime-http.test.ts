@@ -14,6 +14,7 @@ import { ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { BConnectClientBase } from '../packages/mcp-core/src/bconnect-client-base.js';
 import { runServer, serverClients, startServer, type ServerEntry } from '../packages/mcp-core/src/server-runtime.js';
 import { createServer as createEndpointsServer } from '../bconnect-endpoints-mcp/src/index.js';
+import { TOOL_RELEASES as ENDPOINTS_RELEASES } from '../bconnect-endpoints-mcp/src/tool-releases.js';
 
 const ENV = {
   BCONNECT_BASE_URL: 'http://bms.runtime-http.test/bconnect',
@@ -66,7 +67,7 @@ describe('standalone HTTP mode', () => {
   beforeAll(async () => {
     // Port 0: the system picks a free one, so no other test can take it first.
     const env = { ...ENV, MCP_PORT: '0', MCP_ALLOWED_HOSTS: 'mcp.example.test,bad/entry' };
-    const entry: ServerEntry<TestClient> = { name: 'bconnect-runtime-mcp', createServer: mcpServer, clients: serverClients(TestClient, env) };
+    const entry: ServerEntry<TestClient> = { name: 'bconnect-runtime-mcp', createServer: mcpServer, clients: serverClients(TestClient, env), releases: { list_things: ['25R2', '26R1'] } };
     const exit = vi.fn((code: number) => { throw new Error(`exit ${code}`); }) as unknown as (code: number) => never;
     await startServer(entry, { env, error: (line) => lines.push(line), exit, connectStdio: vi.fn(), listening: (s) => listeners.push(s) });
     port = (listeners[0].address() as { port: number }).port;
@@ -130,7 +131,7 @@ describe('HTTP mode bind address', () => {
     const lines: string[] = [];
     const listening = vi.fn();
     const exit = vi.fn((code: number) => { throw new Error(`exit ${code}`); }) as unknown as (code: number) => never;
-    const entry = { name: 'bconnect-runtime-mcp', createServer: mcpServer, clients: serverClients(TestClient, env) };
+    const entry = { name: 'bconnect-runtime-mcp', createServer: mcpServer, clients: serverClients(TestClient, env), releases: { list_things: ['25R2', '26R1'] } };
     await expect(startServer(entry, { env, error: (l) => lines.push(l), exit, connectStdio: vi.fn(), listening })).rejects.toThrow('exit 1');
     // Plain string checks: a pattern built from the address would need full escaping.
     const line = lines.at(-1) ?? '';
@@ -151,7 +152,7 @@ describe('standalone HTTP mode with a real server: write tools listed only with 
 
   beforeAll(async () => {
     const env = { ...ENV, MCP_PORT: '0' };
-    const entry: ServerEntry<TestClient> = { name: 'bconnect-endpoints-mcp', createServer: createEndpointsServer, clients: serverClients(TestClient, env) };
+    const entry: ServerEntry<TestClient> = { name: 'bconnect-endpoints-mcp', createServer: createEndpointsServer, clients: serverClients(TestClient, env), releases: ENDPOINTS_RELEASES };
     const exit = vi.fn((code: number) => { throw new Error(`exit ${code}`); }) as unknown as (code: number) => never;
     await startServer(entry, { env, error: () => undefined, exit, connectStdio: vi.fn(), listening: (s) => listeners.push(s) });
     port = (listeners[0].address() as { port: number }).port;

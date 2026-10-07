@@ -79,6 +79,22 @@ export function releaseRefusal(tool: string, needed: string, env: NodeJS.Process
   return `${tool} is only available in bMS ${needed}; this server uses ${releaseDescription(env)}.`;
 }
 
+/**
+ * Why a server can't serve the selected release (REQ-SRV-030, #310): none of its tools has a
+ * route there (its generated table; a merged tool's row covers its variants). Names the
+ * releases that have one and the release in use; undefined when the server has a tool.
+ */
+export function missingReleaseReason(table: ToolReleaseTable, env: NodeJS.ProcessEnv = process.env): string | undefined {
+  const release = selectedRelease(env);
+  const rows = Object.values(table);
+  // An empty table names no release a server would need (e.g. one not generated yet): no stop.
+  if (rows.length === 0 || rows.some((releases) => releases.includes(release))) {
+    return undefined;
+  }
+  const needed = [...new Set(rows.flat())].sort();
+  return `needs bMS ${needed.join(" or ")}; this server uses ${releaseDescription(env)}. None of its APIs exist in that release.`;
+}
+
 /** Stops on an invalid BCONNECT_RELEASE (ClientConfigError), as the settings check does. */
 export function checkReleaseSetting(env: NodeJS.ProcessEnv = process.env): void {
   checkRelease(env.BCONNECT_RELEASE);
