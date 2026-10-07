@@ -15,8 +15,9 @@ describe('validateParameters — object parameters', () => {
     expect(validateParameters({}, optional)).toEqual({ valid: true, errors: [] });
   });
 
-  it('a required object given null is missing', () => {
+  it('a required object given null or nothing is missing', () => {
     expect(validateParameters({ filter: null }, required)).toEqual({ valid: false, errors: ['filter is required'] });
+    expect(validateParameters({}, required)).toEqual({ valid: false, errors: ['filter is required'] });
   });
 
   it('an array is not an object: the type check says so, once', () => {
