@@ -184,7 +184,7 @@ Only the gateway is distributed as a container; the 13 stdio servers run via Nod
 | `bconnect-updatemanagement-mcp` | 3 | 3 | Windows Update management |
 | **Total** | **276** | **232** | |
 
-— means the server needs 26R1. (Compliance still lists its 8 tools with `BCONNECT_RELEASE=25R2`, but they fail on a 25R2 bMS.)
+— means the server needs 26R1. (Compliance still lists its 8 tools on a 25R2 bMS, but they fail there.)
 
 Each server reads the release from the bMS at startup and logs it (for example
 `bMS 26.1.161.0 → release 26R1`); `BCONNECT_RELEASE` is only the fallback. Compliance and universal

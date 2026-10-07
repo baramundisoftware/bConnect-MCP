@@ -283,6 +283,9 @@ function staleReusedSocket(error: AxiosError): boolean {
   return reused && !error.response && (error.code === "ECONNRESET" || /socket hang up/i.test(error.message));
 }
 
+/** The longest the release detection waits for the bMS version (#159). */
+const DETECTION_TIMEOUT_MS = 10_000;
+
 /** Responses the success step has handled; see the retry note there. */
 const processedResponses = new WeakSet<object>();
 
@@ -793,10 +796,15 @@ export class BConnectClientBase {
 
   /**
    * `version` of the connected bMS (GET /servermanagement/v2.0/ManagementServer),
-   * or undefined when the answer has none; for release detection (#159).
+   * or undefined when the answer has none; for release detection (#159). One
+   * try within at most 10 s: the connectivity check right after it waits the
+   * full timeout (and retries) anyway, so an unreachable bMS isn't waited for twice.
    */
   async managementServerVersion(): Promise<unknown> {
-    const response = await this.client.get<unknown>("/servermanagement/v2.0/ManagementServer");
+    const response = await this.client.get<unknown>("/servermanagement/v2.0/ManagementServer", {
+      timeout: Math.min(this.config.timeout || 30000, DETECTION_TIMEOUT_MS),
+      "axios-retry": { retries: 0 },
+    });
     const data: unknown = response.data;
     return typeof data === "object" && data !== null && "version" in data ? data.version : undefined;
   }

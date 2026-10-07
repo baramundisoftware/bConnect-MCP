@@ -11,7 +11,7 @@
  */
 import { BConnectApiError } from "./api-errors.js";
 import type { BConnectClientBase } from "./bconnect-client-base.js";
-import { checkRelease, RELEASES } from "./client-config.js";
+import { checkRelease, ClientConfigError, RELEASES } from "./client-config.js";
 
 export type Release = (typeof RELEASES)[number];
 
@@ -88,12 +88,21 @@ export function forgetDetectedRelease(): void {
   detected = undefined;
 }
 
+/**
+ * Why detection failed, as one line: the status for an API error; the whole
+ * message for a settings error (our own text, and the operator needs all of
+ * it); the first sentence of anything else, without the tool-call advice.
+ */
 const reasonOf = (error: unknown): string => {
   if (error instanceof BConnectApiError) {
     return `ManagementServer answered ${error.status}`;
   }
   const message = (error instanceof Error ? error.message : String(error)).split(/[\r\n]+/).join(" ").trim();
-  return message.length > 120 ? `${message.slice(0, 120)}…` : message;
+  if (error instanceof ClientConfigError) {
+    return message;
+  }
+  const first = message.split(". ")[0].replace(" (BCONNECT_TIMEOUT_MS)", "");
+  return first.length > 120 ? `${first.slice(0, 120)}…` : first;
 };
 
 /**

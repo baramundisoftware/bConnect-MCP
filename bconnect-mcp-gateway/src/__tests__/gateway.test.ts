@@ -17,6 +17,10 @@ import { http, HttpResponse } from "msw";
 
 const listen = vi.fn((_port: number, _bind: string, onListening: () => void) => { onListening(); });
 
+// A real .env in the checkout must not reach these tests; the call itself is checked below.
+const loadEnv = vi.fn();
+vi.mock("@bconnect/mcp-core", async (importOriginal) => ({ ...(await importOriginal<object>()), loadEnvOnce: loadEnv }));
+
 vi.mock("../app.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../app.js")>();
   return { ...actual, createApp: () => ({ listen }) };
@@ -44,6 +48,7 @@ let lines: string[];
 beforeEach(() => {
   vi.resetModules();
   listen.mockClear();
+  loadEnv.mockClear();
   for (const name of READ) {vi.stubEnv(name, undefined);}
   vi.stubEnv("LOG_FORMAT", "json");
   lines = [];
@@ -80,6 +85,34 @@ describe("gateway entry point: release detection (#159)", () => {
     expect(detected).toBeGreaterThan(-1);
     expect(detected).toBeLessThan(msgs.indexOf("listening"));
     expect(selectedRelease()).toBe("25R2");
+  });
+
+  it("loads .env before it reads the settings and detects", async () => {
+    withService();
+    await start();
+    expect(loadEnv).toHaveBeenCalledOnce();
+  });
+
+  it("detects after the bind check: a refused bind sends nothing", async () => {
+    withService();
+    vi.stubEnv("MCP_GATEWAY_BIND", "0.0.0.0");
+    managementServer = () => { throw new Error("must not be called"); };
+    await expect(start()).rejects.toThrow("exit 1");
+    expect(logged().some((m) => /bMS|release detection/.test(m.msg))).toBe(false);
+  });
+
+  it("its servers list the tools of the detected release (one core for all)", async () => {
+    withService();
+    await start();
+    const { createServer } = await import("bconnect-universaldynamicgroups-mcp");
+    const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+    const { InMemoryTransport } = await import("@modelcontextprotocol/sdk/inMemory.js");
+    const [a, b] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "gateway-test", version: "0" });
+    await Promise.all([createServer().server.connect(a), client.connect(b)]);
+    // Universal dynamic groups don't exist in 25R2: the detected release hides all 6 tools.
+    expect((await client.listTools()).tools).toEqual([]);
+    await client.close();
   });
 
   it("starts with the setting and a warning when the version can't be read", async () => {

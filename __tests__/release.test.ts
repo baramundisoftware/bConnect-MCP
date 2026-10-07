@@ -11,6 +11,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { setupServer } from 'msw/node';
 import { delay, http, HttpResponse } from 'msw';
 import { BConnectClientBase } from '../packages/mcp-core/src/bconnect-client-base.js';
+import { ClientConfigError } from '../packages/mcp-core/src/client-config.js';
 import {
   checkReleaseSetting, detectRelease, forgetDetectedRelease, releaseDescription, releaseFromVersion, releaseRefusal, selectedRelease,
 } from '../packages/mcp-core/src/release.js';
@@ -117,6 +118,29 @@ describe('detectRelease', () => {
         expect(l.lines[0].line).toContain(`using ${release} (${source})`);
       }
     });
+  });
+
+  it('tries once, even with retries configured, so an unreachable bMS is not waited for twice', async () => {
+    answer = () => HttpResponse.error();
+    const retrying = new BConnectClientBase({ baseUrl: BASE, apiKey: 'k', timeout: 200, maxRetries: 3, retryDelay: 1 });
+    await detectRelease(retrying, log().sink, {});
+    expect(sent).toEqual([`GET ${ROUTE}`]);
+  });
+
+  it('a timeout reason is one short sentence, without the tool-call advice', async () => {
+    answer = async () => { await delay('infinite'); return HttpResponse.json({}); };
+    const l = log();
+    await detectRelease(client(), l.sink, {});
+    expect(l.lines[0].line).toMatch(/didn't answer within 0\.2 s\); using 26R1 \(default\)$/);
+    expect(l.lines[0].line).not.toMatch(/page size|BCONNECT_TIMEOUT_MS/);
+  });
+
+  it('a settings error from a client factory is reported whole', async () => {
+    const message = `BCONNECT_BASE_URL is required. ${'Set it to the bConnect address, e.g. https://bms.example.com/bconnect. '.repeat(3)}`.trim();
+    const l = log();
+    await detectRelease(() => { throw new ClientConfigError(message); }, l.sink, {});
+    expect(l.lines[0].line).toBe(`could not detect the bMS release (${message}); using 26R1 (default)`);
+    expect(sent).toEqual([]);
   });
 
   it('keeps a hostile version out of the log as one quoted, shortened line', async () => {

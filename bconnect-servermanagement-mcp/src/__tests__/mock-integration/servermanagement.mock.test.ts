@@ -31,6 +31,11 @@ describe('release detection (#159, needs bConnect-Mock 0.5.0 or later)', () => {
     if (!available) {return;}
     const health = await getMockHealth();
     const expected = health!.bmsVersion.toUpperCase();
+    // bConnect-Mock before 0.5.0 answers this fixed version for every release: nothing to check there.
+    if (await client.managementServerVersion() === '26.1.0.5678') {
+      console.warn('⚠  bConnectMock older than 0.5.0 — release detection test skipped');
+      return;
+    }
     const lines: string[] = [];
     try {
       const release = await detectRelease(client, { info: (l) => lines.push(l), warn: (l) => lines.push(`warn ${l}`) }, {});
