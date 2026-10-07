@@ -549,4 +549,4 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 
 ---
 
-*bConnect MCP Suite — 13 servers; 268 tools on bMS 26R1, 230 on 25R2*
+*bConnect MCP Suite — 13 servers; 239 tools on bMS 26R1, 197 on 25R2*

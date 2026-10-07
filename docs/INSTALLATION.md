@@ -552,7 +552,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
   node bconnect-endpoints-mcp/build/index.js
 ```
 
-The answer is a JSON list of the server's tools (`list_windows_endpoints`, `get_windows_endpoint`, …).
+The answer is a JSON list of the server's tools (`list_endpoints`, `get_endpoint`, …).
 
 Test API connectivity:
 
@@ -577,4 +577,4 @@ succeed where the MCP servers fail. On Windows with an internal CA, add `--ssl-n
 
 ---
 
-*bConnect MCP Suite — 13 servers; 268 tools on bMS 26R1, 230 on 25R2*
+*bConnect MCP Suite — 13 servers; 239 tools on bMS 26R1, 197 on 25R2*

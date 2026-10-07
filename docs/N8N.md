@@ -147,8 +147,9 @@ If the MCP Client Tool node is not available in your n8n version, use an
   "id": 1,
   "method": "tools/call",
   "params": {
-    "name": "list_windows_endpoints",
+    "name": "list_endpoints",
     "arguments": {
+      "type": "WindowsEndpoint",
       "PageSize": 25
     }
   }
@@ -217,24 +218,24 @@ are not loaded lazily.
 
 Each tool definition costs roughly 300 tokens on average (from about 200 to
 over 400; the group member tools carry the largest schemas). The bConnect MCP
-suite has 268 tools across 13 domains on 26R1 (230 on 25R2); through the gateway, where write
-tools are off and left out of the list, an agent sees the 173 read tools (148 on 25R2).
+suite has 239 tools across 13 domains on 26R1 (197 on 25R2); through the gateway, where write
+tools are off and left out of the list, an agent sees the 158 read tools (131 on 25R2).
 
 ### Token cost per configuration
 
 | Domains connected | Tools | Approx. tokens consumed |
 |-------------------|-------|------------------------|
-| `endpoints` only | 25 | ~6,200 |
-| `endpoints` + `software` | 36 | ~9,800 |
-| `endpoints` + `jobs` + `assets` | 60 | ~17,700 |
-| `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 87 | ~26,300 |
-| All 13 domains | 173 | ~53,900 |
+| `endpoints` only | 10 | ~2,600 |
+| `endpoints` + `software` | 21 | ~6,200 |
+| `endpoints` + `jobs` + `assets` | 45 | ~14,000 |
+| `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 72 | ~22,600 |
+| All 13 domains | 158 | ~50,200 |
 
 Measured on 26R1 from the gateway's `tools/list` answers, which contain only read tools (about
-189,000 characters of tool definitions for all 13 domains, at roughly 3.5 characters per token). The
+176,000 characters of tool definitions for all 13 domains, at roughly 3.5 characters per token). The
 exact count depends on the model's tokenizer and on how n8n passes the tools on.
 
-At ~54,000 tokens for tool definitions alone, every call of the AI Agent spends a
+At ~50,000 tokens for tool definitions alone, every call of the AI Agent spends a
 large part of the context window before any conversation, user data, or system
 instructions.
 
@@ -257,7 +258,7 @@ Client Tool node per domain you need and leave the rest out. Within a domain,
 
 ### Never connect all 13 domains to a single AI Agent
 
-Even with a large-context model, loading all 173 tool definitions wastes tokens
+Even with a large-context model, loading all 158 tool definitions wastes tokens
 on tools the workflow will never call, increases latency, and reduces the model's
 effective reasoning budget for actual work.
 

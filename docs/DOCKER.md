@@ -210,10 +210,10 @@ export the CA.
 
 ## Server Compatibility
 
-The gateway serves all 13 servers on 26R1 (268 tools). On 25R2 the servers have 230 tools, and
+The gateway serves all 13 servers on 26R1 (239 tools). On 25R2 the servers have 197 tools, and
 two servers don't work (compliance and universal dynamic groups list no tools there). Each release
 lists only the tools whose API routes it has. Because write tools are off in the gateway, its tool
-lists contain only the read tools: 173 on 26R1, 148 on 25R2.
+lists contain only the read tools: 158 on 26R1, 131 on 25R2.
 
 | Server | Requires 26R1 |
 |--------|--------------|
