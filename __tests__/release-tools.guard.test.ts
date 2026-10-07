@@ -106,7 +106,9 @@ beforeAll(async () => {
 
 describe('tools per release from the spec', () => {
   it('every server has a generated src/tool-releases.ts that matches the specs', () => {
-    const wrong = seen.filter((s) => JSON.stringify(s.generated) !== JSON.stringify(s.expected)).map((s) => s.server);
+    // Same entries; the order isn't compared (a merged tool's row stands before its variants').
+    const sorted = (t: Record<string, readonly string[]> | undefined) => JSON.stringify(Object.entries(t ?? {}).sort(([a], [b]) => a.localeCompare(b)));
+    const wrong = seen.filter((s) => sorted(s.generated) !== sorted(s.expected)).map((s) => s.server);
     expect(wrong).toEqual([]);
   });
 

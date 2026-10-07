@@ -19,7 +19,7 @@ import { http, HttpResponse } from 'msw';
 import { ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 import { documentedErrorMeaning } from '../packages/mcp-core/src/tool-errors.js';
 import { RELEASES, type Release } from './lib/spec.js';
-import { BASE_PATH, ROOT, SERVERS, connect, guardEnv, requiredArguments, type ToolResult } from './lib/exerciser.js';
+import { BASE_PATH, ROOT, SERVERS, callsOf, connect, guardEnv, requiredArguments, type ToolResult } from './lib/exerciser.js';
 
 const DETAIL = 'guard: no such object';
 const USERNAME = 'error-guard-user-7f3a';
@@ -62,10 +62,11 @@ async function exerciseAll(release: Release, gates: { writes: boolean; secretRea
     Object.assign(process.env, guardEnv(release, { ...gates, writes: true }));
     const conn = await connect(server);
     Object.assign(process.env, guardEnv(release, gates), { BCONNECT_USERNAME: USERNAME, BCONNECT_PASSWORD: PASSWORD });
-    for (const tool of conn.tools) {
+    // Every route: a merged tool once per variant of the release (REQ-SRV-029).
+    for (const tool of await callsOf(server, conn.tools, release)) {
       sent = [];
-      const result = await conn.call(tool.name, requiredArguments(tool.inputSchema));
-      calls.push({ server, tool: tool.name, requests: sent, result, text: contentText(result) });
+      const result = await conn.call(tool.name, { ...requiredArguments(tool.inputSchema), ...tool.select });
+      calls.push({ server, tool: tool.key, requests: sent, result, text: contentText(result) });
     }
     await conn.close();
   }

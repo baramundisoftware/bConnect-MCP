@@ -9,7 +9,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import {
-  refuseReplacedTool, variantKey, withToolVariants, withUnverifiedWriteMarker, withVariantSelectors,
+  describeVariant, refuseReplacedTool, variantKey, variantSelect, withToolVariants, withUnverifiedWriteMarker, withVariantSelectors,
   UNVERIFIED_WRITE_NOTE, type ReplacedToolTable, type ToolReleaseTable, type ToolVariantTable,
 } from '@bconnect/mcp-core';
 
@@ -46,7 +46,8 @@ const ARGS: Record<string, string[]> = {
 };
 
 const saved = process.env.BCONNECT_RELEASE;
-afterEach(() => { process.env.BCONNECT_RELEASE = saved; });
+// Assigning undefined would store the string "undefined" (read as 25R2): delete instead.
+afterEach(() => { if (saved === undefined) { delete process.env.BCONNECT_RELEASE; } else { process.env.BCONNECT_RELEASE = saved; } });
 
 const call = (name: string, args: Record<string, unknown> = {}) => ({ params: { name, arguments: args } });
 async function refusal(run: () => unknown): Promise<McpError> {
@@ -136,6 +137,7 @@ describe('withToolVariants', () => {
   });
 
   it('refuses a combination no route has, listing the valid ones for the given first selector', async () => {
+    process.env.BCONNECT_RELEASE = '26R1';
     const e = await refusal(() => handler(call('list_members', { kind: 'Dynamic', member: 'Red', groupId: 'g' })));
     expect(e.code).toBe(ErrorCode.InvalidParams);
     expect(e.message).toContain('list_members has no route for kind "Dynamic" and member "Red". Valid on bMS 26R1: kind "Dynamic" without member.');
@@ -222,4 +224,52 @@ describe('withUnverifiedWriteMarker with variants', () => {
       `Does it. ${UNVERIFIED_WRITE_NOTE}`,
     ]);
   });
+});
+
+describe('edge cases', () => {
+  const REQUIRED: ToolVariantTable = { set_thing: { 'set_thing[type=Red]': { type: 'Red' }, 'set_thing[type=Blue]': { type: 'Blue' } } };
+  const REQUIRED_RELEASES: ToolReleaseTable = { 'set_thing[type=Red]': ['25R2', '26R1'], 'set_thing[type=Blue]': ['26R1'] };
+
+  it('a selector no variant leaves out is required: the refusal names the values of the release', async () => {
+    process.env.BCONNECT_RELEASE = '25R2';
+    const handler = withToolVariants(REQUIRED, REQUIRED_RELEASES, () => [], async () => ({ content: [] }));
+    const e = await refusal(() => handler(call('set_thing', {})));
+    expect(e.code).toBe(ErrorCode.InvalidParams);
+    expect(e.message).toContain('set_thing needs type: one of Red.');
+  });
+
+  it('lists a tool without a schema, a non-object property and a tool without required unchanged', async () => {
+    const list = async () => ({ tools: [
+      { name: 'set_thing' },
+      { name: 'set_thing', inputSchema: { type: 'object', properties: { type: { type: 'string' }, odd: 'x' } } },
+    ] });
+    process.env.BCONNECT_RELEASE = '26R1';
+    const { tools } = await withVariantSelectors(REQUIRED, REQUIRED_RELEASES, (key) => (key.endsWith('Red]') ? ['odd'] : []), list)();
+    expect(tools[0]).toEqual({ name: 'set_thing' });
+    expect((tools[1] as any).inputSchema).toEqual({ type: 'object', properties: { type: { type: 'string', enum: ['Red', 'Blue'] }, odd: 'x' } });
+  });
+
+  it('describes and parses variant keys', () => {
+    expect(describeVariant({ kind: 'Static', member: null })).toBe('kind "Static" without member');
+    expect(describeVariant({ kind: null, member: 'Red' })).toBe('without kind and member "Red"');
+    expect(variantSelect('plain_tool')).toEqual({});
+    expect(variantSelect('t[kind=Static,member=]')).toEqual({ kind: 'Static', member: null });
+  });
+
+  it('names the variants of every release when none of the selected one takes the argument', async () => {
+    process.env.BCONNECT_RELEASE = '26R1';
+    const handler = withToolVariants(VARIANTS, RELEASES, (key) => ARGS[key], async () => ({ content: [] }));
+    const e = await refusal(() => handler(call('list_things', { type: 'Red', Depth: 1 })));
+    expect(e.message).toContain('Depth is not available for list_things with type "Red" (only with type "Blue").');
+  });
+});
+
+it('keeps a property no variant takes, and drops from required what it leaves out', async () => {
+  process.env.BCONNECT_RELEASE = '26R1';
+  const list = async () => ({ tools: [{ name: 'list_things', inputSchema: {
+    type: 'object', properties: { free: { type: 'string' }, Depth: { type: 'integer' } }, required: ['free', 'Depth'],
+  } }] });
+  const { tools } = await withVariantSelectors(VARIANTS, RELEASES, (key) => ARGS[key], list)();
+  // Depth only has 25R2 routes: left out on 26R1, with its required entry.
+  expect((tools[0] as any).inputSchema).toEqual({ type: 'object', properties: { free: { type: 'string' } }, required: ['free'] });
 });

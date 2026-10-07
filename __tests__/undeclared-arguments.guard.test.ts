@@ -9,7 +9,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { RELEASES } from './lib/spec.js';
-import { SERVERS, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
+import { SERVERS, callsOf, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
 
 const UNDECLARED = 'zzUndeclaredArgument';
 const recorder = createRecorder();
@@ -24,12 +24,14 @@ describe.each(RELEASES)('bMS %s', (release) => {
     Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
     for (const server of SERVERS) {
       const conn = await connect(server);
-      for (const tool of conn.tools) {
+      // Every route: a merged tool once per variant of the release (REQ-SRV-029); the refusal names the whole tool's arguments.
+      for (const route of await callsOf(server, conn.tools, release)) {
+        const tool = conn.tools.find((t) => t.name === route.name)!;
         const declared = Object.keys(tool.inputSchema.properties ?? {});
         recorder.take();
-        const r = await conn.call(tool.name, { ...requiredArguments(tool.inputSchema), [UNDECLARED]: 'x' });
+        const r = await conn.call(tool.name, { ...requiredArguments(route.inputSchema), ...route.select, [UNDECLARED]: 'x' });
         found.push({
-          tool: `${server} ${tool.name}`,
+          tool: `${server} ${route.key}`,
           open: tool.inputSchema.additionalProperties !== false,
           refused: r.isError,
           named: r.text.includes(`Unknown argument for ${tool.name}: ${UNDECLARED}.`),

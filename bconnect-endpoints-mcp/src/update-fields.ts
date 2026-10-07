@@ -46,8 +46,13 @@ export const maintenanceWindowFields: Record<string, Field> = {
     description: "The periods in which jobs may run, e.g. [{\"maintenancePeriod\":\"Everyday\",\"start\":{\"hour\":22,\"minute\":0},\"end\":{\"hour\":6,\"minute\":0}}]. Required, at least one, for Everyday, WorkdayWeekend and IndividualWeekday; leave out for Anytime and Never." },
 };
 
+/**
+ * Per update tool, and per endpoint type of update_endpoint (its variant key,
+ * REQ-SRV-029): the fields it offers. Android and iOS send the same paths, in
+ * the same order, as their former tools did.
+ */
 export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
-  update_windows_endpoint: {
+  "update_endpoint[type=WindowsEndpoint]": {
     displayName: text("/displayName", "Display name"),
     logicalGroupId: guid("/logicalGroupId", "Logical group to move the endpoint to (GUID)"),
     comment: text("/comment", "Comment"),
@@ -66,7 +71,7 @@ export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
     entraIdDeviceId: text("/EntraIdDeviceId", "Entra ID device ID"),
     coManagement: choice("/CoManagement", "Co-management with Intune", ["None", "Intune"]),
   },
-  update_linux_endpoint: {
+  "update_endpoint[type=LinuxEndpoint]": {
     displayName: text("/displayName", "Display name"),
     logicalGroupId: guid("/logicalGroupId", "Logical group to move the endpoint to (GUID)"),
     comment: text("/comment", "Comment"),
@@ -75,7 +80,7 @@ export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
     primaryMAC: text("/primaryMAC", "Primary MAC address"),
     managementMode: choice("/managementMode", "How the endpoint is managed", ["SSH", "ManagementAgent"]),
   },
-  update_mac_endpoint: {
+  "update_endpoint[type=MacEndpoint]": {
     displayName: text("/DisplayName", "Display name"),
     logicalGroupId: guid("/LogicalGroupId", "Logical group to move the endpoint to (GUID)"),
     comment: text("/Comment", "Comment"),
@@ -90,7 +95,18 @@ export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
     dip: text("/dip", "Distribution point (DIP)"),
     defaultDomain: text("/defaultDomain", "Default domain"),
   },
-  update_network_endpoint: {
+  "update_endpoint[type=AndroidEndpoint]": {
+    displayName: text("/displayName", "Display name"),
+    logicalGroupId: guid("/logicalGroupId", "Logical group to move the endpoint to (GUID)"),
+    comment: text("/comment", "Comment"),
+    serialNumber: text("/serialNumber", "Serial number"),
+  },
+  "update_endpoint[type=IOSEndpoint]": {
+    displayName: text("/displayName", "Display name"),
+    logicalGroupId: guid("/logicalGroupId", "Logical group to move the endpoint to (GUID)"),
+    comment: text("/comment", "Comment"),
+  },
+  "update_endpoint[type=NetworkEndpoint]": {
     displayName: text("/displayName", "Display name"),
     comment: text("/comment", "Comment"),
     hostName: text("/hostName", "Host name"),
@@ -99,7 +115,7 @@ export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
     registeredUser: text("/registeredUser", "Registered user"),
     webInterfaceUrl: text("/webInterfaceUrl", "URL of the device's web interface"),
   },
-  update_industrial_endpoint: {
+  "update_endpoint[type=IndustrialEndpoint]": {
     displayName: text("/displayName", "Display name"),
     logicalGroupId: guid("/logicalGroupId", "Logical group to move the endpoint to (GUID)"),
     comment: text("/comment", "Comment"),
@@ -128,18 +144,35 @@ export interface UpdateInputSchema {
   minProperties: number;
 }
 
+const fieldProperty = (field: Field): Record<string, unknown> => ({
+  type: field.type ?? "string",
+  description: field.description,
+  ...(field.enum && { enum: [...field.enum] }),
+  ...(field.items && { items: field.items }),
+});
+
 /** The input schema: `id` plus every field, at least one of them given. */
 export function updateInputSchema(tool: string, idDescription: string): UpdateInputSchema {
   const properties: Record<string, Record<string, unknown>> = { id: { type: "string", description: idDescription } };
   for (const [name, field] of Object.entries(fieldsOf(tool))) {
-    properties[name] = {
-      type: field.type ?? "string",
-      description: field.description,
-      ...(field.enum && { enum: [...field.enum] }),
-      ...(field.items && { items: field.items }),
-    };
+    properties[name] = fieldProperty(field);
   }
   return { type: "object", properties, required: ["id"], minProperties: 2 };
+}
+
+/**
+ * The input schema of a merged update tool (REQ-SRV-029): `type`, `id` and every
+ * field of its variants (the first variant's definition), at least one field
+ * given. Which types take a field is added when the tool is listed.
+ */
+export function mergedUpdateInputSchema(keys: readonly string[], type: Record<string, unknown>, idDescription: string): UpdateInputSchema {
+  const properties: Record<string, Record<string, unknown>> = { type, id: { type: "string", description: idDescription } };
+  for (const key of keys) {
+    for (const [name, field] of Object.entries(fieldsOf(key))) {
+      properties[name] ??= fieldProperty(field);
+    }
+  }
+  return { type: "object", properties, required: ["type", "id"], minProperties: 3 };
 }
 
 /** Validation: `id` and every GUID field must be GUIDs. */

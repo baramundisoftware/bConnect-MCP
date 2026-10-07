@@ -73,14 +73,34 @@ describe('AC 1: every replaced tool\'s request is sent unchanged by its replacem
     expect(new Set(FIXTURE.filter((e) => e.release === '26R1').map((e) => e.tool)).size).toBe(35);
   });
 
+  /**
+   * The one deliberate change: update_android_endpoint and update_ios_endpoint sent an empty
+   * patch when no field was given; update_endpoint refuses that for every type, as the other
+   * types' update tools already did (#171), and sends nothing.
+   */
+  const emptyUpdate = (entry: Entry) => /^update_(android|ios)_endpoint$/.test(entry.tool) && entry.requests[0]?.body === '[]';
+
   it.each(FIXTURE.map((e) => [e.release, e.tool, e.call, e] as const))('%s %s (%s arguments)', async (release, tool, _call, entry) => {
     const { tool: next, select, rename = {}, defaults = {} } = replacement(tool);
     const args = { ...defaults, ...Object.fromEntries(Object.entries(entry.args).map(([k, v]) => [rename[k] ?? k, v])), ...select };
     const conn = use(release);
     recorder.take();
     const result = await conn.call(next, args);
+    if (emptyUpdate(entry)) {
+      expect(result.code).toBe(-32602);
+      expect(result.text).toContain('needs at least one field to change');
+      expect(recorder.take()).toEqual([]);
+      return;
+    }
     expect(result.isError, result.text).toBe(false);
     expect(recorder.take().map(normalized)).toEqual(entry.requests.map(normalized));
+  });
+
+  it('the empty-patch exception covers only the 4 Android/iOS calls without a field (not vacuous, not wider)', () => {
+    expect(FIXTURE.filter(emptyUpdate).map((e) => `${e.release} ${e.tool} ${e.call}`).sort()).toEqual([
+      '25R2 update_android_endpoint required', '25R2 update_ios_endpoint required',
+      '26R1 update_android_endpoint required', '26R1 update_ios_endpoint required',
+    ]);
   });
 });
 

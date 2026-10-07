@@ -18,34 +18,41 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, pageSizeProperty, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, withVariantSelectors, withToolVariants, variantKey, refuseReplacedTool } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 import { INTERVAL_RULE, checkIntervalRule, withIntervalRemoval } from "./maintenance-window.js";
 
-/** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
+/** The query parameters a list tool (or route of a merged tool) sends: exactly what its route declares in the selected release (#179). */
 const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, selectedRelease(), tool);
 
-/** search_endpoints takes the search text and page size as `query` and `pageSize`; the table's names aren't offered twice (#179). */
-const SEARCH_ALIASES = new Set(["SearchQuery", "PageSize"]);
-function withSearchAliases<Result extends { tools: object[] }>(handler: () => Promise<Result>): () => Promise<Result> {
-  return async () => {
-    const result = await handler();
-    return {
-      ...result,
-      tools: result.tools.map((tool) => {
-        if (!("name" in tool) || tool.name !== "search_endpoints" || !("inputSchema" in tool)) {return tool;}
-        const schema = tool.inputSchema;
-        if (typeof schema !== "object" || schema === null || !("properties" in schema) || typeof schema.properties !== "object" || schema.properties === null) {return tool;}
-        const properties = Object.fromEntries(Object.entries(schema.properties).filter(([name]) => !SEARCH_ALIASES.has(name)));
-        return { ...tool, inputSchema: { ...schema, properties } };
-      }),
-    };
-  };
+/** The `type` argument of a merged tool; its values are set per release by the core (withVariantSelectors). */
+const typeProperty = (description: string): Record<string, unknown> => ({ type: "string", description });
+
+/** Path arguments of each merged tool's routes. */
+const PATH_ARGUMENTS: Readonly<Record<string, readonly string[]>> = {
+  get_endpoint: ["id"], delete_endpoint: ["id"], update_endpoint: ["id"], start_enrollment: ["id"],
+  list_endpoints_by_logical_group: ["logicalGroupId"],
+};
+
+/**
+ * The arguments a route of a merged tool takes besides `type` (REQ-SRV-029): its path
+ * arguments, its query parameters (selected release, else the other one's, as listed) and
+ * its body fields. The core refuses any other tool argument for that route.
+ */
+function routeArguments(key: string): string[] {
+  const tool = key.slice(0, key.indexOf("["));
+  const release = selectedRelease();
+  const query = QUERY_PARAMETERS[release]?.[key] ?? QUERY_PARAMETERS[release === "25R2" ? "26R1" : "25R2"]?.[key] ?? {};
+  const body = tool === "update_endpoint" ? updateFieldNames(key) : tool === "start_enrollment" ? createFieldNames(key) : [];
+  return [...(PATH_ARGUMENTS[tool] ?? []), ...Object.keys(query), ...body];
 }
-import { updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
-import { createBody, createInputSchema } from "./create-fields.js";
+
+import { mergedUpdateInputSchema, updateFieldNames, updateInputSchema, updatePatch } from "./update-fields.js";
+import { createBody, createFieldNames, createInputSchema, mergedCreateInputSchema } from "./create-fields.js";
+import { TOOL_VARIANTS } from "./tool-variants.js";
+import { REPLACED_TOOLS } from "./replaced-tools.js";
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 
@@ -96,26 +103,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // Write tools: gated by ALLOW_WRITE_OPERATIONS, and marked unverified in tools/list
   // until their live check is recorded (REQ-XC-003 AC 5).
   const WRITE_TOOLS = new Set<string>([
-  "start_android_enrollment",
-  "start_ios_enrollment",
+  "update_endpoint",
+  "start_enrollment",
   "create_android_endpoint",
-  "update_android_endpoint",
-  "delete_android_endpoint",
   "create_ios_endpoint",
-  "update_ios_endpoint",
-  "delete_ios_endpoint",
   "create_windows_endpoint",
-  "update_windows_endpoint",
-  "delete_windows_endpoint",
-  "start_windows_enrollment",
   "trigger_intune_installation",
   "create_linux_endpoint",
-  "update_linux_endpoint",
-  "delete_linux_endpoint",
   "create_mac_endpoint",
-  "update_mac_endpoint",
-  "delete_mac_endpoint",
-  "start_mac_enrollment",
   "create_logical_group",
   "update_logical_group",
   "delete_logical_group",
@@ -126,81 +121,48 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "update_maintenance_window_for_logical_group",
   "delete_maintenance_window_for_logical_group",
   "create_industrial_endpoint",
-  "update_industrial_endpoint",
-  "delete_industrial_endpoint",
   "create_network_endpoint",
-  "update_network_endpoint",
-  "delete_network_endpoint",
   "delete_endpoint",
   "delete_unmanaged_endpoint",
   "link_entra_id_data",
   "unlink_entra_id_data",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withSearchAliases(withQueryProperties(QUERY_PARAMETERS, () => selectedRelease(), withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  // A merged tool's type values and per-type properties follow the selected release (REQ-SRV-029).
+  const toolCatalog = declaredArgumentsOnly(withVariantSelectors(TOOL_VARIANTS, TOOL_RELEASES, routeArguments, withQueryProperties(QUERY_PARAMETERS, () => selectedRelease(), withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
-        // ── Endpoints API ─────────────────────────────────────────────────
+        // ── One tool per operation; the endpoint type is an argument (REQ-SRV-029) ──
         {
           name: "list_endpoints",
-          description: "List all endpoints (devices) managed by baramundi. Supports filtering, searching, and pagination.",
-          inputSchema: {
-            type: "object",
-            properties: {},
-            required: []
-          }
+          description: "List endpoints (devices) managed by baramundi, one page at a time. Without type, all types with the common filters; with type, only that type's endpoints, with its own filters and fields. The type values are those of the type field in the results.",
+          inputSchema: { type: "object", properties: { type: typeProperty("Endpoint type; leave out for all types.") }, required: [] }
         },
         {
           name: "get_endpoint",
-          description: "Get detailed information about a specific endpoint by ID",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                description: "Endpoint ID (GUID)"
-              }
-            },
-            required: ["id"]
-          }
+          description: "Get an endpoint by its GUID. With type, the type-specific details (e.g. hardware, OS, management state); without, the common fields.",
+          inputSchema: { type: "object", properties: { type: typeProperty("Endpoint type; leave out for the common fields."), id: { type: "string", description: "Endpoint ID (GUID)" } }, required: ["id"] }
         },
         {
-          name: "search_endpoints",
-          description: "Search for endpoints. Searches across multiple fields including hostname, IP, serial number, etc.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              query: {
-                type: "string",
-                description: "Search query string"
-              },
-              pageSize: pageSizeProperty(50)
-            },
-            required: ["query"]
-          }
+          name: "delete_endpoint",
+          description: "Delete an endpoint by its GUID; with type, through that type's route. WARNING: Permanently deletes the endpoint.",
+          inputSchema: { type: "object", properties: { type: typeProperty("Endpoint type; leave out to delete through the common route."), id: { type: "string", description: "Endpoint ID (GUID)" } }, required: ["id"] }
         },
         {
-          name: "list_windows_endpoints",
-          description: "List all Windows endpoints specifically",
-          inputSchema: {
-            type: "object",
-            properties: {},
-            required: []
-          }
+          name: "update_endpoint",
+          description: "Update an endpoint of the given type: sends a JSON Patch of the fields given (at least one). Which fields a type takes is listed with each field. WARNING: Modifies endpoint properties.",
+          inputSchema: mergedUpdateInputSchema(Object.keys(TOOL_VARIANTS.update_endpoint), typeProperty("Endpoint type."), "Endpoint ID (GUID)")
         },
         {
-          name: "get_windows_endpoint",
-          description: "Get detailed information about a specific Windows endpoint",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                description: "Windows endpoint ID (GUID)"
-              }
-            },
-            required: ["id"]
-          }
+          name: "start_enrollment",
+          description: "Start the enrollment of an existing endpoint of the given type and return what the administrator needs (install command, token, URL or QR text). Which fields a type takes is listed with each field.",
+          inputSchema: mergedCreateInputSchema(Object.keys(TOOL_VARIANTS.start_enrollment), typeProperty("Endpoint type."))
         },
+        {
+          name: "list_endpoints_by_logical_group",
+          description: "List the endpoints of a logical group, one page at a time; with type, only that type's.",
+          inputSchema: { type: "object", properties: { type: typeProperty("Endpoint type; leave out for all types."), logicalGroupId: { type: "string", description: "Logical group ID (GUID)" } }, required: ["logicalGroupId"] }
+        },
+        // ── Endpoints API ─────────────────────────────────────────────────
         {
           name: "list_logical_groups",
           description: "List the logical groups in baramundi, one page at a time. Filter by name, distribution point (Dip) or domain.",
@@ -224,187 +186,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             required: ["id"]
           }
         },
-        {
-          name: "list_group_endpoints",
-          description: "List all endpoints in a specific logical group",
-          inputSchema: {
-            type: "object",
-            properties: {
-              logicalGroupId: {
-                type: "string",
-                description: "Logical group ID"
-              }
-            },
-            required: ["logicalGroupId"]
-          }
-        },
-        {
-          name: "list_linux_endpoints",
-          description: "List all Linux endpoints",
-          inputSchema: {
-            type: "object",
-            properties: {},
-            required: []
-          }
-        },
-        {
-          name: "list_mac_endpoints",
-          description: "List all Mac endpoints",
-          inputSchema: {
-            type: "object",
-            properties: {},
-            required: []
-          }
-        },
-        {
-          name: "get_linux_endpoint",
-          description: "Retrieve detailed information about a specific Linux endpoint by its GUID. Returns full endpoint properties including display name, hostname, IP address, OS version, management status, and group membership. Use this after list_linux_endpoints to inspect a particular device.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                description: "Linux endpoint ID (GUID)"
-              }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "get_mac_endpoint",
-          description: "Retrieve detailed information about a specific macOS endpoint by its GUID. Returns full endpoint properties including display name, hostname, IP address, OS version, management status, and enrollment state. Use this after list_mac_endpoints to inspect a particular device.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                description: "macOS endpoint ID (GUID)"
-              }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "list_endpoints_by_logical_group",
-          description: "List all endpoints of any platform type (Windows, Linux, Mac, Android, iOS, etc.) that belong to a specific logical group. Returns a paged list of endpoints with basic information. Use this for cross-platform group inventory queries in baramundi.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              logicalGroupId: {
-                type: "string",
-                description: "Logical group ID (GUID)"
-              }
-            },
-            required: ["logicalGroupId"]
-          }
-        },
-        {
-          name: "list_windows_endpoints_by_logical_group",
-          description: "List all Windows endpoints belonging to a specific logical group in baramundi. Returns a paged list of Windows endpoints with full details. This is the primary tool for group-based Windows fleet queries and rollout status checks when managing endpoints via logical groups.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              logicalGroupId: {
-                type: "string",
-                description: "Logical group ID (GUID)"
-              }
-            },
-            required: ["logicalGroupId"]
-          }
-        },
         // Android READ (Phase 24)
-        {
-          name: "list_android_endpoints",
-          description: "List all Android endpoints managed by baramundi. Returns a paged list of Android mobile devices. Use for Android fleet inventory queries.",
-          inputSchema: {
-            type: "object",
-            properties: {}
-          }
-        },
-        {
-          name: "get_android_endpoint",
-          description: "Get details of a specific Android endpoint by its GUID. Returns full device properties including serial number, enrollment state, and group assignments.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "Android endpoint ID (GUID)" }
-            },
-            required: ["id"]
-          }
-        },
         // iOS READ (Phase 24)
-        {
-          name: "list_ios_endpoints",
-          description: "List all iOS/iPadOS endpoints managed by baramundi. Returns a paged list of Apple mobile devices. Use for iOS fleet inventory queries.",
-          inputSchema: {
-            type: "object",
-            properties: {}
-          }
-        },
-        {
-          name: "get_ios_endpoint",
-          description: "Get details of a specific iOS/iPadOS endpoint by its GUID. Returns full device properties including serial number, enrollment state, and group assignments.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "iOS endpoint ID (GUID)" }
-            },
-            required: ["id"]
-          }
-        },
         // Mobile enrollment
-        {
-          name: "start_android_enrollment",
-          description: "Start the enrollment process for an existing Android endpoint in baramundi MDM. Triggers sending of enrollment instructions to the device or optionally via email. This is the core MDM onboarding action for Android devices and completes the Android endpoint lifecycle.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                description: "Android endpoint ID (GUID)"
-              },
-              enrollmentMailAddress: {
-                type: "string",
-                description: "Email address to send enrollment instructions to (optional)"
-              },
-              emailLanguageId: {
-                type: "string",
-                description: "Language ID for the enrollment email, e.g. 'en-US' or 'de-DE' (optional)"
-              },
-              forceMobileDataOnEnrollment: {
-                type: "boolean",
-                description: "Force mobile data during enrollment (default: false)"
-              },
-              includeWifiInQrCode: {
-                type: "boolean",
-                description: "Include Wi-Fi credentials in the QR code (default: false)"
-              }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "start_ios_enrollment",
-          description: "Start the enrollment process for an existing iOS or iPadOS endpoint in baramundi MDM. Triggers sending of enrollment instructions to the device or optionally via email. This completes the iOS endpoint lifecycle alongside create, update, and delete operations.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                description: "iOS endpoint ID (GUID)"
-              },
-              enrollmentMailAddress: {
-                type: "string",
-                description: "Email address to send enrollment instructions to (optional)"
-              },
-              emailLanguageId: {
-                type: "string",
-                description: "Language ID for the enrollment email, e.g. 'en-US' or 'de-DE' (optional)"
-              }
-            },
-            required: ["id"]
-          }
-        },
         // Android CRUD
         {
           name: "create_android_endpoint",
@@ -441,50 +225,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             required: ["displayName"]
           }
         },
-        {
-          name: "update_android_endpoint",
-          description: "Update an existing Android endpoint in baramundi",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                description: "Android endpoint ID (GUID)"
-              },
-              displayName: {
-                type: "string",
-                description: "Display name of the Android endpoint"
-              },
-              logicalGroupId: {
-                type: "string",
-                description: "ID of the logical group to assign the endpoint to (GUID format)"
-              },
-              comment: {
-                type: "string",
-                description: "Comment or description for the endpoint"
-              },
-              serialNumber: {
-                type: "string",
-                description: "Serial number of the Android device"
-              }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "delete_android_endpoint",
-          description: "Delete an Android endpoint from baramundi",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: {
-                type: "string",
-                description: "Android endpoint ID (GUID)"
-              }
-            },
-            required: ["id"]
-          }
-        },
         // iOS CRUD (Phase 24)
         {
           name: "create_ios_endpoint",
@@ -499,57 +239,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             required: ["displayName"]
           }
         },
-        {
-          name: "update_ios_endpoint",
-          description: "Update an existing iOS/iPadOS endpoint in baramundi MDM. WARNING: Modifies endpoint properties.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "iOS endpoint ID (GUID)" },
-              displayName: { type: "string", description: "Display name of the iOS endpoint" },
-              logicalGroupId: { type: "string", description: "ID of the logical group (GUID)" },
-              comment: { type: "string", description: "Comment or description" }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "delete_ios_endpoint",
-          description: "Delete an iOS/iPadOS endpoint from baramundi MDM. WARNING: Permanently removes the device record.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "iOS endpoint ID (GUID)" }
-            },
-            required: ["id"]
-          }
-        },
         // Windows CRUD
         {
           name: "create_windows_endpoint",
           description: "Create a new Windows endpoint. WARNING: Creates a new endpoint in the system.",
           inputSchema: createInputSchema("create_windows_endpoint")
-        },
-        {
-          name: "update_windows_endpoint",
-          description: "Update a Windows endpoint. WARNING: Modifies endpoint properties.",
-          inputSchema: updateInputSchema("update_windows_endpoint", "Endpoint ID (GUID)")
-        },
-        {
-          name: "delete_windows_endpoint",
-          description: "Delete a Windows endpoint. WARNING: Permanently deletes the endpoint.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "Endpoint ID (GUID)" }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "start_windows_enrollment",
-          description: "Start Windows endpoint enrollment. Sets endpoint to Internet mode and generates enrollment data.",
-          inputSchema: createInputSchema("start_windows_enrollment")
         },
         {
           name: "trigger_intune_installation",
@@ -568,22 +262,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           description: "Create a new Linux endpoint. WARNING: Creates a new endpoint.",
           inputSchema: createInputSchema("create_linux_endpoint")
         },
-        {
-          name: "update_linux_endpoint",
-          description: "Update a Linux endpoint. WARNING: Modifies endpoint properties.",
-          inputSchema: updateInputSchema("update_linux_endpoint", "Endpoint ID (GUID)")
-        },
-        {
-          name: "delete_linux_endpoint",
-          description: "Delete a Linux endpoint. WARNING: Permanently deletes the endpoint.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "Endpoint ID (GUID)" }
-            },
-            required: ["id"]
-          }
-        },
         // Mac CRUD
         {
           name: "create_mac_endpoint",
@@ -597,27 +275,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             },
             required: ["displayName"]
           }
-        },
-        {
-          name: "update_mac_endpoint",
-          description: "Update a Mac endpoint. WARNING: Modifies endpoint properties.",
-          inputSchema: updateInputSchema("update_mac_endpoint", "Endpoint ID (GUID)")
-        },
-        {
-          name: "delete_mac_endpoint",
-          description: "Delete a Mac endpoint. WARNING: Permanently deletes the endpoint.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "Endpoint ID (GUID)" }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "start_mac_enrollment",
-          description: "Start Mac endpoint enrollment.",
-          inputSchema: createInputSchema("start_mac_enrollment")
         },
         // Logical groups CRUD
         {
@@ -659,18 +316,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         { name: "update_maintenance_window_for_logical_group", description: `Update a maintenance window for a logical group. ${INTERVAL_RULE} Changing the type to Anytime or Never removes the existing intervals. WARNING: Modifies existing maintenance window.`, inputSchema: updateInputSchema("update_maintenance_window_for_logical_group", "Logical group ID (GUID)") },
         { name: "delete_maintenance_window_for_logical_group", description: "Delete a maintenance window for a logical group. WARNING: Permanently deletes maintenance window.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         // Industrial & network endpoints (Phase 24: added GET for network)
-        { name: "list_industrial_endpoints", description: "List all industrial endpoints (PLCs, SCADA systems, etc.) managed by baramundi. Returns a paged list.", inputSchema: { type: "object", properties: {} } },
-        { name: "get_industrial_endpoint", description: "Get details of a specific industrial endpoint by its GUID.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Industrial endpoint ID (GUID)" } }, required: ["id"] } },
         { name: "create_industrial_endpoint", description: "Create a new industrial endpoint (PLC, SCADA, etc.). WARNING: Creates a new endpoint.", inputSchema: createInputSchema("create_industrial_endpoint") },
-        { name: "update_industrial_endpoint", description: "Update an existing industrial endpoint. WARNING: Modifies endpoint properties.", inputSchema: updateInputSchema("update_industrial_endpoint", "Industrial endpoint ID (GUID)") },
-        { name: "delete_industrial_endpoint", description: "Delete an industrial endpoint. WARNING: Permanently deletes the endpoint.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
-        { name: "list_network_endpoints", description: "List all network endpoints (switches, routers, printers, etc.) managed by baramundi.", inputSchema: { type: "object", properties: {} } },
-        { name: "get_network_endpoint", description: "Get details of a specific network endpoint by its GUID.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Network endpoint ID (GUID)" } }, required: ["id"] } },
         { name: "create_network_endpoint", description: "Create a new network endpoint (switch, router, printer, etc.). WARNING: Creates a new endpoint.", inputSchema: createInputSchema("create_network_endpoint") },
-        { name: "update_network_endpoint", description: "Update an existing network endpoint. WARNING: Modifies endpoint properties.", inputSchema: updateInputSchema("update_network_endpoint", "Network endpoint ID (GUID)") },
-        { name: "delete_network_endpoint", description: "Delete a network endpoint. WARNING: Permanently deletes the endpoint.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
         // Generic delete
-        { name: "delete_endpoint", description: "Delete any endpoint by ID (generic delete for all endpoint types). WARNING: Permanently deletes the endpoint.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
       ];
 
       // 26R1-only tools: Unmanaged Endpoints + EntraID (listed per TOOL_RELEASES, #159)
@@ -684,7 +332,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       );
 
       return { tools };
-  }))));
+  }, { variants: TOOL_VARIANTS, releases: TOOL_RELEASES }))));
   // With writes off, tools/list leaves out the write tools; the gate still refuses them by name (REQ-SRV-026).
   server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
     withToolAnnotations(TOOL_METHODS, toolCatalog.list))));
@@ -698,18 +346,22 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       validateOrThrow(args, TOOL_RULES[name]());
     }
   }
+  // A merged tool's call is checked against its routes for the selected release before anything else (REQ-SRV-029).
   // countOnly (#165): count with one 1-row request instead of loading a page.
-  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, withToolVariants(TOOL_VARIANTS, TOOL_RELEASES, routeArguments, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
+    // A removed per-type tool answers with its replacement; it never runs (REQ-SRV-029).
+    refuseReplacedTool(REPLACED_TOOLS, TOOL_RELEASES, name);
     // A tool the selected release lacks is refused by name first, before its arguments are
     // checked against a schema the release doesn't list, and before anything is sent (#159).
     refuseUnavailableTool(TOOL_RELEASES, name);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
 
-    
+    // The route a merged tool's arguments chose (checked by withToolVariants); any other tool is its own route.
+    const route = variantKey(TOOL_VARIANTS, name, args) ?? name;
     // Validate arguments first — pure, no side effects, fails fast on bad input.
-    validateToolArguments(name, args);
+    validateToolArguments(route, args);
     // ── Write-operation gate (REQ-SRV-012) ───────────────────────────────────
     if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
       return {
@@ -733,39 +385,31 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     try {
       const bconnect = lazyClient(getBconnect);
 
-      switch (name) {
+      switch (route) {
         // ── Endpoints ───────────────────────────────────────────────────
-        case "list_endpoints": {
-          const result = await bconnect.endpoints.getEndpoints(pickArguments(args ?? {}, sends("list_endpoints")));
+        case "list_endpoints[type=]": {
+          const result = await bconnect.endpoints.getEndpoints(pickArguments(args ?? {}, sends(route)));
           return toolJsonResult(result);
         }
 
-        case "get_endpoint": {
+        case "get_endpoint[type=]": {
           const result = await bconnect.endpoints.getEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
-        case "search_endpoints": {
-          const result = await bconnect.endpoints.searchEndpoints(
-            args!.query as string,
-            args!.pageSize as number | undefined,
-            pickArguments(args ?? {}, sends("search_endpoints").filter((name) => !SEARCH_ALIASES.has(name)))
-          );
+
+        case "list_endpoints[type=WindowsEndpoint]": {
+          const result = await bconnect.endpoints.getWindowsEndpoints(pickArguments(args ?? {}, sends(route)));
           return toolJsonResult(result);
         }
 
-        case "list_windows_endpoints": {
-          const result = await bconnect.endpoints.getWindowsEndpoints(pickArguments(args ?? {}, sends("list_windows_endpoints")));
-          return toolJsonResult(result);
-        }
-
-        case "get_windows_endpoint": {
+        case "get_endpoint[type=WindowsEndpoint]": {
           const result = await bconnect.endpoints.getWindowsEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
         case "list_logical_groups": {
-          const result = await bconnect.endpoints.getLogicalGroups(pickArguments(args ?? {}, sends("list_logical_groups")));
+          const result = await bconnect.endpoints.getLogicalGroups(pickArguments(args ?? {}, sends(route)));
           return toolJsonResult(result);
         }
 
@@ -774,71 +418,64 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "list_group_endpoints": {
-          const result = await bconnect.endpoints.getLogicalGroupEndpoints(
-            args!.logicalGroupId as string,
-            pickArguments(args ?? {}, sends("list_group_endpoints"))
-          );
+
+        case "list_endpoints[type=LinuxEndpoint]": {
+          const result = await bconnect.endpoints.getLinuxEndpoints(pickArguments(args ?? {}, sends(route)));
           return toolJsonResult(result);
         }
 
-        case "list_linux_endpoints": {
-          const result = await bconnect.endpoints.getLinuxEndpoints(pickArguments(args ?? {}, sends("list_linux_endpoints")));
+        case "list_endpoints[type=MacEndpoint]": {
+          const result = await bconnect.endpoints.getMacEndpoints(pickArguments(args ?? {}, sends(route)));
           return toolJsonResult(result);
         }
 
-        case "list_mac_endpoints": {
-          const result = await bconnect.endpoints.getMacEndpoints(pickArguments(args ?? {}, sends("list_mac_endpoints")));
-          return toolJsonResult(result);
-        }
-
-        case "get_linux_endpoint": {
+        case "get_endpoint[type=LinuxEndpoint]": {
           const result = await bconnect.endpoints.getLinuxEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
-        case "get_mac_endpoint": {
+        case "get_endpoint[type=MacEndpoint]": {
           const result = await bconnect.endpoints.getMacEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
-        case "list_endpoints_by_logical_group": {
+        case "list_endpoints_by_logical_group[type=]": {
           const result = await bconnect.endpoints.getEndpointsByLogicalGroup(
             args!.logicalGroupId as string,
-            pickArguments(args ?? {}, sends("list_endpoints_by_logical_group"))
+            pickArguments(args ?? {}, sends(route))
           );
           return toolJsonResult(result);
         }
 
-        case "list_windows_endpoints_by_logical_group": {
+        case "list_endpoints_by_logical_group[type=WindowsEndpoint]": {
           const result = await bconnect.endpoints.getWindowsEndpointsByLogicalGroup(
             args!.logicalGroupId as string,
-            pickArguments(args ?? {}, sends("list_windows_endpoints_by_logical_group"))
+            pickArguments(args ?? {}, sends(route))
           );
           return toolJsonResult(result);
         }
 
-        case "list_android_endpoints": {
-          const result = await bconnect.endpoints.listAndroidEndpoints(pickArguments(args ?? {}, sends("list_android_endpoints")));
+        case "list_endpoints[type=AndroidEndpoint]": {
+          const result = await bconnect.endpoints.listAndroidEndpoints(pickArguments(args ?? {}, sends(route)));
           return toolJsonResult(result);
         }
 
-        case "get_android_endpoint": {
+        case "get_endpoint[type=AndroidEndpoint]": {
           const result = await bconnect.endpoints.getAndroidEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
-        case "list_ios_endpoints": {
-          const result = await bconnect.endpoints.listIosEndpoints(pickArguments(args ?? {}, sends("list_ios_endpoints")));
+        case "list_endpoints[type=IOSEndpoint]": {
+          const result = await bconnect.endpoints.listIosEndpoints(pickArguments(args ?? {}, sends(route)));
           return toolJsonResult(result);
         }
 
-        case "get_ios_endpoint": {
+        case "get_endpoint[type=IOSEndpoint]": {
           const result = await bconnect.endpoints.getIosEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
-        case "start_android_enrollment": {
+        case "start_enrollment[type=AndroidEndpoint]": {
           const result = await bconnect.endpoints.startAndroidEnrollment(
             args!.id as string,
             {
@@ -851,7 +488,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "start_ios_enrollment": {
+        case "start_enrollment[type=IOSEndpoint]": {
           const result = await bconnect.endpoints.startIosEnrollment(
             args!.id as string,
             {
@@ -875,17 +512,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "update_android_endpoint": {
-          const patchOperations: Array<Record<string, never>> = [];
-          if (args!.displayName !== undefined) {patchOperations.push({ op: "replace", path: "/displayName", value: args!.displayName } as never);}
-          if (args!.logicalGroupId !== undefined) {patchOperations.push({ op: "replace", path: "/logicalGroupId", value: args!.logicalGroupId } as never);}
-          if (args!.comment !== undefined) {patchOperations.push({ op: "replace", path: "/comment", value: args!.comment } as never);}
-          if (args!.serialNumber !== undefined) {patchOperations.push({ op: "replace", path: "/serialNumber", value: args!.serialNumber } as never);}
-          const result = await bconnect.endpoints.updateAndroidEndpoint(args!.id as string, patchOperations);
+        case "update_endpoint[type=AndroidEndpoint]": {
+          const patch = changes(route, args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateAndroidEndpoint(args!.id as string, patch);
           return toolJsonResult(result, { lead: `Android endpoint ${args!.id} updated:` });
         }
 
-        case "delete_android_endpoint": {
+        case "delete_endpoint[type=AndroidEndpoint]": {
           await bconnect.endpoints.deleteAndroidEndpoint(args!.id as string);
           return toolJsonResult({ success: true, message: `Android endpoint ${args!.id} deleted successfully` });
         }
@@ -900,16 +533,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "update_ios_endpoint": {
-          const patchOps: Array<Record<string, never>> = [];
-          if (args!.displayName !== undefined) {patchOps.push({ op: "replace", path: "/displayName", value: args!.displayName } as never);}
-          if (args!.logicalGroupId !== undefined) {patchOps.push({ op: "replace", path: "/logicalGroupId", value: args!.logicalGroupId } as never);}
-          if (args!.comment !== undefined) {patchOps.push({ op: "replace", path: "/comment", value: args!.comment } as never);}
-          const result = await bconnect.endpoints.updateIosEndpoint(args!.id as string, patchOps);
+        case "update_endpoint[type=IOSEndpoint]": {
+          const patch = changes(route, args!); // checks the arguments before the client is built
+          const result = await bconnect.endpoints.updateIosEndpoint(args!.id as string, patch);
           return toolJsonResult(result, { lead: `iOS endpoint ${args!.id} updated:` });
         }
 
-        case "delete_ios_endpoint": {
+        case "delete_endpoint[type=IOSEndpoint]": {
           await bconnect.endpoints.deleteIosEndpoint(args!.id as string);
           return toolJsonResult({ success: true, message: `iOS endpoint ${args!.id} deleted successfully` });
         }
@@ -919,19 +549,19 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "update_windows_endpoint": {
-          const patch = changes("update_windows_endpoint", args!); // checks the arguments before the client is built
+        case "update_endpoint[type=WindowsEndpoint]": {
+          const patch = changes(route, args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateWindowsEndpoint(args!.id as string, patch);
           return toolJsonResult(result);
         }
 
-        case "delete_windows_endpoint": {
+        case "delete_endpoint[type=WindowsEndpoint]": {
           await bconnect.endpoints.deleteWindowsEndpoint(args!.id as string);
           return { content: [{ type: "text", text: `Windows endpoint ${args!.id} deleted successfully` }] };
         }
 
-        case "start_windows_enrollment": {
-          const result = await bconnect.endpoints.startWindowsEndpointEnrollment(args!.id as string, createBody("start_windows_enrollment", args!));
+        case "start_enrollment[type=WindowsEndpoint]": {
+          const result = await bconnect.endpoints.startWindowsEndpointEnrollment(args!.id as string, createBody(route, args!));
           return toolJsonResult(result, { lead: `Windows endpoint ${args!.id} enrollment started:` });
         }
 
@@ -950,13 +580,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "update_linux_endpoint": {
-          const patch = changes("update_linux_endpoint", args!); // checks the arguments before the client is built
+        case "update_endpoint[type=LinuxEndpoint]": {
+          const patch = changes(route, args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateLinuxEndpoint(args!.id as string, patch);
           return toolJsonResult(result);
         }
 
-        case "delete_linux_endpoint": {
+        case "delete_endpoint[type=LinuxEndpoint]": {
           await bconnect.endpoints.deleteLinuxEndpoint(args!.id as string);
           return { content: [{ type: "text", text: `Linux endpoint ${args!.id} deleted successfully` }] };
         }
@@ -966,19 +596,19 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "update_mac_endpoint": {
-          const patch = changes("update_mac_endpoint", args!); // checks the arguments before the client is built
+        case "update_endpoint[type=MacEndpoint]": {
+          const patch = changes(route, args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateMacEndpoint(args!.id as string, patch);
           return toolJsonResult(result);
         }
 
-        case "delete_mac_endpoint": {
+        case "delete_endpoint[type=MacEndpoint]": {
           await bconnect.endpoints.deleteMacEndpoint(args!.id as string);
           return { content: [{ type: "text", text: `Mac endpoint ${args!.id} deleted successfully` }] };
         }
 
-        case "start_mac_enrollment": {
-          const result = await bconnect.endpoints.startMacEndpointEnrollment(args!.id as string, createBody("start_mac_enrollment", args!));
+        case "start_enrollment[type=MacEndpoint]": {
+          const result = await bconnect.endpoints.startMacEndpointEnrollment(args!.id as string, createBody(route, args!));
           return toolJsonResult(withoutQrImage(result), { lead: `Mac endpoint ${args!.id} enrollment started:` });
         }
 
@@ -1006,7 +636,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "update_maintenance_window_for_endpoint": {
           checkIntervalRule(args!);
-          const patch = withIntervalRemoval(args!, changes("update_maintenance_window_for_endpoint", args!)); // checks the arguments before the client is built
+          const patch = withIntervalRemoval(args!, changes(route, args!)); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateMaintenanceWindowForEndpoint(args!.id as string, patch);
           return toolJsonResult(result, { lead: `Maintenance window for endpoint ${args!.id} updated:` });
         }
@@ -1034,12 +664,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return { content: [{ type: "text", text: `Maintenance window for logical group ${args!.id} deleted successfully` }] };
         }
 
-        case "list_industrial_endpoints": {
-          const result = await bconnect.endpoints.listIndustrialEndpoints(pickArguments(args ?? {}, sends("list_industrial_endpoints")));
+        case "list_endpoints[type=IndustrialEndpoint]": {
+          const result = await bconnect.endpoints.listIndustrialEndpoints(pickArguments(args ?? {}, sends(route)));
           return toolJsonResult(result);
         }
 
-        case "get_industrial_endpoint": {
+        case "get_endpoint[type=IndustrialEndpoint]": {
           if (!args?.id) {throw new McpError(ErrorCode.InvalidParams, "id is required");}
           const result = await bconnect.endpoints.getIndustrialEndpoint(args.id as string);
           return toolJsonResult(result);
@@ -1050,13 +680,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return { content: [{ type: "text", text: `Industrial endpoint created successfully. ID: ${result.id}` }] };
         }
 
-        case "update_industrial_endpoint": {
-          const patch = changes("update_industrial_endpoint", args!); // checks the arguments before the client is built
+        case "update_endpoint[type=IndustrialEndpoint]": {
+          const patch = changes(route, args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateIndustrialEndpoint(args!.id as string, patch);
           return toolJsonResult(result, { lead: `Industrial endpoint ${args!.id} updated:` });
         }
 
-        case "delete_industrial_endpoint": {
+        case "delete_endpoint[type=IndustrialEndpoint]": {
           await bconnect.endpoints.deleteIndustrialEndpoint(args!.id as string);
           return { content: [{ type: "text", text: `Industrial endpoint ${args!.id} deleted successfully` }] };
         }
@@ -1066,29 +696,29 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return { content: [{ type: "text", text: `Network endpoint created successfully. ID: ${result.id}` }] };
         }
 
-        case "update_network_endpoint": {
-          const patch = changes("update_network_endpoint", args!); // checks the arguments before the client is built
+        case "update_endpoint[type=NetworkEndpoint]": {
+          const patch = changes(route, args!); // checks the arguments before the client is built
           const result = await bconnect.endpoints.updateNetworkEndpoint(args!.id as string, patch);
           return toolJsonResult(result, { lead: `Network endpoint ${args!.id} updated:` });
         }
 
-        case "delete_network_endpoint": {
+        case "delete_endpoint[type=NetworkEndpoint]": {
           await bconnect.endpoints.deleteNetworkEndpoint(args!.id as string);
           return { content: [{ type: "text", text: `Network endpoint ${args!.id} deleted successfully` }] };
         }
 
-        case "delete_endpoint": {
+        case "delete_endpoint[type=]": {
           await bconnect.endpoints.deleteEndpoint(args!.id as string);
           return { content: [{ type: "text", text: `Endpoint ${args!.id} deleted successfully` }] };
         }
 
         // Phase 24: Network READ
-        case "list_network_endpoints": {
-          const result = await bconnect.endpoints.listNetworkEndpoints(pickArguments(args ?? {}, sends("list_network_endpoints")));
+        case "list_endpoints[type=NetworkEndpoint]": {
+          const result = await bconnect.endpoints.listNetworkEndpoints(pickArguments(args ?? {}, sends(route)));
           return toolJsonResult(result);
         }
 
-        case "get_network_endpoint": {
+        case "get_endpoint[type=NetworkEndpoint]": {
           const result = await bconnect.endpoints.getNetworkEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
@@ -1146,7 +776,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // model can read; only McpErrors stay protocol errors (REQ-XC-001).
       return toolErrorResult(error, release);
     }
-  }, { pageSizeArgument: { search_endpoints: "pageSize" } }));
+  })));
 
   // ── Direct handler dispatch for testing ──────────────────────────────────
   //

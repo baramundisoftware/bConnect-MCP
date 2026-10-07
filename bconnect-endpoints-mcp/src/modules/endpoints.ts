@@ -31,14 +31,12 @@ type WindowsEndpointsByLogicalGroupList = paths["/v2.0/LogicalGroups/{logicalGro
 // Type aliases for Android WRITE operations
 type AndroidEndpointForCreation = paths["/v2.0/AndroidEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type AndroidEndpoint = paths["/v2.0/AndroidEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
-type AndroidEndpointUpdate = paths["/v2.0/AndroidEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 type AndroidEnrollmentRequest = paths["/v2.0/AndroidEndpoints/{id}/StartEnrollment"]["post"]["requestBody"]["content"]["application/json"];
 type AndroidEnrollmentResponse = paths["/v2.0/AndroidEndpoints/{id}/StartEnrollment"]["post"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for iOS WRITE operations
 type IosEndpointForCreation = paths["/v2.0/IosEndpoints"]["post"]["requestBody"]["content"]["application/json"];
 type IosEndpoint = paths["/v2.0/IosEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
-type IosEndpointUpdate = paths["/v2.0/IosEndpoints/{id}"]["patch"]["requestBody"]["content"]["application/json-patch+json"];
 type IosEnrollmentRequest = paths["/v2.0/IosEndpoints/{id}/StartEnrollment"]["post"]["requestBody"]["content"]["application/json"];
 type IosEnrollmentResponse = paths["/v2.0/IosEndpoints/{id}/StartEnrollment"]["post"]["responses"]["200"]["content"]["application/json"];
 
@@ -304,7 +302,7 @@ export class EndpointsModule {
   /**
    * Update an existing Android endpoint
    */
-  async updateAndroidEndpoint(id: string, updateData: AndroidEndpointUpdate): Promise<unknown> {
+  async updateAndroidEndpoint(id: string, updateData: JsonPatchOperation[]): Promise<unknown> {
     const response = await this.client.patch(
       `${this.basePath}/AndroidEndpoints/${id}`,
       updateData
@@ -350,7 +348,7 @@ export class EndpointsModule {
   /**
    * Update an existing iOS endpoint
    */
-  async updateIosEndpoint(id: string, updateData: IosEndpointUpdate): Promise<unknown> {
+  async updateIosEndpoint(id: string, updateData: JsonPatchOperation[]): Promise<unknown> {
     const response = await this.client.patch(
       `${this.basePath}/IosEndpoints/${id}`,
       updateData

@@ -10,7 +10,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { RELEASES } from './lib/spec.js';
-import { ID, SERVERS, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
+import { ID, SERVERS, callsOf, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
 
 /** What bMS answers to every request: nested, so indentation shows. */
 const ANSWER = {
@@ -62,15 +62,16 @@ describe.each(RELEASES)('bMS %s', (release) => {
   beforeAll(async () => {
     for (const server of SERVERS) {
       const conn = await connect(server);
-      for (const tool of conn.tools) {
-        const args = requiredArguments(tool.inputSchema);
+      // Every route: a merged tool once per variant of the release (REQ-SRV-029).
+      for (const tool of await callsOf(server, conn.tools, release)) {
+        const args = { ...requiredArguments(tool.inputSchema), ...tool.select };
         const run = async (pretty: string) => {
           Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }), { BCONNECT_PRETTY_JSON: pretty });
           return conn.call(tool.name, args);
         };
         const compact = await run('');
         const pretty = await run('true');
-        calls.push({ tool: `${server} ${tool.name}`, isError: compact.isError || pretty.isError, compact: textOf(compact), pretty: textOf(pretty) });
+        calls.push({ tool: `${server} ${tool.key}`, isError: compact.isError || pretty.isError, compact: textOf(compact), pretty: textOf(pretty) });
       }
       await conn.close();
     }

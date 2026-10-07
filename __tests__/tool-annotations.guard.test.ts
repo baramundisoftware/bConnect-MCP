@@ -173,7 +173,8 @@ describe.each(RELEASES)('bMS %s', (release) => {
   }, 300_000);
 
   it('lists every tool of every server', () => {
-    expect(seen.length).toBeGreaterThan(200);
+    // Not vacuous: 25R2 lists 197 tools since #174 merged the per-type endpoint tools.
+    expect(seen.length).toBeGreaterThan(190);
   });
 
   it('annotates every tool as its operations say (title, readOnlyHint, destructiveHint on writes)', () => {

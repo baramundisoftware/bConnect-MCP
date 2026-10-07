@@ -21,9 +21,10 @@ export function variantOf(key: string): Variant {
   return { tool: m[1], select };
 }
 
-/** `type "WindowsEndpoint"`, `without type`, `kind "Static" and member "Red"`: as the servers say it. */
+/** `type "WindowsEndpoint"`, `without type`, `kind "Static" and member "Red"`, `kind "Static" without member`: as the servers say it. */
 export function describeVariant(select: Record<string, string | null>): string {
-  return Object.entries(select).map(([name, value]) => (value === null ? `without ${name}` : `${name} "${value}"`)).join(' and ');
+  const parts = Object.entries(select).map(([name, value]) => (value === null ? `without ${name}` : `${name} "${value}"`));
+  return parts.map((part, i) => (i === 0 ? part : `${part.startsWith('without ') ? ' ' : ' and '}${part}`)).join('');
 }
 
 /** The arguments that call a variant: its selectors with a value. */

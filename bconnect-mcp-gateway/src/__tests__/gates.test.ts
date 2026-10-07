@@ -91,7 +91,8 @@ describe("gateway with the gates closed", () => {
       const data = text.split("\n").find((line) => line.startsWith("data: "));
       const body = JSON.parse((data ?? "data: {}").slice(6)) as { result?: { tools?: Array<{ name: string; annotations?: { readOnlyHint?: boolean } }> } };
       const tools = body.result?.tools ?? [];
-      expect(tools.length).toBeGreaterThan(20);
+      // Not vacuous: the endpoints server lists 10 read tools on 26R1, 7 on 25R2 (one tool per operation since #174).
+      expect(tools.length).toBeGreaterThanOrEqual(7);
       expect(tools.filter((t) => t.annotations?.readOnlyHint !== true).map((t) => t.name)).toEqual([]);
       expect(tools.map((t) => t.name)).not.toContain("delete_endpoint");
     } finally {
