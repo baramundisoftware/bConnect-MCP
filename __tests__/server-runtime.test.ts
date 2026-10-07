@@ -536,6 +536,32 @@ describe('review follow-ups (REQ-SRV-023)', () => {
     }
   });
 
+  it('answers a request whose handler fails with a JSON-RPC error and keeps serving (Express 5, #69)', async () => {
+    const port = await freePort();
+    const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', MCP_TRANSPORT: 'http', MCP_PORT: String(port) };
+    const t = io(env);
+    // A server whose connect() rejects: on Express 4 that rejection was unhandled and could stop the process.
+    const failing = { ...httpEntry(env), createServer: () => ({ server: { connect: () => Promise.reject(new Error('boom /internal/path')), close: async () => undefined } as never }) };
+    await startServer(failing, t.options);
+    try {
+      msw.close();
+      const post = () => fetch(`http://127.0.0.1:${port}/mcp`, {
+        method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }),
+      });
+      for (const attempt of [1, 2]) {
+        const res = await post();
+        const text = await res.text();
+        expect(res.status, `attempt ${attempt}`).toBe(500);
+        expect(JSON.parse(text)).toMatchObject({ jsonrpc: '2.0', error: { code: -32603, message: 'Internal error' } });
+        expect(text).not.toMatch(/boom|internal\/path|\bat /);
+      }
+    } finally {
+      for (const s of t.servers) {await new Promise<void>((resolve) => s.close(() => resolve()));}
+      msw.listen({ onUnhandledRequest: 'error' });
+    }
+  });
+
   it('names the network cause of a failed connectivity check, without the host', async () => {
     msw.close();
     try {

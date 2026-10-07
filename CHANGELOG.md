@@ -32,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   manifests and type definitions say so. The gateway already ran Express 5.2.1 in every build while
   its manifest still named Express 4. Its separate `package-lock.json`, which no build used, is
   removed: the gateway runs on the root install (#69). Not breaking: the HTTP mode answers as before
-  (tool calls, malformed JSON, host check).
+  (tool calls, malformed JSON, host check), and a request that fails inside the handler now gets a
+  JSON-RPC "Internal error" instead of being able to stop the server process.
 - **Maintenance windows follow the bMS release.** On bMS 2025 R2 the create tools offered the 2026 R1
   window types: their default, `Anytime`, and `Never` don't exist in 25R2, and 25R2's `Unrestricted`
   was missing (#307). Creating a maintenance window now offers and accepts the selected release's

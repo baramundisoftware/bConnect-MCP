@@ -245,8 +245,13 @@ async function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io
     res.writeHead(405).end(JSON.stringify({ error: "Method Not Allowed. Session management not supported in stateless mode." }));
   });
 
-  // Malformed JSON and other request errors: a JSON-RPC error, never Express's HTML page with a stack.
-  app.use((error: { status?: number; type?: string }, _req: Request, res: Response, _next: NextFunction) => {
+  // Malformed JSON and other request errors, and (Express 5) a handler that fails: a JSON-RPC error,
+  // never Express's HTML page with a stack. Once a streamed answer has started, Express ends it.
+  app.use((error: { status?: number; type?: string }, _req: Request, res: Response, next: NextFunction) => {
+    if (res.headersSent) {
+      next(error);
+      return;
+    }
     const parse = error.type === "entity.parse.failed";
     const status = typeof error.status === "number" && error.status >= 400 && error.status < 600 ? error.status : 500;
     res.status(status).json({ jsonrpc: "2.0", error: { code: parse ? -32700 : -32603, message: parse ? "Parse error" : "Internal error" }, id: null });
