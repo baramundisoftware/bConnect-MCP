@@ -37,9 +37,8 @@ Include as much of the following as possible:
 
 ## Security Considerations
 
-> The controls below describe the current `main` branch. Some of them are newer than the
-> latest release; 26.1.9 will be the first release that has all of them (see
-> [CHANGELOG.md](CHANGELOG.md) → Unreleased). Update when it is published.
+> The controls below describe the current `main` branch. Changes after the latest release are
+> listed in [CHANGELOG.md](CHANGELOG.md) → Unreleased.
 
 ### Credentials at rest (`.env` and client config)
 

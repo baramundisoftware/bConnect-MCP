@@ -73,7 +73,7 @@ arm64) on GitHub Packages; the 13 servers run as local processes over stdio. Nod
 needed, the image brings its own:
 
 ```bash
-docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest   # or pin a version, e.g. :26.1.9
+docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest   # or pin a version, e.g. :26.1.10
 ```
 
 The [README](../README.md#gateway-http-multi-user) shows a `docker run` with the bMS settings and the

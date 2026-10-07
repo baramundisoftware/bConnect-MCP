@@ -24,7 +24,7 @@ image (linux/amd64 + linux/arm64) — browse it on the
 
 ```bash
 docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
-# or pin a version: …/bconnect-mcp-gateway:26.1.9
+# or pin a version: …/bconnect-mcp-gateway:26.1.10
 ```
 
 To build it yourself instead, the build context must be the repo **root** — the gateway

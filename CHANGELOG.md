@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.1.10] - 2026-10-07
+
+> **Breaking for anyone who calls tools by name:** the endpoint and groups tools are merged into
+> one tool per operation (#174), and while writes are off the tool list shows only read tools
+> (#156). See "Upgrading from 26.1.9" below and the old → new tool tables under Changed. With
+> the default settings (writes off) all 13 servers together list 130 tools with about 134 KB of
+> tool definitions on bMS 26R1 (26.1.9: 276 tools, 234 KB) and 100 tools, about 105 KB, on 25R2
+> (26.1.9: 240 tools, 206 KB): 43 % and 49 % less context per session.
+
 ### Added
 - **List tools can answer "how many?" without loading a page.** Every list tool that pages its results
   accepts `countOnly: true`: the tool asks bConnect for a single row with the same filters and returns
@@ -167,6 +176,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   request (the gateway offers no CORS; it used to answer with a list of allowed methods). The other
   answers (unknown domain, 405, rate limit, host check) are unchanged. A request that fails with a
   5xx is now logged. The gateway and the servers share one handler for these errors.
+
+
+### Upgrading from 26.1.9
+- **Calls to endpoint or groups tools by their old names fail.** Replace them as listed under
+  Changed (for example `list_windows_endpoints` → `list_endpoints` with `type` `WindowsEndpoint`,
+  `list_endpoints_by_static_group` → `list_group_members` with `groupKind` `StaticGroup`). Saved
+  prompts, skills and automation that name tools need the new names.
+- **Write tools are no longer listed while writes are off.** Before, they were listed and refused
+  when called. If a client or automation needs them, set `ALLOW_WRITE_OPERATIONS=true` for that
+  server. The gateway keeps writes off, as before.
+- **If you compare result text,** set `BCONNECT_PRETTY_JSON=true` to keep the indented format.
+- **`BCONNECT_RELEASE` is only a fallback now:** each server reads the release from the bMS at
+  startup, and that release wins (with a warning if `BCONNECT_RELEASE` says otherwise).
+  `BCONNECT_RELEASE` applies when the version can't be read, for example for an account without
+  read access to server management.
+- **On a bMS 2025 R2,** remove the compliance and universal dynamic groups servers from your client
+  configuration: they stop at startup with "needs bMS 26R1". The maintenance-window update tools
+  are not offered on 25R2.
+
+### Known issues
+- **The gateway has no built-in authentication.** Front it with an authenticating, TLS-terminating
+  reverse proxy that also checks `Host` and `Origin`.
+- **The gateway has no trust-proxy setting.** Behind a proxy it sees every request as coming from
+  the proxy, so all callers share one rate-limit bucket and the access log shows the proxy's address.
+- **Some reads are slow on a large or busy bMS** and can run into the default 30 s timeout; set
+  `BCONNECT_TIMEOUT_MS=90000` for those servers (see `docs/TROUBLESHOOTING.md`).
 
 ## [26.1.9] - 2026-10-06
 
@@ -749,7 +784,8 @@ providing 212 tools across endpoints, jobs, assets, software, compliance, and mo
 - Transport modes: stdio (local) and HTTP (network/Docker)
 - Unit tests and mock-integration tests across all servers
 
-[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.9...HEAD
+[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.10...HEAD
+[26.1.10]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.9...v26.1.10
 [26.1.9]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.7...v26.1.9
 [26.1.7]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.2...v26.1.7
 [26.1.2]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.1...v26.1.2
