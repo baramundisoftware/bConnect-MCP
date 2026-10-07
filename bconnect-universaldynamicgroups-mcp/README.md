@@ -5,7 +5,7 @@ Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST 
 **Domain:** Universal Dynamic Groups — UDG definitions and folder hierarchy (requires baramundi 2026 R1)  
 **Tools:** 6 (none on bMS 25R2)
 
-> **Note:** This server is only functional on a bMS 2026 R1. Universal Dynamic Groups do not exist in baramundi 25R2; on a 25R2 bMS (detected at startup, or `BCONNECT_RELEASE=25R2` as the fallback), no tools are exposed.
+> **Note:** This server is only functional on a bMS 2026 R1. Universal Dynamic Groups do not exist in baramundi 25R2; on a 25R2 bMS (detected at startup, or `BCONNECT_RELEASE=25R2` as the fallback), the server stops at startup with `needs bMS 26R1; this server uses 25R2 (…)`. In the HTTP gateway it lists no tools there.
 
 ---
 

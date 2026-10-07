@@ -87,6 +87,7 @@ failed or disconnected; the reason is in the client's MCP log.
 | `BCONNECT_RELEASE "…" isn't valid. Use 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.` | A release other than `26R1`/`25R2` (also `26r1` or an empty value) | Fix the value, or remove the line for 26R1 |
 | `BCONNECT_CA_CERT_PATH can't be read: <path> (<code>)` or `… points to an empty file` | CA file missing, unreadable or empty | Fix the path or the file |
 | `<server>: cannot reach bConnect API at <url> (<cause>). Check BCONNECT_BASE_URL, credentials, and network.` | The startup call failed. The cause in brackets: 401, TLS, timeout, unreachable | See [Authentication Errors](#authentication-errors), [TLS Certificate Errors](#tls-certificate-errors) or [Network & Connection Errors](#network--connection-errors) |
+| `<server>: needs bMS <release>; this server uses <release in use>. None of its APIs exist in that release.` | A server whose APIs the bMS release doesn't have (compliance, universaldynamicgroups on 25R2) | Use it with a 26R1 bMS, or remove it from your config; see [Wrong bMS Release](#wrong-bms-release) |
 
 The startup call goes to a light list route of the server's domain. Two cases to know:
 
@@ -364,8 +365,11 @@ cp .env.example .env
 ### Wrong bMS Release
 
 `bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` are **26R1 only**. A 25R2 bMS
-doesn't have their routes, so their startup check fails ("cannot reach bConnect API at …") and they
-exit. Don't configure them for a 25R2 bMS.
+doesn't have their APIs, so on 25R2 they stop at startup, before the connectivity check, with
+`bconnect-compliance-mcp: needs bMS 26R1; this server uses 25R2 (detected: bMS 25.2.…). None of its
+APIs exist in that release.` (the brackets say whether the release was detected or comes from
+`BCONNECT_RELEASE`). Don't configure them for a 25R2 bMS. In the HTTP gateway they don't stop: their
+tool lists are empty on 25R2.
 
 Each server reads the release from the bMS at startup and logs it, for example
 `bMS 26.1.161.0 → release 26R1`. A `BCONNECT_RELEASE` that differs is overridden:
