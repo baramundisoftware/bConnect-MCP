@@ -10,6 +10,7 @@
  * keep their own list (readme-env guard).
  */
 import { describe, expect, it } from 'vitest';
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT } from './lib/exerciser.js';
@@ -17,6 +18,8 @@ import { envReads } from './lib/env-reads.js';
 import { SECRET_ENV_KEYS } from '../bconnect-mcp-gateway/src/secrets.js';
 
 const GUIDE = join(ROOT, 'docs', 'CONFIGURATION.md');
+/** SHA-256 of the README's Technical Preview notice on b996ef6: it must not change (REQ-DOC-001 AC 2). */
+const NOTICE_SHA256 = '83d7d6eaa08bcee5bfbd2611d05af361def05b983d8e7ef1d92b96c377f8fcf9';
 
 /** Read by the code but not configuration (see readme-env.guard.test.ts). */
 const NOT_CONFIGURATION = new Set(['VITEST']);
@@ -44,7 +47,8 @@ const SETTINGS = [...new Set([
   ...SECRET_ENV_KEYS.map((key) => `${key}_FILE`),
 ])].filter((name): name is string => typeof name === 'string' && !NOT_CONFIGURATION.has(name)).sort();
 
-const read = (file: string): string => readFileSync(file, 'utf8');
+/** A file's text with LF line endings: a Windows checkout may have CRLF (core.autocrlf). */
+const read = (file: string): string => readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 /**
  * The lines of a Markdown text outside fenced code and HTML comments, so a heading there doesn't
  * count. One pass over the lines, no pattern removal: a comment runs from its `<!--` line to the
@@ -132,5 +136,54 @@ describe('the other documents link to the guide instead of repeating the setting
     const text = '### `A`\n\n## Next group\n\nLong introduction text of the next group, well over twenty characters.\n';
     const section = text.split(/^### /m).slice(1).map((s) => s.split(/^#{1,3} /m)[0])[0];
     expect(section.split('\n').slice(1).join('\n').trim().length).toBeLessThan(20);
+  });
+});
+
+/**
+ * The README as an entry point (REQ-DOC-001 AC 2): a table of contents that links every section, a
+ * quick start that gets one server running with an env file, links to the three guides, and the
+ * Technical Preview notice unchanged.
+ */
+describe('README entry point', () => {
+  const readme = (): string => visible(read(join(ROOT, 'README.md')));
+  const slug = (heading: string): string => heading.trim().toLowerCase().replace(/[^\p{L}\p{N}\s_-]/gu, '').replace(/ /g, '-');
+
+  it('has a table of contents that links every section', () => {
+    const text = readme();
+    const at = text.indexOf('\n## Contents\n');
+    expect(at).toBeGreaterThan(0);
+    const contents = text.slice(at, text.indexOf('\n## ', at + 5));
+    const sections = [...text.slice(at + 5).matchAll(/^## (.+)$/gm)].map((m) => m[1]);
+    expect(sections.length).toBeGreaterThan(5);
+    expect(sections.filter((h) => !contents.includes(`](#${slug(h)})`))).toEqual([]);
+  });
+
+  it('has a quick start: install, credentials in an env file, a first server that answers', () => {
+    // The commands are fenced code, so read the section as written, not as visible() leaves it.
+    const text = read(join(ROOT, 'README.md'));
+    const at = text.indexOf('\n## Quick start\n');
+    expect(at).toBeGreaterThan(0);
+    const quick = text.slice(at, text.indexOf('\n## ', at + 5));
+    expect(quick).toMatch(/npm ci/);
+    expect(quick).toMatch(/\.env\b/);
+    expect(quick).toMatch(/BCONNECT_BASE_URL=/);
+    expect(quick).toMatch(/--env-file|cp [^\n]*\.env/);
+    expect(quick).toMatch(/tools\/list|claude mcp add/);
+  });
+
+  it.each(['docs/INSTALLATION.md', 'docs/CLIENTS.md', 'docs/CONFIGURATION.md'])('links to %s', (guidePath) => {
+    expect(readme()).toContain(`](${guidePath}`);
+  });
+
+  it('reads a README with Windows line endings (CRLF) like one with LF (self-check)', () => {
+    expect('a\r\n## Contents\r\nb'.replace(/\r\n/g, '\n')).toContain('\n## Contents\n');
+  });
+
+  it('keeps the Technical Preview notice byte for byte (as on b996ef6, LF line endings)', () => {
+    const raw = read(join(ROOT, 'README.md'));
+    const start = raw.indexOf('> [!WARNING]');
+    const end = raw.indexOf('\n\n', start);
+    expect(start).toBeGreaterThan(0);
+    expect(createHash('sha256').update(raw.slice(start, end)).digest('hex')).toBe(NOTICE_SHA256);
   });
 });

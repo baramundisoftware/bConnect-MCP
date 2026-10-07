@@ -17,7 +17,8 @@ This guide covers installing and configuring the bConnect MCP Suite (13 servers 
 
 **Requirements:** Node.js **22.15 or 24**, the versions CI tests. 22.15 and later also honor the
 OS/Windows CA trust store (see [TLS / SSL Configuration](#tls--ssl-configuration)). The
-packages still allow Node 20, but nobody tests it.
+packages still allow Node 20, but nobody tests it; `node --env-file` (used in the README's quick
+start and in [CLIENTS.md](CLIENTS.md)) needs 20.6 or later.
 
 #### From the release download (no build)
 
@@ -75,7 +76,7 @@ needed, the image brings its own:
 docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest   # or pin a version, e.g. :26.1.9
 ```
 
-The [README](../README.md#docker-deployment) shows a `docker run` with the bMS settings and the
+The [README](../README.md#gateway-http-multi-user) shows a `docker run` with the bMS settings and the
 health check; [DOCKER.md](DOCKER.md) is the full guide (Compose, TLS and authentication, an
 internal CA, mounted secrets).
 
