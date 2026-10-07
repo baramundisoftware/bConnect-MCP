@@ -32,6 +32,11 @@
  *      and send `pickArguments(args, queryParameters(QUERY_PARAMETERS, …))`. Wrap the
  *      CallTool handler as `withCountOnly(QUERY_PARAMETERS, selectedRelease, …)`
  *      so they answer `countOnly`. __tests__/count-only.guard.test.ts fails until this is done.
+ *  10. Tools per bMS release (REQ-SRV-028): the generator also writes `src/tool-releases.ts`.
+ *      If a tool's routes are missing in a release, list the tools as
+ *      `withReleaseTools(TOOL_RELEASES, …)` and call `refuseUnavailableTool(TOOL_RELEASES, name)`
+ *      right after `refuseUndeclared`; never check the release by hand.
+ *      __tests__/release-tools.guard.test.ts fails until this is done.
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";

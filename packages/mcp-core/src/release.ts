@@ -9,6 +9,7 @@
  * what it can't use falls back with a warning that says why. Nothing else
  * reads BCONNECT_RELEASE (release-source.guard.test.ts).
  */
+import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectApiError } from "./api-errors.js";
 import type { BConnectClientBase } from "./bconnect-client-base.js";
 import { checkRelease, ClientConfigError, RELEASES } from "./client-config.js";
@@ -73,8 +74,8 @@ export function releaseDescription(env: NodeJS.ProcessEnv = process.env): string
   return `${settingRelease(env)} (${env.BCONNECT_RELEASE === undefined ? "default" : "from BCONNECT_RELEASE"})`;
 }
 
-/** The refusal for a tool the selected release doesn't offer. */
-export function releaseRefusal(tool: string, needed: Release, env: NodeJS.ProcessEnv = process.env): string {
+/** The refusal for a tool the selected release doesn't offer; `needed` names the release(s) that do. */
+export function releaseRefusal(tool: string, needed: string, env: NodeJS.ProcessEnv = process.env): string {
   return `${tool} is only available in bMS ${needed}; this server uses ${releaseDescription(env)}.`;
 }
 
@@ -149,4 +150,45 @@ export async function detectRelease(
     log.info(`bMS ${version} → release ${release}`);
   }
   return release;
+}
+
+/** Per tool: the releases whose spec has every route the tool calls; generated into each server's src/tool-releases.ts. */
+export type ToolReleaseTable = Readonly<Record<string, readonly Release[]>>;
+
+const isNamed = (tool: object): tool is { name: string } => "name" in tool && typeof tool.name === "string";
+
+/** The releases of a listed tool; a tool missing from the table means it wasn't regenerated. */
+function releasesOf(table: ToolReleaseTable, tool: string): readonly Release[] {
+  if (!Object.hasOwn(table, tool)) {
+    throw new Error(`No releases for ${tool}; run node scripts/generate-query-parameters.mjs`);
+  }
+  return table[tool];
+}
+
+/**
+ * The tool list of the selected release (REQ-SRV-028 AC 5): a tool is listed
+ * only when the release's spec has every route it calls. Read per request,
+ * like the release itself.
+ */
+export function withReleaseTools<Result extends { tools: object[] }>(
+  table: ToolReleaseTable,
+  handler: () => Result | Promise<Result>,
+): () => Promise<Result> {
+  return async () => {
+    const result = await handler();
+    const release = selectedRelease();
+    return { ...result, tools: result.tools.filter((tool) => !isNamed(tool) || releasesOf(table, tool.name).includes(release)) };
+  };
+}
+
+/**
+ * Refuses a call to a tool the selected release doesn't offer, before anything
+ * is sent (MethodNotFound, naming the release(s) that offer it and the one in
+ * use). A name the table doesn't know is left to the server.
+ */
+export function refuseUnavailableTool(table: ToolReleaseTable, tool: string): void {
+  if (!Object.hasOwn(table, tool) || table[tool].includes(selectedRelease())) {
+    return;
+  }
+  throw new McpError(ErrorCode.MethodNotFound, releaseRefusal(tool, table[tool].join(" or ")));
 }

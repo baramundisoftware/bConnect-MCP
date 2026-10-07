@@ -18,8 +18,9 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
+import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
@@ -187,7 +188,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       ]
     };
   }));
-  server.setRequestHandler(ListToolsRequestSchema, withToolAnnotations(TOOL_METHODS, toolCatalog.list));
+  server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withToolAnnotations(TOOL_METHODS, toolCatalog.list)));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -227,6 +228,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     const { name, arguments: args } = request.params;
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
+    // A tool the selected release lacks is refused by name, before anything is sent (#159).
+    refuseUnavailableTool(TOOL_RELEASES, name);
 
     // Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(name, args);

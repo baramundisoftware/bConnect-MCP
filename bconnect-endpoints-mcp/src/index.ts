@@ -18,8 +18,9 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, pageSizeProperty, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, releaseRefusal } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, pageSizeProperty, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
+import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 import { INTERVAL_RULE, checkIntervalRule, withIntervalRemoval } from "./maintenance-window.js";
 
@@ -77,7 +78,6 @@ const clients = serverClients(BConnectClient);
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const release = selectedRelease();
-  const is26R1 = release === "26R1";
 
   const server = new Server(
     {
@@ -674,22 +674,20 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       ];
 
       // 26R1-only tools: Unmanaged Endpoints + EntraID
-      if (is26R1) {
-        tools.push(
-          { name: "list_unmanaged_endpoints", description: "[26R1] List all unmanaged endpoints detected by baramundi. Returns the devices that are not yet enrolled into management; the route takes no paging or filter arguments. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: {} } },
-          { name: "get_unmanaged_endpoint", description: "[26R1] Get details of a specific unmanaged endpoint by its GUID. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
-          { name: "delete_unmanaged_endpoint", description: "[26R1] Delete an unmanaged endpoint record. WARNING: Permanently removes the unmanaged device record. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
-          { name: "get_entra_id_data", description: "[26R1] Get the Entra ID (formerly Azure AD) data bMS stores for a device, looked up by its Entra ID device ID (not the bMS endpoint ID). The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { deviceId: { type: "string", description: "Entra ID device ID (GUID), not the bMS endpoint ID" } }, required: ["deviceId"] } },
-          { name: "link_entra_id_data", description: "[26R1] Link a baramundi endpoint to its Entra ID device, tenant and user. WARNING: Creates or replaces the Entra ID association of the endpoint. The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "bMS endpoint ID (GUID)" }, entraIdDeviceId: { type: "string", description: "Entra ID device ID (GUID)" }, entraIdTenantId: { type: "string", description: "Entra ID tenant ID (GUID)" }, entraIdUserId: { type: "string", description: "Entra ID user ID (GUID)" } }, required: ["endpointId", "entraIdDeviceId", "entraIdTenantId", "entraIdUserId"] } },
-          { name: "unlink_entra_id_data", description: "[26R1] Remove the Entra ID association of a baramundi endpoint. WARNING: Removes the Entra association. The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "bMS endpoint ID (GUID)" } }, required: ["endpointId"] } },
-        );
-      }
+      tools.push(
+        { name: "list_unmanaged_endpoints", description: "[26R1] List all unmanaged endpoints detected by baramundi. Returns the devices that are not yet enrolled into management; the route takes no paging or filter arguments. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: {} } },
+        { name: "get_unmanaged_endpoint", description: "[26R1] Get details of a specific unmanaged endpoint by its GUID. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
+        { name: "delete_unmanaged_endpoint", description: "[26R1] Delete an unmanaged endpoint record. WARNING: Permanently removes the unmanaged device record. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
+        { name: "get_entra_id_data", description: "[26R1] Get the Entra ID (formerly Azure AD) data bMS stores for a device, looked up by its Entra ID device ID (not the bMS endpoint ID). The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { deviceId: { type: "string", description: "Entra ID device ID (GUID), not the bMS endpoint ID" } }, required: ["deviceId"] } },
+        { name: "link_entra_id_data", description: "[26R1] Link a baramundi endpoint to its Entra ID device, tenant and user. WARNING: Creates or replaces the Entra ID association of the endpoint. The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "bMS endpoint ID (GUID)" }, entraIdDeviceId: { type: "string", description: "Entra ID device ID (GUID)" }, entraIdTenantId: { type: "string", description: "Entra ID tenant ID (GUID)" }, entraIdUserId: { type: "string", description: "Entra ID user ID (GUID)" } }, required: ["endpointId", "entraIdDeviceId", "entraIdTenantId", "entraIdUserId"] } },
+        { name: "unlink_entra_id_data", description: "[26R1] Remove the Entra ID association of a baramundi endpoint. WARNING: Removes the Entra association. The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "bMS endpoint ID (GUID)" } }, required: ["endpointId"] } },
+      );
 
       return { tools };
   }))));
   // With writes off, tools/list leaves out the write tools; the gate still refuses them by name (REQ-SRV-026).
-  server.setRequestHandler(ListToolsRequestSchema, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
-    withToolAnnotations(TOOL_METHODS, toolCatalog.list)));
+  server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
+    withToolAnnotations(TOOL_METHODS, toolCatalog.list))));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -705,6 +703,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     const { name, arguments: args } = request.params;
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
+    // A tool the selected release lacks is refused by name, before anything is sent (#159).
+    refuseUnavailableTool(TOOL_RELEASES, name);
 
     
     // Validate arguments first — pure, no side effects, fails fast on bad input.
@@ -1105,31 +1105,26 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // Phase 24: 26R1-only tools
         case "list_unmanaged_endpoints": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("list_unmanaged_endpoints", "26R1"));}
           const result = await bconnect.endpoints.listUnmanagedEndpoints();
           return toolJsonResult(result);
         }
 
         case "get_unmanaged_endpoint": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("get_unmanaged_endpoint", "26R1"));}
           const result = await bconnect.endpoints.getUnmanagedEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
         case "delete_unmanaged_endpoint": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("delete_unmanaged_endpoint", "26R1"));}
           await bconnect.endpoints.deleteUnmanagedEndpoint(args!.id as string);
           return { content: [{ type: "text", text: `Unmanaged endpoint ${args!.id} deleted successfully` }] };
         }
 
         case "get_entra_id_data": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("get_entra_id_data", "26R1"));}
           const result = await bconnect.endpoints.getEntraIdData(args!.deviceId as string);
           return toolJsonResult(result);
         }
 
         case "link_entra_id_data": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("link_entra_id_data", "26R1"));}
           const result = await bconnect.endpoints.linkEntraIdData(
             args!.endpointId as string,
             pickArguments(args!, ["entraIdDeviceId", "entraIdTenantId", "entraIdUserId"])
@@ -1138,7 +1133,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "unlink_entra_id_data": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("unlink_entra_id_data", "26R1"));}
           await bconnect.endpoints.unlinkEntraIdData(args!.endpointId as string);
           return { content: [{ type: "text", text: `EntraID data unlinked from endpoint ${args!.endpointId} successfully` }] };
         }

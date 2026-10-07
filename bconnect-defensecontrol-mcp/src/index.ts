@@ -20,8 +20,9 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, releaseRefusal } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
+import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
@@ -38,7 +39,6 @@ const clients = serverClients(BConnectClient);
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const release = selectedRelease();
-  const is26R1 = release === "26R1";
 
   const server = new Server(
     {
@@ -201,42 +201,40 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     ];
 
     // 26R1-only tools
-    if (is26R1) {
-      tools.splice(2, 0,
-        {
-          name: "get_bitlocker_secrets",
-          description: "[26R1] Get the BitLocker secrets including recovery keys and startup PIN for a specific Windows endpoint. Returns the initial startup PIN and BitLocker recovery keys stored for the specified managed Windows endpoint. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve BitLocker secrets for." }
-            },
-            required: ["endpointId"]
-          }
-        },
-        {
-          name: "update_bitlocker_pin",
-          description: "[26R1] Update the BitLocker startup PIN for a specific Windows endpoint using a JSON Patch document. Modifies the InitialStartupPin field for the specified managed Windows endpoint and returns the updated BitLocker secrets. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              endpointId: { type: "string", description: "GUID of the Windows endpoint to update the BitLocker PIN for." },
-              patchOperations: {
-                type: "array",
-                description: "JSON Patch operations array. Use op=replace, path=/InitialStartupPin, value=<new-pin>."
-              }
-            },
-            required: ["endpointId", "patchOperations"]
-          }
+    tools.splice(2, 0,
+      {
+        name: "get_bitlocker_secrets",
+        description: "[26R1] Get the BitLocker secrets including recovery keys and startup PIN for a specific Windows endpoint. Returns the initial startup PIN and BitLocker recovery keys stored for the specified managed Windows endpoint. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve BitLocker secrets for." }
+          },
+          required: ["endpointId"]
         }
-      );
-    }
+      },
+      {
+        name: "update_bitlocker_pin",
+        description: "[26R1] Update the BitLocker startup PIN for a specific Windows endpoint using a JSON Patch document. Modifies the InitialStartupPin field for the specified managed Windows endpoint and returns the updated BitLocker secrets. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            endpointId: { type: "string", description: "GUID of the Windows endpoint to update the BitLocker PIN for." },
+            patchOperations: {
+              type: "array",
+              description: "JSON Patch operations array. Use op=replace, path=/InitialStartupPin, value=<new-pin>."
+            }
+          },
+          required: ["endpointId", "patchOperations"]
+        }
+      }
+    );
 
     return { tools };
   })));
   // With writes off, tools/list leaves out the write tools; the gate still refuses them by name (REQ-SRV-026).
-  server.setRequestHandler(ListToolsRequestSchema, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
-    withToolAnnotations(TOOL_METHODS, toolCatalog.list)));
+  server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
+    withToolAnnotations(TOOL_METHODS, toolCatalog.list))));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -296,6 +294,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
+    // A tool the selected release lacks is refused by name, before anything is sent (#159).
+    refuseUnavailableTool(TOOL_RELEASES, name);
 
     // 1. Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(name, args);
@@ -362,17 +362,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "get_bitlocker_secrets": {
-          if (!is26R1) {
-            throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("get_bitlocker_secrets", "26R1"));
-          }
           const result = await dc.getBitLockerSecrets(args!.endpointId as string);
           return toolJsonResult(result);
         }
 
         case "update_bitlocker_pin": {
-          if (!is26R1) {
-            throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("update_bitlocker_pin", "26R1"));
-          }
           const result = await dc.updateBitLockerPin(args!.endpointId as string, args!.patchOperations as never);
           return toolJsonResult(result);
         }

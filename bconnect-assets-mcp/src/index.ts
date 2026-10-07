@@ -18,8 +18,9 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, releaseRefusal } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
+import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
@@ -40,7 +41,6 @@ const clients = serverClients(BConnectClient);
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const release = selectedRelease();
-  const is26R1 = release === "26R1";
 
   const server = new Server(
     {
@@ -444,38 +444,36 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     ];
 
     // 26R1-only tools
-    if (is26R1) {
-      (tools as object[]).push(
-        {
-          name: "list_assets_by_org_unit",
-          description: "[26R1] List all assets assigned to endpoints within a specific organizational unit. Returns a paged list of assets for the given OU GUID. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              orgUnitId: { type: "string", description: "GUID of the organizational unit whose assets to list." }
-            },
-            required: ["orgUnitId"]
-          }
-        },
-        {
-          name: "list_assets_by_ad_object",
-          description: "[26R1] List all assets assigned to a specific Active Directory object (user or group). Returns a paged list of assets owned by the given AD object GUID. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              adObjectId: { type: "string", description: "GUID of the Active Directory object whose assets to list." }
-            },
-            required: ["adObjectId"]
-          }
+    (tools as object[]).push(
+      {
+        name: "list_assets_by_org_unit",
+        description: "[26R1] List all assets assigned to endpoints within a specific organizational unit. Returns a paged list of assets for the given OU GUID. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            orgUnitId: { type: "string", description: "GUID of the organizational unit whose assets to list." }
+          },
+          required: ["orgUnitId"]
         }
-      );
-    }
+      },
+      {
+        name: "list_assets_by_ad_object",
+        description: "[26R1] List all assets assigned to a specific Active Directory object (user or group). Returns a paged list of assets owned by the given AD object GUID. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            adObjectId: { type: "string", description: "GUID of the Active Directory object whose assets to list." }
+          },
+          required: ["adObjectId"]
+        }
+      }
+    );
 
     return { tools };
   })));
   // With writes off, tools/list leaves out the write tools; the gate still refuses them by name (REQ-SRV-026).
-  server.setRequestHandler(ListToolsRequestSchema, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
-    withToolAnnotations(TOOL_METHODS, toolCatalog.list)));
+  server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
+    withToolAnnotations(TOOL_METHODS, toolCatalog.list))));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -547,6 +545,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     const { name, arguments: args } = request.params;
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
+    // A tool the selected release lacks is refused by name, before anything is sent (#159).
+    refuseUnavailableTool(TOOL_RELEASES, name);
 
     // 1. Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(name, args);
@@ -573,13 +573,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     try {
       const bconnect = lazyClient(getBconnect);
       const assets = lazyClient(() => bconnect.assets);
-
-      // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
-      const requires26R1 = (): void => {
-        if (!is26R1) {
-          throw new McpError(ErrorCode.MethodNotFound, releaseRefusal(name, "26R1"));
-        }
-      };
 
       // Dispatch — arguments already validated by validateToolArguments above.
       switch (name) {
@@ -626,13 +619,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "list_assets_by_org_unit": {
-          requires26R1();
           const result = await assets.getAssetsByOrgUnit(args!.orgUnitId as string, pickArguments(args ?? {}, sends("list_assets_by_org_unit")));
           return toolJsonResult(result);
         }
 
         case "list_assets_by_ad_object": {
-          requires26R1();
           const result = await assets.getAssetsByADObject(args!.adObjectId as string, pickArguments(args ?? {}, sends("list_assets_by_ad_object")));
           return toolJsonResult(result);
         }
