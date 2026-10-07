@@ -202,34 +202,20 @@ per token, −33 %) per session on 26R1, and 55 KB (≈ 16,000 tokens, −34 %) 
 
 ## Configuration Reference
 
-The variables most deployments set. Each server's README lists exactly the variables that server reads.
+Every setting of the servers and the gateway, with its default and what it does, is in
+**[docs/CONFIGURATION.md](docs/CONFIGURATION.md)**; each server's README lists the ones that server
+reads. Most deployments set only these:
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `BCONNECT_BASE_URL` | Yes | — | bConnect API URL (e.g. `https://bms.company.com:443/bconnect`) |
-| `BCONNECT_API_KEY` | Yes* | — | API key for authentication |
-| `BCONNECT_USERNAME` | Yes* | — | Username for Basic Auth |
-| `BCONNECT_PASSWORD` | Yes* | — | Password for Basic Auth |
-| `BCONNECT_RELEASE` | — | `26R1` | Fallback for the bMS release: `25R2` or `26R1`, spelt exactly so. Each server reads the release from the bMS at startup and uses this only when it can't; a different value is overridden, with a warning |
-| `BCONNECT_CA_CERT_PATH` | — | — | Path to CA certificate (PEM) for self-signed certs |
-| `ALLOW_WRITE_OPERATIONS` | — | off | `true` enables the write tools (create, update, delete, start, assign …); off, they are left out of the tool list |
-| `ALLOW_SECRET_READ` | — | off | `true` enables the tools that return BitLocker keys/PIN or LAPS passwords (defensecontrol) |
-| `BCONNECT_TIMEOUT_MS` | — | `30000` | How long to wait for bConnect, 1000 to 600000 ms |
-| `BCONNECT_MAX_RETRIES` | — | `0` | Retries for reads after a network error, a timeout or 502/503/504, 0 to 5; writes are never retried |
-| `BCONNECT_ALLOW_INSECURE_HTTP` | — | `false` | `http://` base URLs are refused except for this machine; `true` allows them (credentials unencrypted) |
-| `BCONNECT_SKIP_CONNECTIVITY_CHECK` | — | `false` | `true` skips the startup call to bConnect |
-| `BCONNECT_AUDIT_LEVEL` | — | `none` | Audit logging: `none`, `security`, `write` or `all`, in any case; levels are cumulative. Any other value stops the server. Entries go to stderr; what each level records: [docs/AUDIT.md](docs/AUDIT.md) |
-| `BCONNECT_PRETTY_JSON` | — | `false` | `true` writes tool results as indented JSON, for debugging; by default they are compact JSON (see below) |
-| `BCONNECT_RATE_LIMIT_ENABLED` | — | `false` | Limit the requests a server sends to bConnect, across all its tool calls |
-| `MCP_TRANSPORT` | — | `stdio` | Transport: `stdio` (local) or `http` (binds loopback by default, no authentication) |
-| `MCP_PORT` | — | `3000` | HTTP port (when `MCP_TRANSPORT=http`) |
-| `MCP_BIND` | — | `127.0.0.1` | HTTP bind address (when `MCP_TRANSPORT=http`) |
-| `MCP_GATEWAY_PORT` | — | `3001` | Gateway listen port (when using `bconnect-mcp-gateway`) |
-| `MCP_GATEWAY_BIND` | — | `127.0.0.1` | Gateway bind address (loopback-only unless behind a proxy) |
-| `MCP_GATEWAY_ALLOWED_HOSTS` / `MCP_ALLOWED_HOSTS` | — | — | Host names the gateway / a server's HTTP mode answers to besides `localhost`, `127.0.0.1`, `[::1]`; others get 403 |
-| `MCP_ALLOW_NO_AUTH` | — | `false` | Allow a non-loopback bind (gateway or HTTP mode); asserts an authenticating proxy is in front |
-
-> \* **Authentication**: provide either `BCONNECT_API_KEY` alone, or both `BCONNECT_USERNAME` and `BCONNECT_PASSWORD`. API key takes precedence if both are set. The password must be ASCII only (bConnect rejects `§`, umlauts or `ß`; the servers refuse such a password before signing in).
+- [`BCONNECT_BASE_URL`](docs/CONFIGURATION.md#bconnect_base_url): `https://<your-bms-server>:443/bconnect`
+  ([how to find it](docs/CONFIGURATION.md#how-to-find-your-bms-server-url)).
+- One credential: [`BCONNECT_API_KEY`](docs/CONFIGURATION.md#bconnect_api_key)
+  ([how to generate one](docs/CONFIGURATION.md#how-to-generate-an-api-key)), or
+  [`BCONNECT_USERNAME`](docs/CONFIGURATION.md#bconnect_username) and
+  [`BCONNECT_PASSWORD`](docs/CONFIGURATION.md#bconnect_password) (ASCII-only password).
+- With an internal CA: [`BCONNECT_CA_CERT_PATH`](docs/CONFIGURATION.md#bconnect_ca_cert_path), unless
+  Node.js 22.15 or later already trusts it ([TLS and CA certificates](docs/CONFIGURATION.md#tls-and-ca-certificates)).
+- To allow changes: [`ALLOW_WRITE_OPERATIONS`](docs/CONFIGURATION.md#allow_write_operations)`=true`
+  (off by default; the gateway always keeps it off).
 
 **Compact tool results.** Tool results are compact JSON: the same data without indentation. Each
 result stays in the model's context for the rest of the conversation, and the indentation alone was
@@ -246,36 +232,6 @@ example that a parent object's existence couldn't be confirmed) is kept. Measure
 bConnect mock (bMS 26R1): `list_endpoints` with type `WindowsEndpoint` 8.8 KB for one page of 10 endpoints, 54 bytes with
 `countOnly` (`{"totalItems":10,"filters":{"type":"WindowsEndpoint"}}`). The option adds one short property to
 each paged list tool, about 6.6 KB to the tool list on 26R1 (82 tools) and 5.1 KB on 25R2 (64 tools).
-
-### How to Find Your bMS Server URL
-
-1. Open the **baramundi Management Center** on your bMS server
-2. The server address is the machine name or IP where bMS is installed
-3. bConnect listens on **port 443** by default (HTTPS). If your installation uses a different port (e.g. **444** in older/test setups), use that port instead — you can check it in the bConnect settings of the Management Center
-4. Your URL will be: `https://<server-name>:443/bconnect`
-
-### How to Generate an API Key
-
-1. Open the **baramundi Management Center**
-2. Go to **Server Management > API Keys**
-3. Click **Create New API Key**
-4. Give it a descriptive name (e.g. "MCP Server bConnect")
-5. Copy the generated key — you won't see it again
-6. Use this key as `BCONNECT_API_KEY`
-
-### SSL/TLS Certificates
-
-If your bMS server uses a self-signed or internal CA certificate:
-
-- On **Node.js ≥ 22.15** the servers also trust the machine's OS certificate store, so a CA
-  the machine already trusts needs no setting.
-- Otherwise provide the CA certificate:
-  ```env
-  BCONNECT_CA_CERT_PATH=/path/to/your-ca-cert.pem
-  ```
-  or Node's own `NODE_EXTRA_CA_CERTS=/path/to/your-ca-cert.pem`.
-
-Don't set `NODE_TLS_REJECT_UNAUTHORIZED=0`, not even for a test: it turns off certificate checks for every TLS connection of the process, so anyone in the network path can pose as the bMS, receive the credentials and send the model forged data.
 
 ---
 

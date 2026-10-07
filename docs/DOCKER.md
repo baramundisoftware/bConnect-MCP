@@ -138,9 +138,8 @@ bump it by hand to pick up Node.js and Alpine security fixes.
 ## Environment Variables
 
 The gateway uses one bConnect **service credential** (`BCONNECT_API_KEY`, or
-`BCONNECT_USERNAME` + `BCONNECT_PASSWORD`) for all downstream calls. With Compose, set these
-in `.env.gateway`; `docker-compose.gateway.yml` passes on the variables below. The defaults
-are the code's; where Compose or the image sets another, the table says so.
+`BCONNECT_USERNAME` + `BCONNECT_PASSWORD`) for all downstream calls. With Compose, set the
+settings in `.env.gateway`; `docker-compose.gateway.yml` passes them on.
 
 > **Write tools and secret reads are off in the gateway.** The gateway has no authentication of
 > its own, so whoever reaches it could use them. It therefore ignores `ALLOW_WRITE_OPERATIONS`
@@ -150,31 +149,24 @@ are the code's; where Compose or the image sets another, the table says so.
 > if either was set. Write tools are also left out of the tool list, so clients only see read
 > tools. This stays so until the gateway has its own authentication.
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `BCONNECT_BASE_URL` | bConnect V2.0 API base URL; must be `https://` | none: required, every tool call fails without it (Compose: `https://bms-server/bconnect`) |
-| `BCONNECT_ALLOW_INSECURE_HTTP` | `true` allows an `http://` base URL to another host (credentials unencrypted) | `false` |
-| `BCONNECT_API_KEY` | API key (or use username/password below) | *(one credential required)* |
-| `BCONNECT_USERNAME` / `BCONNECT_PASSWORD` | API username + password (alternative to the key); the password must be ASCII-only (bConnect rejects `§`, umlauts, `ß`) | — |
-| `BCONNECT_RELEASE` | Fallback for the bMS release: `25R2` or `26R1`; the gateway reads the release from the bMS at startup with its service credential and uses this only when it can't | `26R1` |
-| `BCONNECT_AUDIT_LEVEL` | `none`, `security`, `write`, `all` | `none` |
-| `BCONNECT_PRETTY_JSON` | `true` writes tool results as indented JSON, for debugging; default compact JSON | `false` |
-| `NODE_TLS_REJECT_UNAUTHORIZED` | Leave unset: `0` turns off certificate checks for every bMS call. For an internal CA, use `BCONNECT_CA_CERT_PATH` | — |
-| `BCONNECT_CA_CERT_PATH` | Path to a CA certificate inside the container | — |
-| `BCONNECT_TIMEOUT_MS` | Wait per bMS request, 1000–600000 ms; slow reads on a busy bMS may need `90000` | `30000` |
-| `BCONNECT_MAX_RETRIES` | Retries for reads after a network error, timeout or 502/503/504 (0–5); writes are never retried | `0` |
-| `BCONNECT_SKIP_CONNECTIVITY_CHECK` | Accepted for compatibility; the gateway makes no startup call to bConnect | `false` |
-| `BCONNECT_RATE_LIMIT_ENABLED` / `_MAX_REQUESTS` / `_WINDOW_MS` | Outbound limit towards bMS, per domain across all requests | `false` / `100` / `60000` |
-| `MCP_ALLOW_NO_AUTH` | Allow a non-loopback gateway bind (asserts a proxy is in front) | `false` |
-| `MCP_GATEWAY_PORT` | Gateway listen port | `3001` |
-| `MCP_GATEWAY_ALLOWED_HOSTS` | Host names the gateway answers to besides `localhost`, `127.0.0.1` and `[::1]`, comma-separated (ports ignored); requests addressed to other names get 403. List the name your proxy passes on as `Host`, and the Docker service name for clients on the same network | — (Compose: `mcp-gateway`; setting it replaces that, so keep `mcp-gateway` in your list) |
-| `MCP_GATEWAY_BIND` | Gateway bind address | `127.0.0.1` (the image and Compose: `0.0.0.0`, see [Manual `docker run`](#manual-docker-run)) |
-| `MCP_GATEWAY_RATE_LIMIT_ENABLED` | Per-client-IP inbound rate limiting | `true` |
-| `MCP_GATEWAY_RATE_LIMIT_MAX` | Max requests per window, per client IP | `300` |
-| `MCP_GATEWAY_RATE_LIMIT_WINDOW_MS` | Rate-limit window (ms) | `60000` |
-| `MCP_GATEWAY_MAX_BODY` | Max accepted request body size | `1mb` |
-| `LOG_LEVEL` | Gateway log level: `error`, `warn`, `info`, `debug` | `info` |
-| `LOG_FORMAT` | Gateway log format: `text` or `json` (use `json` for ELK/Loki) | `text` |
+Every setting, with its default, is described in [CONFIGURATION.md](CONFIGURATION.md): the
+connection, TLS and result settings apply to the gateway as they do to a server, plus the
+[gateway's own settings](CONFIGURATION.md#gateway). With Compose, `.env.gateway.example` lists the
+ones the compose file passes on.
+
+Where the image or the compose file sets something other than the code's default:
+
+- [`MCP_GATEWAY_BIND`](CONFIGURATION.md#mcp_gateway_bind): `0.0.0.0` in the image and the compose
+  file, so the port mapping decides who can reach the gateway (see [Manual `docker run`](#manual-docker-run)).
+- [`MCP_ALLOW_NO_AUTH`](CONFIGURATION.md#mcp_allow_no_auth): `true` in the compose file, which binds
+  `0.0.0.0` inside the container and publishes the port on loopback only (`MCP_GATEWAY_HOST_BIND`,
+  default `127.0.0.1`); change that only once an authenticating proxy is in front.
+- [`MCP_GATEWAY_ALLOWED_HOSTS`](CONFIGURATION.md#mcp_gateway_allowed_hosts): `mcp-gateway` in the
+  compose file (the Docker service name); setting it replaces that, so keep `mcp-gateway` in your list.
+- [`BCONNECT_BASE_URL`](CONFIGURATION.md#bconnect_base_url): `https://bms-server/bconnect` in the
+  compose file, a placeholder to replace.
+- [`BCONNECT_SKIP_CONNECTIVITY_CHECK`](CONFIGURATION.md#bconnect_skip_connectivity_check): the
+  gateway makes no connectivity check; the setting only skips its release detection at startup.
 
 > The gateway writes a structured **access log** (method, path, status, duration, and the
 > client address — behind a proxy that is the proxy's address; real identity lives at the
