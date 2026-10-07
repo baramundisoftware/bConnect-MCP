@@ -129,6 +129,7 @@ describe('clientConfigFromEnv', () => {
         } catch (e) {
           return e;
         }
+        return undefined;
       })();
       expect(error).toBeInstanceOf(MissingCredentialsError);
       expect(error).toBeInstanceOf(Error);

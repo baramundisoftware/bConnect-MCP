@@ -187,7 +187,7 @@ function argumentsFor(tool: { inputSchema: JsonSchema }, op: ApiOperation): Reco
 async function exercise(server: string, conn: ConnectedServer, tool: ConnectedServer['tools'][number],
   ops: ApiOperation[], args: Record<string, unknown>, validator: SpecValidator): Promise<ToolRun> {
   let result: Awaited<ReturnType<ConnectedServer['call']>>;
-  let started = Date.now();
+  let started: number;
   // A throttled call (429) is retried after a pause, not counted as a failure.
   for (let attempt = 0; ; attempt++) {
     exchanges = [];

@@ -169,13 +169,6 @@ function validateParameter(value: unknown, rule: ValidationRule): string[] {
     }
   }
 
-  // Object validation
-  if (type === 'object' && typeof value === 'object' && value !== null) {
-    if (Array.isArray(value)) {
-      errors.push(`${name} must be an object, not an array`);
-    }
-  }
-
   return errors;
 }
 
