@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Managed endpoints — Windows, Linux, macOS, Android, iOS, network, and industrial devices  
-**Tools:** 61 (58 on bMS 25R2)
+**Tools:** 32 (25 on bMS 25R2)
 
 ---
 
@@ -50,48 +50,31 @@ Write tools (create, update, delete, start, assign, …) are **off** unless
 keeps their descriptions out of the model's context, and a call by name is refused. A write tool whose description ends with "Not yet verified against a live bMS." hasn't
 been checked against a real bMS yet.
 
+Tools that differ only by device type are one tool with a `type` argument: the API's endpoint
+type names (`WindowsEndpoint`, `MacEndpoint`, `LinuxEndpoint`, `AndroidEndpoint`, `IOSEndpoint`,
+`NetworkEndpoint`; `IndustrialEndpoint` on bMS 25R2 only), the same values as the `type` field of
+the results. The tool list offers only the values the connected bMS release has, and each
+type-specific filter or field says which types take it. A call with a filter or field the chosen
+type doesn't have is refused before anything is sent.
+
 | Tool | Description |
 |------|-------------|
-| `list_endpoints` | List all managed endpoints across all OS types |
-| `get_endpoint` | Get details of a specific endpoint by GUID |
-| `search_endpoints` | Search endpoints by name or other criteria |
-| `list_windows_endpoints` | List all managed Windows endpoints |
-| `get_windows_endpoint` | Get details of a specific Windows endpoint |
-| `list_logical_groups` | List all logical groups |
+| `list_endpoints` | List endpoints, one page at a time; `type` (optional) for one device type and its own filters |
+| `get_endpoint` | Get an endpoint by GUID; `type` (optional) for the type-specific details |
+| `delete_endpoint` | Delete an endpoint by GUID; `type` (optional) to delete through that type's route |
+| `update_endpoint` | Update an endpoint of the given `type` (JSON Patch of the fields given) |
+| `start_enrollment` | Start the enrollment of an endpoint of the given `type` (Windows, Mac, Android, iOS) |
+| `list_endpoints_by_logical_group` | List the endpoints of a logical group; `type` (optional): `WindowsEndpoint` |
+| `create_windows_endpoint` | Create a new Windows endpoint |
+| `create_linux_endpoint` | Create a new Linux endpoint |
+| `create_mac_endpoint` | Create a new macOS endpoint |
+| `create_android_endpoint` | Create a new Android endpoint |
+| `create_ios_endpoint` | Create a new iOS endpoint |
+| `create_network_endpoint` | Create a new network endpoint |
+| `create_industrial_endpoint` | **(25R2)** Create a new industrial endpoint (PLC, SCADA) |
+| `trigger_intune_installation` | Trigger the baramundi Agent installation via Intune (Windows) |
+| `list_logical_groups` | List logical groups |
 | `get_logical_group` | Get details of a specific logical group |
-| `list_group_endpoints` | List endpoints belonging to a group |
-| `list_linux_endpoints` | List all managed Linux endpoints |
-| `list_mac_endpoints` | List all managed macOS endpoints |
-| `get_linux_endpoint` | Get details of a specific Linux endpoint |
-| `get_mac_endpoint` | Get details of a specific macOS endpoint |
-| `list_industrial_endpoints` | **(25R2)** List all industrial endpoints (PLCs, SCADA systems, etc.) |
-| `get_industrial_endpoint` | **(25R2)** Get details of a specific industrial endpoint |
-| `list_endpoints_by_logical_group` | List all endpoints in a logical group |
-| `list_windows_endpoints_by_logical_group` | List Windows endpoints in a logical group |
-| `list_android_endpoints` | List all managed Android endpoints |
-| `get_android_endpoint` | Get details of a specific Android endpoint |
-| `list_ios_endpoints` | List all managed iOS endpoints |
-| `get_ios_endpoint` | Get details of a specific iOS endpoint |
-| `start_android_enrollment` | Start enrollment for an Android device |
-| `start_ios_enrollment` | Start enrollment for an iOS device |
-| `create_android_endpoint` | Create a new Android endpoint record |
-| `update_android_endpoint` | Update an existing Android endpoint |
-| `delete_android_endpoint` | Delete an Android endpoint by GUID |
-| `create_ios_endpoint` | Create a new iOS endpoint record |
-| `update_ios_endpoint` | Update an existing iOS endpoint |
-| `delete_ios_endpoint` | Delete an iOS endpoint by GUID |
-| `create_windows_endpoint` | Create a new Windows endpoint record |
-| `update_windows_endpoint` | Update an existing Windows endpoint |
-| `delete_windows_endpoint` | Delete a Windows endpoint by GUID |
-| `start_windows_enrollment` | Start enrollment for a Windows device |
-| `trigger_intune_installation` | Trigger the baramundi Agent installation via Intune (requires co-management) |
-| `create_linux_endpoint` | Create a new Linux endpoint record |
-| `update_linux_endpoint` | Update an existing Linux endpoint |
-| `delete_linux_endpoint` | Delete a Linux endpoint by GUID |
-| `create_mac_endpoint` | Create a new macOS endpoint record |
-| `update_mac_endpoint` | Update an existing macOS endpoint |
-| `delete_mac_endpoint` | Delete a macOS endpoint by GUID |
-| `start_mac_enrollment` | Start enrollment for a macOS device |
 | `create_logical_group` | Create a new logical group |
 | `update_logical_group` | Update an existing logical group |
 | `delete_logical_group` | Delete a logical group by GUID |
@@ -103,15 +86,6 @@ been checked against a real bMS yet.
 | `create_maintenance_window_for_logical_group` | Create a maintenance window for a logical group |
 | `update_maintenance_window_for_logical_group` | **(26R1)** Update a maintenance window for a logical group |
 | `delete_maintenance_window_for_logical_group` | Delete a maintenance window for a logical group |
-| `create_industrial_endpoint` | **(25R2)** Create a new industrial endpoint (PLC, SCADA) |
-| `update_industrial_endpoint` | **(25R2)** Update an existing industrial endpoint |
-| `delete_industrial_endpoint` | **(25R2)** Delete an industrial endpoint by GUID |
-| `list_network_endpoints` | List all network endpoints (switches, routers, printers) |
-| `get_network_endpoint` | Get details of a specific network endpoint |
-| `create_network_endpoint` | Create a new network endpoint |
-| `update_network_endpoint` | Update an existing network endpoint |
-| `delete_network_endpoint` | Delete a network endpoint by GUID |
-| `delete_endpoint` | Delete any endpoint by GUID (generic delete) |
 | `list_unmanaged_endpoints` | **(26R1)** List all unmanaged detected endpoints |
 | `get_unmanaged_endpoint` | **(26R1)** Get details of an unmanaged endpoint |
 | `delete_unmanaged_endpoint` | **(26R1)** Delete an unmanaged endpoint record |
@@ -119,8 +93,13 @@ been checked against a real bMS yet.
 | `link_entra_id_data` | **(26R1)** Link an EntraID device to a baramundi endpoint |
 | `unlink_entra_id_data` | **(26R1)** Unlink EntraID data from an endpoint |
 
+The per-type tools of earlier versions (`list_windows_endpoints`, `get_mac_endpoint`,
+`update_android_endpoint`, `start_ios_enrollment`, …) and `search_endpoints` /
+`list_group_endpoints` are gone; calling one returns the tool and argument that replace it. The
+full mapping is in the [CHANGELOG](../CHANGELOG.md).
+
 > Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1.
-> Tools marked **(25R2)** exist only in bMS 2025 R2: 2026 R1 removed the industrial-endpoint API. The maintenance-window updates send `PATCH`, which only 26R1 offers (25R2 uses `PUT`, #307).
+> Tools marked **(25R2)** exist only in bMS 2025 R2: 2026 R1 removed the industrial-endpoint API (so does the `IndustrialEndpoint` type). The maintenance-window updates send `PATCH`, which only 26R1 offers (25R2 uses `PUT`, #307).
 
 ---
 

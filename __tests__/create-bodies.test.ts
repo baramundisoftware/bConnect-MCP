@@ -61,10 +61,11 @@ describe.each([
     'POST', `/endpoints/v2.0/Endpoints/${ID}/MaintenanceWindow`, { maintenanceWindowDefinitionType: 'Everyday', intervals: INTERVALS }, ['id', 'maintenanceWindowDefinitionType']],
   ['endpoints', 'create_maintenance_window_for_logical_group', { id: ID, maintenanceWindowDefinitionType: 'Anytime' },
     'POST', `/endpoints/v2.0/LogicalGroups/${ID}/MaintenanceWindow`, { maintenanceWindowDefinitionType: 'Anytime' }, ['id', 'maintenanceWindowDefinitionType']],
-  ['endpoints', 'start_windows_enrollment', { id: ID, enrollmentMailAddress: 'admin@example.com', emailLanguageId: 'de', sync: true },
-    'POST', `/endpoints/v2.0/WindowsEndpoints/${ID}/StartEnrollment`, { enrollmentMailAddress: 'admin@example.com', emailLanguageId: 'de', sync: true }, ['id']],
-  ['endpoints', 'start_mac_enrollment', { id: ID, enrollmentMailAddress: 'admin@example.com', enrollmentType: 'Native' },
-    'POST', `/endpoints/v2.0/MacEndpoints/${ID}/StartEnrollment`, { enrollmentMailAddress: 'admin@example.com', enrollmentType: 'Native' }, ['id']],
+  // start_enrollment takes the endpoint type (REQ-SRV-029); the body has only the type's fields.
+  ['endpoints', 'start_enrollment', { type: 'WindowsEndpoint', id: ID, enrollmentMailAddress: 'admin@example.com', emailLanguageId: 'de', sync: true },
+    'POST', `/endpoints/v2.0/WindowsEndpoints/${ID}/StartEnrollment`, { enrollmentMailAddress: 'admin@example.com', emailLanguageId: 'de', sync: true }, ['id', 'type']],
+  ['endpoints', 'start_enrollment', { type: 'MacEndpoint', id: ID, enrollmentMailAddress: 'admin@example.com', enrollmentType: 'Native' },
+    'POST', `/endpoints/v2.0/MacEndpoints/${ID}/StartEnrollment`, { enrollmentMailAddress: 'admin@example.com', enrollmentType: 'Native' }, ['id', 'type']],
   ['assets', 'create_asset', { assetTypeId: G, ownerId: ID, ownerType: 'Machine', name: 'Laptop 42' },
     'POST', '/assets/v2.0/Assets', { assetTypeId: G, ownerId: ID, ownerType: 'Machine', name: 'Laptop 42' }, ['assetTypeId', 'name', 'ownerId', 'ownerType']],
   ['variables', 'create_variable_definition', { name: 'Site', category: 'Inventory', scopes: ['Endpoint'], type: 'String', comment: 'Office site' },
@@ -88,14 +89,14 @@ describe.each([
 describe('enums and removed arguments', () => {
   it('declares the enums the spec defines', async () => {
     expect((await schemaOf('assets', 'create_asset')).properties.ownerType.enum).toEqual(['Undefined', 'LogicalGroup', 'Machine', 'AssetStock', 'ADObject', 'OrgUnit']);
-    expect((await schemaOf('endpoints', 'start_mac_enrollment')).properties.enrollmentType.enum).toEqual(['Unenrolled', 'SSH', 'SSHAndNative', 'Native']);
+    expect((await schemaOf('endpoints', 'start_enrollment')).properties.enrollmentType.enum).toEqual(['Unenrolled', 'SSH', 'SSHAndNative', 'Native']);
     expect((await schemaOf('variables', 'create_variable_definition')).properties.type.enum).toContain('Checkbox');
   });
 
   it.each([
     ['endpoints', 'create_network_endpoint', 'endpointData'],
     ['endpoints', 'create_maintenance_window_for_endpoint', 'maintenanceWindowData'],
-    ['endpoints', 'start_windows_enrollment', 'emailRecipient'],
+    ['endpoints', 'start_enrollment', 'emailRecipient'],
     ['variables', 'create_variable_definition', 'dataType'],
     ['software', 'add_application_to_bundle', 'order'],
   ])('%s %s no longer offers %s', async (server, name, arg) => {

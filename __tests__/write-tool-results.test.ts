@@ -77,15 +77,15 @@ async function call(server: string, name: string, args: Record<string, unknown>)
 const PATCH = [{ op: 'replace', path: '/name', value: 'x' }];
 
 describe('enrollment returns what the administrator needs (#172)', () => {
-  it('start_windows_enrollment returns the install command and its validity', async () => {
-    const r = await call('endpoints', 'start_windows_enrollment', { id: ID });
+  it('start_enrollment (WindowsEndpoint) returns the install command and its validity', async () => {
+    const r = await call('endpoints', 'start_enrollment', { type: 'WindowsEndpoint', id: ID });
     expect(r.isError).toBe(false);
     expect(r.text).toContain('msiexec /i bmsagent.msi TOKEN=abc');
     expect(r.text).toContain('2026-10-09T12:00:00Z');
   });
 
-  it('start_mac_enrollment returns token, URL and QR text, and leaves out the QR image', async () => {
-    const r = await call('endpoints', 'start_mac_enrollment', { id: ID });
+  it('start_enrollment (MacEndpoint) returns token, URL and QR text, and leaves out the QR image', async () => {
+    const r = await call('endpoints', 'start_enrollment', { type: 'MacEndpoint', id: ID });
     for (const v of ['mac-token-123', 'https://bms.example.com/enroll/mac', 'bms://enroll?t=mac-token-123']) expect(r.text).toContain(v);
     expect(r.text).not.toContain(QR_IMAGE);
     expect(r.text).toMatch(/qrCodeImageBase64/);
@@ -114,7 +114,7 @@ describe('updates and cleanups return the result bMS sent (#172)', () => {
   it.each([
     ['endpoints', 'update_maintenance_window_for_endpoint', { id: ID, maintenanceWindowDefinitionType: 'Never' }, 'Night window'],
     ['endpoints', 'update_maintenance_window_for_logical_group', { id: ID, maintenanceWindowDefinitionType: 'Never' }, 'Night window'],
-    ['endpoints', 'update_network_endpoint', { id: ID, displayName: 'Switch-01' }, 'Switch-01'],
+    ['endpoints', 'update_endpoint', { type: 'NetworkEndpoint', id: ID, displayName: 'Switch-01' }, 'Switch-01'],
     ['servermanagement', 'msw_cleanup', {}, '42 files deleted'],
     ['servermanagement', 'simulate_msw_cleanup', {}, 'b.cab'],
     ['servermanagement', 'update_security_group', { id: ID, patchOperations: PATCH }, 'Helpdesk'],

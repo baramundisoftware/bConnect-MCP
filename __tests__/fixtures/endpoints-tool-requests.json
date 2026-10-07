@@ -1,0 +1,4006 @@
+[
+ {
+  "release": "25R2",
+  "tool": "delete_android_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_android_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/Endpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/Endpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_industrial_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/IndustrialEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_industrial_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/IndustrialEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_ios_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_ios_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_linux_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_linux_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_mac_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_mac_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_network_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_network_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_windows_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "delete_windows_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_android_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_android_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_industrial_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IndustrialEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_industrial_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IndustrialEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_ios_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_ios_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_linux_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_linux_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_mac_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_mac_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_network_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_network_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_windows_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "get_windows_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_group_endpoints",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_group_endpoints",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_group_endpoints",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IndustrialEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IndustrialEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IndustrialEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "search_endpoints",
+  "call": "required",
+  "args": {
+   "query": "x"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "PageSize",
+      "50"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "search_endpoints",
+  "call": "all",
+  "args": {
+   "query": "x",
+   "pageSize": 1,
+   "OrderBy": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "search_endpoints",
+  "call": "count",
+  "args": {
+   "query": "x",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "start_android_enrollment",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":null,\"emailLanguageId\":null,\"forceMobileDataOnEnrollment\":false,\"includeWifiInQrCode\":false}"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "start_android_enrollment",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "enrollmentMailAddress": "x",
+   "emailLanguageId": "00000000-0000-4000-8000-000000000002",
+   "forceMobileDataOnEnrollment": false,
+   "includeWifiInQrCode": false
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":\"x\",\"emailLanguageId\":\"00000000-0000-4000-8000-000000000002\",\"forceMobileDataOnEnrollment\":false,\"includeWifiInQrCode\":false}"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "start_ios_enrollment",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":null,\"emailLanguageId\":null}"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "start_ios_enrollment",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "enrollmentMailAddress": "x",
+   "emailLanguageId": "00000000-0000-4000-8000-000000000002"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":\"x\",\"emailLanguageId\":\"00000000-0000-4000-8000-000000000002\"}"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "start_mac_enrollment",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{}"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "start_mac_enrollment",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "enrollmentMailAddress": "x",
+   "emailLanguageId": "00000000-0000-4000-8000-000000000002",
+   "enrollmentType": "Unenrolled"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":\"x\",\"emailLanguageId\":\"00000000-0000-4000-8000-000000000002\",\"enrollmentType\":\"Unenrolled\"}"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "start_windows_enrollment",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{}"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "start_windows_enrollment",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "enrollmentMailAddress": "x",
+   "emailLanguageId": "00000000-0000-4000-8000-000000000002",
+   "sync": false
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":\"x\",\"emailLanguageId\":\"00000000-0000-4000-8000-000000000002\",\"sync\":false}"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_android_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_android_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x",
+   "serialNumber": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/logicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/serialNumber\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_industrial_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/IndustrialEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_industrial_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x",
+   "hostName": "x",
+   "port": 1,
+   "primaryIP": "x",
+   "primaryMAC": "x",
+   "webInterfaceUrl": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/IndustrialEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/logicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/hostName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/port\",\"value\":1},{\"op\":\"replace\",\"path\":\"/primaryIP\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryMAC\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/webInterfaceUrl\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_ios_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_ios_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/logicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_linux_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_linux_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x",
+   "hostName": "x",
+   "primaryIP": "x",
+   "primaryMAC": "x",
+   "managementMode": "SSH"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/logicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/hostName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryIP\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryMAC\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/managementMode\",\"value\":\"SSH\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_mac_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/DisplayName\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_mac_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x",
+   "category": "x",
+   "owner": "Company",
+   "registeredUser": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/DisplayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/LogicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/Comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/Category\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/Owner\",\"value\":\"Company\"},{\"op\":\"replace\",\"path\":\"/RegisteredUser\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_network_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_network_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "comment": "x",
+   "hostName": "x",
+   "primaryIP": "x",
+   "primaryMAC": "x",
+   "registeredUser": "x",
+   "webInterfaceUrl": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/hostName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryIP\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryMAC\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/registeredUser\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/webInterfaceUrl\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_windows_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "update_windows_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x",
+   "hostName": "x",
+   "domain": "x",
+   "primaryIP": "x",
+   "primarySubnetMask": "x",
+   "primaryMAC": "x",
+   "uuid": "00000000-0000-4000-8000-000000000003",
+   "registeredUser": "x",
+   "registeredUserUpdateMode": "UseNextLogonUser",
+   "userRelatedJobExecution": "Always",
+   "isEnergyManagementActive": false,
+   "isDeactivated": false,
+   "entraIdDeviceId": "00000000-0000-4000-8000-000000000004",
+   "coManagement": "None"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/logicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/hostName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/domain\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryIP\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primarySubnetMask\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryMAC\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/UUID\",\"value\":\"00000000-0000-4000-8000-000000000003\"},{\"op\":\"replace\",\"path\":\"/registeredUser\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/registeredUserUpdateMode\",\"value\":\"UseNextLogonUser\"},{\"op\":\"replace\",\"path\":\"/userRelatedJobExecution\",\"value\":\"Always\"},{\"op\":\"replace\",\"path\":\"/isEnergyManagementActive\",\"value\":false},{\"op\":\"replace\",\"path\":\"/isDeactivated\",\"value\":false},{\"op\":\"replace\",\"path\":\"/EntraIdDeviceId\",\"value\":\"00000000-0000-4000-8000-000000000004\"},{\"op\":\"replace\",\"path\":\"/CoManagement\",\"value\":\"None\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_android_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_android_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/Endpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/Endpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_ios_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_ios_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_linux_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_linux_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_mac_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_mac_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_network_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_network_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_windows_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "delete_windows_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "DELETE",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_android_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_android_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_ios_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_ios_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_linux_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_linux_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_mac_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_mac_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_network_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_network_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_windows_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "get_windows_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_group_endpoints",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_group_endpoints",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_group_endpoints",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/NetworkEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints",
+  "call": "required",
+  "args": {},
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints",
+  "call": "all",
+  "args": {
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "EntraIdDeviceId": "00000000-0000-4000-8000-000000000001",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "EntraIdDeviceId",
+      "00000000-0000-4000-8000-000000000001"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints",
+  "call": "count",
+  "args": {
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "EntraIdDeviceId": "00000000-0000-4000-8000-000000000002",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "EntraIdDeviceId",
+      "00000000-0000-4000-8000-000000000002"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "search_endpoints",
+  "call": "required",
+  "args": {
+   "query": "x"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "PageSize",
+      "50"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "search_endpoints",
+  "call": "all",
+  "args": {
+   "query": "x",
+   "pageSize": 1,
+   "OrderBy": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "search_endpoints",
+  "call": "count",
+  "args": {
+   "query": "x",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "start_android_enrollment",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":null,\"emailLanguageId\":null,\"forceMobileDataOnEnrollment\":false,\"includeWifiInQrCode\":false}"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "start_android_enrollment",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "enrollmentMailAddress": "x",
+   "emailLanguageId": "00000000-0000-4000-8000-000000000002",
+   "forceMobileDataOnEnrollment": false,
+   "includeWifiInQrCode": false
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":\"x\",\"emailLanguageId\":\"00000000-0000-4000-8000-000000000002\",\"forceMobileDataOnEnrollment\":false,\"includeWifiInQrCode\":false}"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "start_ios_enrollment",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":null,\"emailLanguageId\":null}"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "start_ios_enrollment",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "enrollmentMailAddress": "x",
+   "emailLanguageId": "00000000-0000-4000-8000-000000000002"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":\"x\",\"emailLanguageId\":\"00000000-0000-4000-8000-000000000002\"}"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "start_mac_enrollment",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{}"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "start_mac_enrollment",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "enrollmentMailAddress": "x",
+   "emailLanguageId": "00000000-0000-4000-8000-000000000002",
+   "enrollmentType": "Unenrolled"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":\"x\",\"emailLanguageId\":\"00000000-0000-4000-8000-000000000002\",\"enrollmentType\":\"Unenrolled\"}"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "start_windows_enrollment",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{}"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "start_windows_enrollment",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "enrollmentMailAddress": "x",
+   "emailLanguageId": "00000000-0000-4000-8000-000000000002",
+   "sync": false
+  },
+  "requests": [
+   {
+    "method": "POST",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001/StartEnrollment",
+    "query": [],
+    "contentType": "application/json",
+    "body": "{\"enrollmentMailAddress\":\"x\",\"emailLanguageId\":\"00000000-0000-4000-8000-000000000002\",\"sync\":false}"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_android_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_android_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x",
+   "serialNumber": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/AndroidEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/logicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/serialNumber\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_ios_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_ios_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/IosEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/logicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_linux_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_linux_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x",
+   "hostName": "x",
+   "primaryIP": "x",
+   "primaryMAC": "x",
+   "managementMode": "SSH"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/LinuxEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/logicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/hostName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryIP\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryMAC\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/managementMode\",\"value\":\"SSH\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_mac_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/DisplayName\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_mac_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x",
+   "category": "x",
+   "owner": "Company",
+   "registeredUser": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/MacEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/DisplayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/LogicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/Comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/Category\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/Owner\",\"value\":\"Company\"},{\"op\":\"replace\",\"path\":\"/RegisteredUser\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_network_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_network_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "comment": "x",
+   "hostName": "x",
+   "primaryIP": "x",
+   "primaryMAC": "x",
+   "registeredUser": "x",
+   "webInterfaceUrl": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/NetworkEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/hostName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryIP\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryMAC\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/registeredUser\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/webInterfaceUrl\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_windows_endpoint",
+  "call": "required",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"}]"
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "update_windows_endpoint",
+  "call": "all",
+  "args": {
+   "id": "00000000-0000-4000-8000-000000000001",
+   "displayName": "x",
+   "logicalGroupId": "00000000-0000-4000-8000-000000000002",
+   "comment": "x",
+   "hostName": "x",
+   "domain": "x",
+   "primaryIP": "x",
+   "primarySubnetMask": "x",
+   "primaryMAC": "x",
+   "uuid": "00000000-0000-4000-8000-000000000003",
+   "registeredUser": "x",
+   "registeredUserUpdateMode": "UseNextLogonUser",
+   "userRelatedJobExecution": "Always",
+   "isEnergyManagementActive": false,
+   "isDeactivated": false,
+   "entraIdDeviceId": "00000000-0000-4000-8000-000000000004",
+   "coManagement": "None"
+  },
+  "requests": [
+   {
+    "method": "PATCH",
+    "path": "/endpoints/v2.0/WindowsEndpoints/00000000-0000-4000-8000-000000000001",
+    "query": [],
+    "contentType": "application/json-patch+json",
+    "body": "[{\"op\":\"replace\",\"path\":\"/displayName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/logicalGroupId\",\"value\":\"00000000-0000-4000-8000-000000000002\"},{\"op\":\"replace\",\"path\":\"/comment\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/hostName\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/domain\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryIP\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primarySubnetMask\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/primaryMAC\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/UUID\",\"value\":\"00000000-0000-4000-8000-000000000003\"},{\"op\":\"replace\",\"path\":\"/registeredUser\",\"value\":\"x\"},{\"op\":\"replace\",\"path\":\"/registeredUserUpdateMode\",\"value\":\"UseNextLogonUser\"},{\"op\":\"replace\",\"path\":\"/userRelatedJobExecution\",\"value\":\"Always\"},{\"op\":\"replace\",\"path\":\"/isEnergyManagementActive\",\"value\":false},{\"op\":\"replace\",\"path\":\"/isDeactivated\",\"value\":false},{\"op\":\"replace\",\"path\":\"/EntraIdDeviceId\",\"value\":\"00000000-0000-4000-8000-000000000004\"},{\"op\":\"replace\",\"path\":\"/CoManagement\",\"value\":\"None\"}]"
+   }
+  ]
+ }
+]

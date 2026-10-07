@@ -11,12 +11,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { LIVE_VERIFIED_WRITE_TOOLS, UNVERIFIED_WRITE_NOTE } from '../packages/mcp-core/src/unverified-writes.js';
+import { describeVariant, variantOf } from './lib/variants.js';
 
 const VERIFIED: Record<string, string[]> = {
   endpoints: [
-    'update_windows_endpoint', 'update_mac_endpoint', 'update_logical_group',
+    // Checked under the old per-type names; recorded per route of the merged tools since #174.
+    'update_endpoint[type=WindowsEndpoint]', 'update_endpoint[type=MacEndpoint]', 'update_logical_group',
     'create_windows_endpoint', 'create_mac_endpoint', 'create_logical_group',
-    'delete_windows_endpoint', 'delete_mac_endpoint', 'delete_logical_group',
+    'delete_endpoint[type=WindowsEndpoint]', 'delete_endpoint[type=MacEndpoint]', 'delete_logical_group',
     'create_maintenance_window_for_logical_group', 'update_maintenance_window_for_logical_group', 'delete_maintenance_window_for_logical_group',
   ],
   jobs: [
@@ -47,9 +49,12 @@ afterAll(() => { process.env = saved; });
 describe.each(Object.entries(VERIFIED))('%s', (server, names) => {
   it.each(names)('%s is recorded with its release and drops the note', (name) => {
     expect(LIVE_VERIFIED_WRITE_TOOLS.get(name) ?? '').toMatch(/2026-10-02, bMS 26\.1\.161 \(26R1\)/);
-    const t = tools[server].find((x) => x.name === name);
-    expect(t, `${name} not listed`).toBeDefined();
+    const { tool, select } = variantOf(name);
+    const t = tools[server].find((x) => x.name === tool);
+    expect(t, `${tool} not listed`).toBeDefined();
     expect(t!.description).not.toContain(UNVERIFIED_WRITE_NOTE);
+    // A merged tool names its unverified routes; a verified one is not among them.
+    if (tool !== name) {expect(t!.description).not.toContain(describeVariant(select));}
   });
 });
 

@@ -4,7 +4,7 @@
  * Each table lists the properties of the operation's request schema in the
  * 26R1 spec (WindowsEndpointForCreation, LinuxEndpointForCreation,
  * NetworkEndpointForCreation, MaintenanceWindowForCreation,
- * Windows/MacEnrollmentRequest) that the tool offers; `required` follows the
+ * Windows/Mac/Android/IOSEnrollmentRequest) that the tool offers; `required` follows the
  * schema. The table drives the input schema, the validation rules and the body,
  * so a tool can't send a field its schema doesn't declare. Path parameters
  * (`id`) are added to the input schema and stay out of the body.
@@ -99,21 +99,42 @@ export const CREATE_FIELDS: Record<string, CreateTool> = {
     fields: maintenanceWindowFields,
     required: ["maintenanceWindowDefinitionType"],
   },
-  start_windows_enrollment: {
+  // start_enrollment per endpoint type (its variant key, REQ-SRV-029).
+  "start_enrollment[type=WindowsEndpoint]": {
     pathId: "Endpoint ID (GUID)",
     fields: {
       enrollmentMailAddress: text("", "E-mail address that receives the enrollment instructions"),
-      emailLanguageId: text("", "Language of the e-mail, e.g. de or en"),
+      emailLanguageId: text("", "E-mail template ID, e.g. en-US or de-DE"),
       sync: flag("", "Wait for the enrollment data to be generated"),
     },
     required: [],
   },
-  start_mac_enrollment: {
+  "start_enrollment[type=MacEndpoint]": {
     pathId: "Endpoint ID (GUID)",
     fields: {
       enrollmentMailAddress: text("", "E-mail address that receives the enrollment instructions"),
-      emailLanguageId: text("", "Language of the e-mail, e.g. de or en"),
+      emailLanguageId: text("", "E-mail template ID, e.g. en-US or de-DE"),
       enrollmentType: choice("", "How the Mac is enrolled", ["Unenrolled", "SSH", "SSHAndNative", "Native"]),
+    },
+    required: [],
+  },
+  // Android and iOS: fields only (schema, validation); the server builds their bodies, which
+  // always carry every field (null or false when not given), as before.
+  "start_enrollment[type=AndroidEndpoint]": {
+    pathId: "Endpoint ID (GUID)",
+    fields: {
+      enrollmentMailAddress: text("", "E-mail address that receives the enrollment instructions"),
+      emailLanguageId: text("", "E-mail template ID, e.g. en-US or de-DE"),
+      forceMobileDataOnEnrollment: flag("", "Force mobile data during enrollment (default: false)"),
+      includeWifiInQrCode: flag("", "Include Wi-Fi credentials in the QR code (default: false)"),
+    },
+    required: [],
+  },
+  "start_enrollment[type=IOSEndpoint]": {
+    pathId: "Endpoint ID (GUID)",
+    fields: {
+      enrollmentMailAddress: text("", "E-mail address that receives the enrollment instructions"),
+      emailLanguageId: text("", "E-mail template ID, e.g. en-US or de-DE"),
     },
     required: [],
   },
@@ -133,21 +154,42 @@ export interface CreateInputSchema {
   required: string[];
 }
 
+const fieldProperty = (f: Field): Record<string, unknown> => ({
+  type: f.type ?? "string",
+  description: f.description,
+  ...(f.enum && { enum: [...f.enum] }),
+  ...(f.items && { items: f.items }),
+  ...(f.properties && { properties: f.properties }),
+});
+
 /** The input schema: the path id (if any) plus every body field. */
 export function createInputSchema(name: string): CreateInputSchema {
   const tool = toolOf(name);
   const properties: Record<string, Record<string, unknown>> = tool.pathId ? { id: { type: "string", description: tool.pathId } } : {};
   for (const [field, f] of Object.entries(tool.fields)) {
-    properties[field] = {
-      type: f.type ?? "string",
-      description: f.description,
-      ...(f.enum && { enum: [...f.enum] }),
-      ...(f.items && { items: f.items }),
-      ...(f.properties && { properties: f.properties }),
-    };
+    properties[field] = fieldProperty(f);
   }
   return { type: "object", properties, required: [...(tool.pathId ? ["id"] : []), ...tool.required] };
 }
+
+/**
+ * The input schema of a merged tool with a body (start_enrollment, REQ-SRV-029):
+ * `type`, the path id and every field of its variants (the first variant's
+ * definition). Which types take a field is added when the tool is listed.
+ */
+export function mergedCreateInputSchema(keys: readonly string[], type: Record<string, unknown>): CreateInputSchema {
+  const first = toolOf(keys[0]);
+  const properties: Record<string, Record<string, unknown>> = { type, ...(first.pathId && { id: { type: "string", description: first.pathId } }) };
+  for (const key of keys) {
+    for (const [field, f] of Object.entries(toolOf(key).fields)) {
+      properties[field] ??= fieldProperty(f);
+    }
+  }
+  return { type: "object", properties, required: ["type", ...(first.pathId ? ["id"] : [])] };
+}
+
+/** The body fields a create or enrollment tool (or variant) takes. */
+export const createFieldNames = (name: string): string[] => Object.keys(toolOf(name).fields);
 
 /** Validation: the path id and every GUID field. */
 export function createRules(name: string): ValidationRule[] {

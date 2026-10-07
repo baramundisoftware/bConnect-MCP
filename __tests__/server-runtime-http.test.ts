@@ -161,16 +161,16 @@ describe('standalone HTTP mode with a real server: write tools listed only with 
     for (const s of listeners) {await new Promise<void>((resolve) => s.close(() => resolve()));}
   });
 
-  it('lists the 25 read tools of 26R1 with writes off, and all 61 with writes on, per request', async () => {
+  it('lists the 10 read tools of 26R1 with writes off, and all 32 with writes on, per request', async () => {
     vi.stubEnv('BCONNECT_RELEASE', '26R1');
     vi.stubEnv('ALLOW_WRITE_OPERATIONS', '');
     const off = await names(1);
-    expect(off).toHaveLength(25);
+    expect(off).toHaveLength(10);
     expect(off).toContain('list_endpoints');
     expect(off).not.toContain('delete_endpoint');
     vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true');
     const on = await names(2);
-    expect(on).toHaveLength(61);
+    expect(on).toHaveLength(32);
     expect(on).toContain('delete_endpoint');
   });
 });

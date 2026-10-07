@@ -84,10 +84,10 @@ async function main() {
     const tools = await sendRequest('tools/list');
     console.log(`✅ Connected! Found ${tools.tools.length} MCP tools available.\n`);
 
-    // Call list_linux_endpoints
+    // List the Linux endpoints
     const linuxEndpointsResult = await sendRequest('tools/call', {
-      name: 'list_linux_endpoints',
-      arguments: { PageSize: 100 }
+      name: 'list_endpoints',
+      arguments: { type: 'LinuxEndpoint', PageSize: 100 }
     });
 
     const linuxEndpointsText = linuxEndpointsResult.content[0].text;

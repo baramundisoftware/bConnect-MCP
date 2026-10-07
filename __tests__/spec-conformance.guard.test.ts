@@ -30,7 +30,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { RELEASES, type Release, type ApiOperation, loadOperations } from './lib/spec.js';
 import {
-  ID, ROOT, SERVERS, UNKNOWN_NAME, UNKNOWN_VALUE, allArguments, connect, createRecorder, domainOf, guardEnv, requiredArguments,
+  ID, ROOT, SERVERS, UNKNOWN_NAME, UNKNOWN_VALUE, allArguments, callsOf, connect, createRecorder, domainOf, guardEnv, requiredArguments,
 } from './lib/exerciser.js';
 import {
   type Baseline, type ParamCall, type Violation, type WriteCall,
@@ -72,21 +72,23 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
     const exercised = [];
     const paramCalls: ParamCall[] = [];
     const writeCalls: WriteCall[] = [];
-    for (const tool of conn.tools) {
+    // A merged tool is called once per route of the release, as `tool[selector=value]` (REQ-SRV-029).
+    const calls = await callsOf(server, conn.tools, release);
+    for (const tool of calls.map((c) => ({ ...c, name: c.key, call: c.name }))) {
       // Pass 1, required arguments: route, body and response checks.
       recorder.take();
-      const { text } = await conn.call(tool.name, requiredArguments(tool.inputSchema));
+      const { text } = await conn.call(tool.call, { ...requiredArguments(tool.inputSchema), ...tool.select });
       const pass1 = recorder.take();
       // The sample GUID becomes {id}, so baseline keys read like routes.
       exercised.push({ tool: tool.name, requests: pass1.map((r) => ({ method: r.method, path: r.path.split(ID).join('{id}') })) });
       writeCalls.push({ tool: tool.name, result: text, requests: pass1.map((r) => ({ method: r.method, path: r.path, contentType: r.contentType, body: r.body })) });
       // Pass 2, every documented argument: parameter checks.
       const { args, idsByArg } = allArguments(tool.inputSchema);
-      const { isError } = await conn.call(tool.name, args);
+      const { isError } = await conn.call(tool.call, { ...args, ...tool.select });
       const pass2 = recorder.take();
       // Pass 3, required arguments plus an undeclared one: it is refused (#163), so nothing may
       // reach the wire; anything that does is checked by arg-leak with the pass-2 requests.
-      await conn.call(tool.name, { ...requiredArguments(tool.inputSchema), [UNKNOWN_NAME]: UNKNOWN_VALUE });
+      await conn.call(tool.call, { ...requiredArguments(tool.inputSchema), ...tool.select, [UNKNOWN_NAME]: UNKNOWN_VALUE });
       const pass3 = recorder.take();
       paramCalls.push({
         tool: tool.name, inputSchema: tool.inputSchema, idsByArg,
@@ -100,7 +102,7 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
       });
     }
     await conn.close();
-    registered.set(server, new Set(conn.tools.map((t) => t.name)));
+    registered.set(server, new Set(calls.map((c) => c.key)));
     const covered = coveredByDomain.get(domain) ?? new Set<string>();
     coveredByDomain.set(domain, covered);
     violations.push(...checkTools({ release, server, domain, table, exercised, covered }));
@@ -115,16 +117,17 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
     Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
     const conn = await connect(server);
     Object.assign(process.env, guardEnv(release, { writes: false, secretRead: true }));
+    const listedKeys = new Set((await callsOf(server, conn.tools, release)).map((c) => c.key));
     for (const tool of registered.get(server) ?? []) {
-      if (!conn.tools.some((t) => t.name === tool)) {
+      if (!listedKeys.has(tool)) {
         violations.push({ check: 'writes-off-not-called', release, server, tool, detail: 'not listed with writes on' });
       }
     }
     const calls = [];
-    for (const tool of conn.tools) {
+    for (const tool of await callsOf(server, conn.tools, release)) {
       recorder.take();
-      await conn.call(tool.name, requiredArguments(tool.inputSchema));
-      calls.push({ tool: tool.name, requests: recorder.take() });
+      await conn.call(tool.name, { ...requiredArguments(tool.inputSchema), ...tool.select });
+      calls.push({ tool: tool.key, requests: recorder.take() });
     }
     await conn.close();
     violations.push(...checkWritesOff(release, server, calls));

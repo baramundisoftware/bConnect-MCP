@@ -26,7 +26,7 @@ export interface ToolCallRequest {
 }
 
 export interface CountOnlyOptions {
-  /** Per tool, the argument that sets its page size where it isn't `PageSize` (e.g. search_endpoints: "pageSize"). */
+  /** Per tool, the argument that sets its page size where it isn't `PageSize` (e.g. a tool taking "pageSize"). */
   pageSizeArgument?: Readonly<Record<string, string>>;
 }
 

@@ -15,6 +15,7 @@ import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { Release } from './spec.js';
+import { describeVariant, selectorArguments, variantOf } from './variants.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const BASE_URL = 'https://bms.guard.test/bconnect';
@@ -191,4 +192,49 @@ export async function connect(server: string, credentials?: Record<string, strin
     },
     close: () => client.close(),
   };
+}
+
+/** One call the guards make: a tool, or one route (variant) of a merged tool (REQ-SRV-029). */
+export interface ToolCall {
+  /** The tool name, or the variant key (`list_endpoints[type=WindowsEndpoint]`): what the guards report and look up in operations.ts. */
+  key: string;
+  /** The name to call. */
+  name: string;
+  /** The tool's schema reduced to what this route takes: no selectors, no "Only for" property of another route. */
+  inputSchema: JsonSchema;
+  /** Selector arguments added to every call of this route. */
+  select: Record<string, string>;
+}
+
+/** The routes a property is "Only for", as the core lists them; undefined when every route takes it. */
+const onlyFor = (schema: JsonSchema): string[] | undefined => {
+  const m = /Only for (.+)\.$/.exec(String(schema?.description ?? ''));
+  return m ? m[1].split('; ') : undefined;
+};
+
+/**
+ * The calls that reach every route of a server's listed tools in the selected release: a tool
+ * without variants once; a merged tool once per variant its tool-releases.ts gives the release,
+ * with the variant's selector values and only the arguments that variant takes.
+ */
+export async function callsOf(server: string, tools: ConnectedServer['tools'], release: Release): Promise<ToolCall[]> {
+  const { TOOL_OPERATIONS } = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
+  const { TOOL_RELEASES } = await import(pathToFileURL(join(ROOT, server, 'src', 'tool-releases.ts')).href).catch(() => ({ TOOL_RELEASES: {} }));
+  const out: ToolCall[] = [];
+  for (const tool of tools) {
+    const keys = Object.keys(TOOL_OPERATIONS).filter((k) => variantOf(k).tool === tool.name && k !== tool.name);
+    if (keys.length === 0) {
+      out.push({ key: tool.name, name: tool.name, inputSchema: tool.inputSchema, select: {} });
+      continue;
+    }
+    for (const key of keys.filter((k) => (TOOL_RELEASES[k] ?? []).includes(release))) {
+      const { select } = variantOf(key);
+      const label = describeVariant(select);
+      const properties = Object.fromEntries(Object.entries<JsonSchema>(tool.inputSchema.properties ?? {})
+        .filter(([name, schema]) => !(name in select) && (onlyFor(schema)?.includes(label) ?? true)));
+      const required = (tool.inputSchema.required ?? []).filter((name: string) => name in properties);
+      out.push({ key, name: tool.name, inputSchema: { ...tool.inputSchema, properties, required }, select: selectorArguments(key) });
+    }
+  }
+  return out;
 }

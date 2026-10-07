@@ -22,13 +22,14 @@ import { ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, requiredArg
 
 /**
  * Tools listed per release: all of them with writes on, the reads with writes off (measured on d208ab0;
- * since #159 without the tools whose routes the release lacks: 26R1 −8 (5 reads), 25R2 −10 (8 reads)).
+ * since #159 without the tools whose routes the release lacks: 26R1 −8 (5 reads), 25R2 −10 (8 reads);
+ * since #174 one tool per endpoint operation: 26R1 −29 (15 reads), 25R2 −33 (17 reads)).
  */
-const COUNTS = { '26R1': { on: 268, off: 173 }, '25R2': { on: 230, off: 148 } } as const;
+const COUNTS = { '26R1': { on: 239, off: 158 }, '25R2': { on: 197, off: 131 } } as const;
 
 /** Read tools per server on 26R1 (listed with writes off); the 4 servers without write tools are absent. */
 const READS_26R1: Record<string, number> = {
-  'bconnect-assets-mcp': 15, 'bconnect-defensecontrol-mcp': 10, 'bconnect-endpoints-mcp': 25, 'bconnect-jobs-mcp': 20,
+  'bconnect-assets-mcp': 15, 'bconnect-defensecontrol-mcp': 10, 'bconnect-endpoints-mcp': 10, 'bconnect-jobs-mcp': 20,
   'bconnect-operatingsystems-mcp': 5, 'bconnect-servermanagement-mcp': 16, 'bconnect-software-mcp': 11,
   'bconnect-updatemanagement-mcp': 2, 'bconnect-variables-mcp': 9,
 };
@@ -36,6 +37,10 @@ const READS_26R1: Record<string, number> = {
 const refusal = (tool: string): string => JSON.stringify([{
   type: 'text', text: `Write operation '${tool}' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.`,
 }]);
+
+/** A tool's operationIds; a merged tool's are those of all its variants (REQ-SRV-029). */
+const idsOf = (operations: Record<string, string[]>, tool: string): string[] =>
+  operations[tool] ?? Object.entries(operations).filter(([key]) => key.startsWith(`${tool}[`)).flatMap(([, ids]) => ids);
 
 /** The HTTP methods of a tool's operations in both releases: the server's own spec first, then any. */
 function methodsOf(domain: string, ids: readonly string[]): string[] {
@@ -95,7 +100,7 @@ describe.each(RELEASES)('bMS %s', (release) => {
           await conn.call(tool.name, args);
           entry.reads.push({
             tool: tool.name, sent: recorder.take().map((r) => r.method),
-            methods: methodsOf(domainOf(server), TOOL_OPERATIONS[tool.name] ?? []),
+            methods: methodsOf(domainOf(server), idsOf(TOOL_OPERATIONS, tool.name)),
           });
         } else {
           env(false);

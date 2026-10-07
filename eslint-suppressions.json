@@ -11,7 +11,7 @@
   },
   "bconnect-endpoints-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 13
+      "count": 6
     }
   },
   "bconnect-jobs-mcp/src/index.ts": {

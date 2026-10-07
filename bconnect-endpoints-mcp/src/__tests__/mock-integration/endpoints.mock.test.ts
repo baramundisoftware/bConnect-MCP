@@ -8,9 +8,12 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { BConnectClient } from '../../bconnect-client.js';
 import { createServer } from '../../index.js';
+import { TOOL_VARIANTS } from '../../tool-variants.js';
+import { TOOL_RELEASES } from '../../tool-releases.js';
 import {
   checkMockAvailable,
   createClient,
+  getMockHealth,
   MOCK_BASE_URL,
   NONEXISTENT_GUID,
 } from './helpers.js';
@@ -56,15 +59,16 @@ describe('Endpoints — list Endpoints', () => {
 });
 
 describe('Endpoints — countOnly (#165)', () => {
-  it('list_windows_endpoints counts what a normal call reports as totalItems', async () => {
+  it('list_endpoints (WindowsEndpoint) counts what a normal call reports as totalItems', async () => {
     if (!available) {return;}
-    const normal = await callTool('list_windows_endpoints', {});
-    const count = await callTool('list_windows_endpoints', { countOnly: true });
+    const normal = await callTool('list_endpoints', { type: 'WindowsEndpoint' });
+    const count = await callTool('list_endpoints', { type: 'WindowsEndpoint', countOnly: true });
     expect(normal.isError, normal.text).toBe(false);
     expect(count.isError, count.text).toBe(false);
     const { totalItems } = JSON.parse(normal.text) as { totalItems: number };
     expect(typeof totalItems).toBe('number');
-    expect(JSON.parse(count.text)).toEqual({ totalItems });
+    // The type is echoed with the other filters (REQ-SRV-029).
+    expect(JSON.parse(count.text)).toEqual({ totalItems, filters: { type: 'WindowsEndpoint' } });
   });
 });
 
@@ -92,5 +96,51 @@ describe('Endpoints — unknown id', () => {
   it('rejects on get with nonexistent GUID', async () => {
     if (!available) {return;}
     await expect(client.endpoints.getEndpoint(NONEXISTENT_GUID)).rejects.toThrow();
+  });
+});
+
+describe('Endpoints — every read route of the merged tools (REQ-SRV-029, #174)', () => {
+  /** The release the mock serves, so the server lists and checks the same one. */
+  async function useMockRelease(): Promise<'25R2' | '26R1'> {
+    const version = (await getMockHealth())?.bmsVersion?.toLowerCase();
+    const release = version === '25r2' ? '25R2' : '26R1';
+    process.env.BCONNECT_RELEASE = release;
+    return release;
+  }
+  const routes = (tool: string, release: string): Array<Record<string, string>> => Object.entries(TOOL_VARIANTS[tool])
+    .filter(([key]) => (TOOL_RELEASES[key] ?? []).some((r) => r === release))
+    .map(([, select]) => (select.type ? { type: select.type } : {}));
+
+  it('list_endpoints and get_endpoint answer for every type of the release', async () => {
+    if (!available) {return;}
+    const release = await useMockRelease();
+    const types = routes('list_endpoints', release);
+    expect(types.length).toBe(release === '25R2' ? 8 : 7);
+    for (const select of types) {
+      const list = await callTool('list_endpoints', { ...select, PageSize: 1 });
+      expect(list.isError, `${JSON.stringify(select)}: ${list.text}`).toBe(false);
+      const id = (JSON.parse(list.text) as { data?: Array<{ id?: string }> }).data?.[0]?.id;
+      if (!id) {continue;}
+      const got = await callTool('get_endpoint', { ...select, id });
+      expect(got.isError, `${JSON.stringify(select)} ${id}: ${got.text}`).toBe(false);
+    }
+  });
+
+  it('list_endpoints_by_logical_group answers with and without type', async () => {
+    if (!available) {return;}
+    const release = await useMockRelease();
+    const groups = await callTool('list_logical_groups', { PageSize: 1 });
+    const logicalGroupId = (JSON.parse(groups.text) as { data?: Array<{ id?: string }> }).data?.[0]?.id;
+    expect(logicalGroupId).toBeTruthy();
+    for (const select of routes('list_endpoints_by_logical_group', release)) {
+      const r = await callTool('list_endpoints_by_logical_group', { ...select, logicalGroupId });
+      expect(r.isError, `${JSON.stringify(select)}: ${r.text}`).toBe(false);
+    }
+  });
+
+  it('a removed per-type name answers with its replacement', async () => {
+    if (!available) {return;}
+    await useMockRelease();
+    await expect(callTool('list_windows_endpoints', {})).rejects.toThrow(/replaced by list_endpoints: call list_endpoints with type "WindowsEndpoint"/);
   });
 });

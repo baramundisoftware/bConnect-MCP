@@ -15,7 +15,7 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 >  
 > Keep an eye on AI token usage, especially during testing, as costs can add up quickly depending on the model and workload.
 
-**276 tools** across **13 servers** (268 on bMS 26R1, 230 on 25R2), compatible with **baramundi Management Suite 2025 R2 and 2026 R1**.
+**243 tools** across **13 servers** (239 on bMS 26R1, 197 on 25R2), compatible with **baramundi Management Suite 2025 R2 and 2026 R1**.
 
 ---
 
@@ -169,7 +169,7 @@ Only the gateway is distributed as a container; the 13 stdio servers run via Nod
 
 | Server | Tools on 26R1 | Tools on 25R2 | What It Does |
 |--------|------|------|--------------|
-| `bconnect-endpoints-mcp` | 61 | 58 | Windows/Linux/Mac/Android/iOS/industrial endpoints, logical groups, maintenance windows |
+| `bconnect-endpoints-mcp` | 32 | 25 | Windows/Linux/Mac/Android/iOS/network/industrial endpoints (one tool per operation, type as argument), logical groups, maintenance windows |
 | `bconnect-groups-mcp` | 30 | 33 | Endpoints by logical/static/dynamic/universal dynamic group and by AD user |
 | `bconnect-jobs-mcp` | 34 | 34 | Job definitions, instances, folders, kiosk releases |
 | `bconnect-servermanagement-mcp` | 30 | 25 | Management server, microservices, security groups, API keys |
@@ -182,7 +182,7 @@ Only the gateway is distributed as a container; the 13 stdio servers run via Nod
 | `bconnect-compliance-mcp` | 8 | — | Compliance violations, CVE vulnerabilities (needs 26R1) |
 | `bconnect-universaldynamicgroups-mcp` | 6 | — | Universal Dynamic Group definitions (needs 26R1) |
 | `bconnect-updatemanagement-mcp` | 3 | 3 | Windows Update management |
-| **Total** | **268** | **230** | |
+| **Total** | **239** | **197** | |
 
 — means the server needs 26R1 and lists no tools on 25R2. Each release lists only the tools whose API routes it has: 26R1 has no industrial-endpoint tools, 25R2 no 26R1-only tools.
 
@@ -193,9 +193,9 @@ dynamic groups don't exist in 2025 R2: don't configure those two servers for a 2
 Install only the servers you need. Most users start with `bconnect-endpoints-mcp`.
 
 The counts include the write tools. While writes are off (the default, and always in the gateway),
-the tool list leaves them out: 173 tools on 26R1, 148 on 25R2. Every MCP client loads the whole
-tool list into the model's context, so this saves about 74 KB (≈ 21,000 tokens at 3.5 characters
-per token, −28 %) per session on 26R1, and 64 KB (≈ 18,000 tokens, −28 %) on 25R2. A write tool called by name is still refused.
+the tool list leaves them out: 158 tools on 26R1, 131 on 25R2. Every MCP client loads the whole
+tool list into the model's context, so this saves about 66 KB (≈ 19,000 tokens at 3.5 characters
+per token, −28 %) per session on 26R1, and 55 KB (≈ 16,000 tokens, −27 %) on 25R2. A write tool called by name is still refused.
 
 ---
 
@@ -233,7 +233,7 @@ The variables most deployments set. Each server's README lists exactly the varia
 **Compact tool results.** Tool results are compact JSON: the same data without indentation. Each
 result stays in the model's context for the rest of the conversation, and the indentation alone was
 16–22 % of it. Measured against the bConnect mock (bMS 26R1): `list_endpoints` (31 endpoints) 28.4 KB → 23.5 KB,
-`list_windows_endpoints` (10) 10.5 KB → 8.8 KB, `list_job_instances` (5) 5.4 KB → 4.5 KB,
+`list_endpoints` with type `WindowsEndpoint` (10) 10.5 KB → 8.8 KB, `list_job_instances` (5) 5.4 KB → 4.5 KB,
 `list_job_definitions` (5) 2.2 KB → 1.7 KB. Set `BCONNECT_PRETTY_JSON=true` to get the indented
 format back, for example while debugging.
 
@@ -242,9 +242,9 @@ The tool then asks bConnect for a single row with the same filters and returns o
 filters it applied, for example `{"totalItems":10,"filters":{"DisplayName":"x"}}`. If bConnect's answer
 has no total, the result says the count is unavailable instead of guessing; a note the tool adds (for
 example that a parent object's existence couldn't be confirmed) is kept. Measured against the
-bConnect mock (bMS 26R1): `list_windows_endpoints` 8.8 KB for one page of 10 endpoints, 17 bytes with
-`countOnly`. The option adds one short property to each paged list tool, about 9.8 KB to the tool
-list on 26R1 (123 tools) and 8.9 KB on 25R2 (111 tools).
+bConnect mock (bMS 26R1): `list_endpoints` with type `WindowsEndpoint` 8.8 KB for one page of 10 endpoints, 54 bytes with
+`countOnly` (`{"totalItems":10,"filters":{"type":"WindowsEndpoint"}}`). The option adds one short property to
+each paged list tool, about 8.8 KB to the tool list on 26R1 (110 tools) and 7.6 KB on 25R2 (95 tools).
 
 ### How to Find Your bMS Server URL
 

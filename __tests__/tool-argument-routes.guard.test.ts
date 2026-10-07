@@ -21,7 +21,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { RELEASES, type Release } from './lib/spec.js';
 import {
-  BASE_PATH, ID, ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, sample, type JsonSchema,
+  BASE_PATH, ID, ROOT, SERVERS, callsOf, connect, createRecorder, domainOf, guardEnv, sample, type JsonSchema,
 } from './lib/exerciser.js';
 
 const MARKER = '11111111-2222-4333-8444-555555555555';
@@ -77,18 +77,20 @@ async function sweep(release: Release): Promise<{ findings: Finding[]; pathIds: 
       return { requests: recorder.take().map((r) => r.url), text, isError };
     };
 
-    for (const tool of conn.tools) {
-      const schema = tool.inputSchema;
+    // Every route: a merged tool once per variant of the release, with its selector (REQ-SRV-029).
+    for (const route of await callsOf(server, conn.tools, release)) {
+      const tool = { name: route.name, key: route.key };
+      const schema = route.inputSchema;
       const idArgs = Object.entries<JsonSchema>(schema.properties ?? {})
         .filter(([name, s]) => s.type === 'string' && /id$/i.test(name))
         .map(([name]) => name);
       for (const arg of idArgs) {
-        const probe = await call(tool.name, argumentsWith(schema, arg, MARKER));
+        const probe = await call(tool.name, { ...argumentsWith(schema, arg, MARKER), ...route.select });
         const isPathId = probe.requests.some((u) => u.pathname.includes(MARKER));
         if (isPathId) pathIds++;
         for (const [payload, value] of Object.entries(payloads(domain))) {
-          const { requests, text, isError } = await call(tool.name, argumentsWith(schema, arg, value));
-          const base = { release, server, tool: tool.name, arg, payload };
+          const { requests, text, isError } = await call(tool.name, { ...argumentsWith(schema, arg, value), ...route.select });
+          const base = { release, server, tool: tool.key, arg, payload };
           for (const url of requests) {
             const problem = escapeOf(url, domain);
             if (problem) findings.push({ ...base, problem });
@@ -127,15 +129,20 @@ describe.each(RELEASES)('tool arguments, bMS %s', (release) => {
 
 describe.each(RULE_MAP_SERVERS)('%s validation rules', (server) => {
   let rules: Record<string, () => Array<{ name: string }>>;
-  let tools: Array<{ name: string; inputSchema: JsonSchema }>;
+  /** Every route of either release; a merged tool's variants by their key, with the arguments that variant takes. */
+  let tools: Array<{ name: string; inputSchema: JsonSchema }> = [];
 
   beforeAll(async () => {
-    process.env.BCONNECT_RELEASE = '26R1';
     const utils = await import(pathToFileURL(join(ROOT, server, 'src', 'utils', 'mcp-tool-validation-rules.ts')).href);
     rules = utils.TOOL_RULES;
-    const conn = await connect(server);
-    tools = conn.tools;
-    await conn.close();
+    for (const release of RELEASES) {
+      process.env.BCONNECT_RELEASE = release;
+      const conn = await connect(server);
+      for (const route of await callsOf(server, conn.tools, release)) {
+        if (!tools.some((t) => t.name === route.key)) tools.push({ name: route.key, inputSchema: route.inputSchema });
+      }
+      await conn.close();
+    }
   });
 
   it('has a TOOL_RULES entry for every registered tool', () => {

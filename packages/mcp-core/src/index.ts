@@ -23,3 +23,4 @@ export * from "./security-routes.js";
 export * from "./host-check.js";
 export * from "./server-runtime.js";
 export * from "./release.js";
+export * from "./tool-variants.js";

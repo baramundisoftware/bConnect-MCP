@@ -75,8 +75,6 @@ describe('#186 the path id and undeclared arguments stay out of the query', () =
 describe('#170 logical-group tools reach sub-groups', () => {
   it.each([
     ['endpoints', 'list_endpoints_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/Endpoints`],
-    ['endpoints', 'list_group_endpoints', `/endpoints/v2.0/LogicalGroups/${G}/Endpoints`],
-    ['endpoints', 'list_windows_endpoints_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/WindowsEndpoints`],
     ['groups', 'list_endpoints_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/Endpoints`],
     ['groups', 'list_windows_endpoints_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/WindowsEndpoints`],
     ['groups', 'list_logical_groups_by_logical_group', `/endpoints/v2.0/LogicalGroups/${G}/LogicalGroups`],
@@ -88,8 +86,13 @@ describe('#170 logical-group tools reach sub-groups', () => {
     expect(await call(server, name, { logicalGroupId: G, includeSubfolders: true })).toEqual([{ path, query: { includeSubfolders: 'true' } }]);
   });
 
+  it('endpoints list_endpoints_by_logical_group with type WindowsEndpoint sends includeSubfolders (REQ-SRV-029)', async () => {
+    expect(await call('endpoints', 'list_endpoints_by_logical_group', { type: 'WindowsEndpoint', logicalGroupId: G, includeSubfolders: true }))
+      .toEqual([{ path: `/endpoints/v2.0/LogicalGroups/${G}/WindowsEndpoints`, query: { includeSubfolders: 'true' } }]);
+  });
+
   it('no tool offers includeSubGroups, which bConnect ignores', async () => {
-    expect(await propsOf('endpoints', 'list_windows_endpoints_by_logical_group')).not.toContain('includeSubGroups');
+    expect(await propsOf('endpoints', 'list_endpoints_by_logical_group')).not.toContain('includeSubGroups');
   });
 
   it('list_logical_groups pages and filters', async () => {

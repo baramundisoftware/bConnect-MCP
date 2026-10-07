@@ -27,6 +27,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`) are unchanged and still decide what a tool may do.
 
 ### Changed
+- **Breaking: the endpoint tools are one tool per operation, with the endpoint type as an argument.**
+  The endpoints server had a copy of each operation per device type; the copies are merged into one
+  tool with a `type` argument (#174). Its values are the API's endpoint type names, the same as the
+  `type` field of the results: `WindowsEndpoint`, `MacEndpoint`, `LinuxEndpoint`, `AndroidEndpoint`,
+  `IOSEndpoint`, `NetworkEndpoint`, and `IndustrialEndpoint` on bMS 25R2 only. The tool list offers
+  only the values the bMS release has; a filter or field that only some types take says which, and a
+  call that combines it with another type is refused before anything is sent. Each call sends the
+  same request as the old tool did. The old names are not kept as aliases: calling one returns the
+  replacement, for example `list_windows_endpoints was replaced by list_endpoints: call list_endpoints
+  with type "WindowsEndpoint".` One difference: updating an Android or iOS endpoint without any field
+  is now refused, as for the other types (it sent an empty change before). Create tools stay per
+  type, because their required fields differ. The endpoints server lists 32 tools on 26R1 (61
+  before) and 25 on 25R2 (58); its tool list shrinks from 50.9 KB to 32.1 KB on 26R1 (writes off:
+  21.8 KB to 9.1 KB).
+
+  | Old tool | New call |
+  |---|---|
+  | `list_windows_endpoints`, `list_mac_endpoints`, `list_linux_endpoints`, `list_android_endpoints`, `list_ios_endpoints`, `list_network_endpoints`, `list_industrial_endpoints` | `list_endpoints` with `type` `WindowsEndpoint`, `MacEndpoint`, `LinuxEndpoint`, `AndroidEndpoint`, `IOSEndpoint`, `NetworkEndpoint`, `IndustrialEndpoint` |
+  | `search_endpoints` (`query`, `pageSize`) | `list_endpoints` without `type`, with `SearchQuery` and `PageSize` (it sent `PageSize` 50 when none was given; pass it to keep that) |
+  | `get_windows_endpoint`, `get_mac_endpoint`, `get_linux_endpoint`, `get_android_endpoint`, `get_ios_endpoint`, `get_network_endpoint`, `get_industrial_endpoint` | `get_endpoint` with `type` (as above) |
+  | `delete_windows_endpoint`, `delete_mac_endpoint`, `delete_linux_endpoint`, `delete_android_endpoint`, `delete_ios_endpoint`, `delete_network_endpoint`, `delete_industrial_endpoint` | `delete_endpoint` with `type` (as above) |
+  | `update_windows_endpoint`, `update_mac_endpoint`, `update_linux_endpoint`, `update_android_endpoint`, `update_ios_endpoint`, `update_network_endpoint`, `update_industrial_endpoint` | `update_endpoint` with `type` (as above) |
+  | `start_windows_enrollment`, `start_mac_enrollment`, `start_android_enrollment`, `start_ios_enrollment` | `start_enrollment` with `type` `WindowsEndpoint`, `MacEndpoint`, `AndroidEndpoint`, `IOSEndpoint` |
+  | `list_group_endpoints` | `list_endpoints_by_logical_group` without `type` |
+  | `list_windows_endpoints_by_logical_group` | `list_endpoints_by_logical_group` with `type` `WindowsEndpoint` |
+
+  `list_endpoints`, `get_endpoint`, `delete_endpoint` and `list_endpoints_by_logical_group` without
+  `type` work as before.
 - **Each bMS release lists only the tools whose API routes it has.** Which tools a release offers
   is now derived from its API specification instead of hand-written checks: a tool is listed when
   every route it calls exists in the release. This hides tools that could only fail: the 8
