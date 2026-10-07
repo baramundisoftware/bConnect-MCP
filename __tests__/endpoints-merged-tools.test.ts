@@ -17,6 +17,8 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { connect, createRecorder, guardEnv, ROOT, type ConnectedServer } from './lib/exerciser.js';
 import type { Release } from './lib/spec.js';
+import { UPDATE_FIELDS } from '../bconnect-endpoints-mcp/src/update-fields.js';
+import { CREATE_FIELDS } from '../bconnect-endpoints-mcp/src/create-fields.js';
 
 interface Recorded { method: string; path: string; query: Array<[string, string]>; contentType: string | null; body: string }
 interface Entry { release: Release; tool: string; call: string; args: Record<string, unknown>; requests: Recorded[] }
@@ -199,5 +201,26 @@ describe('write gate and live-check notes', () => {
     const description = (name: string) => tools.find((t) => t.name === name)!.description as string;
     expect(description('update_endpoint')).toMatch(/Not yet verified against a live bMS for: type "AndroidEndpoint"; type "IOSEndpoint"; type "LinuxEndpoint"; type "NetworkEndpoint"\.$/);
     expect(description('delete_endpoint')).toMatch(/Not yet verified against a live bMS for: without type; type "AndroidEndpoint"; type "IOSEndpoint"; type "LinuxEndpoint"; type "NetworkEndpoint"\.$/);
+  });
+});
+
+describe('merged schemas', () => {
+  // A merged tool lists each field once (the first type's definition), so a field shared by
+  // several types must be defined alike for all of them; only the patch path may differ (Mac).
+  it.each([
+    ['update_endpoint', UPDATE_FIELDS as Record<string, Record<string, Record<string, unknown>>>],
+    ['start_enrollment', Object.fromEntries(Object.entries(CREATE_FIELDS).map(([k, v]) => [k, v.fields])) as Record<string, Record<string, Record<string, unknown>>>],
+  ])('%s: a field shared by several types has one definition', (tool, table) => {
+    const seen = new Map<string, string>();
+    const differ: string[] = [];
+    for (const [key, fields] of Object.entries(table).filter(([k]) => k.startsWith(`${tool}[`))) {
+      for (const [name, { path: _path, ...definition }] of Object.entries(fields)) {
+        const text = JSON.stringify(definition);
+        if (seen.has(name) && seen.get(name) !== text) differ.push(`${key} ${name}`);
+        seen.set(name, seen.get(name) ?? text);
+      }
+    }
+    expect(seen.size).toBeGreaterThan(3);
+    expect(differ).toEqual([]);
   });
 });

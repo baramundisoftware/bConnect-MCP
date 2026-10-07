@@ -104,7 +104,7 @@ export const CREATE_FIELDS: Record<string, CreateTool> = {
     pathId: "Endpoint ID (GUID)",
     fields: {
       enrollmentMailAddress: text("", "E-mail address that receives the enrollment instructions"),
-      emailLanguageId: text("", "Language of the e-mail, e.g. de or en"),
+      emailLanguageId: text("", "E-mail template ID, e.g. en-US or de-DE"),
       sync: flag("", "Wait for the enrollment data to be generated"),
     },
     required: [],
@@ -113,7 +113,7 @@ export const CREATE_FIELDS: Record<string, CreateTool> = {
     pathId: "Endpoint ID (GUID)",
     fields: {
       enrollmentMailAddress: text("", "E-mail address that receives the enrollment instructions"),
-      emailLanguageId: text("", "Language of the e-mail, e.g. de or en"),
+      emailLanguageId: text("", "E-mail template ID, e.g. en-US or de-DE"),
       enrollmentType: choice("", "How the Mac is enrolled", ["Unenrolled", "SSH", "SSHAndNative", "Native"]),
     },
     required: [],
@@ -124,7 +124,7 @@ export const CREATE_FIELDS: Record<string, CreateTool> = {
     pathId: "Endpoint ID (GUID)",
     fields: {
       enrollmentMailAddress: text("", "E-mail address that receives the enrollment instructions"),
-      emailLanguageId: text("", "Language of the e-mail, e.g. de or en"),
+      emailLanguageId: text("", "E-mail template ID, e.g. en-US or de-DE"),
       forceMobileDataOnEnrollment: flag("", "Force mobile data during enrollment (default: false)"),
       includeWifiInQrCode: flag("", "Include Wi-Fi credentials in the QR code (default: false)"),
     },
@@ -134,7 +134,7 @@ export const CREATE_FIELDS: Record<string, CreateTool> = {
     pathId: "Endpoint ID (GUID)",
     fields: {
       enrollmentMailAddress: text("", "E-mail address that receives the enrollment instructions"),
-      emailLanguageId: text("", "Language of the e-mail, e.g. de or en"),
+      emailLanguageId: text("", "E-mail template ID, e.g. en-US or de-DE"),
     },
     required: [],
   },

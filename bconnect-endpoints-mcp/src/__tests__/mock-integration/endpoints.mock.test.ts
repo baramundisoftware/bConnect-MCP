@@ -107,8 +107,8 @@ describe('Endpoints — every read route of the merged tools (REQ-SRV-029, #174)
     process.env.BCONNECT_RELEASE = release;
     return release;
   }
-  const routes = (tool: string, release: string) => Object.entries(TOOL_VARIANTS[tool])
-    .filter(([key]) => (TOOL_RELEASES[key] ?? []).includes(release as never))
+  const routes = (tool: string, release: string): Array<Record<string, string>> => Object.entries(TOOL_VARIANTS[tool])
+    .filter(([key]) => (TOOL_RELEASES[key] ?? []).some((r) => r === release))
     .map(([, select]) => (select.type ? { type: select.type } : {}));
 
   it('list_endpoints and get_endpoint answer for every type of the release', async () => {

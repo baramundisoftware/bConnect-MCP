@@ -60,7 +60,7 @@ const variantsOf = (table: ToolVariantTable, tool: string): Array<[string, Varia
   Object.hasOwn(table, tool) ? Object.entries(table[tool]) : [];
 
 const inRelease = (releases: ToolReleaseTable, key: string, release: string): boolean =>
-  Object.hasOwn(releases, key) && (releases[key] as readonly string[]).includes(release);
+  Object.hasOwn(releases, key) && releases[key].some((r) => r === release);
 
 const selectorsOf = (variants: Array<[string, VariantSelect]>): string[] =>
   [...new Set(variants.flatMap(([, select]) => Object.keys(select)))];
@@ -157,9 +157,9 @@ function checkVariant(table: ToolVariantTable, releases: ToolReleaseTable, argum
     const given = Object.fromEntries(selectors.map((name) => [name, typeof args[name] === "string" ? args[name] : null]));
     const first = selectors[0];
     const same = here.filter(([, select]) => select[first] === given[first]);
-    refuse(`${tool} has no route for ${describeVariant(given)}. Valid on bMS ${release}: ${(same.length > 0 ? same : here).map(([, select]) => describeVariant(select)).join("; ")}.`);
+    return refuse(`${tool} has no route for ${describeVariant(given)}. Valid on bMS ${release}: ${(same.length > 0 ? same : here).map(([, select]) => describeVariant(select)).join("; ")}.`);
   }
-  const chosen = key as string;
+  const chosen = key;
   const select = table[tool][chosen];
   if (!inRelease(releases, chosen, release)) {
     refuse(releaseRefusal(`${tool} with ${describeVariant(select)}`, (releases[chosen] ?? []).join(" or ")));

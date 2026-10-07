@@ -54,6 +54,12 @@ describe('merged tools (REQ-SRV-029, ADR-0015)', () => {
     expect(r.out).toContain('mixed_endpoint mixes write and destructive routes');
   });
 
+  it('the generator refuses an entry line it can\'t read (e.g. a double-quoted variant key)', () => {
+    const r = generate(`  "pick_endpoint[type=]": ['GetEndpoint'],`);
+    expect(r.status).toBe(1);
+    expect(r.out).toContain("can't read");
+  });
+
   it('the generator accepts variants of one effect and writes the variant table', () => {
     const r = generate(`  'pick_endpoint[type=]': ['GetEndpoint'],\n  'pick_endpoint[type=WindowsEndpoint]': ['GetWindowsEndpoint'],`);
     expect(r.out).toMatch(/files written/);

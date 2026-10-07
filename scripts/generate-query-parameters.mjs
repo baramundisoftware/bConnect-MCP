@@ -120,6 +120,13 @@ function property(param, route, spec) {
 /** [key, operationIds] for every line of the server's src/operations.ts; a key is a tool or a variant (`tool[type=X]`). */
 function toolsOf(server) {
   const ops = readFileSync(join(ROOT, server, "src", "operations.ts"), "utf8");
+  // Every entry line (`<key>: [...]`) must parse: a key in another quoting would otherwise be skipped silently.
+  const entries = ops.split("\n").filter((line) => /^[ \t]*\S.*:[ \t]*\[.*\],?[ \t]*$/.test(line) && !/^[ \t]*(\*|\/\/)/.test(line));
+  const parsed = entries.filter((line) => /^[ \t]*(?:'[a-z0-9_]+\[[^\]']*\]'|[a-z0-9_]+):[ \t]*\[/.test(line));
+  if (parsed.length !== entries.length) {
+    console.error(`${server}/src/operations.ts: can't read ${entries.filter((l) => !parsed.includes(l)).map((l) => l.trim()).join(" | ")}; write keys as name or 'name[selector=value]'.`);
+    process.exit(1);
+  }
   return [...ops.matchAll(/^[ \t]*(?:'([a-z0-9_]+\[[^\]']*\])'|([a-z0-9_]+)):[ \t]*\[([^\]]*)\]/gm)]
     .map((m) => [m[1] ?? m[2], [...m[3].matchAll(/'([^']+)'/g)].map((x) => x[1])]);
 }
