@@ -34,7 +34,7 @@ import {
 } from './lib/exerciser.js';
 import {
   type Baseline, type ParamCall, type Violation, type WriteCall,
-  checkBodies, checkCoverage, checkParams, checkStaleBindings, checkTools, checkWritesOff, compareWithBaseline, keyOf,
+  checkBodies, checkCoverage, checkParams, checkStaleBindings, checkTools, checkUnsupported, checkWritesOff, compareWithBaseline, keyOf,
 } from './lib/conformance.js';
 import { bodyValidator, jsonPatchProblems } from './lib/bodies.js';
 
@@ -249,6 +249,28 @@ describe('the checks report known-bad cases (self-test)', () => {
     expect(real('/assets/v2.0/Assets/00000000-0000-4000-8000-000000000001')).toEqual([]);
     expect(real('/assets/v2.0/Asset/00000000-0000-4000-8000-000000000001')).toEqual(['route']);
     expect(real('/v2.0/Assets/00000000-0000-4000-8000-000000000001')).toEqual(['route']);
+  });
+
+  it('skips an operation the server declares unsupported, in that release only (REQ-SRV-031)', () => {
+    const unsupported = { DeleteThing: { '25R2': 'Not offered: the specification describes this request in two ways.' } };
+    const covered = new Set(['GetThings', 'GetThing']);
+    expect(checkCoverage('26R1', 'demo', covered, operations, unsupported).map(keyOf)).toEqual(['coverage 26R1 demo - DeleteThing']);
+    expect(checkCoverage('25R2', 'demo', covered, operations, unsupported)).toEqual([]);
+  });
+
+  it('reports a declaration that no longer holds: unknown operation, no tool, tool listed, no reason', () => {
+    const table = { get_thing: ['GetThing'], delete_thing: ['DeleteThing'] };
+    const reason = 'Not offered: the specification describes this request in two ways.';
+    const run = (unsupported: Record<string, Record<string, string>>, listed: string[] = []) =>
+      checkUnsupported({ release: '26R1', server: 'demo-server', domain: 'demo', unsupported, table, listed: new Set(listed), operations })
+        .map((x) => `${x.check} ${x.detail}`);
+    expect(run({ DeleteThing: { '26R1': reason } })).toEqual([]);
+    expect(run({ GoneThing: { '26R1': reason } })).toEqual(['unsupported-unknown GoneThing']);
+    expect(run({ GetThings: { '26R1': reason } })).toEqual(['unsupported-no-tool GetThings']);
+    expect(run({ DeleteThing: { '26R1': reason } }, ['delete_thing'])).toEqual(['unsupported-listed DeleteThing']);
+    expect(run({ DeleteThing: { '26R1': 'short' } })).toEqual(['unsupported-reason DeleteThing']);
+    // Another release's declaration is checked in that release's pass.
+    expect(run({ DeleteThing: { '25R2': 'short' } })).toEqual([]);
   });
 
   it('reports a dead table entry and an operation no tool declares', () => {
