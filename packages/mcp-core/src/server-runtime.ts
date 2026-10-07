@@ -19,6 +19,7 @@ import type { BConnectClientBase, BConnectConfig, ClientOptions } from "./bconne
 import { CLIENT_ENV_VARS, clientConfigFromEnv, hasRequestCredentials, type BConnectCredentials } from "./client-config.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { allowedHosts, hostCheck } from "./host-check.js";
+import { detectRelease } from "./release.js";
 
 export type { ClientOptions } from "./bconnect-client-base.js";
 
@@ -173,6 +174,9 @@ async function serve<C extends BConnectClientBase>(entry: ServerEntry<C>, io: St
   const env = io.env;
   io.loadEnv?.();
   const client = entry.clients.get();
+  // The bMS release first (#159): the probe route and every tool list depend on it.
+  const line = (text: string): void => io.error(`${name}: ${text}`);
+  await detectRelease(client, { info: line, warn: line }, env);
   if (env.BCONNECT_SKIP_CONNECTIVITY_CHECK === "true") {
     io.error(`${name}: connectivity check skipped (BCONNECT_SKIP_CONNECTIVITY_CHECK=true); the settings were checked.`);
   } else {

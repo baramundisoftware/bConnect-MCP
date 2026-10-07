@@ -19,12 +19,12 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, releaseRefusal } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
-const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, selectedRelease(), tool);
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { UdgRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -36,7 +36,7 @@ export type { BConnectCredentials } from "@bconnect/mcp-core";
 const clients = serverClients(BConnectClient);
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
-  const release = process.env.BCONNECT_RELEASE ?? "26R1";
+  const release = selectedRelease();
   const is26R1 = release === "26R1";
 
   const server = new Server(
@@ -53,7 +53,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => selectedRelease(), async () => {
     if (!is26R1) {
       return { tools: [] };
     }
@@ -158,7 +158,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   }
 
   // countOnly (#165): count with one 1-row request instead of loading a page.
-  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
@@ -166,7 +166,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     if (!is26R1) {
       throw new McpError(
         ErrorCode.MethodNotFound,
-        `${name} is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.`
+        releaseRefusal(name, "26R1")
       );
     }
 

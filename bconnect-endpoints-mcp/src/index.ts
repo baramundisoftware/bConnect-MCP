@@ -18,13 +18,13 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, pageSizeProperty, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, pageSizeProperty, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, releaseRefusal } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 import { INTERVAL_RULE, checkIntervalRule, withIntervalRemoval } from "./maintenance-window.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
-const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, selectedRelease(), tool);
 
 /** search_endpoints takes the search text and page size as `query` and `pageSize`; the table's names aren't offered twice (#179). */
 const SEARCH_ALIASES = new Set(["SearchQuery", "PageSize"]);
@@ -76,7 +76,7 @@ export type { BConnectCredentials } from "@bconnect/mcp-core";
 const clients = serverClients(BConnectClient);
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
-  const release = process.env.BCONNECT_RELEASE ?? "26R1";
+  const release = selectedRelease();
   const is26R1 = release === "26R1";
 
   const server = new Server(
@@ -137,7 +137,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "unlink_entra_id_data",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withSearchAliases(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withSearchAliases(withQueryProperties(QUERY_PARAMETERS, () => selectedRelease(), withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     const tools: object[] = [
         // ── Endpoints API ─────────────────────────────────────────────────
         {
@@ -701,7 +701,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
   }
   // countOnly (#165): count with one 1-row request instead of loading a page.
-  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
@@ -1105,31 +1105,31 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // Phase 24: 26R1-only tools
         case "list_unmanaged_endpoints": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "list_unmanaged_endpoints is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("list_unmanaged_endpoints", "26R1"));}
           const result = await bconnect.endpoints.listUnmanagedEndpoints();
           return toolJsonResult(result);
         }
 
         case "get_unmanaged_endpoint": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "get_unmanaged_endpoint is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("get_unmanaged_endpoint", "26R1"));}
           const result = await bconnect.endpoints.getUnmanagedEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
         case "delete_unmanaged_endpoint": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "delete_unmanaged_endpoint is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("delete_unmanaged_endpoint", "26R1"));}
           await bconnect.endpoints.deleteUnmanagedEndpoint(args!.id as string);
           return { content: [{ type: "text", text: `Unmanaged endpoint ${args!.id} deleted successfully` }] };
         }
 
         case "get_entra_id_data": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "get_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("get_entra_id_data", "26R1"));}
           const result = await bconnect.endpoints.getEntraIdData(args!.deviceId as string);
           return toolJsonResult(result);
         }
 
         case "link_entra_id_data": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "link_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("link_entra_id_data", "26R1"));}
           const result = await bconnect.endpoints.linkEntraIdData(
             args!.endpointId as string,
             pickArguments(args!, ["entraIdDeviceId", "entraIdTenantId", "entraIdUserId"])
@@ -1138,7 +1138,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "unlink_entra_id_data": {
-          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, "unlink_entra_id_data is only available in bConnect 26R1. Set BCONNECT_RELEASE=26R1.");}
+          if (!is26R1) {throw new McpError(ErrorCode.MethodNotFound, releaseRefusal("unlink_entra_id_data", "26R1"));}
           await bconnect.endpoints.unlinkEntraIdData(args!.endpointId as string);
           return { content: [{ type: "text", text: `EntraID data unlinked from endpoint ${args!.endpointId} successfully` }] };
         }

@@ -19,7 +19,7 @@ which once called the wrong path (see the comment in
 
 ## Running
 
-The tests expect the mock at `http://127.0.0.1:13433`, version **0.4.0 or later**
+The tests expect the mock at `http://127.0.0.1:13433`, version **0.5.0 or later** (0.5.0 answers `ManagementServer.version` per release, which the release-detection test needs)
 (for the domain check above), and a **26R1** mock: the
 compliance and software tests call 26R1-only routes (`/v2.0/Rules`, `Bundles`),
 which the mock's default 25R2 mode answers with 404. The mock listens on 3433

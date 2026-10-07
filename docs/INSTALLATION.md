@@ -193,7 +193,7 @@ BCONNECT_API_KEY=your-api-key
 # BCONNECT_USERNAME=your-username
 # BCONNECT_PASSWORD=your-password
 
-BCONNECT_RELEASE=26R1          # optional: 26R1 (default) or 25R2, the release of your bMS
+BCONNECT_RELEASE=26R1          # optional fallback: 26R1 (default) or 25R2; the server reads the release from the bMS
 ```
 
 The password must be **ASCII only**: bConnect rejects `§`, umlauts or `ß` (HTTP 401), so the

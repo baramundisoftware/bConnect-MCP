@@ -4,13 +4,15 @@
  * On bMS 26.1.161, GET /software/v2.0/InstalledWindowsSoftware answered after a
  * constant 30 s, so the startup check timed out and the server exited. 26R1
  * has lighter list routes; 25R2 has only InstalledWindowsSoftware. The probe
- * therefore follows BCONNECT_RELEASE exactly as the tool set does: /Bundles for
- * 26R1 (the default), InstalledWindowsSoftware for any other value.
+ * therefore follows the selected release exactly as the tool set does: /Bundles for
+ * 26R1 (the default), InstalledWindowsSoftware for any other value. Since #159 that
+ * is the detected release when detection ran, even for a client built before it.
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { setupServer } from 'msw/node';
 import { delay, http, HttpResponse } from 'msw';
 import { BConnectClient } from '../bconnect-software-mcp/src/bconnect-client.js';
+import { detectRelease, forgetDetectedRelease } from '../packages/mcp-core/src/release.js';
 
 const BASE = 'http://bms.software-probe.test/bconnect';
 const sent: string[] = [];
@@ -18,6 +20,7 @@ const msw = setupServer(http.all('*', async ({ request }) => {
   const path = new URL(request.url).pathname;
   sent.push(path);
   if (path.endsWith('/InstalledWindowsSoftware')) {await delay('infinite');}
+  if (path.endsWith('/ManagementServer')) {return HttpResponse.json({ name: 'bMS', version: '25.2.0.0' });}
   return HttpResponse.json({ data: [], totalItems: 0, hasNextPage: false });
 }));
 
@@ -27,7 +30,7 @@ beforeAll(() => {
   delete process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK;
   msw.listen({ onUnhandledRequest: 'error' });
 });
-afterEach(() => { sent.length = 0; vi.restoreAllMocks(); });
+afterEach(() => { sent.length = 0; vi.restoreAllMocks(); forgetDetectedRelease(); });
 afterAll(() => {
   msw.close();
   if (savedRelease === undefined) {delete process.env.BCONNECT_RELEASE;} else {process.env.BCONNECT_RELEASE = savedRelease;}
@@ -48,6 +51,16 @@ describe('software startup check (#202)', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     process.env.BCONNECT_RELEASE = release;
     expect(await client().testConnection()).toBe(false); // never answers here: the check times out
+    expect(sent).toEqual(['/bconnect/software/v2.0/InstalledWindowsSoftware']);
+  });
+
+  it('follows the detected release, also for a client built before detection (#159)', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    process.env.BCONNECT_RELEASE = '26R1';
+    const built = client();
+    await detectRelease(built, { info: () => {}, warn: () => {} }, process.env);
+    sent.length = 0;
+    expect(await built.testConnection()).toBe(false);
     expect(sent).toEqual(['/bconnect/software/v2.0/InstalledWindowsSoftware']);
   });
 

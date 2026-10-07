@@ -6,8 +6,9 @@
 # The gateway is NOT a workspace member; it depends on @bconnect/mcp-core and
 # all 13 bconnect-*-mcp servers via file: deps. So the build installs the
 # workspace at the root (single package-lock.json), builds the shared core and
-# every server, then installs + builds the gateway with --install-links so its
-# node_modules is self-contained and the runtime image needs only the gateway.
+# every server, then builds the gateway against the root node_modules, so the
+# core is one module for the gateway and all 13 servers (the bMS release they
+# share is detected there once, #159).
 
 FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS builder
 WORKDIR /app

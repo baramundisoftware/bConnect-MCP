@@ -27,6 +27,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`) are unchanged and still decide what a tool may do.
 
 ### Changed
+- **The servers read the bMS release from the bMS at startup.** Each server, and the gateway with
+  its service credential, asks the bMS for its version once at startup (`26.1.…` is 26R1, `25.2.…`
+  is 25R2) and logs the release it uses, for example `bMS 26.1.161.0 → release 26R1`. That release
+  selects the tools, list filters and error explanations, as `BCONNECT_RELEASE` did before.
+  `BCONNECT_RELEASE` is now the fallback: it applies when the version can't be read (for example an
+  account without read access to server management) or is not a known release, with a warning that
+  says why. A `BCONNECT_RELEASE` that differs from the detected release is overridden, with a warning.
+  `BCONNECT_SKIP_CONNECTIVITY_CHECK=true` skips the detection too. A tool the release doesn't offer
+  now answers `<tool> is only available in bMS 26R1; this server uses 25R2 (…)` instead of telling
+  you to set `BCONNECT_RELEASE`. Not breaking: with a correct `BCONNECT_RELEASE`, nothing changes.
 - **Breaking: while writes are off, the tool list shows only read tools.** With
   `ALLOW_WRITE_OPERATIONS` not set to `true` (the default, and always in the gateway), `tools/list`
   leaves out every tool that creates, changes, deletes or starts something. Every MCP client loads

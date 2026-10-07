@@ -17,12 +17,12 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
-const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, process.env.BCONNECT_RELEASE, tool);
+const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, selectedRelease(), tool);
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { TOOL_RULES } from "./utils/mcp-tool-validation-rules.js";
 import type { paths as JobsPaths } from "./generated/jobs-types.js";
@@ -52,7 +52,7 @@ async function kioskReleasesOfJobDefinition(
     await jobDefinitionExists();
     result.note = "The job definition exists and has no kiosk releases.";
   } catch (checkError) {
-    const release = process.env.BCONNECT_RELEASE ?? "26R1";
+    const release = selectedRelease();
     if (checkError instanceof BConnectApiError && checkError.status === 404) {
       const missing = toolErrorResult(checkError, release);
       missing.content[0].text = `No job definition with this id exists, or it is not visible to the configured user.\n${missing.content[0].text}`;
@@ -132,7 +132,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "withdraw_kiosk_release",
   ]);
 
-  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
+  const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => selectedRelease(), withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
     return {
       tools: [
         // ── Jobs API ──────────────────────────────────────────────────────
@@ -486,7 +486,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   }
 
   // countOnly (#165): count with one 1-row request instead of loading a page.
-  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
@@ -738,7 +738,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     } catch (error: unknown) {
       // API errors, gate refusals and configuration errors are tool results the
       // model can read; only McpErrors stay protocol errors (REQ-XC-001).
-      return toolErrorResult(error, process.env.BCONNECT_RELEASE ?? "26R1");
+      return toolErrorResult(error, selectedRelease());
     }
   }));
 

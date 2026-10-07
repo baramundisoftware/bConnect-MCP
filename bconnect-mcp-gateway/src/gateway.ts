@@ -23,7 +23,7 @@
  *   ALLOW_WRITE_OPERATIONS / ALLOW_SECRET_READ — ignored: kept off (see gates.ts).
  */
 
-import { checkRelease, prettyJsonSetting } from "@bconnect/mcp-core";
+import { BConnectClientBase, checkReleaseSetting, clientConfigFromEnv, detectRelease, loadEnvOnce, prettyJsonSetting } from "@bconnect/mcp-core";
 import { createApp, domains, gatewayAllowedHosts } from "./app.js";
 import { closeGates } from "./gates.js";
 import { createLogger } from "./logger.js";
@@ -41,11 +41,15 @@ if (ignoredGates.length > 0) {
   );
 }
 
-// The servers build their tool list from BCONNECT_RELEASE before any client checks
-// it, so an invalid value would quietly serve the 25R2 list. Stop instead, as a
-// stdio server does; likewise for the result format (BCONNECT_PRETTY_JSON).
+// The servers build their tool list from the release before any client checks
+// BCONNECT_RELEASE, so an invalid value would quietly serve the 25R2 list. Stop
+// instead, as a stdio server does; likewise for the result format (BCONNECT_PRETTY_JSON).
+// The settings below, and the service credential for the release detection, may come
+// from a .env file, as for a stdio server; it never overrides the gates closed above.
+loadEnvOnce();
+
 try {
-  checkRelease(process.env.BCONNECT_RELEASE);
+  checkReleaseSetting();
   prettyJsonSetting(process.env.BCONNECT_PRETTY_JSON);
 } catch (err) {
   log.error((err as Error).message);
@@ -79,6 +83,13 @@ if (!isLoopbackBind && process.env.MCP_ALLOW_NO_AUTH !== "true") {
   );
   process.exit(1);
 }
+
+// The bMS release (#159), detected once with the service credential after the bind check and
+// before any server lists its tools. Never stops the gateway: without it, BCONNECT_RELEASE applies.
+await detectRelease(
+  () => new BConnectClientBase(clientConfigFromEnv(process.env)),
+  { info: (line) => log.info(line), warn: (line) => log.warn(line) },
+);
 
 app.listen(port, bind, () => {
   log.info("listening", { url: `http://${bind}:${port}`, servers: domains.length });

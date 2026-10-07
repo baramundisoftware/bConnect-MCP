@@ -30,7 +30,7 @@
  *   9. Paged list tools (REQ-SRV-027): the generator also writes
  *      `src/query-params.ts`; list tools offer `withQueryProperties(QUERY_PARAMETERS, …)`
  *      and send `pickArguments(args, queryParameters(QUERY_PARAMETERS, …))`. Wrap the
- *      CallTool handler as `withCountOnly(QUERY_PARAMETERS, () => process.env.BCONNECT_RELEASE, …)`
+ *      CallTool handler as `withCountOnly(QUERY_PARAMETERS, selectedRelease, …)`
  *      so they answer `countOnly`. __tests__/count-only.guard.test.ts fails until this is done.
  */
 
@@ -42,7 +42,7 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, serverClients, runServer } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, serverClients, runServer, selectedRelease } from "@bconnect/mcp-core";
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { DomainRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -173,7 +173,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     } catch (error) {
       // API errors, gate refusals and configuration errors are tool results the
       // model can read; only McpErrors stay protocol errors (REQ-XC-001).
-      return toolErrorResult(error, process.env.BCONNECT_RELEASE ?? "26R1");
+      return toolErrorResult(error, selectedRelease());
     }
   });
 
