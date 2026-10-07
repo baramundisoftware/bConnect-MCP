@@ -11,11 +11,21 @@ gateway are configured through environment variables only.
   overridden by the file.
 - **The HTTP gateway:** with Compose, set the variables in `.env.gateway`
   (`.env.gateway.example` lists them); `docker-compose.gateway.yml` passes them on. See
-  [DOCKER.md](DOCKER.md).
+  [DOCKER.md](DOCKER.md). Started with Node.js, it also reads a `.env` file from its working
+  directory, but only after its logger and the gates are set up: `LOG_LEVEL`, `LOG_FORMAT` and the
+  write and secret gates have no effect there.
 
 Each server's README lists exactly the variables that server reads (a test checks it) and says
-where a setting behaves differently for that server. An invalid value stops the server at startup
-with a message naming the setting; in the gateway, every tool call reports it.
+where a setting behaves differently for that server.
+
+**Invalid values.** A server stops at startup, with a message naming the setting, on a missing base
+URL or credential, a non-ASCII password, a CA file it can't read, and an invalid
+`BCONNECT_RELEASE`, `BCONNECT_TIMEOUT_MS`, `BCONNECT_MAX_RETRIES`, `BCONNECT_AUDIT_LEVEL` or
+`BCONNECT_PRETTY_JSON`. The gateway stops at startup on an invalid `BCONNECT_RELEASE` or
+`BCONNECT_PRETTY_JSON` or a `*_FILE` it can't read; for the others, every tool call reports the
+problem. The switches (`ALLOW_*`, `MCP_ALLOW_NO_AUTH`, `BCONNECT_RATE_LIMIT_ENABLED`,
+`BCONNECT_SKIP_CONNECTIVITY_CHECK`, …) take effect only when set to exactly `true`; other numbers
+and levels that aren't checked fall back to their default.
 
 **Contents:** [Connection](#connection) · [TLS and CA certificates](#tls-and-ca-certificates) ·
 [Write and secret gates](#write-and-secret-gates) ·
@@ -121,7 +131,7 @@ If your bMS server uses a certificate from an internal CA:
   `NODE_EXTRA_CA_CERTS`, to the CA certificate. How to export it from the bMS:
   [INSTALLATION.md → TLS / SSL Configuration](INSTALLATION.md#tls--ssl-configuration).
 - In the gateway container, the operating-system store is the image's own, so an internal CA always
-  needs `BCONNECT_CA_CERT_PATH` ([DOCKER.md → Custom CA Certificates](DOCKER.md#custom-ca-certificates)).
+  needs `BCONNECT_CA_CERT_PATH` (or `NODE_EXTRA_CA_CERTS`) ([DOCKER.md → Custom CA Certificates](DOCKER.md#custom-ca-certificates)).
 
 ### `BCONNECT_CA_CERT_PATH`
 
@@ -166,7 +176,8 @@ applications, not installer packages.
 `get_local_admin_accounts` and `patch_local_admin_user_credentials` (cleartext LAPS password). Off,
 those secrets can't land in a model's context or transcript by accident. It is independent of
 `ALLOW_WRITE_OPERATIONS`: the two write tools need both. Every server reads it (the shared client
-checks it), but only defensecontrol has tools that use it.
+checks it), but only defensecontrol has tools that use it. Set it only on a server where retrieving
+these secrets is an intended, authorized use.
 
 ---
 
@@ -237,7 +248,7 @@ recommended otherwise.
 ## Gateway
 
 The gateway serves all 13 servers over HTTP with one bConnect service credential; it reads the
-settings above (except a server's own HTTP mode) and these. The image and the compose file set a
+settings above (except `MCP_TRANSPORT`, `MCP_PORT`, `MCP_BIND` and `MCP_ALLOWED_HOSTS`) and these. The image and the compose file set a
 few defaults of their own; [DOCKER.md](DOCKER.md) says which.
 
 ### `MCP_GATEWAY_PORT`
@@ -258,8 +269,8 @@ Host names the gateway answers to besides `localhost`, `127.0.0.1` and `[::1]`, 
 
 ### `MCP_GATEWAY_RATE_LIMIT_ENABLED`
 
-**Default:** `true`. Per-client-IP rate limiting of the requests the gateway receives; `false` turns
-it off.
+**Default:** `true`. Per-client-IP rate limiting of the requests the gateway receives; only exactly
+`false` turns it off. `/health` is never limited.
 
 ### `MCP_GATEWAY_RATE_LIMIT_MAX`
 

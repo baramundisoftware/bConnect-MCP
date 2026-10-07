@@ -199,8 +199,10 @@ the question.
 
 Everything else (write and secret gates, audit level, rate limits, timeouts and retries, CA file,
 HTTP mode) is optional and described, with its default, in [CONFIGURATION.md](CONFIGURATION.md).
-An invalid value, or a CA file that can't be read, stops the server at startup with a message naming
-the setting. Each server's README lists every variable it reads.
+An invalid `BCONNECT_TIMEOUT_MS`, `BCONNECT_MAX_RETRIES`, `BCONNECT_AUDIT_LEVEL`, `BCONNECT_RELEASE`
+or `BCONNECT_PRETTY_JSON`, or a CA file that can't be read, stops the server at startup with a
+message naming the setting ([which settings are checked](CONFIGURATION.md#configuration)). Each
+server's README lists every variable it reads.
 
 Two to know before you turn them on:
 

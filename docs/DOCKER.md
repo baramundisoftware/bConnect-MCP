@@ -158,6 +158,9 @@ Where the image or the compose file sets something other than the code's default
 
 - [`MCP_GATEWAY_BIND`](CONFIGURATION.md#mcp_gateway_bind): `0.0.0.0` in the image and the compose
   file, so the port mapping decides who can reach the gateway (see [Manual `docker run`](#manual-docker-run)).
+- [`MCP_ALLOW_NO_AUTH`](CONFIGURATION.md#mcp_allow_no_auth): `true` in the compose file, which binds
+  `0.0.0.0` inside the container and publishes the port on loopback only (`MCP_GATEWAY_HOST_BIND`,
+  default `127.0.0.1`); change that only once an authenticating proxy is in front.
 - [`MCP_GATEWAY_ALLOWED_HOSTS`](CONFIGURATION.md#mcp_gateway_allowed_hosts): `mcp-gateway` in the
   compose file (the Docker service name); setting it replaces that, so keep `mcp-gateway` in your list.
 - [`BCONNECT_BASE_URL`](CONFIGURATION.md#bconnect_base_url): `https://bms-server/bconnect` in the

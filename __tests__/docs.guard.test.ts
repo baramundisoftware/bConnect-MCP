@@ -42,6 +42,7 @@ const READ_ELSEWHERE: Record<string, string> = {
   NODE_USE_ENV_PROXY: 'read by Node.js itself; the live tier refuses it',
   SSL_CERT_FILE: 'read by OpenSSL in Node.js; the live tier refuses it',
   SSL_CERT_DIR: 'read by OpenSSL in Node.js; the live tier refuses it',
+  MCP_GATEWAY_HOST_BIND: 'read by Docker Compose (the published port, docker-compose.gateway.yml)',
   BCONNECT_BMS_VERSION: 'a bConnect-Mock setting',
   BCONNECT_MODULE_ROUTING: 'a bConnect-Mock setting',
   BCONNECT_LIVE_MDM: "read from the live tier's env file, not the process environment (live/lib/env.ts)",
