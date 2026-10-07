@@ -10,9 +10,13 @@
  * - In the shipped packages (core, servers, template, gateway) the runtime
  *   dependencies are exactly what the non-test sources import: nothing unused is
  *   shipped, and nothing works only because npm hoisted another package's copy.
+ * - One Express major, 5, declared as it runs (REQ-DEP-002, #69): the root lockfile
+ *   holds one express and one @types/express; the gateway, which isn't a workspace
+ *   member and runs on the root install, has no lockfile of its own, and every
+ *   version it declares is the one the root lockfile installs.
  */
 import { describe, expect, it } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { builtinModules } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -117,5 +121,75 @@ describe('root workspaces', () => {
   it('list exactly the domain servers and the template, plus packages/*', () => {
     const servers = readdirSync(ROOT).filter((d) => /^bconnect-.+-mcp$/.test(d) && d !== 'bconnect-mcp-gateway').sort();
     expect([...workspaces].sort()).toEqual(['bconnect-server-template', 'packages/*', ...servers].sort());
+  });
+});
+
+/** The root lockfile's packages, by install path (`node_modules/express`, `packages/mcp-core/node_modules/express`, …). */
+const LOCK: Record<string, { version?: string }> = JSON.parse(readFileSync(join(ROOT, 'package-lock.json'), 'utf8')).packages;
+/** Every version of `name` the root lockfile installs, at any depth. */
+const lockedVersions = (name: string): string[] =>
+  Object.entries(LOCK).filter(([path]) => path === `node_modules/${name}` || path.endsWith(`/node_modules/${name}`)).map(([, p]) => p.version ?? '?');
+
+/**
+ * Whether `version` satisfies `range` for the forms the manifests use: `^x.y.z`, `~x.y.z` and an
+ * exact `x.y.z` (a caret below 1.0 keeps the minor fixed). Anything else is reported as unsupported.
+ */
+function satisfies(version: string, range: string): boolean | 'unsupported' {
+  const m = /^([~^]?)(\d+)\.(\d+)\.(\d+)$/.exec(range);
+  const v = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
+  if (!m || !v) return 'unsupported';
+  const [want, have] = [m.slice(2).map(Number), v.slice(1).map(Number)];
+  const atLeast = have[0] !== want[0] ? have[0] > want[0] : have[1] !== want[1] ? have[1] > want[1] : have[2] >= want[2];
+  if (m[1] === '') return have.join('.') === want.join('.');
+  if (m[1] === '~') return atLeast && have[0] === want[0] && have[1] === want[1];
+  return atLeast && have[0] === want[0] && (want[0] > 0 || have[1] === want[1]);
+}
+
+describe('one Express major, declared as it runs (REQ-DEP-002, #69)', () => {
+  it('self-check: the range check', () => {
+    expect(satisfies('5.2.1', '^5.2.1')).toBe(true);
+    expect(satisfies('5.3.0', '^5.2.1')).toBe(true);
+    expect(satisfies('4.22.3', '^5.2.1')).toBe(false);
+    expect(satisfies('5.2.0', '^5.2.1')).toBe(false);
+    expect(satisfies('0.3.9', '^0.3.1')).toBe(true);
+    expect(satisfies('0.4.0', '^0.3.1')).toBe(false);
+    expect(satisfies('1.2.9', '~1.2.3')).toBe(true);
+    expect(satisfies('1.3.0', '~1.2.3')).toBe(false);
+    expect(satisfies('1.2.3', '1.2.3')).toBe(true);
+    expect(satisfies('1.2.3', '>=1')).toBe('unsupported');
+  });
+
+  it.each(['express', '@types/express'])('the root lockfile installs one %s, major 5', (name) => {
+    const versions = lockedVersions(name);
+    expect(versions).toHaveLength(1);
+    expect(versions[0]).toMatch(/^5\./);
+  });
+
+  it.each(['packages/mcp-core', 'bconnect-mcp-gateway'])('%s declares express ^5 and @types/express ^5', (dir) => {
+    const manifest = read(dir);
+    expect(manifest.dependencies?.express).toMatch(/^\^5\./);
+    expect(manifest.devDependencies?.['@types/express']).toMatch(/^\^5\./);
+  });
+
+  it('the gateway has no lockfile of its own: it runs on the root install', () => {
+    expect(existsSync(join(ROOT, 'bconnect-mcp-gateway', 'package-lock.json'))).toBe(false);
+  });
+
+  it('every version the gateway declares is the one the root lockfile installs', () => {
+    const manifest = read('bconnect-mcp-gateway');
+    const declared = { ...manifest.dependencies, ...manifest.devDependencies };
+    const wrong = Object.entries(declared).filter(([, range]) => !range.startsWith('file:')).flatMap(([name, range]) => {
+      const installed = LOCK[`node_modules/${name}`]?.version;
+      if (installed === undefined) return [`${name}: not in the root lockfile`];
+      const ok = satisfies(installed, range);
+      return ok === true ? [] : [`${name}: declares ${range}, root installs ${installed}${ok === 'unsupported' ? ' (range form not checked)' : ''}`];
+    });
+    expect(wrong).toEqual([]);
+  });
+
+  it('Dependabot watches only the root lockfile and no longer ignores the Express majors', () => {
+    const config = readFileSync(join(ROOT, '.github', 'dependabot.yml'), 'utf8');
+    expect(config).not.toMatch(/^\s*-\s*"\/bconnect-mcp-gateway"\s*$/m);
+    expect(config).not.toMatch(/dependency-name:\s*"(@types\/)?express"/);
   });
 });
