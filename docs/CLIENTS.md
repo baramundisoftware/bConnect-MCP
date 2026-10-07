@@ -139,6 +139,9 @@ with `/context` on 26.1.9 (`bconnect-endpoints`, 66 tools):
 | Enabled, 3 tools used | ≈ 700 tokens for those 3, plus the 63 names |
 | Disabled | 0 |
 
+Since 26.1.10 the endpoints server lists 10 tools while writes are off and 32 with writes on (it
+had 66), so its share is smaller than measured here.
+
 `/context` shows it for your setup: "MCP tools … (loaded on-demand)" lists the tools in context
 with their size, and the others under "Available". Disabling a server you don't use still pays
 off beyond tokens: no Node.js process and no startup check against the bMS, fewer similar tool

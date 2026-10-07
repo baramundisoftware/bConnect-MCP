@@ -20,7 +20,7 @@ For questions, bugs, or feature requests specific to **bConnect-MCP**, contact:
 For a bug or a change you'd like, open a GitHub issue with the bug report or change proposal
 template. Please include:
 
-- bConnect MCP Suite release tag or commit (e.g. `v26.1.9`)
+- bConnect MCP Suite release tag or commit (e.g. `v26.1.10`)
 - baramundi Management Suite release (`BCONNECT_RELEASE` value)
 - Which server(s) are affected
 - Steps to reproduce
