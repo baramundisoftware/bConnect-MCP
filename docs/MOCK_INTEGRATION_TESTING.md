@@ -19,20 +19,37 @@ which once called the wrong path (see the comment in
 
 ## Running
 
-The tests expect the mock at `http://127.0.0.1:13433`, version **0.5.0 or later** (0.5.0 answers `ManagementServer.version` per release, which the release-detection test needs)
-(for the domain check above), and a **26R1** mock: the
-compliance and software tests call 26R1-only routes (`/v2.0/Rules`, `Bundles`),
-which the mock's default 25R2 mode answers with 404. The mock listens on 3433
+The tests expect the mock at `http://127.0.0.1:13433`, version **0.8.0 or later**
+(0.8.0 answers list items with exactly the specification's fields, such as an
+asset's `assetId` and an endpoint's `type`, which the tests read). Start it with
+its rate limit off: under the limit, `/health` can answer 429 and the tests skip
+as if the mock weren't there. Start it for the bMS release to test, `26r1` or
+`25r2` (`BCONNECT_BMS_VERSION`; the mock's default is 25R2). On 25R2,
+compliance and universaldynamicgroups have no API at all and aren't run, and the
+software tests skip Bundles, which exist from 26R1 on. The mock listens on 3433
 inside the container, so map it to 13433:
 
 ```bash
 docker run -d --name bconnect-mock -p 127.0.0.1:13433:3433 \
-  -e BCONNECT_BMS_VERSION=26r1 \
-  ghcr.io/baramundisoftware/bconnect-mock:latest
+  -e BCONNECT_BMS_VERSION=26r1 -e RATE_LIMIT_ENABLED=false \
+  ghcr.io/baramundisoftware/bconnect-mock:0.8.0
 
-docker ps --filter name=bconnect-mock                # confirm mock is up
-cd bconnect-<domain>-mcp && npm run test:mock        # run one server's tier
+npm run build                                        # once: the tier uses the built core
+node scripts/mock-tier.mjs 26r1                      # every server, as CI runs it
+cd bconnect-<domain>-mcp && npm run test:mock        # or one server's tier
 ```
+
+`scripts/mock-tier.mjs <26r1|25r2>` checks that the mock answers `/health` for
+that release, runs each applicable server's tier, and fails when a server's
+tests fail or skipped because the mock wasn't reachable.
+
+## In CI
+
+The `mock` job in `.github/workflows/ci.yml` runs `scripts/mock-tier.mjs` on
+every pull request and on `main`, once per release (26r1: 13 servers, 25r2: 11),
+against the mock image pinned in the job's `env` (to move to a newer mock, change
+that one line). The job log names the image digest.
+It isn't a required check.
 
 Unset `BCONNECT_BASE_URL`, `BCONNECT_USERNAME` and `BCONNECT_PASSWORD` in your
 shell first. The test client prefers them over the mock URL, so with them set
@@ -136,8 +153,8 @@ universal dynamic groups comes from `fixtures/standard-26r1/`.
 
 ## What this tier deliberately does NOT do
 
-- It doesn't run during `npm test`, in CI or in `npm run ci`. Nothing runs it
-  automatically: run it by hand against a running mock.
+- It doesn't run during `npm test` or `npm run ci`: it needs a running mock. CI
+  runs it in its own job (see "In CI").
 - It doesn't replace the unit tier. Argument-validation, dispatch wiring,
   and tool-name coverage are all unit concerns.
 - It doesn't try to be exhaustive. 2–5 tests per server is enough to catch

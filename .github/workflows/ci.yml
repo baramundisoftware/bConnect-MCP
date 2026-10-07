@@ -8,7 +8,7 @@
 # gate that runs without asking them to trust — or reproduce — someone's
 # local shell.
 #
-# ── Three jobs, and the split is deliberate ────────────────────────────────
+# ── Four jobs, and the split is deliberate ─────────────────────────────────
 # `gate` runs on BOTH Linux and Windows. That is not box-ticking. This repo
 # shipped a defect where a clone on Windows with core.autocrlf=true failed its
 # own test suite, aborted a package's build, and cascaded into failures in two
@@ -26,10 +26,14 @@
 # `coverage` measures every shipped workspace in one run and fails below a
 # floor; it is not one of the required checks (see the job).
 #
+# `mock` runs the mock-integration tier against bConnect-Mock, once per bMS
+# release (25r2, 26r1); not one of the required checks either (see the job).
+#
 # ── Relationship to scripts/ci-local.sh ────────────────────────────────────
-# That script remains the richer local gate (jscpd, semgrep). Neither it nor
-# this workflow runs the mock-integration tier (`npm run test:mock`, needs a
-# live bConnect-Mock); that one is run by hand. This workflow is
+# That script remains the richer local gate (jscpd, semgrep). The
+# mock-integration tier runs in the `mock` job below, against a pinned
+# bConnect-Mock image (REQ-CI-002); by hand it is `node scripts/mock-tier.mjs`
+# (docs/MOCK_INTEGRATION_TESTING.md). This workflow is
 # deliberately NOT a second copy of it: it runs the root `vitest run`, which
 # covers every per-server suite and every suite-wide guard in one pass, so
 # there is no per-server list here to drift out of step with the one there.
@@ -223,6 +227,51 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 14
+
+  mock:
+    name: mock tier (${{ matrix.release }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The mock-integration tier: every server's `npm run test:mock` against
+    # bConnect-Mock, once per bMS release (REQ-CI-002, #311). The unit tier runs
+    # against in-process stubs; this one sends real requests to the mock's routes
+    # and fixtures, which is where a wrong path or field shows. Not one of the
+    # ruleset's required checks (decided separately).
+    #
+    # scripts/mock-tier.mjs checks the mock's /health for the release first and
+    # fails on a failed server AND on a skipped one: a mock test returns early
+    # when the mock isn't reachable, and vitest reports that as passed. The
+    # mock's rate limit is off for the same reason (a 429 on /health reads as
+    # "not reachable"). On 25r2 the runner leaves out the servers whose APIs
+    # are 26R1 only; `__tests__/mock-tier.guard.test.ts` checks this job.
+    strategy:
+      fail-fast: false
+      matrix:
+        release: ["26r1", "25r2"]
+    env:
+      # The one place the mock version is pinned; raising it is this line.
+      BCONNECT_MOCK_IMAGE: ghcr.io/baramundisoftware/bconnect-mock:0.8.0
+      BCONNECT_MOCK_URL: http://127.0.0.1:13433
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22.15"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Start bConnect-Mock
+        run: |
+          docker run -d --name bconnect-mock -p 127.0.0.1:13433:3433 \
+            -e BCONNECT_BMS_VERSION=${{ matrix.release }} -e RATE_LIMIT_ENABLED=false \
+            "$BCONNECT_MOCK_IMAGE"
+          echo "bConnect-Mock: $(docker image inspect "$BCONNECT_MOCK_IMAGE" --format '{{index .RepoDigests 0}}'), bMS ${{ matrix.release }}"
+      - run: npm ci
+      - run: npm run build
+      - name: Run the mock tier
+        run: node scripts/mock-tier.mjs ${{ matrix.release }}
+      - name: Mock log (on failure)
+        if: failure()
+        run: docker logs bconnect-mock 2>&1 | tail -100
 
   strict:
     name: dependency audit (reported, not blocking)
