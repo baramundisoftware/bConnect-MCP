@@ -152,6 +152,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   result text, set the new `BCONNECT_PRETTY_JSON=true` to get the earlier indented format. The
   setting accepts `true` or `false`; any other value stops the server and the gateway.
 
+### Fixed
+- **The gateway answers request errors with JSON-RPC, not an HTML page.** A request body that isn't
+  valid JSON now gets HTTP 400 with the JSON-RPC error `-32700` "Parse error", as each server's own
+  HTTP mode already answered; a body over `MCP_GATEWAY_MAX_BODY` gets 413 and an unsupported charset
+  415, both with `-32603` "Internal error". A path the gateway doesn't serve gets a JSON 404
+  (`{"error":"Not found"}`). The other answers (unknown domain, 405, rate limit, host check) are
+  unchanged. The gateway and the servers share one handler for these errors.
+
 ## [26.1.9] - 2026-10-06
 
 > There is no 26.1.8 release: changes merged under that label (#112) were reverted (#134).
