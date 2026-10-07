@@ -87,7 +87,8 @@ export function releaseRefusal(tool: string, needed: string, env: NodeJS.Process
 export function missingReleaseReason(table: ToolReleaseTable, env: NodeJS.ProcessEnv = process.env): string | undefined {
   const release = selectedRelease(env);
   const rows = Object.values(table);
-  if (rows.some((releases) => releases.includes(release))) {
+  // An empty table names no release a server would need (e.g. one not generated yet): no stop.
+  if (rows.length === 0 || rows.some((releases) => releases.includes(release))) {
     return undefined;
   }
   const needed = [...new Set(rows.flat())].sort();

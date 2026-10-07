@@ -369,7 +369,10 @@ doesn't have their APIs, so on 25R2 they stop at startup, before the connectivit
 `bconnect-compliance-mcp: needs bMS 26R1; this server uses 25R2 (detected: bMS 25.2.…). None of its
 APIs exist in that release.` (the brackets say whether the release was detected or comes from
 `BCONNECT_RELEASE`). Don't configure them for a 25R2 bMS. In the HTTP gateway they don't stop: their
-tool lists are empty on 25R2.
+tool lists are empty on 25R2. If the version can't be read (for example, the account has no read
+access to server management) and `BCONNECT_RELEASE` isn't set, the server assumes 26R1 and its
+probe fails with `cannot reach bConnect API at …` (the route doesn't exist in 25R2); set `BCONNECT_RELEASE=25R2` to get the
+message above.
 
 Each server reads the release from the bMS at startup and logs it, for example
 `bMS 26.1.161.0 → release 26R1`. A `BCONNECT_RELEASE` that differs is overridden:

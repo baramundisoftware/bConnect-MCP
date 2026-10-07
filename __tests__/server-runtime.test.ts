@@ -298,10 +298,19 @@ describe('startServer: a server whose APIs the release lacks says so (REQ-SRV-03
   });
 
   it('names every release that has a tool', async () => {
+    // 26R2 stands in for a future release (#280): the needed releases are listed sorted.
     const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', BCONNECT_RELEASE: '25R2' };
     const t = io(env);
     await expect(startServer(entry(env, { a: ['26R1'], b: ['26R2', '26R1'] }), t.options)).rejects.toThrow('exit 1');
     expect(t.lines.at(-1)).toMatch(/^bconnect-runtime-mcp: needs bMS 26R1 or 26R2; this server uses 25R2/);
+  });
+
+  it('starts with an empty table (nothing to name), as before', async () => {
+    const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', BCONNECT_RELEASE: '25R2' };
+    const t = io(env);
+    await startServer(entry(env, {}), t.options);
+    expect(t.connectStdio).toHaveBeenCalledOnce();
+    expect(t.lines.join('\n')).not.toContain('needs bMS');
   });
 
   it('starts as before on 26R1, probing once', async () => {
