@@ -210,13 +210,14 @@ export the CA.
 
 ## Server Compatibility
 
-The gateway serves all 13 servers on 26R1 (276 tools). On 25R2 the servers have 240 tools, and
-two servers don't work (compliance's 8 tools are among the 240 but fail). Because write tools are
-off in the gateway, its tool lists contain only the read tools: 178 on 26R1, 156 on 25R2.
+The gateway serves all 13 servers on 26R1 (268 tools). On 25R2 the servers have 230 tools, and
+two servers don't work (compliance and universal dynamic groups list no tools there). Each release
+lists only the tools whose API routes it has. Because write tools are off in the gateway, its tool
+lists contain only the read tools: 173 on 26R1, 148 on 25R2.
 
 | Server | Requires 26R1 |
 |--------|--------------|
-| bconnect-compliance-mcp | Yes: its tools are always offered and fail against 25R2, where the compliance API doesn't exist |
+| bconnect-compliance-mcp | Yes: on a 25R2 bMS, where the compliance API doesn't exist, it offers no tools |
 | bconnect-universaldynamicgroups-mcp | Yes: on a 25R2 bMS it offers no tools |
 | All others | No (works with 25R2 and 26R1) |
 

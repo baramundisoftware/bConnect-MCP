@@ -15,7 +15,7 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 >  
 > Keep an eye on AI token usage, especially during testing, as costs can add up quickly depending on the model and workload.
 
-**276 tools** across **13 servers**, compatible with **baramundi Management Suite 2025 R2 and 2026 R1**.
+**276 tools** across **13 servers** (268 on bMS 26R1, 230 on 25R2), compatible with **baramundi Management Suite 2025 R2 and 2026 R1**.
 
 ---
 
@@ -169,8 +169,8 @@ Only the gateway is distributed as a container; the 13 stdio servers run via Nod
 
 | Server | Tools on 26R1 | Tools on 25R2 | What It Does |
 |--------|------|------|--------------|
-| `bconnect-endpoints-mcp` | 66 | 60 | Windows/Linux/Mac/Android/iOS/industrial endpoints, logical groups, maintenance windows |
-| `bconnect-groups-mcp` | 33 | 33 | Endpoints by logical/static/dynamic/universal dynamic group and by AD user |
+| `bconnect-endpoints-mcp` | 61 | 58 | Windows/Linux/Mac/Android/iOS/industrial endpoints, logical groups, maintenance windows |
+| `bconnect-groups-mcp` | 30 | 33 | Endpoints by logical/static/dynamic/universal dynamic group and by AD user |
 | `bconnect-jobs-mcp` | 34 | 34 | Job definitions, instances, folders, kiosk releases |
 | `bconnect-servermanagement-mcp` | 30 | 25 | Management server, microservices, security groups, API keys |
 | `bconnect-assets-mcp` | 26 | 24 | Asset inventory, asset types, stock folders |
@@ -182,9 +182,9 @@ Only the gateway is distributed as a container; the 13 stdio servers run via Nod
 | `bconnect-compliance-mcp` | 8 | — | Compliance violations, CVE vulnerabilities (needs 26R1) |
 | `bconnect-universaldynamicgroups-mcp` | 6 | — | Universal Dynamic Group definitions (needs 26R1) |
 | `bconnect-updatemanagement-mcp` | 3 | 3 | Windows Update management |
-| **Total** | **276** | **232** | |
+| **Total** | **268** | **230** | |
 
-— means the server needs 26R1. (Compliance still lists its 8 tools on a 25R2 bMS, but they fail there.)
+— means the server needs 26R1 and lists no tools on 25R2. Each release lists only the tools whose API routes it has: 26R1 has no industrial-endpoint tools, 25R2 no 26R1-only tools.
 
 Each server reads the release from the bMS at startup and logs it (for example
 `bMS 26.1.161.0 → release 26R1`); `BCONNECT_RELEASE` is only the fallback. Compliance and universal
@@ -193,7 +193,7 @@ dynamic groups don't exist in 2025 R2: don't configure those two servers for a 2
 Install only the servers you need. Most users start with `bconnect-endpoints-mcp`.
 
 The counts include the write tools. While writes are off (the default, and always in the gateway),
-the tool list leaves them out: 178 tools on 26R1, 156 on 25R2. Every MCP client loads the whole
+the tool list leaves them out: 173 tools on 26R1, 148 on 25R2. Every MCP client loads the whole
 tool list into the model's context, so this saves about 77 KB (≈ 22,000 tokens at 3.5 characters
 per token, −29 %) per session on 26R1, and 67 KB (≈ 19,000 tokens, −29 %) on 25R2. A write tool called by name is still refused.
 

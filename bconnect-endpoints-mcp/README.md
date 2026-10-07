@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Managed endpoints — Windows, Linux, macOS, Android, iOS, network, and industrial devices  
-**Tools:** 66 (60 with `BCONNECT_RELEASE=25R2`)
+**Tools:** 61 (58 on bMS 25R2)
 
 ---
 
@@ -64,8 +64,8 @@ been checked against a real bMS yet.
 | `list_mac_endpoints` | List all managed macOS endpoints |
 | `get_linux_endpoint` | Get details of a specific Linux endpoint |
 | `get_mac_endpoint` | Get details of a specific macOS endpoint |
-| `list_industrial_endpoints` | List all industrial endpoints (PLCs, SCADA systems, etc.) |
-| `get_industrial_endpoint` | Get details of a specific industrial endpoint |
+| `list_industrial_endpoints` | **(25R2)** List all industrial endpoints (PLCs, SCADA systems, etc.) |
+| `get_industrial_endpoint` | **(25R2)** Get details of a specific industrial endpoint |
 | `list_endpoints_by_logical_group` | List all endpoints in a logical group |
 | `list_windows_endpoints_by_logical_group` | List Windows endpoints in a logical group |
 | `list_android_endpoints` | List all managed Android endpoints |
@@ -97,15 +97,15 @@ been checked against a real bMS yet.
 | `delete_logical_group` | Delete a logical group by GUID |
 | `get_maintenance_window_for_endpoint` | Get the maintenance window for an endpoint |
 | `create_maintenance_window_for_endpoint` | Create a maintenance window for an endpoint |
-| `update_maintenance_window_for_endpoint` | Update a maintenance window for an endpoint |
+| `update_maintenance_window_for_endpoint` | **(26R1)** Update a maintenance window for an endpoint |
 | `delete_maintenance_window_for_endpoint` | Delete a maintenance window for an endpoint |
 | `get_maintenance_window_for_logical_group` | Get the maintenance window for a logical group |
 | `create_maintenance_window_for_logical_group` | Create a maintenance window for a logical group |
-| `update_maintenance_window_for_logical_group` | Update a maintenance window for a logical group |
+| `update_maintenance_window_for_logical_group` | **(26R1)** Update a maintenance window for a logical group |
 | `delete_maintenance_window_for_logical_group` | Delete a maintenance window for a logical group |
-| `create_industrial_endpoint` | Create a new industrial endpoint (PLC, SCADA) |
-| `update_industrial_endpoint` | Update an existing industrial endpoint |
-| `delete_industrial_endpoint` | Delete an industrial endpoint by GUID |
+| `create_industrial_endpoint` | **(25R2)** Create a new industrial endpoint (PLC, SCADA) |
+| `update_industrial_endpoint` | **(25R2)** Update an existing industrial endpoint |
+| `delete_industrial_endpoint` | **(25R2)** Delete an industrial endpoint by GUID |
 | `list_network_endpoints` | List all network endpoints (switches, routers, printers) |
 | `get_network_endpoint` | Get details of a specific network endpoint |
 | `create_network_endpoint` | Create a new network endpoint |
@@ -119,7 +119,8 @@ been checked against a real bMS yet.
 | `link_entra_id_data` | **(26R1)** Link an EntraID device to a baramundi endpoint |
 | `unlink_entra_id_data` | **(26R1)** Unlink EntraID data from an endpoint |
 
-> Tools marked **(26R1)** require `BCONNECT_RELEASE=26R1` and baramundi Management Suite 2026 R1 or later.
+> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1.
+> Tools marked **(25R2)** exist only in bMS 2025 R2: 2026 R1 removed the industrial-endpoint API. The maintenance-window updates send `PATCH`, which only 26R1 offers (25R2 uses `PUT`, #307).
 
 ---
 
@@ -137,7 +138,7 @@ Run inside the HTTP gateway, the server's own startup code doesn't run: `MCP_TRA
 | `BCONNECT_CA_CERT_PATH` | No | — | PEM file with the CA certificate that signed the bMS server certificate (internal CA). When set, only this CA is trusted; when unset, Node's default and (Node 22.15 or later) the operating system's trusted CAs are used. The server fails if the file can't be read or is empty. |
 | `NODE_TLS_REJECT_UNAUTHORIZED` | No | verify | Leave unset. `0` turns certificate verification off for every TLS connection of the process, so anyone in the network path can pose as the bMS and receive the credentials. Trust the CA instead: Node ≥ 22.15 (OS store) or `BCONNECT_CA_CERT_PATH`. |
 | `BCONNECT_ALLOW_INSECURE_HTTP` | No | off | `true` allows an `http://` base URL to a host other than this machine, which sends the bConnect credentials unencrypted; the server warns once at startup. Test setups only. `http://` to `localhost`, `127.x.x.x` or `[::1]` (the bundled mock) needs no opt-in. |
-| `BCONNECT_RELEASE` | No | `26R1` | Fallback for the release of your bMS: `26R1` or `25R2`, spelt exactly so. The server reads the release from the bMS at startup and uses this value only when it can't; a different value is overridden, with a warning. The release selects the tools and list filters for that release and the API documentation used to explain an error. With `25R2`, the tools marked **(26R1)** are hidden. |
+| `BCONNECT_RELEASE` | No | `26R1` | Fallback for the release of your bMS: `26R1` or `25R2`, spelt exactly so. The server reads the release from the bMS at startup and uses this value only when it can't; a different value is overridden, with a warning. The release selects the tools and list filters for that release and the API documentation used to explain an error. On 25R2, the tools marked **(26R1)** are not listed. |
 | `ALLOW_WRITE_OPERATIONS` | No | off | `true` enables the tools that create, change or delete data, or start actions. Off, they are left out of the tool list and refused when called. |
 | `ALLOW_SECRET_READ` | No | off | `true` lets the shared client call the BitLocker-secret and LAPS operations. This server has no tool that calls them, so the setting has no effect here. |
 | `BCONNECT_AUDIT_LEVEL` | No | `none` | `none`, `security`, `write` or `all`, in any case. Levels are cumulative: `security` records security-relevant calls (credentials, API keys, rights, security groups and profiles, enrollments, restarts; see [docs/AUDIT.md](../docs/AUDIT.md)) and refused requests, `write` adds every write, `all` records every request. Any other value stops the server. Entries go to stderr. |

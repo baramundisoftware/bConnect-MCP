@@ -372,8 +372,9 @@ Each server reads the release from the bMS at startup and logs it, for example
 `bMS 25.2.0.0 → release 25R2; BCONNECT_RELEASE=26R1 is ignored`. When the version can't be read —
 most often because the account has no read access to server management — the server starts with
 `BCONNECT_RELEASE` (default `26R1`) and warns: `could not detect the bMS release (…); using …`.
-Then set `BCONNECT_RELEASE` to the release of your bMS, or give the account that read access. On a
-25R2 bMS, tools that exist only in 26R1 answer
+Then set `BCONNECT_RELEASE` to the release of your bMS, or give the account that read access. Each
+release lists only the tools whose API routes it has (26R1 has no industrial-endpoint tools); a tool
+called by name on a release that lacks it answers
 `<tool> is only available in bMS <release>; this server uses <release> (…).`
 
 ---
@@ -548,4 +549,4 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 
 ---
 
-*bConnect MCP Suite — 13 servers; 276 tools on bMS 26R1, 240 on 25R2*
+*bConnect MCP Suite — 13 servers; 268 tools on bMS 26R1, 230 on 25R2*

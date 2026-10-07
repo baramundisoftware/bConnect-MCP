@@ -577,4 +577,4 @@ succeed where the MCP servers fail. On Windows with an internal CA, add `--ssl-n
 
 ---
 
-*bConnect MCP Suite — 13 servers; 276 tools on bMS 26R1, 240 on 25R2*
+*bConnect MCP Suite — 13 servers; 268 tools on bMS 26R1, 230 on 25R2*

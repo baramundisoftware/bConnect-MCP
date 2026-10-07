@@ -27,6 +27,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`) are unchanged and still decide what a tool may do.
 
 ### Changed
+- **Each bMS release lists only the tools whose API routes it has.** Which tools a release offers
+  is now derived from its API specification instead of hand-written checks: a tool is listed when
+  every route it calls exists in the release. This hides tools that could only fail: the 8
+  compliance tools and the 2 maintenance-window update tools on 25R2 (25R2 updates with `PUT`, the
+  tools send `PATCH`; #307), and the 8 industrial-endpoint tools on 26R1, whose API was removed.
+  26R1 lists 268 tools (173 with writes off), 25R2 230 (148). A tool called by name on a release
+  that lacks it answers `<tool> is only available in bMS <release>; this server uses <release> (…)`.
+  Not breaking: the hidden tools didn't work on those releases.
 - **The servers read the bMS release from the bMS at startup.** Each server, and the gateway with
   its service credential, asks the bMS for its version once at startup (`26.1.…` is 26R1, `25.2.…`
   is 25R2) and logs the release it uses, for example `bMS 26.1.161.0 → release 26R1`. That release

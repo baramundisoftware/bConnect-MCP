@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Compliance rules, CVE vulnerabilities, and mobile device rule violations (requires baramundi 2026 R1)  
-**Tools:** 8 — the compliance API needs bMS 2026 R1; against a 25R2 bMS the tools are listed but fail
+**Tools:** 8 (none on bMS 25R2) — the compliance API needs bMS 2026 R1
 
 > **Note:** This server requires baramundi Management Suite 2026 R1 or later. The compliance API does not exist in 25R2.
 
@@ -51,14 +51,14 @@ All tools are read-only.
 
 | Tool | Description |
 |------|-------------|
-| `list_detected_rule_violations` | List all compliance rule violations across endpoints |
-| `list_detected_rule_violations_for_endpoint` | List compliance violations for a specific endpoint |
-| `list_detected_vulnerabilities` | List all detected CVE vulnerabilities across endpoints |
-| `list_detected_vulnerabilities_for_endpoint` | List CVE vulnerabilities for a specific endpoint |
-| `list_mobile_device_rules` | List all mobile device compliance rules |
-| `get_mobile_device_rule` | Get details of a specific mobile device rule |
-| `list_vulnerabilities` | List all CVEs in the baramundi vulnerability library |
-| `get_vulnerability` | Get details of a specific CVE by GUID |
+| `list_detected_rule_violations` | **(26R1)** List all compliance rule violations across endpoints |
+| `list_detected_rule_violations_for_endpoint` | **(26R1)** List compliance violations for a specific endpoint |
+| `list_detected_vulnerabilities` | **(26R1)** List all detected CVE vulnerabilities across endpoints |
+| `list_detected_vulnerabilities_for_endpoint` | **(26R1)** List CVE vulnerabilities for a specific endpoint |
+| `list_mobile_device_rules` | **(26R1)** List all mobile device compliance rules |
+| `get_mobile_device_rule` | **(26R1)** Get details of a specific mobile device rule |
+| `list_vulnerabilities` | **(26R1)** List all CVEs in the baramundi vulnerability library |
+| `get_vulnerability` | **(26R1)** Get details of a specific CVE by GUID |
 
 ---
 
@@ -110,6 +110,5 @@ release from the bMS at startup (`version` of the management server; the account
 to server management) and logs it; `BCONNECT_RELEASE` is the fallback when it can't (default `26R1`). See [CHANGELOG.md](../CHANGELOG.md) for what each
 release changed.
 
-This server needs **bMS 2026 R1**: the compliance API doesn't exist in 2025 R2. It always offers
-its tools, whatever release it detects; against a 25R2 bMS they fail, and the startup check
-stops the server. Don't configure it for a 25R2 bMS.
+This server needs **bMS 2026 R1**: the compliance API doesn't exist in 2025 R2. On a 25R2 bMS it
+lists no tools, and the startup check stops the server. Don't configure it for a 25R2 bMS.

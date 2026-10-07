@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Group-scoped endpoint queries — list endpoints by logical, static, dynamic, and universal dynamic groups, and by AD user  
-**Tools:** 33
+**Tools:** 30 (33 on bMS 25R2)
 
 ---
 
@@ -56,7 +56,7 @@ All tools are read-only.
 | `list_mac_endpoints_by_logical_group` | List macOS endpoints in a logical group |
 | `list_network_endpoints_by_logical_group` | List network endpoints in a logical group |
 | `list_windows_endpoints_by_logical_group` | List Windows endpoints in a logical group |
-| `list_industrial_endpoints_by_logical_group` | List industrial endpoints in a logical group |
+| `list_industrial_endpoints_by_logical_group` | **(25R2)** List industrial endpoints in a logical group |
 | `list_logical_groups_by_logical_group` | List child logical groups of a parent logical group |
 | `list_endpoints_by_static_group` | List all endpoints in a static group |
 | `list_android_endpoints_by_static_group` | List Android endpoints in a static group |
@@ -65,7 +65,7 @@ All tools are read-only.
 | `list_mac_endpoints_by_static_group` | List macOS endpoints in a static group |
 | `list_network_endpoints_by_static_group` | List network endpoints in a static group |
 | `list_windows_endpoints_by_static_group` | List Windows endpoints in a static group |
-| `list_industrial_endpoints_by_static_group` | List industrial endpoints in a static group |
+| `list_industrial_endpoints_by_static_group` | **(25R2)** List industrial endpoints in a static group |
 | `list_endpoints_by_dynamic_group` | List all endpoints in a dynamic group |
 | `list_windows_endpoints_by_dynamic_group` | List Windows endpoints in a dynamic group |
 | `list_endpoints_by_universal_dynamic_group` | List all endpoints in a universal dynamic group |
@@ -75,7 +75,7 @@ All tools are read-only.
 | `list_mac_endpoints_by_universal_dynamic_group` | List macOS endpoints in a universal dynamic group |
 | `list_network_endpoints_by_universal_dynamic_group` | List network endpoints in a universal dynamic group |
 | `list_windows_endpoints_by_universal_dynamic_group` | List Windows endpoints in a universal dynamic group |
-| `list_industrial_endpoints_by_universal_dynamic_group` | List industrial endpoints in a universal dynamic group |
+| `list_industrial_endpoints_by_universal_dynamic_group` | **(25R2)** List industrial endpoints in a universal dynamic group |
 | `list_endpoints_by_ad_user` | List all endpoints associated with an AD user |
 | `list_android_endpoints_by_ad_user` | List Android endpoints associated with an AD user |
 | `list_ios_endpoints_by_ad_user` | List iOS endpoints associated with an AD user |
@@ -84,6 +84,8 @@ All tools are read-only.
 | `list_windows_endpoints_by_ad_user` | List Windows endpoints associated with an AD user |
 
 ---
+
+> Tools marked **(25R2)** exist only in bMS 2025 R2: 2026 R1 removed the industrial-endpoint API, so the server lists them only on 25R2.
 
 ## Environment Variables
 
