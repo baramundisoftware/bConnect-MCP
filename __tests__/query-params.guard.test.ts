@@ -6,7 +6,8 @@
  * server's `src/operations.ts`, and committed (the specs aren't shipped). This
  * guard fails when a table is missing, edited by hand, or out of date, and checks
  * on its own that every table lists, per release, exactly the query parameters
- * of the tool's GET operation, with the spec's type and enum values.
+ * of the tool's GET operation, with the spec's type and enum values, plus the
+ * client-side `countOnly` on every paged operation whose answer has totalItems (#165).
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -29,6 +30,12 @@ const deref = (spec: Schema, s: Schema | undefined): Schema => {
   if (Array.isArray(x.allOf) && x.allOf.length === 1) {x = x.allOf[0];}
   while (x && x.$ref) {x = x.$ref.replace(/^#\//, '').split('/').reduce((n: Schema, k: string) => n[k], spec);}
   return x;
+};
+
+/** The operation's 200 answer is an object with a totalItems property. */
+const hasTotalItems = (spec: Schema, op: Schema): boolean => {
+  const content: Schema = op.responses?.['200']?.content ?? {};
+  return Object.values<Schema>(content).some((c) => 'totalItems' in (deref(spec, c.schema).properties ?? {}));
 };
 
 describe.each(SERVERS)('%s', (server) => {
@@ -54,13 +61,17 @@ describe.each(SERVERS)('%s', (server) => {
             if (p.in === 'query' && !params.has(p.name)) {params.set(p.name, deref(o.spec, p.schema));}
           }
         }
+        // A paged operation whose answer carries totalItems also offers the client-side countOnly (#165).
+        const countable = params.has('Page') && params.has('PageSize') && gets.some((o) => hasTotalItems(o.spec, o.spec.paths[o.path].get));
         const listed = table[tool];
         if (params.size === 0) {
           if (listed) {wrong.push(`${release} ${tool}: listed, but its operation has no query parameters`);}
           continue;
         }
         if (!listed) { wrong.push(`${release} ${tool}: missing`); continue; }
-        if (Object.keys(listed).join() !== [...params.keys()].join()) {wrong.push(`${release} ${tool}: ${Object.keys(listed).join()} ≠ ${[...params.keys()].join()}`);}
+        const expected = [...params.keys(), ...(countable ? ['countOnly'] : [])];
+        if (Object.keys(listed).join() !== expected.join()) {wrong.push(`${release} ${tool}: ${Object.keys(listed).join()} ≠ ${expected.join()}`);}
+        if (countable && listed.countOnly?.type !== 'boolean') {wrong.push(`${release} ${tool} countOnly: not a boolean`);}
         for (const [name, schema] of params) {
           const prop = listed[name];
           if (!prop) {continue;}

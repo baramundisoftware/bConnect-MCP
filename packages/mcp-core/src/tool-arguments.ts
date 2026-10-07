@@ -134,14 +134,25 @@ export type QueryParameterTable = Readonly<Record<string, Readonly<Record<string
 /** 25R2 only when set so; unset or anything else is 26R1, as the servers treat it. */
 const releaseKey = (release: string | undefined): "25R2" | "26R1" => (release === "25R2" ? "25R2" : "26R1");
 
+/** The table entry for the selected release, else the other release's; undefined when neither lists the tool. */
+function findQueryEntry(table: QueryParameterTable, release: string | undefined, tool: string): Readonly<Record<string, object>> | undefined {
+  const key = releaseKey(release);
+  return table[key]?.[tool] ?? table[key === "25R2" ? "26R1" : "25R2"]?.[tool];
+}
+
+/** Whether `tool` offers the table entry `name` in `release` (false for a tool the table doesn't list). */
+export function offersQueryProperty(table: QueryParameterTable, release: string | undefined, tool: string, name: string): boolean {
+  const entry = findQueryEntry(table, release, tool);
+  return entry !== undefined && Object.hasOwn(entry, name);
+}
+
 /**
  * The table entry for the selected release. A tool whose route only the other release has (its
  * tool is listed on both) keeps that release's parameters, as before the tables. An error when no
  * release lists the tool (the table wasn't regenerated).
  */
 function queryEntry(table: QueryParameterTable, release: string | undefined, tool: string): Readonly<Record<string, object>> {
-  const key = releaseKey(release);
-  const entry = table[key]?.[tool] ?? table[key === "25R2" ? "26R1" : "25R2"]?.[tool];
+  const entry = findQueryEntry(table, release, tool);
   if (!entry) {
     throw new Error(`No query parameters for ${tool}; run node scripts/generate-query-parameters.mjs`);
   }
@@ -153,9 +164,15 @@ export function queryProperties(table: QueryParameterTable, release: string | un
   return { ...queryEntry(table, release, tool) };
 }
 
-/** The names of the query parameters `tool` sends in `release`, for `pickArguments`. */
+/**
+ * Table entries a tool declares but handles itself and never sends to bConnect
+ * (#165): `countOnly` is served by `withCountOnly`.
+ */
+export const CLIENT_OPTIONS: ReadonlySet<string> = new Set(["countOnly"]);
+
+/** The names of the query parameters `tool` sends in `release`, for `pickArguments`; client-side options left out. */
 export function queryParameters(table: QueryParameterTable, release: string | undefined, tool: string): string[] {
-  return Object.keys(queryEntry(table, release, tool));
+  return Object.keys(queryEntry(table, release, tool)).filter((name) => !CLIENT_OPTIONS.has(name));
 }
 
 const isSchemaTool = (tool: object): tool is { name: string; inputSchema: Record<string, unknown> } =>

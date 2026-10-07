@@ -90,3 +90,27 @@ describe('withQueryProperties (#179)', () => {
     expect(queryParameters(only25, '26R1', 'list_old')).toEqual(['Page']);
   });
 });
+
+describe('client-side options in the query table (#165)', () => {
+  const table = {
+    '25R2': { list_things: { Page: { type: 'integer', description: 'p' } } },
+    '26R1': { list_things: { Page: { type: 'integer', description: 'p' }, countOnly: { type: 'boolean', description: 'c' } } },
+  };
+  const list = async () => ({ tools: [{ name: 'list_things', inputSchema: { type: 'object', properties: {} } }] });
+
+  it('a tool declares countOnly but never sends it', async () => {
+    const r = await withQueryProperties(table, () => '26R1', list)();
+    expect(Object.keys((r.tools[0].inputSchema as { properties: object }).properties)).toEqual(['Page', 'countOnly']);
+    expect(queryParameters(table, '26R1', 'list_things')).toEqual(['Page']);
+  });
+
+  it('countOnly is declared only in the release whose entry has it', async () => {
+    const r = await withQueryProperties(table, () => '25R2', list)();
+    expect(Object.keys((r.tools[0].inputSchema as { properties: object }).properties)).toEqual(['Page']);
+  });
+
+  it('a call with countOnly on a tool that does not declare it is refused (REQ-SRV-022)', async () => {
+    const catalog = declaredArgumentsOnly(withQueryProperties(table, () => '25R2', list));
+    await expect(catalog.refuseUndeclared('list_things', { countOnly: true })).rejects.toThrow('Unknown argument for list_things: countOnly.');
+  });
+});

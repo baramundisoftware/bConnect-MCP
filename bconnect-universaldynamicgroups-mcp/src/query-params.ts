@@ -4,9 +4,10 @@
  * change; __tests__/query-params.guard.test.ts fails when this table drifts.
  *
  * Per bMS release and tool: the query parameters of the tool's GET operation,
- * as the properties the tool offers (#179). Tools send exactly these.
+ * as the properties the tool offers (#179). Tools send exactly these, except
+ * the client-side countOnly (#165), which the core handles.
  */
-import { type QueryParameterTable, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { type QueryParameterTable, COUNT_ONLY_PROPERTY, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 
 export const QUERY_PARAMETERS: QueryParameterTable = {
   "25R2": {
@@ -16,6 +17,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_udg_folders_by_folder: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
@@ -24,6 +26,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubfolders: {"type":"boolean","description":"If true, items in sub-folders are also returned (default false)."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
   "26R1": {
@@ -33,6 +36,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, Comment."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_universal_dynamic_groups_by_folder: {
       Name: {"type":"string","description":"Filters results by exactly matching name."},
@@ -41,6 +45,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubfolders: {"type":"boolean","description":"If true, items in sub-folders are also returned (default false)."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_udg_folders: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
@@ -48,6 +53,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_udg_folders_by_folder: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
@@ -56,6 +62,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubFolders: {"type":"boolean","description":"If true, items in sub-folders are also returned (default false)."},
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
 };

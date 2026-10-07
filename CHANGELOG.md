@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **List tools can answer "how many?" without loading a page.** Every list tool that pages its results
+  accepts `countOnly: true`: the tool asks bConnect for a single row with the same filters and returns
+  only `totalItems` and the filters it applied. Against the bConnect mock, counting Windows endpoints
+  takes 17 bytes instead of 8.8 KB for a page of 10. If the answer has no numeric total, the result says
+  the count is unavailable rather than guessing. `countOnly` is handled by the server and never sent to
+  bConnect. Which tools offer it is derived from the API specification (123 tools on bMS 26R1, 111 on
+  25R2); it adds about 9.8 KB to the tool list on 26R1. Not breaking: without `countOnly` every tool
+  behaves as before.
 - **Every tool tells clients whether it only reads or can destroy data.** Each tool in `tools/list`
   now carries MCP annotations: a readable `title` ("List Windows endpoints by logical group"),
   `readOnlyHint`, and on tools that change something `destructiveHint`. A tool that only reads is

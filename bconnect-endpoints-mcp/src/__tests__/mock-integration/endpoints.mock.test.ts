@@ -4,13 +4,32 @@
  */
 
 import { describe, it, beforeAll, expect } from 'vitest';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { BConnectClient } from '../../bconnect-client.js';
+import { createServer } from '../../index.js';
 import {
   checkMockAvailable,
   createClient,
   MOCK_BASE_URL,
   NONEXISTENT_GUID,
 } from './helpers.js';
+
+/** Calls a tool of this server against the mock: text and isError of the result. */
+async function callTool(name: string, args: Record<string, unknown>): Promise<{ text: string; isError: boolean }> {
+  const { server } = createServer({
+    baseUrl: process.env.BCONNECT_BASE_URL || MOCK_BASE_URL,
+    username: process.env.BCONNECT_USERNAME || 'integration-test',
+    password: process.env.BCONNECT_PASSWORD || 'integration-test',
+  });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await server.connect(serverTransport);
+  const mcp = new Client({ name: 'mock-test', version: '1.0.0' }, { capabilities: {} });
+  await mcp.connect(clientTransport);
+  const result = await mcp.callTool({ name, arguments: args });
+  await mcp.close();
+  return { text: (result.content as Array<{ text: string }>).map((c) => c.text).join('\n'), isError: result.isError === true };
+}
 
 let available = false;
 let client: BConnectClient;
@@ -33,6 +52,19 @@ describe('Endpoints — list Endpoints', () => {
     expect(result.data!.length).toBeGreaterThanOrEqual(1);
     expect(result.data![0]).toHaveProperty('id');
     expect(result.data![0]).toHaveProperty('endpointType');
+  });
+});
+
+describe('Endpoints — countOnly (#165)', () => {
+  it('list_windows_endpoints counts what a normal call reports as totalItems', async () => {
+    if (!available) {return;}
+    const normal = await callTool('list_windows_endpoints', {});
+    const count = await callTool('list_windows_endpoints', { countOnly: true });
+    expect(normal.isError, normal.text).toBe(false);
+    expect(count.isError, count.text).toBe(false);
+    const { totalItems } = JSON.parse(normal.text) as { totalItems: number };
+    expect(typeof totalItems).toBe('number');
+    expect(JSON.parse(count.text)).toEqual({ totalItems });
   });
 });
 

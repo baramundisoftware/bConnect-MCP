@@ -4,9 +4,10 @@
  * change; __tests__/query-params.guard.test.ts fails when this table drifts.
  *
  * Per bMS release and tool: the query parameters of the tool's GET operation,
- * as the properties the tool offers (#179). Tools send exactly these.
+ * as the properties the tool offers (#179). Tools send exactly these, except
+ * the client-side countOnly (#165), which the core handles.
  */
-import { type QueryParameterTable, INCLUDE_SUBFOLDERS_PROPERTY, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
+import { type QueryParameterTable, COUNT_ONLY_PROPERTY, INCLUDE_SUBFOLDERS_PROPERTY, PAGE_PROPERTY, PAGE_SIZE_PROPERTY } from "@bconnect/mcp-core";
 
 export const QUERY_PARAMETERS: QueryParameterTable = {
   "25R2": {
@@ -15,18 +16,21 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_defender_threats: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Severity or EndpointName (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_defender_threats_by_endpoint: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Severity or EndpointName (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_defender_threats_by_logical_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Severity or EndpointName (e.g. Name asc)."},
@@ -34,12 +38,14 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_defender_windows_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointId or EndpointName (e.g. EndpointName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
   "26R1": {
@@ -48,18 +54,21 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_defender_threats: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Severity or EndpointName (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_defender_threats_by_endpoint: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Severity or EndpointName (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_defender_threats_by_logical_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Severity or EndpointName (e.g. Name asc)."},
@@ -67,12 +76,14 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
     list_defender_windows_endpoints: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointId or EndpointName (e.g. EndpointName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
     },
   },
 };
