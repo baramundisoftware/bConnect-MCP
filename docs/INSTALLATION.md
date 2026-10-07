@@ -137,22 +137,12 @@ curl http://localhost:3001/health
 # → {"status":"ok","servers":[...],"count":13}
 ```
 
-#### Gateway environment variables
+#### Gateway settings
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `BCONNECT_BASE_URL` + `BCONNECT_API_KEY` (or `BCONNECT_USERNAME`+`BCONNECT_PASSWORD`) | — | The single bConnect service credential |
-| `MCP_GATEWAY_PORT` | `3001` | Listen port |
-| `MCP_GATEWAY_ALLOWED_HOSTS` | — | Host names the gateway answers to besides `localhost`, `127.0.0.1`, `[::1]` (comma-separated); others get 403. List the name your proxy passes on as `Host` |
-| `MCP_GATEWAY_BIND` | `127.0.0.1` | Bind address (loopback-only unless behind a proxy) |
-| `MCP_ALLOW_NO_AUTH` | `false` | Allow a non-loopback bind; asserts an authenticating proxy is in front |
-| `MCP_GATEWAY_RATE_LIMIT_ENABLED` | `true` | Per-client-IP inbound rate limiting; set `false` to disable |
-| `MCP_GATEWAY_RATE_LIMIT_MAX` | `300` | Max requests per window, per client IP |
-| `MCP_GATEWAY_RATE_LIMIT_WINDOW_MS` | `60000` | Rate-limit window in ms |
-| `MCP_GATEWAY_MAX_BODY` | `1mb` | Max accepted request body size |
-
-The servers the gateway hosts run in its process and read the same environment: the shared
-settings (release, CA file, timeouts, audit level, rate limits) apply to all of them; see
+The gateway needs `BCONNECT_BASE_URL` and one bConnect service credential; the servers it hosts run
+in its process and read the same environment, so the shared settings (release, CA file, timeouts,
+audit level, rate limits) apply to all of them. Every setting, the gateway's own included, is in
+[CONFIGURATION.md](CONFIGURATION.md#gateway); what the image and the compose file set is in
 [DOCKER.md → Environment Variables](DOCKER.md#environment-variables).
 
 > **Write tools and secret reads are off in the gateway.** The gateway has no authentication of
@@ -196,9 +186,8 @@ BCONNECT_API_KEY=your-api-key
 BCONNECT_RELEASE=26R1          # optional fallback: 26R1 (default) or 25R2; the server reads the release from the bMS
 ```
 
-The password must be **ASCII only**: bConnect rejects `§`, umlauts or `ß` (HTTP 401), so the
-servers refuse such a password before signing in, and no attempt counts toward the account
-lockout. A username may contain Latin-1 characters such as `ö`.
+The password must be **ASCII only** ([why](CONFIGURATION.md#bconnect_password)); an API key avoids
+the question.
 
 > **These credentials are stored in plaintext** (in `.env` or the Claude Desktop
 > config). Restrict the file to the running user (`chmod 600 .env`, or an NTFS ACL on
@@ -208,57 +197,19 @@ lockout. A username may contain Latin-1 characters such as `ö`.
 
 ### Optional Variables
 
-```env
-BCONNECT_AUDIT_LEVEL=none            # Audit logging: none | security | write | all
-ALLOW_WRITE_OPERATIONS=false         # Enable write/destructive tools (default: off; off, they're not in the tool list)
-ALLOW_SECRET_READ=false              # Enable secret-returning reads (default: off) — see below
+Everything else (write and secret gates, audit level, rate limits, timeouts and retries, CA file,
+HTTP mode) is optional and described, with its default, in [CONFIGURATION.md](CONFIGURATION.md).
+An invalid value, or a CA file that can't be read, stops the server at startup with a message naming
+the setting. Each server's README lists every variable it reads.
 
-# Outbound rate limiting (server → bMS). Limits the requests a server sends, across
-# all its tool calls, and fails a request over the limit. Off by default.
-BCONNECT_RATE_LIMIT_ENABLED=false    # Enable the client-side rate limiter
-BCONNECT_RATE_LIMIT_MAX_REQUESTS=100 # Max requests per window (default: 100)
-BCONNECT_RATE_LIMIT_WINDOW_MS=60000  # Window size in ms (default: 60000 = 1 min)
+Two to know before you turn them on:
 
-BCONNECT_TIMEOUT_MS=30000            # Wait per request, 1000–600000 ms (default: 30000)
-BCONNECT_MAX_RETRIES=0               # Retries for reads after a network error, timeout or 502/503/504 (0–5); writes are never retried
-BCONNECT_CA_CERT_PATH=               # PEM file with the bMS CA (see TLS / SSL Configuration)
-BCONNECT_ALLOW_INSECURE_HTTP=false   # http:// is refused except for localhost; true allows it (credentials unencrypted)
-BCONNECT_SKIP_CONNECTIVITY_CHECK=false  # true skips the startup check against bConnect
-```
+- [`ALLOW_WRITE_OPERATIONS`](CONFIGURATION.md#allow_write_operations) lets the assistant create,
+  change, start, assign and delete bMS objects.
+- [`ALLOW_SECRET_READ`](CONFIGURATION.md#allow_secret_read) lets the defensecontrol tools return
+  BitLocker keys and LAPS passwords.
 
-An invalid value for `BCONNECT_TIMEOUT_MS`, `BCONNECT_MAX_RETRIES` or `BCONNECT_AUDIT_LEVEL`, or
-a CA file that can't be read, stops the server at startup with a message naming the setting.
-Each server's README lists every variable it reads (checked by a test), including the HTTP
-transport settings `MCP_TRANSPORT`, `MCP_PORT` and `MCP_BIND`.
-
-> **`ALLOW_SECRET_READ`** gates the DefenseControl tools whose response contains
-> **live credentials**: `get_bitlocker_secrets` and `update_bitlocker_pin` (BitLocker
-> recovery keys + startup PIN), `get_local_admin_accounts` and
-> `patch_local_admin_user_credentials` (cleartext LAPS password). It is **off by
-> default**, so those secrets can't land in an LLM context or transcript
-> unintentionally. It is **independent of `ALLOW_WRITE_OPERATIONS`**: the two write
-> tools need both gates. Set it to `true` only on a server where retrieving these
-> secrets is an intended, authorized use, then restart the server; a running
-> server doesn't pick up the change, and the assistant can't set it.
-
-> **What write tools can (and can't) do.** With `ALLOW_WRITE_OPERATIONS=true`, the
-> assistant can **create, modify, start, assign and delete many bMS objects** — e.g.
-> create an endpoint, asset, logical group or folder; create and start a job instance;
-> assign a job to a group; build a software bundle from existing applications; create a
-> security group/profile. What it **cannot** do is author the underlying content that
-> bConnect itself does not expose: notably **job definitions** — the step and
-> installation logic of a job is read-only over bConnect, so the assistant can create
-> *instances* of an existing definition and assign them but cannot define a new job's
-> steps; likewise it bundles **already-imported** applications rather than authoring the
-> installer packages themselves. Every call is further governed by that credential's
-> bMS RBAC, so the effective write surface is whatever bConnect exposes ∩ what your
-> service account is permitted to do.
-
-> **Two layers of rate limiting.** The `BCONNECT_RATE_LIMIT_*` vars above throttle
-> a server's **outbound** calls to bMS, across all its tool calls (in the gateway: per
-> domain). They do **not** limit
-> **inbound** requests to the HTTP gateway — that is configured separately on the
-> gateway (`MCP_GATEWAY_RATE_LIMIT_*`, see the Gateway environment variables table).
+Both are off by default, need a restart to take effect, and are always off in the gateway.
 
 ### bMS Release Notes
 
