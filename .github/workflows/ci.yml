@@ -231,6 +231,7 @@ jobs:
   mock:
     name: mock tier (${{ matrix.release }})
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     # The mock-integration tier: every server's `npm run test:mock` against
     # bConnect-Mock, once per bMS release (REQ-CI-002, #311). The unit tier runs
     # against in-process stubs; this one sends real requests to the mock's routes

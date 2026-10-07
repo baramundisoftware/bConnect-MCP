@@ -17,9 +17,14 @@
  *   against the generated release tables.
  * - Fails when a server's tests fail, and when they skipped because the mock
  *   wasn't reachable: those tests return early and vitest reports them passed.
+ *   Only the warning line shows it, so the tier runs with vitest's default
+ *   reporter: the one vitest picks inside an AI-agent shell hides the console
+ *   output of passing tests.
+ * - Runs the tests without BCONNECT_BASE_URL and the credential variables: the
+ *   test client prefers them over the mock URL and would send them elsewhere.
  */
 import { spawnSync } from "node:child_process";
-import { readdirSync } from "node:fs";
+import { readdirSync, realpathSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -32,6 +37,24 @@ const RELEASES = ["26r1", "25r2"];
 
 /** The line a mock test prints when it skips because the mock isn't reachable. */
 const SKIPPED = "not reachable";
+
+/** Settings the test client would prefer over the mock: never passed to the tests. */
+const NOT_PASSED = ["BCONNECT_BASE_URL", "BCONNECT_USERNAME", "BCONNECT_PASSWORD", "BCONNECT_API_KEY"];
+
+/** What a wrong /health answer throws, as opposed to a mock that isn't up yet. */
+class WrongMock extends Error {}
+
+/** The command each server's tier runs with: npm, these arguments. */
+export const TEST_ARGS = ["run", "-s", "test:mock", "--", "--reporter=default"];
+
+/** The environment the tests get: `env` with the mock URL, without NOT_PASSED. */
+export function testEnv(env, baseUrl) {
+  const out = { ...env, BCONNECT_MOCK_URL: baseUrl };
+  for (const name of NOT_PASSED) {
+    delete out[name];
+  }
+  return out;
+}
 
 /** The servers the tier runs for `release` (`26r1` or `25r2`). */
 export function serversFor(release) {
@@ -68,11 +91,11 @@ export async function checkHealth(baseUrl, release, waitMs) {
         return;
       }
       if (res.ok) {
-        throw new Error(`the mock at ${baseUrl} serves bMS ${version || "(none)"}, not ${release}`);
+        throw new WrongMock(`the mock at ${baseUrl} serves bMS ${version || "(none)"}, not ${release}`);
       }
       last = `HTTP ${res.status}`;
     } catch (error) {
-      if (error instanceof Error && error.message.startsWith("the mock at")) {
+      if (error instanceof WrongMock) {
         throw error;
       }
       last = error instanceof Error ? error.message : String(error);
@@ -91,11 +114,7 @@ async function main() {
 
   const failed = [];
   for (const server of servers) {
-    const run = spawnSync("npm", ["run", "-s", "test:mock"], {
-      cwd: join(ROOT, server),
-      env: { ...process.env, BCONNECT_MOCK_URL: baseUrl },
-      encoding: "utf8",
-    });
+    const run = spawnSync("npm", TEST_ARGS, { cwd: join(ROOT, server), env: testEnv(process.env, baseUrl), encoding: "utf8" });
     const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
     process.stdout.write(`\n── ${server}\n${output}`);
     const reason = run.error ? run.error.message : verdict(run.status ?? 1, output);
@@ -111,7 +130,8 @@ async function main() {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+// Run, unless a test imports it; a path through a symlink still counts as running it.
+if (process.argv[1] && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href) {
   main().catch((error) => {
     console.error(`mock tier: ${error instanceof Error ? error.message : String(error)}`);
     process.exitCode = 1;

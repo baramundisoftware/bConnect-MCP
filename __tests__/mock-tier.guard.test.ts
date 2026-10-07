@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import yaml from 'js-yaml';
 import { ROOT, SERVERS } from './lib/exerciser.js';
-import { checkHealth, serversFor, verdict } from '../scripts/mock-tier.mjs';
+import { checkHealth, serversFor, TEST_ARGS, testEnv, verdict } from '../scripts/mock-tier.mjs';
 
 const ci = readFileSync(join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8');
 
@@ -104,6 +104,17 @@ describe('scripts/mock-tier.mjs — verdict per server', () => {
   it('fails a run that skipped because the mock was not reachable, although vitest says passed', () => {
     const output = '⚠  bConnectMock not reachable at http://127.0.0.1:13433 — endpoints mock tests skipped\n      Tests  8 passed (8)';
     expect(verdict(0, output)).toMatch(/not reachable/);
+  });
+});
+
+describe('scripts/mock-tier.mjs — how each server runs', () => {
+  it("runs test:mock with vitest's default reporter, which prints the skip warning (an agent shell's reporter hides it)", () => {
+    expect(TEST_ARGS).toEqual(['run', '-s', 'test:mock', '--', '--reporter=default']);
+  });
+
+  it('gives the tests the mock URL and never the bConnect URL or credentials the client would prefer', () => {
+    const env = testEnv({ PATH: '/bin', BCONNECT_BASE_URL: 'https://bms.example', BCONNECT_USERNAME: 'u', BCONNECT_PASSWORD: 'p', BCONNECT_API_KEY: 'k' }, 'http://127.0.0.1:13433');
+    expect(env).toEqual({ PATH: '/bin', BCONNECT_MOCK_URL: 'http://127.0.0.1:13433' });
   });
 });
 
