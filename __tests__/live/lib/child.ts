@@ -25,13 +25,22 @@ export function readGuardLog(file: string): LoggedRequest[] {
   });
 }
 
-/** Why a server's startup traffic is not just its startup check; empty when it is. */
+/**
+ * Why a server's startup traffic is not just its startup check (plus at most one
+ * release detection, #159); empty when it is.
+ */
 export function startupProblems(requests: LoggedRequest[], domain: string, basePath: string): string[] {
   const problems = requests.filter((r) => r.refused).map((r) => `refused at startup: ${r.method} ${r.path} (${r.refused})`);
   if (problems.length) return problems;
-  if (requests.length === 0) return ['no startup check was sent'];
-  if (requests.length > 1) return [`${requests.length} requests at startup, expected 1`];
-  const [probe] = requests;
+  // Since #159 a server first reads the bMS release: one GET of ManagementServer, no query.
+  const detection = `${basePath}/servermanagement/v2.0/ManagementServer`.toLowerCase();
+  const isDetection = (r: LoggedRequest) => r.method === 'GET' && r.path.toLowerCase() === detection && r.query === '';
+  const detections = requests.filter(isDetection).length;
+  if (detections > 1) return [`${detections} release detections at startup, expected at most 1`];
+  const checks = requests.filter((r) => !isDetection(r));
+  if (checks.length === 0) return ['no startup check was sent'];
+  if (checks.length > 1) return [`${checks.length} startup checks, expected 1`];
+  const [probe] = checks;
   if (probe.method !== 'GET') return [`startup check is ${probe.method}, not GET`];
   if (!probe.path.toLowerCase().startsWith(`${basePath}/${domain}/`.toLowerCase())) {
     return [`startup check went to ${probe.path}, not the ${domain} API`];
@@ -42,7 +51,8 @@ export function startupProblems(requests: LoggedRequest[], domain: string, baseP
 
 /**
  * Why a server's startup failed; empty when it passed every check: it answered
- * initialize, listed tools, wrote only JSON-RPC, and sent only its startup check.
+ * initialize, listed tools, wrote only JSON-RPC, and sent only its startup check
+ * (and at most one release detection).
  * Only a startup with no failure counts as started.
  */
 export function startupFailures(

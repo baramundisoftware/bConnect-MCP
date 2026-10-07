@@ -12,7 +12,8 @@
  * 1. Startup: each built server starts over stdio with the startup probe on
  *    (TLS + authentication against the bMS), answers initialize and tools/list,
  *    and writes nothing but JSON-RPC to stdout. It runs under the same request
- *    guard (child-guard.mjs) and may send only its startup check.
+ *    guard (child-guard.mjs) and may send only its startup check (and at most one
+ *    release detection, #159).
  * 2. Read tools: each tool whose declared operations are all non-secret GETs is
  *    called in-process. List tools go first; the IDs they return feed the tools
  *    that need one (the ID source is the operation whose route is the part of

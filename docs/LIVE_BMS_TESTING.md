@@ -144,8 +144,9 @@ It also fails after the tests when no server started or no read tool was called.
 - **Spawned servers.** The servers started over stdio run as separate processes,
   outside the in-process guard. They run with `node --import child-guard.mjs`,
   which installs the same guard and logs every request. The test asserts that
-  startup sent exactly one request: the server's startup check, a GET list request
-  of its own API with `PageSize=1`.
+  startup sent the server's startup check, a GET list request of its own API with
+  `PageSize=1`, and nothing else except at most one release detection (a GET of
+  `servermanagement/v2.0/ManagementServer`).
 - **Gates.** `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ` are set empty, so
   they stay closed.
 - **Tool selection.** Write tools and tools that return credentials are not
