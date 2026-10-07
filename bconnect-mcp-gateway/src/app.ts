@@ -90,19 +90,21 @@ export function createApp(): express.Application {
 
   // MCP Streamable HTTP handler — stateless, one server+transport per request
   app.post("/:domain/mcp", async (req: Request, res: Response) => {
-    const factory = getServerFactory(req.params.domain);
+    // Express 5 types a route parameter as string | string[] (a wildcard captures several
+    // segments); `:domain` is one segment, and anything else is no known domain.
+    const domain = req.params.domain;
+    const factory = typeof domain === "string" ? getServerFactory(domain) : undefined;
     if (!factory) {
       res.status(404).json({
-        error: `Unknown MCP domain '${req.params.domain}'`,
+        error: `Unknown MCP domain '${String(domain)}'`,
         available: domains,
       });
       return;
     }
 
-    // Express 4 doesn't catch a rejected promise from an async handler: Node
-    // would then terminate the whole gateway. The image (root install) runs
-    // Express 5, which would catch it, but the manifest and the gateway's own
-    // lockfile still allow 4. Either way, fail this request only (REQ-GW-002).
+    // Express 5 forwards a rejected promise from an async handler to the error
+    // handler; the handler still catches its own errors so that only this request
+    // fails, with an answer of its own, and cleanup always runs (REQ-GW-002).
     let server: { connect: (t: unknown) => Promise<void>; close: () => Promise<void> } | undefined;
     let transport: StreamableHTTPServerTransport | undefined;
     // close() returns a promise; a rejection during cleanup must not become an

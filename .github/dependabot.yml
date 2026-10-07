@@ -20,10 +20,10 @@ updates:
     # 13 servers and the template, so "/" updates all of them in one PR. Listing a
     # workspace directory on its own makes Dependabot treat it as a separate
     # project: one PR per manifest and a root lockfile without the workspaces
-    # (npm ci fails; #181, #240-#256). The gateway has its own lockfile.
+    # (npm ci fails; #181, #240-#256). The gateway isn't a workspace member but
+    # has no lockfile of its own: it runs on the root install (REQ-DEP-002, #69).
     directories:
       - "/"
-      - "/bconnect-mcp-gateway"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -45,13 +45,6 @@ updates:
       # must carry only JSON-RPC, so that output breaks every client. Stay on 16
       # until the upgrade is planned together with `quiet: true` at every call site.
       - dependency-name: "dotenv"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "express"
-        update-types: ["version-update:semver-major"]
-      # @types/express must track the express runtime major (currently v4).
-      # A v5 types bump on a v4 runtime is a mismatch; upgrade both together
-      # as part of the express major migration, not as a standalone types PR.
-      - dependency-name: "@types/express"
         update-types: ["version-update:semver-major"]
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
