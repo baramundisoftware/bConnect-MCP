@@ -21,6 +21,7 @@ export * from "./paging.js";
 export * from "./group-scope.js";
 export * from "./security-routes.js";
 export * from "./host-check.js";
+export * from "./request-errors.js";
 export * from "./server-runtime.js";
 export * from "./release.js";
 export * from "./tool-variants.js";

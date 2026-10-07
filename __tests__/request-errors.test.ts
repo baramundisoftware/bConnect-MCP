@@ -41,7 +41,7 @@ describe('requestErrorAnswer', () => {
     ['a status below 400', { status: 302 }],
     ['a status of 600 or more', { status: 600 }],
     ['a status that is no number', { status: '404' }],
-    ['a type that is no string', { status: 400, type: 42 }],
+    ['a type that is no string', { type: 42 }],
   ])('%s → 500, JSON-RPC internal error', (_name, error) => {
     expect(requestErrorAnswer(error)).toEqual({ status: 500, body: INTERNAL_ERROR });
   });

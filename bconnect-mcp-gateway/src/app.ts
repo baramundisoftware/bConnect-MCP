@@ -9,7 +9,7 @@
 
 import express, { Request, Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { allowedHosts, hostCheck } from "@bconnect/mcp-core";
+import { allowedHosts, hostCheck, jsonRpcRequestErrors } from "@bconnect/mcp-core";
 
 import { createServer as createActivedirectoryServer } from "bconnect-activedirectory-mcp";
 import { createServer as createAssetsServer } from "bconnect-assets-mcp";
@@ -152,6 +152,14 @@ export function createApp(): express.Application {
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", servers: domains, count: domains.length });
   });
+
+  // A path no route matches: JSON, not Express's HTML page.
+  app.use((_req: Request, res: Response) => {
+    res.status(404).json({ error: "Not found" });
+  });
+  // A body that can't be read (malformed JSON, over MCP_GATEWAY_MAX_BODY, an unsupported
+  // charset) or a failure that reaches Express: a JSON-RPC error, as in a server's HTTP mode.
+  app.use(jsonRpcRequestErrors());
 
   return app;
 }

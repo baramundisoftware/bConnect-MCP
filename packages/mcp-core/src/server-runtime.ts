@@ -9,7 +9,7 @@
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import * as dotenv from "dotenv";
-import express, { type NextFunction, type Request, type Response } from "express";
+import express from "express";
 import type { Server as HttpServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -19,6 +19,7 @@ import type { BConnectClientBase, BConnectConfig, ClientOptions } from "./bconne
 import { CLIENT_ENV_VARS, clientConfigFromEnv, hasRequestCredentials, type BConnectCredentials } from "./client-config.js";
 import { RateLimiter } from "./rate-limiter.js";
 import { allowedHosts, hostCheck } from "./host-check.js";
+import { jsonRpcRequestErrors } from "./request-errors.js";
 import { detectRelease, missingReleaseReason, type ToolReleaseTable } from "./release.js";
 
 export type { ClientOptions } from "./bconnect-client-base.js";
@@ -246,16 +247,8 @@ async function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io
   });
 
   // Malformed JSON and other request errors, and (Express 5) a handler that fails: a JSON-RPC error,
-  // never Express's HTML page with a stack. Once a streamed answer has started, Express ends it.
-  app.use((error: { status?: number; type?: string }, _req: Request, res: Response, next: NextFunction) => {
-    if (res.headersSent) {
-      next(error);
-      return;
-    }
-    const parse = error.type === "entity.parse.failed";
-    const status = typeof error.status === "number" && error.status >= 400 && error.status < 600 ? error.status : 500;
-    res.status(status).json({ jsonrpc: "2.0", error: { code: parse ? -32700 : -32603, message: parse ? "Parse error" : "Internal error" }, id: null });
-  });
+  // never Express's HTML page. Once a streamed answer has started, Express ends it.
+  app.use(jsonRpcRequestErrors());
 
   // A port in use or an address that can't be bound is a startup error like any other: one line.
   const listener = app.listen(port, bind);
