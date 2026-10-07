@@ -74,15 +74,19 @@ MCP client:
 
 ```bash
 echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | \
-  node --env-file=$HOME/bconnect.env bconnect-endpoints-mcp/build/index.js
+  node --env-file="$HOME/bconnect.env" bconnect-endpoints-mcp/build/index.js
 ```
 
-**4. Register it in Claude Code**, with absolute paths (`--scope user` makes it available in every
-project):
+The server first connects to the bMS, so this also checks the URL and the key: the startup log goes
+to stderr, the tool list is one JSON line on stdout. If it stops with `cannot reach bConnect API`,
+see [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#server-exits-at-startup).
+
+**4. Register it in Claude Code**, from the repo root, so the paths are absolute (`--scope user`
+makes it available in every project):
 
 ```bash
 claude mcp add bconnect-endpoints --scope user \
-  -- node --env-file=$HOME/bconnect.env "$PWD/bconnect-endpoints-mcp/build/index.js"
+  -- node --env-file="$HOME/bconnect.env" "$PWD/bconnect-endpoints-mcp/build/index.js"
 ```
 
 Restart Claude Code and ask, e.g. *"List all Windows endpoints"*. Other clients (Claude Desktop,
@@ -98,7 +102,7 @@ There are three ways to get the suite. Pick one; the bMS settings are the same f
 
 | Way | What you get | Needs | Best for | How |
 | --- | --- | --- | --- | --- |
-| **Release download** | `bconnect-mcp-suite-<version>.zip` from the [Releases page](https://github.com/baramundisoftware/bConnect-MCP/releases), already built (with a `.sha256` checksum file) | Node.js | one user, a fixed version, no build tools | [Quick start](#quick-start), [INSTALLATION.md](docs/INSTALLATION.md#from-the-release-download-no-build) |
+| **Release download** | `bconnect-mcp-suite-<version>.zip` from the [Releases page](https://github.com/baramundisoftware/bConnect-MCP/releases), already built (with a `.sha256` checksum file) | Node.js | one user, a fixed version, no build tools | [INSTALLATION.md](docs/INSTALLATION.md#from-the-release-download-no-build) (`npm ci --omit=dev`, no build; then steps 2–4 of the [Quick start](#quick-start)) |
 | **From source** | a `git clone` of this repository, built locally | Node.js, Git | the newest changes on `main`, contributing | [Quick start](#quick-start), [INSTALLATION.md](docs/INSTALLATION.md#from-source) |
 | **Gateway container** | the image `ghcr.io/baramundisoftware/bconnect-mcp-gateway` from [GitHub Packages](https://github.com/orgs/baramundisoftware/packages?repo_name=bConnect-MCP) | Docker | several users or tools (e.g. n8n) sharing one HTTP endpoint | [Gateway](#gateway-http-multi-user) |
 

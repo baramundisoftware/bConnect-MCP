@@ -17,7 +17,8 @@ This guide covers installing and configuring the bConnect MCP Suite (13 servers 
 
 **Requirements:** Node.js **22.15 or 24**, the versions CI tests. 22.15 and later also honor the
 OS/Windows CA trust store (see [TLS / SSL Configuration](#tls--ssl-configuration)). The
-packages still allow Node 20, but nobody tests it.
+packages still allow Node 20, but nobody tests it; `node --env-file` (used in the README's quick
+start and in [CLIENTS.md](CLIENTS.md)) needs 20.6 or later.
 
 #### From the release download (no build)
 

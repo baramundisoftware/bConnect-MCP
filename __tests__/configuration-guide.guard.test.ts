@@ -47,7 +47,8 @@ const SETTINGS = [...new Set([
   ...SECRET_ENV_KEYS.map((key) => `${key}_FILE`),
 ])].filter((name): name is string => typeof name === 'string' && !NOT_CONFIGURATION.has(name)).sort();
 
-const read = (file: string): string => readFileSync(file, 'utf8');
+/** A file's text with LF line endings: a Windows checkout may have CRLF (core.autocrlf). */
+const read = (file: string): string => readFileSync(file, 'utf8').replace(/\r\n/g, '\n');
 /**
  * The lines of a Markdown text outside fenced code and HTML comments, so a heading there doesn't
  * count. One pass over the lines, no pattern removal: a comment runs from its `<!--` line to the
@@ -174,7 +175,11 @@ describe('README entry point', () => {
     expect(readme()).toContain(`](${guidePath}`);
   });
 
-  it('keeps the Technical Preview notice byte for byte (as on b996ef6)', () => {
+  it('reads a README with Windows line endings (CRLF) like one with LF (self-check)', () => {
+    expect('a\r\n## Contents\r\nb'.replace(/\r\n/g, '\n')).toContain('\n## Contents\n');
+  });
+
+  it('keeps the Technical Preview notice byte for byte (as on b996ef6, LF line endings)', () => {
     const raw = read(join(ROOT, 'README.md'));
     const start = raw.indexOf('> [!WARNING]');
     const end = raw.indexOf('\n\n', start);

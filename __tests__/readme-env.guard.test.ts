@@ -434,6 +434,8 @@ describe.each(SERVERS)('%s README remarks', (server) => {
     const hasSecrets = SECRET_ROUTES.some((r: { domain: string }) => r.domain === domain);
     const remark = remarkOf(readme(), 'ALLOW_SECRET_READ') ?? '';
     expect(remark.startsWith('No effect'), remark).toBe(!hasSecrets);
+    // Where secrets can be read, the remark says what the setting enables there.
+    if (hasSecrets) expect(remark.length).toBeGreaterThan(20);
   });
 
   it('says what the release changes: marked tools, or that the server stops on 25R2', async () => {

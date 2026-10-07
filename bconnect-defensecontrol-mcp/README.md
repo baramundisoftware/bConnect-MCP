@@ -76,7 +76,7 @@ been checked against a real bMS yet.
 
 ## Environment Variables
 
-The variables this server reads (a test checks the list). Each is described, with its default, in [docs/CONFIGURATION.md](../docs/CONFIGURATION.md); the second column says only what is different in this server. When the HTTP gateway hosts the server, `MCP_TRANSPORT`, `MCP_PORT`, `MCP_BIND` and `MCP_ALLOWED_HOSTS` have no effect, and the gateway's own settings apply ([Gateway](../docs/CONFIGURATION.md#gateway)).
+The variables this server reads (a test checks the list). Each is described, with its default, in [docs/CONFIGURATION.md](../docs/CONFIGURATION.md); the second column says only what is different in this server. When the HTTP gateway hosts the server, `MCP_TRANSPORT`, `MCP_PORT`, `MCP_BIND` and `MCP_ALLOWED_HOSTS` have no effect, `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ` are ignored (always off), and the gateway's own settings apply ([Gateway](../docs/CONFIGURATION.md#gateway)).
 
 <!-- env:start -->
 | Variable | In this server |
@@ -90,7 +90,7 @@ The variables this server reads (a test checks the list). Each is described, wit
 | [`BCONNECT_ALLOW_INSECURE_HTTP`](../docs/CONFIGURATION.md#bconnect_allow_insecure_http) |  |
 | [`BCONNECT_RELEASE`](../docs/CONFIGURATION.md#bconnect_release) | On 25R2 the tools marked **(26R1)** aren't listed. |
 | [`ALLOW_WRITE_OPERATIONS`](../docs/CONFIGURATION.md#allow_write_operations) |  |
-| [`ALLOW_SECRET_READ`](../docs/CONFIGURATION.md#allow_secret_read) | Needed by the four tools that return BitLocker keys, the PIN or LAPS passwords; the two write tools among them also need `ALLOW_WRITE_OPERATIONS`. |
+| [`ALLOW_SECRET_READ`](../docs/CONFIGURATION.md#allow_secret_read) | Needed by the four tools that read or set BitLocker secrets or LAPS passwords; the two that set them also need `ALLOW_WRITE_OPERATIONS`. |
 | [`BCONNECT_AUDIT_LEVEL`](../docs/CONFIGURATION.md#bconnect_audit_level) |  |
 | [`BCONNECT_PRETTY_JSON`](../docs/CONFIGURATION.md#bconnect_pretty_json) |  |
 | [`BCONNECT_RATE_LIMIT_ENABLED`](../docs/CONFIGURATION.md#bconnect_rate_limit_enabled) |  |
