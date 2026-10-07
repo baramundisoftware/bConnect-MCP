@@ -15,8 +15,10 @@
  * Known violations are in spec-conformance.baseline.json, each with the GitHub
  * issue that fixes it. A new violation fails; so does a baseline entry that no
  * longer occurs (the fix is proven: remove the entry), and an entry without an
- * issue number. The baseline is the only exemption list: every exception is a
- * known defect with an issue.
+ * issue number. The baseline is for known defects with an issue. The only other
+ * exemption is deliberate: an operation a server declares unsupported in a release,
+ * with its reason, in its src/unsupported-operations.ts (REQ-SRV-031); a
+ * declaration that no longer holds fails too.
  *
  *   npm run check:spec                                  # run
  *   SPEC_BASELINE=prune npm run check:spec              # drop entries that no longer occur
