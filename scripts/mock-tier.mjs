@@ -49,6 +49,18 @@ class WrongMock extends Error {}
 /** The command each server's tier runs with: npm, these arguments. */
 export const TEST_ARGS = ["run", "-s", "test:mock", "--", "--reporter=default"];
 
+/**
+ * How to start npm on `platform`. On Windows npm is npm.cmd, which Node starts only
+ * through a shell (spawnSync "npm" fails with ENOENT); it gets one command line, since
+ * Node warns about an argument list passed alongside `shell: true`. TEST_ARGS are
+ * fixed words, nothing from the caller, so there is nothing to quote.
+ */
+export function testCommand(platform) {
+  return platform === "win32"
+    ? { command: `npm ${TEST_ARGS.join(" ")}`, args: [], shell: true }
+    : { command: "npm", args: TEST_ARGS, shell: false };
+}
+
 /** The environment the tests get: `env` with the mock URL, without NOT_PASSED. */
 export function testEnv(env, baseUrl) {
   const out = { ...env, BCONNECT_MOCK_URL: baseUrl };
@@ -116,7 +128,8 @@ async function main() {
 
   const failed = [];
   for (const server of servers) {
-    const run = spawnSync("npm", TEST_ARGS, { cwd: join(ROOT, server), env: testEnv(process.env, baseUrl), encoding: "utf8" });
+    const { command, args, shell } = testCommand(process.platform);
+    const run = spawnSync(command, args, { cwd: join(ROOT, server), env: testEnv(process.env, baseUrl), encoding: "utf8", shell });
     const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
     process.stdout.write(`\n── ${server}\n${output}`);
     const reason = run.error ? run.error.message : verdict(run.status ?? 1, output);

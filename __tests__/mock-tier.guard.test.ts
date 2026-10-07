@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import yaml from 'js-yaml';
 import { ROOT, SERVERS } from './lib/exerciser.js';
-import { checkHealth, serversFor, TEST_ARGS, testEnv, verdict } from '../scripts/mock-tier.mjs';
+import { checkHealth, serversFor, TEST_ARGS, testCommand, testEnv, verdict } from '../scripts/mock-tier.mjs';
 
 const ci = readFileSync(join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8');
 
@@ -110,6 +110,16 @@ describe('scripts/mock-tier.mjs — verdict per server', () => {
 describe('scripts/mock-tier.mjs — how each server runs', () => {
   it("runs test:mock with vitest's default reporter, which prints the skip warning (an agent shell's reporter hides it)", () => {
     expect(TEST_ARGS).toEqual(['run', '-s', 'test:mock', '--', '--reporter=default']);
+  });
+
+  it('starts npm directly on Linux and macOS', () => {
+    expect(testCommand('linux')).toEqual({ command: 'npm', args: TEST_ARGS, shell: false });
+    expect(testCommand('darwin')).toEqual({ command: 'npm', args: TEST_ARGS, shell: false });
+  });
+
+  it('starts npm through the shell on Windows, where npm is npm.cmd (without a shell: spawnSync npm ENOENT)', () => {
+    // One command line, no argument list: Node warns when arguments are passed alongside shell: true.
+    expect(testCommand('win32')).toEqual({ command: 'npm run -s test:mock -- --reporter=default', args: [], shell: true });
   });
 
   it('gives the tests the mock URL and never the bConnect URL or credentials the client would prefer', () => {

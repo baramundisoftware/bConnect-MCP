@@ -78,7 +78,7 @@ export function sanitisedSummary(input: SummaryInput): string {
     `- bMS release ${input.release}${input.bmsVersion ? ` (version ${input.bmsVersion})` : ''}`,
     `- TLS: ${input.plainHttp ? 'none (plain HTTP; credentials travel unencrypted)'
       : input.tlsVerified ? `certificates verified${input.caFile ? ' (CA file set)' : ''}` : 'NOT verified (NODE_TLS_REJECT_UNAUTHORIZED=0)'}`,
-    `- Startup: ${input.startups.ok}/${input.startups.total} servers started with the startup check and sent nothing else`,
+    `- Startup: ${input.startups.ok}/${input.startups.total} servers started with the startup check and sent nothing else (release detection allowed)`,
     `- Read tools: ${by('ok').length} ok, ${by('expected').length} expected, ${by('failed').length} failed, ${by('not verified live').length} not verified live, ${by('skipped').length} skipped`,
   ];
   const p = input.profile;
