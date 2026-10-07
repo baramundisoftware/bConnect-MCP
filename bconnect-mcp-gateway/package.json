@@ -28,10 +28,10 @@
     "bconnect-universaldynamicgroups-mcp": "file:../bconnect-universaldynamicgroups-mcp",
     "bconnect-updatemanagement-mcp": "file:../bconnect-updatemanagement-mcp",
     "bconnect-variables-mcp": "file:../bconnect-variables-mcp",
-    "express": "^4.21.0"
+    "express": "^5.2.1"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.6",
     "@types/node": "^22.18.12",
     "@vitest/coverage-v8": "^4.1.11",
     "typescript": "^5.9.3",

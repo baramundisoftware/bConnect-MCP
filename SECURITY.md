@@ -148,7 +148,7 @@ These items are not exploitable as written, but are recommended practices to kee
 
 **Reproducible installs.** Production builds and CI must use `npm ci` against the committed `package-lock.json`, never `npm install`. `npm install` resolves a fresh dependency graph that may differ from what was reviewed; `npm ci` fails if the lockfile and `node_modules` would diverge from the lockfile, which is the property you want.
 
-**Dependency monitoring.** Dependabot ([`.github/dependabot.yml`](.github/dependabot.yml)) proposes updates weekly for the npm workspace (root lockfile: core, servers, template), the gateway and the GitHub Actions; minor and patch updates are grouped. Dependabot alerts and secret scanning are on. The gateway image's Node.js base image is pinned by digest and updated by hand. The April 2026 MCP host CVEs underline that timely SDK upgrades matter even when the local code is not directly affected.
+**Dependency monitoring.** Dependabot ([`.github/dependabot.yml`](.github/dependabot.yml)) proposes updates weekly for the root lockfile (core, servers, template, and the gateway, which runs on the root install and has no lockfile of its own) and the GitHub Actions; minor and patch updates are grouped. Dependabot alerts and secret scanning are on. The gateway image's Node.js base image is pinned by digest and updated by hand. The April 2026 MCP host CVEs underline that timely SDK upgrades matter even when the local code is not directly affected.
 
 **Tool-argument validation.** Tool arguments arrive untyped from the MCP host (`request.params.arguments`) and are forwarded to the bConnect REST API over HTTPS. All 13 servers share a single validation architecture:
 

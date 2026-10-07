@@ -7,6 +7,6 @@
   "types": "./build/index.d.ts",
   "exports": { ".": { "types": "./build/index.d.ts", "default": "./build/index.js" } },
   "scripts": { "build": "tsc" },
-  "dependencies": { "@modelcontextprotocol/sdk": "^1.32.0", "axios": "^1.20.0", "axios-retry": "^4.5.0", "dotenv": "^16.4.0", "express": "^4.21.0" },
-  "devDependencies": { "@types/express": "^4.17.21", "typescript": "^5.9.3" }
+  "dependencies": { "@modelcontextprotocol/sdk": "^1.32.0", "axios": "^1.20.0", "axios-retry": "^4.5.0", "dotenv": "^16.4.0", "express": "^5.2.1" },
+  "devDependencies": { "@types/express": "^5.0.6", "typescript": "^5.9.3" }
 }

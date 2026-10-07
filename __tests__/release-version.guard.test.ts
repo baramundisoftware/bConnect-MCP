@@ -2,14 +2,14 @@
  * Release version guard.
  *
  * The release version lives in many places: the root manifest, every server,
- * the template and the gateway manifest, both lockfiles, the `version` each
+ * the template and the gateway manifest, the root lockfile, the `version` each
  * server reports in its MCP handshake (hard-coded in src/index.ts) and the
  * compose image tag. A release once bumped the manifests and left all 14
  * handshake versions on the old number. Everything must match the root
  * package.json; `packages/mcp-core` is private and stays unversioned.
  */
 import { describe, expect, it } from 'vitest';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -45,10 +45,8 @@ describe('release version', () => {
     }
   });
 
-  it('gateway lockfile carries the root version', () => {
-    const lock = readJson('bconnect-mcp-gateway/package-lock.json');
-    expect(lock.version).toBe(VERSION);
-    expect(lock.packages[''].version).toBe(VERSION);
+  it('the gateway has no lockfile whose version could drift: it runs on the root install (REQ-DEP-002)', () => {
+    expect(existsSync(join(ROOT, 'bconnect-mcp-gateway', 'package-lock.json'))).toBe(false);
   });
 
   it('docker-compose.gateway.yml tags the image with the root version', () => {
