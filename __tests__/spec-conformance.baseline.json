@@ -1,6 +1,1 @@
-{
-  "body-invalid 25R2 bconnect-endpoints-mcp create_maintenance_window_for_endpoint -": 307,
-  "body-invalid 25R2 bconnect-endpoints-mcp create_maintenance_window_for_logical_group -": 307,
-  "coverage 25R2 endpoints - UpdateMaintenanceWindowForEndpointById": 307,
-  "coverage 25R2 endpoints - UpdateMaintenanceWindowForLogicalGroupById": 307
-}
+{}

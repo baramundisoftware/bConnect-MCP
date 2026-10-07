@@ -99,7 +99,7 @@ The per-type tools of earlier versions (`list_windows_endpoints`, `get_mac_endpo
 full mapping is in the [CHANGELOG](../CHANGELOG.md).
 
 > Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1.
-> Tools marked **(25R2)** exist only in bMS 2025 R2: 2026 R1 removed the industrial-endpoint API (so does the `IndustrialEndpoint` type). The maintenance-window updates send `PATCH`, which only 26R1 offers (25R2 uses `PUT`, #307).
+> Tools marked **(25R2)** exist only in bMS 2025 R2: 2026 R1 removed the industrial-endpoint API (so does the `IndustrialEndpoint` type). Updating a maintenance window needs 26R1: 25R2 updates with `PUT`, and its API specification describes that request in two contradicting ways, so the update tools aren't offered on 25R2 until a 25R2 bMS confirms it (declared in `src/unsupported-operations.ts`). Creating one works in both releases with that release's window types: 25R2 `Unrestricted` (the default, no intervals), `Everyday`, `WorkdayWeekend`, `IndividualWeekday`; 26R1 `Anytime` (the default) and `Never` (both without intervals) instead of `Unrestricted`, plus the same three. A type the release doesn't have is refused before anything is sent.
 
 ---
 

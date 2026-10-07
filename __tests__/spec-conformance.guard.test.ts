@@ -15,8 +15,10 @@
  * Known violations are in spec-conformance.baseline.json, each with the GitHub
  * issue that fixes it. A new violation fails; so does a baseline entry that no
  * longer occurs (the fix is proven: remove the entry), and an entry without an
- * issue number. The baseline is the only exemption list: every exception is a
- * known defect with an issue.
+ * issue number. The baseline is for known defects with an issue. The only other
+ * exemption is deliberate: an operation a server declares unsupported in a release,
+ * with its reason, in its src/unsupported-operations.ts (REQ-SRV-031); a
+ * declaration that no longer holds fails too.
  *
  *   npm run check:spec                                  # run
  *   SPEC_BASELINE=prune npm run check:spec              # drop entries that no longer occur
@@ -25,7 +27,7 @@
  * The checks themselves are proven on known-bad fixtures below.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { RELEASES, type Release, type ApiOperation, loadOperations } from './lib/spec.js';
@@ -33,8 +35,8 @@ import {
   ID, ROOT, SERVERS, UNKNOWN_NAME, UNKNOWN_VALUE, allArguments, callsOf, connect, createRecorder, domainOf, guardEnv, requiredArguments,
 } from './lib/exerciser.js';
 import {
-  type Baseline, type ParamCall, type Violation, type WriteCall,
-  checkBodies, checkCoverage, checkParams, checkStaleBindings, checkTools, checkWritesOff, compareWithBaseline, keyOf,
+  type Baseline, type ParamCall, type UnsupportedOperations, type Violation, type WriteCall,
+  checkBodies, checkCoverage, checkParams, checkStaleBindings, checkTools, checkUnsupported, checkWritesOff, compareWithBaseline, keyOf,
 } from './lib/conformance.js';
 import { bodyValidator, jsonPatchProblems } from './lib/bodies.js';
 
@@ -52,6 +54,12 @@ afterAll(() => {
   recorder.close();
   process.env = savedEnv;
 });
+
+/** A server's declared-unsupported operations (REQ-SRV-031); none when it has no such file. */
+async function unsupportedOf(server: string): Promise<UnsupportedOperations> {
+  const file = join(ROOT, server, 'src', 'unsupported-operations.ts');
+  return existsSync(file) ? (await import(pathToFileURL(file).href)).UNSUPPORTED_OPERATIONS : {};
+}
 
 async function tableOf(server: string): Promise<Readonly<Record<string, readonly string[]>>> {
   const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
@@ -132,7 +140,16 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
     await conn.close();
     violations.push(...checkWritesOff(release, server, calls));
   }
-  for (const [domain, covered] of coveredByDomain) violations.push(...checkCoverage(release, domain, covered));
+  // Declared-unsupported operations: no coverage gap in their release, and every declaration must hold (REQ-SRV-031).
+  const unsupportedByDomain = new Map<string, Record<string, Record<string, string>>>();
+  for (const server of SERVERS) {
+    const unsupported = await unsupportedOf(server);
+    const merged = unsupportedByDomain.get(domainOf(server)) ?? {};
+    for (const [id, releases] of Object.entries(unsupported)) merged[id] = { ...merged[id], ...releases };
+    unsupportedByDomain.set(domainOf(server), merged);
+    violations.push(...checkUnsupported({ release, server, domain: domainOf(server), unsupported, table: await tableOf(server), listed: registered.get(server) ?? new Set() }));
+  }
+  for (const [domain, covered] of coveredByDomain) violations.push(...checkCoverage(release, domain, covered, undefined, unsupportedByDomain.get(domain)));
   return { violations, registered };
 }
 
@@ -249,6 +266,28 @@ describe('the checks report known-bad cases (self-test)', () => {
     expect(real('/assets/v2.0/Assets/00000000-0000-4000-8000-000000000001')).toEqual([]);
     expect(real('/assets/v2.0/Asset/00000000-0000-4000-8000-000000000001')).toEqual(['route']);
     expect(real('/v2.0/Assets/00000000-0000-4000-8000-000000000001')).toEqual(['route']);
+  });
+
+  it('skips an operation the server declares unsupported, in that release only (REQ-SRV-031)', () => {
+    const unsupported = { DeleteThing: { '25R2': 'Not offered: the specification describes this request in two ways.' } };
+    const covered = new Set(['GetThings', 'GetThing']);
+    expect(checkCoverage('26R1', 'demo', covered, operations, unsupported).map(keyOf)).toEqual(['coverage 26R1 demo - DeleteThing']);
+    expect(checkCoverage('25R2', 'demo', covered, operations, unsupported)).toEqual([]);
+  });
+
+  it('reports a declaration that no longer holds: unknown operation, no tool, tool listed, no reason', () => {
+    const table = { get_thing: ['GetThing'], delete_thing: ['DeleteThing'] };
+    const reason = 'Not offered: the specification describes this request in two ways.';
+    const run = (unsupported: Record<string, Record<string, string>>, listed: string[] = []) =>
+      checkUnsupported({ release: '26R1', server: 'demo-server', domain: 'demo', unsupported, table, listed: new Set(listed), operations })
+        .map((x) => `${x.check} ${x.detail}`);
+    expect(run({ DeleteThing: { '26R1': reason } })).toEqual([]);
+    expect(run({ GoneThing: { '26R1': reason } })).toEqual(['unsupported-unknown GoneThing']);
+    expect(run({ GetThings: { '26R1': reason } })).toEqual(['unsupported-no-tool GetThings']);
+    expect(run({ DeleteThing: { '26R1': reason } }, ['delete_thing'])).toEqual(['unsupported-listed DeleteThing']);
+    expect(run({ DeleteThing: { '26R1': 'short' } })).toEqual(['unsupported-reason DeleteThing']);
+    // Another release's declaration is checked in that release's pass.
+    expect(run({ DeleteThing: { '25R2': 'short' } })).toEqual([]);
   });
 
   it('reports a dead table entry and an operation no tool declares', () => {

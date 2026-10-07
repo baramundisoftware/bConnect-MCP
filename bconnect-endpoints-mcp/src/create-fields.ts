@@ -9,13 +9,14 @@
  * so a tool can't send a field its schema doesn't declare. Path parameters
  * (`id`) are added to the input schema and stay out of the body.
  */
-import { CommonRules, pickArguments, type ValidationRule } from "@bconnect/mcp-core";
-import { choice, flag, guid, maintenanceWindowFields, text, type Field } from "./update-fields.js";
+import { CommonRules, pickArguments, selectedRelease, type Release, type ValidationRule } from "@bconnect/mcp-core";
+import { choice, flag, guid, maintenanceWindowFieldsOf, text, type Field } from "./update-fields.js";
 
-interface CreateTool {
+export interface CreateTool {
   /** Path parameter, if the route has one. */
   pathId?: string;
-  fields: Record<string, Field>;
+  /** The body fields; a function when they differ per bMS release (maintenance windows, REQ-SRV-031). */
+  fields: Record<string, Field> | ((release: Release) => Record<string, Field>);
   required: string[];
 }
 
@@ -91,12 +92,12 @@ export const CREATE_FIELDS: Record<string, CreateTool> = {
   },
   create_maintenance_window_for_endpoint: {
     pathId: "Endpoint ID (GUID)",
-    fields: maintenanceWindowFields,
+    fields: maintenanceWindowFieldsOf,
     required: ["maintenanceWindowDefinitionType"],
   },
   create_maintenance_window_for_logical_group: {
     pathId: "Logical group ID (GUID)",
-    fields: maintenanceWindowFields,
+    fields: maintenanceWindowFieldsOf,
     required: ["maintenanceWindowDefinitionType"],
   },
   // start_enrollment per endpoint type (its variant key, REQ-SRV-029).
@@ -148,6 +149,10 @@ const toolOf = (name: string): CreateTool => {
   return tool;
 };
 
+/** A tool's body fields in the selected release. */
+export const fieldsOf = (tool: CreateTool): Record<string, Field> =>
+  (typeof tool.fields === "function" ? tool.fields(selectedRelease()) : tool.fields);
+
 export interface CreateInputSchema {
   type: "object";
   properties: Record<string, Record<string, unknown>>;
@@ -166,7 +171,7 @@ const fieldProperty = (f: Field): Record<string, unknown> => ({
 export function createInputSchema(name: string): CreateInputSchema {
   const tool = toolOf(name);
   const properties: Record<string, Record<string, unknown>> = tool.pathId ? { id: { type: "string", description: tool.pathId } } : {};
-  for (const [field, f] of Object.entries(tool.fields)) {
+  for (const [field, f] of Object.entries(fieldsOf(tool))) {
     properties[field] = fieldProperty(f);
   }
   return { type: "object", properties, required: [...(tool.pathId ? ["id"] : []), ...tool.required] };
@@ -181,7 +186,7 @@ export function mergedCreateInputSchema(keys: readonly string[], type: Record<st
   const first = toolOf(keys[0]);
   const properties: Record<string, Record<string, unknown>> = { type, ...(first.pathId && { id: { type: "string", description: first.pathId } }) };
   for (const key of keys) {
-    for (const [field, f] of Object.entries(toolOf(key).fields)) {
+    for (const [field, f] of Object.entries(fieldsOf(toolOf(key)))) {
       properties[field] ??= fieldProperty(f);
     }
   }
@@ -189,19 +194,19 @@ export function mergedCreateInputSchema(keys: readonly string[], type: Record<st
 }
 
 /** The body fields a create or enrollment tool (or variant) takes. */
-export const createFieldNames = (name: string): string[] => Object.keys(toolOf(name).fields);
+export const createFieldNames = (name: string): string[] => Object.keys(fieldsOf(toolOf(name)));
 
 /** Validation: the path id and every GUID field. */
 export function createRules(name: string): ValidationRule[] {
   const tool = toolOf(name);
   return [
     ...(tool.pathId ? [CommonRules.guid("id")] : []),
-    ...Object.entries(tool.fields).filter(([, f]) => f.guid)
+    ...Object.entries(fieldsOf(tool)).filter(([, f]) => f.guid)
       .map(([field]) => (tool.required.includes(field) ? CommonRules.guid(field) : CommonRules.guidOptional(field))),
   ];
 }
 
 /** The request body: only the declared fields the caller gave. */
 export function createBody(name: string, args: Record<string, unknown>): Record<string, unknown> {
-  return pickArguments(args, Object.keys(toolOf(name).fields));
+  return pickArguments(args, Object.keys(fieldsOf(toolOf(name))));
 }

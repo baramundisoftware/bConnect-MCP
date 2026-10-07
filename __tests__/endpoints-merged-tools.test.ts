@@ -18,7 +18,7 @@ import { join } from 'node:path';
 import { connect, createRecorder, guardEnv, ROOT, type ConnectedServer } from './lib/exerciser.js';
 import type { Release } from './lib/spec.js';
 import { UPDATE_FIELDS } from '../bconnect-endpoints-mcp/src/update-fields.js';
-import { CREATE_FIELDS } from '../bconnect-endpoints-mcp/src/create-fields.js';
+import { CREATE_FIELDS, fieldsOf } from '../bconnect-endpoints-mcp/src/create-fields.js';
 
 interface Recorded { method: string; path: string; query: Array<[string, string]>; contentType: string | null; body: string }
 interface Entry { release: Release; tool: string; call: string; args: Record<string, unknown>; requests: Recorded[] }
@@ -209,7 +209,7 @@ describe('merged schemas', () => {
   // several types must be defined alike for all of them; only the patch path may differ (Mac).
   it.each([
     ['update_endpoint', UPDATE_FIELDS as Record<string, Record<string, Record<string, unknown>>>],
-    ['start_enrollment', Object.fromEntries(Object.entries(CREATE_FIELDS).map(([k, v]) => [k, v.fields])) as Record<string, Record<string, Record<string, unknown>>>],
+    ['start_enrollment', Object.fromEntries(Object.entries(CREATE_FIELDS).map(([k, v]) => [k, fieldsOf(v)])) as Record<string, Record<string, Record<string, unknown>>>],
   ])('%s: a field shared by several types has one definition', (tool, table) => {
     const seen = new Map<string, string>();
     const differ: string[] = [];
