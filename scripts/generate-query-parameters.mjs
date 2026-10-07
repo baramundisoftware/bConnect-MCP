@@ -197,7 +197,8 @@ function releaseTable(server, specs) {
     const releases = RELEASES.filter((release) => ids.every((id) => {
       const newest = operationsOf(specs, "26R1", domain, id);
       const called = newest.length ? newest : operationsOf(specs, "25R2", domain, id);
-      return called.length > 0 && operationsOf(specs, release, domain, id).some((o) => called.some((c) => c.method === o.method && c.path === o.path));
+      // Spec paths carry no domain segment: compare it too, so another domain's identical path doesn't count.
+      return called.length > 0 && operationsOf(specs, release, domain, id).some((o) => called.some((c) => c.domain === o.domain && c.method === o.method && c.path === o.path));
     }));
     return `  ${tool}: [${releases.map((r) => `"${r}"`).join(", ")}],`;
   });

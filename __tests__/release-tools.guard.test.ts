@@ -35,7 +35,7 @@ function availability(server: string, operations: Record<string, string[]>): Rec
   return Object.fromEntries(Object.entries(operations).map(([tool, ids]) => {
     const releases = RELEASES.filter((release) => ids.every((id) => {
       const called = opsOf('26R1', id).length ? opsOf('26R1', id) : opsOf('25R2', id);
-      return called.length > 0 && opsOf(release, id).some((o) => called.some((c) => c.method === o.method && c.path === o.path));
+      return called.length > 0 && opsOf(release, id).some((o) => called.some((c) => c.domain === o.domain && c.method === o.method && c.path === o.path));
     }));
     return [tool, [...releases].sort()];
   }));
@@ -51,7 +51,7 @@ interface Seen {
   expected: Record<string, Release[]>;
   generated: Record<string, readonly string[]> | undefined;
   listed: Record<Release, string[]>;
-  refused: Array<{ release: Release; tool: string; code?: number; text: string; sent: number }>;
+  refused: Array<{ release: Release; tool: string; code?: number; text: string; sent: number; undeclaredCode?: number }>;
 }
 const seen: Seen[] = [];
 
@@ -75,7 +75,8 @@ beforeAll(async () => {
       for (const tool of Object.keys(TOOL_OPERATIONS).filter((t) => !entry.expected[t].includes(release))) {
         recorder.take();
         const r = await conn.call(tool, requiredArguments(schemas[tool] ?? {}));
-        entry.refused.push({ release, tool, code: r.code, text: r.text, sent: recorder.take().length });
+        const undeclared = await conn.call(tool, { ...requiredArguments(schemas[tool] ?? {}), notDeclared: 'x' });
+        entry.refused.push({ release, tool, code: r.code, text: r.text, sent: recorder.take().length, undeclaredCode: undeclared.code });
       }
       await conn.close();
     }
@@ -97,8 +98,25 @@ describe('tools per release from the spec', () => {
     expect(wrong).toEqual([]);
   });
 
+  // Hand-picked cases, so a wrong rule in both the generator and availability() above can't pass;
+  // spec-conformance.guard.test.ts checks the traffic of every listed tool independently.
+  it.each([
+    ['bconnect-endpoints-mcp', 'update_maintenance_window_for_endpoint', ['26R1']], // PUT in 25R2, the tool sends PATCH
+    ['bconnect-endpoints-mcp', 'list_industrial_endpoints', ['25R2']], // removed in 26R1
+    ['bconnect-groups-mcp', 'list_industrial_endpoints_by_static_group', ['25R2']],
+    ['bconnect-compliance-mcp', 'list_vulnerabilities', ['26R1']], // no 25R2 compliance spec
+    ['bconnect-universaldynamicgroups-mcp', 'list_udg_folders', ['26R1']], // GetFolders exists in other 25R2 domains only
+    ['bconnect-endpoints-mcp', 'list_windows_endpoints', ['25R2', '26R1']],
+  ])('%s %s is available in %j', (server, tool, releases) => {
+    expect(seen.find((s) => s.server === server)?.generated?.[tool]).toEqual(releases);
+  });
+
   it.each(RELEASES)('bMS %s lacks the expected number of tools (not vacuous)', (release) => {
     expect(seen.flatMap((s) => Object.keys(s.expected).filter((t) => !s.expected[t].includes(release))).length).toBe(HIDDEN[release]);
+  });
+
+  it('a tool the release lacks is refused before its arguments are checked (no InvalidParams for a schema it does not list)', () => {
+    expect(seen.flatMap((s) => s.refused.filter((r) => r.undeclaredCode !== METHOD_NOT_FOUND).map((r) => `${s.server} ${r.release} ${r.tool}: ${r.undeclaredCode}`))).toEqual([]);
   });
 
   it('a tool the release lacks is refused by name, naming the release in use, and sends nothing', () => {

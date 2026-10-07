@@ -200,7 +200,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
     ];
 
-    // 26R1-only tools
+    // 26R1-only tools (listed per TOOL_RELEASES, #159)
     tools.splice(2, 0,
       {
         name: "get_bitlocker_secrets",
@@ -287,6 +287,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // countOnly (#165): count with one 1-row request instead of loading a page.
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
+    // A tool the selected release lacks is refused by name first, before its arguments are
+    // checked against a schema the release doesn't list, and before anything is sent (#159).
+    refuseUnavailableTool(TOOL_RELEASES, name);
     // A renamed tool answers with its new name (#177).
     const renamedTo = RENAMED_TOOLS.get(name);
     if (renamedTo) {
@@ -294,8 +297,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
-    // A tool the selected release lacks is refused by name, before anything is sent (#159).
-    refuseUnavailableTool(TOOL_RELEASES, name);
 
     // 1. Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(name, args);

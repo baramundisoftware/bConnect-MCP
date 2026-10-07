@@ -673,7 +673,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         { name: "delete_endpoint", description: "Delete any endpoint by ID (generic delete for all endpoint types). WARNING: Permanently deletes the endpoint.", inputSchema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] } },
       ];
 
-      // 26R1-only tools: Unmanaged Endpoints + EntraID
+      // 26R1-only tools: Unmanaged Endpoints + EntraID (listed per TOOL_RELEASES, #159)
       tools.push(
         { name: "list_unmanaged_endpoints", description: "[26R1] List all unmanaged endpoints detected by baramundi. Returns the devices that are not yet enrolled into management; the route takes no paging or filter arguments. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: {} } },
         { name: "get_unmanaged_endpoint", description: "[26R1] Get details of a specific unmanaged endpoint by its GUID. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
@@ -701,10 +701,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // countOnly (#165): count with one 1-row request instead of loading a page.
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
+    // A tool the selected release lacks is refused by name first, before its arguments are
+    // checked against a schema the release doesn't list, and before anything is sent (#159).
+    refuseUnavailableTool(TOOL_RELEASES, name);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
-    // A tool the selected release lacks is refused by name, before anything is sent (#159).
-    refuseUnavailableTool(TOOL_RELEASES, name);
 
     
     // Validate arguments first — pure, no side effects, fails fast on bad input.

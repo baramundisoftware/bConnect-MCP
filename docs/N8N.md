@@ -72,7 +72,7 @@ carrying your proxy/IdP token).
 | **Authentication** | **None** on a trusted private network. If a proxy fronts the gateway, use **Bearer Auth** or **Header Auth** with whatever token the proxy requires. |
 | **Tools to Include** | **All**, or **Selected** to offer the agent only some tools (fewer tokens, see below) |
 
-The AI Agent now has access to exactly the 27 endpoints read tools (~6,400 tokens) —
+The AI Agent now has access to exactly the 25 endpoints read tools (~6,200 tokens) —
 nothing from the other 12 domains is loaded. The gateway keeps write tools off and leaves
 them out of the tool list.
 
@@ -234,7 +234,7 @@ Measured on 26R1 from the gateway's `tools/list` answers, which contain only rea
 189,000 characters of tool definitions for all 13 domains, at roughly 3.5 characters per token). The
 exact count depends on the model's tokenizer and on how n8n passes the tools on.
 
-At ~53,000 tokens for tool definitions alone, every call of the AI Agent spends a
+At ~54,000 tokens for tool definitions alone, every call of the AI Agent spends a
 large part of the context window before any conversation, user data, or system
 instructions.
 

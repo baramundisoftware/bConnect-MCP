@@ -443,7 +443,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
     ];
 
-    // 26R1-only tools
+    // 26R1-only tools (listed per TOOL_RELEASES, #159)
     (tools as object[]).push(
       {
         name: "list_assets_by_org_unit",
@@ -543,10 +543,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // countOnly (#165): count with one 1-row request instead of loading a page.
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
+    // A tool the selected release lacks is refused by name first, before its arguments are
+    // checked against a schema the release doesn't list, and before anything is sent (#159).
+    refuseUnavailableTool(TOOL_RELEASES, name);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
-    // A tool the selected release lacks is refused by name, before anything is sent (#159).
-    refuseUnavailableTool(TOOL_RELEASES, name);
 
     // 1. Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(name, args);
