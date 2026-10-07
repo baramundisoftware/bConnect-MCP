@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Group-scoped endpoint queries — list endpoints by logical, static, dynamic, and universal dynamic groups, and by AD user  
-**Tools:** 30 (33 on bMS 25R2)
+**Tools:** 2
 
 ---
 
@@ -47,45 +47,33 @@ Claude Desktop (`claude_desktop_config.json`) and other clients: see
 
 All tools are read-only.
 
+The tools that differed only by group kind and member type are two tools with arguments. The
+values are the API's names: group kinds `LogicalGroup`, `StaticGroup`, `DynamicGroup`,
+`UniversalDynamicGroup`; member and endpoint types `WindowsEndpoint`, `MacEndpoint`,
+`LinuxEndpoint`, `AndroidEndpoint`, `IOSEndpoint`, `NetworkEndpoint` (`IndustrialEndpoint` on
+bMS 25R2 only), the same values as the `type` field of the results. The tool list offers only the
+values the connected bMS release has, and each filter that only some routes take says which. A call
+with a filter the chosen route doesn't have, or a combination the API has no route for, is refused
+before anything is sent, with the valid ones.
+
 | Tool | Description |
 |------|-------------|
-| `list_endpoints_by_logical_group` | List all endpoints in a logical group |
-| `list_android_endpoints_by_logical_group` | List Android endpoints in a logical group |
-| `list_ios_endpoints_by_logical_group` | List iOS endpoints in a logical group |
-| `list_linux_endpoints_by_logical_group` | List Linux endpoints in a logical group |
-| `list_mac_endpoints_by_logical_group` | List macOS endpoints in a logical group |
-| `list_network_endpoints_by_logical_group` | List network endpoints in a logical group |
-| `list_windows_endpoints_by_logical_group` | List Windows endpoints in a logical group |
-| `list_industrial_endpoints_by_logical_group` | **(25R2)** List industrial endpoints in a logical group |
-| `list_logical_groups_by_logical_group` | List child logical groups of a parent logical group |
-| `list_endpoints_by_static_group` | List all endpoints in a static group |
-| `list_android_endpoints_by_static_group` | List Android endpoints in a static group |
-| `list_ios_endpoints_by_static_group` | List iOS endpoints in a static group |
-| `list_linux_endpoints_by_static_group` | List Linux endpoints in a static group |
-| `list_mac_endpoints_by_static_group` | List macOS endpoints in a static group |
-| `list_network_endpoints_by_static_group` | List network endpoints in a static group |
-| `list_windows_endpoints_by_static_group` | List Windows endpoints in a static group |
-| `list_industrial_endpoints_by_static_group` | **(25R2)** List industrial endpoints in a static group |
-| `list_endpoints_by_dynamic_group` | List all endpoints in a dynamic group |
-| `list_windows_endpoints_by_dynamic_group` | List Windows endpoints in a dynamic group |
-| `list_endpoints_by_universal_dynamic_group` | List all endpoints in a universal dynamic group |
-| `list_android_endpoints_by_universal_dynamic_group` | List Android endpoints in a universal dynamic group |
-| `list_ios_endpoints_by_universal_dynamic_group` | List iOS endpoints in a universal dynamic group |
-| `list_linux_endpoints_by_universal_dynamic_group` | List Linux endpoints in a universal dynamic group |
-| `list_mac_endpoints_by_universal_dynamic_group` | List macOS endpoints in a universal dynamic group |
-| `list_network_endpoints_by_universal_dynamic_group` | List network endpoints in a universal dynamic group |
-| `list_windows_endpoints_by_universal_dynamic_group` | List Windows endpoints in a universal dynamic group |
-| `list_industrial_endpoints_by_universal_dynamic_group` | **(25R2)** List industrial endpoints in a universal dynamic group |
-| `list_endpoints_by_ad_user` | List all endpoints associated with an AD user |
-| `list_android_endpoints_by_ad_user` | List Android endpoints associated with an AD user |
-| `list_ios_endpoints_by_ad_user` | List iOS endpoints associated with an AD user |
-| `list_linux_endpoints_by_ad_user` | List Linux endpoints associated with an AD user |
-| `list_mac_endpoints_by_ad_user` | List macOS endpoints associated with an AD user |
-| `list_windows_endpoints_by_ad_user` | List Windows endpoints associated with an AD user |
+| `list_group_members` | List the members of a group (`groupKind`, `groupId`), one page at a time: all endpoints, one `memberType`, or with `memberType` `LogicalGroup` the child groups of a logical group. `includeSubfolders` for logical groups. |
+| `list_ad_user_endpoints` | List the endpoints associated with an AD user (`adUserId`); `endpointType` (optional) for one type: Windows, Mac, Linux, Android, iOS |
+
+Member types per group kind (the routes the API offers):
+
+| `groupKind` | `memberType` |
+|---|---|
+| `LogicalGroup` | left out (all endpoints), every endpoint type, `LogicalGroup` (child groups) |
+| `StaticGroup` | left out (all endpoints), every endpoint type |
+| `DynamicGroup` | left out (all endpoints), `WindowsEndpoint` |
+| `UniversalDynamicGroup` | left out (all endpoints), every endpoint type |
+
+`countOnly: true` returns only the number of members (`totalItems`) with one 1-row request, for
+example to check how many endpoints a job assignment to a group reaches.
 
 ---
-
-> Tools marked **(25R2)** exist only in bMS 2025 R2: 2026 R1 removed the industrial-endpoint API, so the server lists them only on 25R2.
 
 ## Environment Variables
 

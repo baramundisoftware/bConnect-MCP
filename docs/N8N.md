@@ -110,7 +110,7 @@ Each bConnect domain is a separate URL path on the gateway:
 | `software` | `/software/mcp` | Installed software inventory |
 | `activedirectory` | `/activedirectory/mcp` | AD groups, users, OUs |
 | `servermanagement` | `/servermanagement/mcp` | Server config, API keys |
-| `groups` | `/groups/mcp` | Logical, static, dynamic groups |
+| `groups` | `/groups/mcp` | Members of logical, static, dynamic and universal dynamic groups; endpoints of an AD user |
 | `variables` | `/variables/mcp` | Variable definitions and instances |
 | `defensecontrol` | `/defensecontrol/mcp` | BitLocker, Defender, local admins |
 | `operatingsystems` | `/operatingsystems/mcp` | OS deployment profiles |
@@ -217,9 +217,9 @@ input schema — into the LLM system prompt **on every single invocation**. Tool
 are not loaded lazily.
 
 Each tool definition costs roughly 300 tokens on average (from about 200 to
-over 400; the group member tools carry the largest schemas). The bConnect MCP
-suite has 239 tools across 13 domains on 26R1 (197 on 25R2); through the gateway, where write
-tools are off and left out of the list, an agent sees the 158 read tools (131 on 25R2).
+over 400; the two group member tools, which cover every group kind, about 900 each). The bConnect MCP
+suite has 211 tools across 13 domains on 26R1 (166 on 25R2); through the gateway, where write
+tools are off and left out of the list, an agent sees the 130 read tools (100 on 25R2).
 
 ### Token cost per configuration
 
@@ -229,13 +229,13 @@ tools are off and left out of the list, an agent sees the 158 read tools (131 on
 | `endpoints` + `software` | 21 | ~6,200 |
 | `endpoints` + `jobs` + `assets` | 45 | ~14,000 |
 | `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 72 | ~22,600 |
-| All 13 domains | 158 | ~50,200 |
+| All 13 domains | 130 | ~39,300 |
 
 Measured on 26R1 from the gateway's `tools/list` answers, which contain only read tools (about
-176,000 characters of tool definitions for all 13 domains, at roughly 3.5 characters per token). The
+137,500 characters of tool definitions for all 13 domains, at roughly 3.5 characters per token). The
 exact count depends on the model's tokenizer and on how n8n passes the tools on.
 
-At ~50,000 tokens for tool definitions alone, every call of the AI Agent spends a
+At ~39,000 tokens for tool definitions alone, every call of the AI Agent spends a
 large part of the context window before any conversation, user data, or system
 instructions.
 
@@ -258,7 +258,7 @@ Client Tool node per domain you need and leave the rest out. Within a domain,
 
 ### Never connect all 13 domains to a single AI Agent
 
-Even with a large-context model, loading all 158 tool definitions wastes tokens
+Even with a large-context model, loading all 130 tool definitions wastes tokens
 on tools the workflow will never call, increases latency, and reduces the model's
 effective reasoning budget for actual work.
 

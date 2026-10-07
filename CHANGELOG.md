@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`) are unchanged and still decide what a tool may do.
 
 ### Changed
-- **Breaking: the endpoint tools are one tool per operation, with the endpoint type as an argument.**
+- **Breaking: the endpoint and groups tools are one tool per operation, with the type as an argument.**
   The endpoints server had a copy of each operation per device type; the copies are merged into one
   tool with a `type` argument (#174). Its values are the API's endpoint type names, the same as the
   `type` field of the results: `WindowsEndpoint`, `MacEndpoint`, `LinuxEndpoint`, `AndroidEndpoint`,
@@ -55,6 +55,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   `list_endpoints`, `get_endpoint`, `delete_endpoint` and `list_endpoints_by_logical_group` without
   `type` work as before.
+
+  The groups server had a tool per group kind and member type; its 33 tools are now two (#174):
+  `list_group_members` with `groupKind` (`LogicalGroup`, `StaticGroup`, `DynamicGroup`,
+  `UniversalDynamicGroup`), `groupId` and, optionally, `memberType` (an endpoint type as above, or
+  `LogicalGroup` for the child groups of a logical group; left out: all endpoints), and
+  `list_ad_user_endpoints` with `adUserId` and, optionally, `endpointType`. `groupId` replaces
+  `logicalGroupId`, `staticGroupId`, `dynamicGroupId` and `universalDynamicGroupId`. A combination
+  the API has no route for is refused with the valid ones, for example `list_group_members has no
+  route for groupKind "DynamicGroup" and memberType "MacEndpoint". Valid on bMS 26R1: groupKind
+  "DynamicGroup" without memberType; groupKind "DynamicGroup" and memberType "WindowsEndpoint".`
+  Each call sends the same request as the old tool did, with the same filters, `includeSubfolders`
+  (logical groups) and `countOnly`. An old name returns its replacement, for example
+  `list_mac_endpoints_by_static_group was replaced by list_group_members: call list_group_members
+  with groupKind "StaticGroup" and with memberType "MacEndpoint", with groupId (was staticGroupId).`
+  The groups server lists 2 tools in both releases (30 before on 26R1, 33 on 25R2); its tool list
+  shrinks from 44.4 KB to 6.1 KB on 26R1 and from 47.6 KB to 5.4 KB on 25R2. The four
+  `assign_job_to_*` tools now say to check their reach with `list_group_members` and
+  `countOnly: true` instead of `PageSize: 1`.
+
+  | Old tool | New call |
+  |---|---|
+  | `list_endpoints_by_logical_group` (groups server; `logicalGroupId`) | `list_group_members` with `groupKind` `LogicalGroup`, without `memberType`, `groupId` |
+  | `list_windows_endpoints_by_logical_group`, `list_mac_endpoints_by_logical_group`, `list_linux_endpoints_by_logical_group`, `list_android_endpoints_by_logical_group`, `list_ios_endpoints_by_logical_group`, `list_network_endpoints_by_logical_group`, `list_industrial_endpoints_by_logical_group` | `list_group_members` with `groupKind` `LogicalGroup` and `memberType` `WindowsEndpoint`, `MacEndpoint`, `LinuxEndpoint`, `AndroidEndpoint`, `IOSEndpoint`, `NetworkEndpoint`, `IndustrialEndpoint`; `groupId` |
+  | `list_logical_groups_by_logical_group` | `list_group_members` with `groupKind` `LogicalGroup` and `memberType` `LogicalGroup`; `groupId` |
+  | `list_endpoints_by_static_group` (`staticGroupId`) | `list_group_members` with `groupKind` `StaticGroup`, without `memberType`, `groupId` |
+  | `list_windows_endpoints_by_static_group`, `list_mac_endpoints_by_static_group`, `list_linux_endpoints_by_static_group`, `list_android_endpoints_by_static_group`, `list_ios_endpoints_by_static_group`, `list_network_endpoints_by_static_group`, `list_industrial_endpoints_by_static_group` | `list_group_members` with `groupKind` `StaticGroup` and `memberType` (as above); `groupId` |
+  | `list_endpoints_by_dynamic_group` (`dynamicGroupId`) | `list_group_members` with `groupKind` `DynamicGroup`, without `memberType`, `groupId` |
+  | `list_windows_endpoints_by_dynamic_group` | `list_group_members` with `groupKind` `DynamicGroup` and `memberType` `WindowsEndpoint`; `groupId` |
+  | `list_endpoints_by_universal_dynamic_group` (`universalDynamicGroupId`) | `list_group_members` with `groupKind` `UniversalDynamicGroup`, without `memberType`, `groupId` |
+  | `list_windows_endpoints_by_universal_dynamic_group`, `list_mac_endpoints_by_universal_dynamic_group`, `list_linux_endpoints_by_universal_dynamic_group`, `list_android_endpoints_by_universal_dynamic_group`, `list_ios_endpoints_by_universal_dynamic_group`, `list_network_endpoints_by_universal_dynamic_group`, `list_industrial_endpoints_by_universal_dynamic_group` | `list_group_members` with `groupKind` `UniversalDynamicGroup` and `memberType` (as above); `groupId` |
+  | `list_endpoints_by_ad_user` | `list_ad_user_endpoints` without `endpointType` |
+  | `list_windows_endpoints_by_ad_user`, `list_mac_endpoints_by_ad_user`, `list_linux_endpoints_by_ad_user`, `list_android_endpoints_by_ad_user`, `list_ios_endpoints_by_ad_user` | `list_ad_user_endpoints` with `endpointType` `WindowsEndpoint`, `MacEndpoint`, `LinuxEndpoint`, `AndroidEndpoint`, `IOSEndpoint` |
+
+  The industrial member type exists only on bMS 25R2, as before. All 13 servers on 26R1 now list
+  211 tools (239 before this change, 268 before #174), 130 with writes off (158, 173).
 - **Each bMS release lists only the tools whose API routes it has.** Which tools a release offers
   is now derived from its API specification instead of hand-written checks: a tool is listed when
   every route it calls exists in the release. This hides tools that could only fail: the 8
