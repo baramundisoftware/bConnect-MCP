@@ -273,3 +273,11 @@ it('keeps a property no variant takes, and drops from required what it leaves ou
   // Depth only has 25R2 routes: left out on 26R1, with its required entry.
   expect((tools[0] as any).inputSchema).toEqual({ type: 'object', properties: { free: { type: 'string' } }, required: ['free'] });
 });
+
+it('parses a long, hostile key in linear time (no regex backtracking)', () => {
+  const hostile = `[${'[a'.repeat(50_000)}`;
+  const started = performance.now();
+  expect(variantSelect(hostile)).toEqual({});
+  expect(variantSelect(`t[${'a'.repeat(50_000)}=]`)).toEqual({ ['a'.repeat(50_000)]: null });
+  expect(performance.now() - started).toBeLessThan(200);
+});

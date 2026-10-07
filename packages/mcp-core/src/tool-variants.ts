@@ -46,10 +46,12 @@ export function describeVariant(select: VariantSelect): string {
 
 /** The selector values of a variant key: `tool[type=X]` → { type: "X" }; `tool[type=]` → { type: null }. */
 export function variantSelect(key: string): VariantSelect {
-  const inner = /\[(.*)\]$/.exec(key)?.[1];
-  if (inner === undefined) {
+  // Plain string search, no regex: the key can come from a caller's table (linear time, no backtracking).
+  const open = key.indexOf("[");
+  if (open < 0 || !key.endsWith("]")) {
     return {};
   }
+  const inner = key.slice(open + 1, -1);
   return Object.fromEntries(inner.split(",").map((part) => {
     const [name, value = ""] = part.split("=");
     return [name, value === "" ? null : value];
