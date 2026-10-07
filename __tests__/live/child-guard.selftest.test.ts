@@ -136,8 +136,13 @@ describe('a server counts as started only when every startup check passed', () =
     expect(startupFailures(clean, 'endpoints', '/bconnect')).toEqual([]);
   });
 
+  it('passes a clean startup that detected the release first (#159)', () => {
+    const detection = { method: 'GET', path: '/bconnect/servermanagement/v2.0/ManagementServer', query: '' };
+    expect(startupFailures({ ...clean, requests: [detection, probe] }, 'endpoints', '/bconnect')).toEqual([]);
+  });
+
   it('fails a startup that answered but sent more than its startup check', () => {
-    expect(startupFailures({ ...clean, requests: [probe, probe] }, 'endpoints', '/bconnect')).toEqual(['2 requests at startup, expected 1']);
+    expect(startupFailures({ ...clean, requests: [probe, probe] }, 'endpoints', '/bconnect')).toEqual(['2 startup checks, expected 1']);
   });
 
   it('fails no initialize answer, no tools and non-JSON output', () => {
@@ -154,9 +159,36 @@ describe('startup sends only the startup check', () => {
     expect(startupProblems([probe], 'endpoints', '/bconnect')).toEqual([]);
   });
 
+  describe('the release detection (#159): one GET of ManagementServer, read-only', () => {
+    const detection = { method: 'GET', path: '/bconnect/servermanagement/v2.0/ManagementServer', query: '' };
+
+    it('is accepted once, before or after the startup check, in any letter case', () => {
+      expect(startupProblems([detection, probe], 'endpoints', '/bconnect')).toEqual([]);
+      expect(startupProblems([probe, detection], 'endpoints', '/bconnect')).toEqual([]);
+      expect(startupProblems([{ ...detection, path: '/BConnect/ServerManagement/v2.0/managementserver' }, probe], 'endpoints', '/bconnect')).toEqual([]);
+    });
+
+    it('is not a startup check on its own', () => {
+      expect(startupProblems([detection], 'endpoints', '/bconnect')).toEqual(['no startup check was sent']);
+    });
+
+    it('is flagged when sent twice, with a query, or with another method', () => {
+      expect(startupProblems([detection, detection, probe], 'endpoints', '/bconnect')).toEqual(['2 release detections at startup, expected at most 1']);
+      expect(startupProblems([{ ...detection, query: 'PageSize=1' }, probe], 'endpoints', '/bconnect'))
+        .toEqual(['2 startup checks, expected 1']);
+      expect(startupProblems([{ ...detection, method: 'DELETE', refused: 'method DELETE' }, probe], 'endpoints', '/bconnect'))
+        .toEqual(['refused at startup: DELETE /bconnect/servermanagement/v2.0/ManagementServer (method DELETE)']);
+    });
+
+    it("counts for the servermanagement server too, next to its own startup check", () => {
+      const own = { method: 'GET', path: '/bconnect/servermanagement/v2.0/Microservices', query: 'PageSize=1' };
+      expect(startupProblems([detection, own], 'servermanagement', '/bconnect')).toEqual([]);
+    });
+  });
+
   it('flags no request, a second request, another domain, a refusal and a missing PageSize', () => {
     expect(startupProblems([], 'endpoints', '/bconnect')).toEqual(['no startup check was sent']);
-    expect(startupProblems([probe, probe], 'endpoints', '/bconnect')).toEqual(['2 requests at startup, expected 1']);
+    expect(startupProblems([probe, probe], 'endpoints', '/bconnect')).toEqual(['2 startup checks, expected 1']);
     expect(startupProblems([{ ...probe, path: '/bconnect/jobs/v2.0/Folders' }], 'endpoints', '/bconnect'))
       .toEqual(['startup check went to /bconnect/jobs/v2.0/Folders, not the endpoints API']);
     expect(startupProblems([{ ...probe, method: 'POST', refused: 'method POST' }], 'endpoints', '/bconnect'))
