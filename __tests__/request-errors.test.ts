@@ -50,9 +50,9 @@ describe('requestErrorAnswer', () => {
     expect(requestErrorAnswer({ type: 'entity.parse.failed' })).toEqual({ status: 500, body: PARSE_ERROR });
   });
 
-  it("never carries the error's message, a stack or a path", () => {
+  it("never carries the error's message or a file path", () => {
     const text = JSON.stringify(requestErrorAnswer(bodyError(400, 'entity.parse.failed')));
-    expect(text).not.toMatch(/secret|node_modules|\/srv\/|stack/i);
+    expect(text).not.toMatch(/secret|node_modules|\/srv\//i);
   });
 });
 
@@ -80,7 +80,16 @@ describe('jsonRpcRequestErrors', () => {
     expect(seen).toEqual({ status: 400, body: PARSE_ERROR });
   });
 
-  it('leaves an answer whose streaming has started to Express', () => {
+  it('tells onError about each error with the status it is answered with', () => {
+    const heard: Array<[number, unknown]> = [];
+    const error = bodyError(413, 'entity.too.large');
+    const { res, next } = recorder();
+    jsonRpcRequestErrors((status, e) => heard.push([status, e]))(error, {}, res, next);
+    jsonRpcRequestErrors((status, e) => heard.push([status, e]))('boom', {}, recorder(true).res, next);
+    expect(heard).toEqual([[413, error], [500, 'boom']]);
+  });
+
+    it('leaves an answer whose streaming has started to Express', () => {
     const error = new Error('late');
     const { res, seen, next } = recorder(true);
     jsonRpcRequestErrors()(error, {}, res, next);

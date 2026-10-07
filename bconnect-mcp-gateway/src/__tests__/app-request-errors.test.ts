@@ -11,7 +11,7 @@
 
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import http from "node:http";
-import { createApp } from "../app.js";
+import { createApp, logServerErrors } from "../app.js";
 
 async function startApp(): Promise<{ baseUrl: string; close: () => Promise<void> }> {
   const server = http.createServer(createApp());
@@ -25,6 +25,12 @@ async function startApp(): Promise<{ baseUrl: string; close: () => Promise<void>
 }
 
 const MCP_HEADERS = { "Content-Type": "application/json", Accept: "application/json, text/event-stream" };
+const MCP_INITIALIZE = {
+  jsonrpc: "2.0",
+  id: 1,
+  method: "initialize",
+  params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "test-client", version: "1.0.0" } },
+};
 const PARSE_ERROR = { jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null };
 const INTERNAL_ERROR = { jsonrpc: "2.0", error: { code: -32603, message: "Internal error" }, id: null };
 
@@ -88,10 +94,31 @@ describe("request errors", () => {
     expect(await answer(res)).toEqual({ status: 404, type: expect.stringContaining("application/json"), body: { error: "Not found" } });
   });
 
-  it("keeps serving after each error", async () => {
-    await post("/endpoints/mcp", "{bad");
-    await post("/endpoints/mcp", "x".repeat(4096));
-    const res = await fetch(`${gateway.baseUrl}/health`, { signal: AbortSignal.timeout(5000) });
-    expect(await answer(res)).toMatchObject({ status: 200, body: { status: "ok" } });
+  it("OPTIONS gets the JSON 404 as well (no CORS)", async () => {
+    const res = await fetch(`${gateway.baseUrl}/endpoints/mcp`, { method: "OPTIONS", signal: AbortSignal.timeout(5000) });
+    expect(await answer(res)).toMatchObject({ status: 404, body: { error: "Not found" } });
+  });
+
+  it("keeps serving after each error: an MCP call right after succeeds", async () => {
+    expect((await post("/endpoints/mcp", "{bad")).status).toBe(400);
+    expect((await post("/endpoints/mcp", "x".repeat(4096))).status).toBe(413);
+    const res = await post("/endpoints/mcp", JSON.stringify(MCP_INITIALIZE));
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('"serverInfo"');
+  });
+});
+
+describe("logServerErrors", () => {
+  it("logs a 5xx with the message only, and no 4xx", () => {
+    const logged: Array<[string, unknown]> = [];
+    const log = logServerErrors({ error: (msg, fields) => { logged.push([msg, fields]); } });
+    log(400, new Error("bad body"));
+    log(413, new Error("too large"));
+    log(500, new Error("boom"));
+    log(503, "down");
+    expect(logged).toEqual([
+      ["request failed", { status: 500, error: "boom" }],
+      ["request failed", { status: 503, error: "down" }],
+    ]);
   });
 });

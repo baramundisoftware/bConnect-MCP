@@ -38,15 +38,19 @@ interface MinimalResponse {
 
 /**
  * Express error handler (four parameters) answering with requestErrorAnswer().
- * Once a streamed answer has started, Express ends it.
+ * Once a streamed answer has started, Express ends it. `onError` hears about
+ * every error with the status it is answered with (the caller decides what to log).
  */
-export function jsonRpcRequestErrors(): (error: unknown, req: unknown, res: MinimalResponse, next: (error: unknown) => void) => void {
+export function jsonRpcRequestErrors(
+  onError?: (status: number, error: unknown) => void,
+): (error: unknown, req: unknown, res: MinimalResponse, next: (error: unknown) => void) => void {
   return (error, _req, res, next) => {
+    const { status, body } = requestErrorAnswer(error);
+    onError?.(status, error);
     if (res.headersSent) {
       next(error);
       return;
     }
-    const { status, body } = requestErrorAnswer(error);
     res.status(status).json(body);
   };
 }
