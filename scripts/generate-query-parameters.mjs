@@ -142,7 +142,8 @@ function variantOf(key) {
 }
 
 /** `type "WindowsEndpoint"` / `without type`, as the core says it. */
-const describeVariant = (select) => Object.entries(select).map(([n, v]) => (v === null ? `without ${n}` : `${n} "${v}"`)).join(" and ");
+const describeVariant = (select) => Object.entries(select).map(([n, v]) => (v === null ? `without ${n}` : `${n} "${v}"`))
+  .reduce((text, part) => (text === "" ? part : `${text}${part.startsWith("without ") ? " " : " and "}${part}`), "");
 
 /**
  * Variants of a merged tool, named as briefly as the tool's variants in the release

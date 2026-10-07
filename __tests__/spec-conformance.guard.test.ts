@@ -367,6 +367,10 @@ describe('the checks report known-bad cases (self-test)', () => {
       const noSelect = via('LogicalGroup');
       delete noSelect.select;
       expect(check(noSelect)).toEqual(['path-slot {logicalGroupId} ← groupId']);
+      // A member type is not the parent, and a mere suffix is not a word.
+      expect(check({ ...via('LogicalGroup'), select: { memberType: 'LogicalGroup' } })).toEqual(['path-slot {logicalGroupId} ← groupId']);
+      const up = { ...via('LogicalGroup'), inputSchema: { properties: { upId: { type: 'string' } } }, idsByArg: { upId: G } };
+      expect(check(up)).toEqual(['path-slot {logicalGroupId} ← upId']);
     });
 
     it('reports a 1-based or missing Page description and a PageSize without the 1000 limit', () => {

@@ -139,9 +139,12 @@ const slotsOf = (template: string): Array<string | null> =>
 function slotFits(slot: string, arg: string, select: Record<string, string> = {}): boolean {
   const norm = (s: string): string => s.toLowerCase().replace(/id$/, '');
   if (norm(slot) === '' || norm(arg) === '' || norm(slot) === norm(arg)) return true;
-  // A merged tool's generic argument (groupId) fits the slot its route's selector names
-  // (groupKind "LogicalGroup" → {logicalGroupId}), never another kind's (REQ-SRV-029).
-  return Object.values(select).some((value) => value.toLowerCase() === norm(slot)) && norm(slot).endsWith(norm(arg));
+  // A merged tool's generic argument (groupId) fits the slot a *Kind selector of its route names
+  // (groupKind "LogicalGroup" → {logicalGroupId}), never another kind's, and only as the kind's
+  // whole last word ("Group" of "LogicalGroup", not "up"); a member type never names it (REQ-SRV-029).
+  const word = arg.charAt(0).toUpperCase() + arg.slice(1, arg.length - 2);
+  return arg.endsWith('Id') && Object.entries(select).some(([name, value]) =>
+    name.endsWith('Kind') && value.toLowerCase() === norm(slot) && value.endsWith(word) && value !== word);
 }
 
 /**

@@ -18,6 +18,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { callsOf, connect, createRecorder, guardEnv, ROOT, type ConnectedServer } from './lib/exerciser.js';
 import type { Release } from './lib/spec.js';
+import { routeTakes } from './lib/variants.js';
 
 interface Recorded { method: string; path: string; query: Array<[string, string]>; contentType: string | null; body: string }
 interface Entry { release: Release; tool: string; call: string; args: Record<string, unknown>; requests: Recorded[] }
@@ -236,6 +237,14 @@ describe('calls that name no route', () => {
 });
 
 describe('the per-route notes say exactly which arguments each route takes', () => {
+  it('the note parser reads the last note, not words of the spec text before it', () => {
+    const route = { groupKind: 'StaticGroup', memberType: null };
+    expect(routeTakes('Not for production use. Only for groupKind "LogicalGroup".', route)).toBe(false);
+    expect(routeTakes('Only for testing. Not for memberType "AndroidEndpoint".', route)).toBe(true);
+    expect(routeTakes('Not for memberType "LogicalGroup"; without memberType.', route)).toBe(false);
+    expect(routeTakes('No note here.', route)).toBe(true);
+  });
+
   // The exerciser reads "Only for …" / "Not for …" to give each route its arguments; they must be
   // exactly the arguments the old tool for that route declared (its "all" call in the fixture).
   it.each(['25R2', '26R1'] as const)('%s: every route\'s arguments equal its old tool\'s', async (release) => {

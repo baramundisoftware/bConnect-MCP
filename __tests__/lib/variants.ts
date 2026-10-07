@@ -54,8 +54,12 @@ export function partNames(part: string, select: Record<string, string | null>): 
 
 /** Whether a property with this description is taken by the route `select`: true without a note. */
 export function routeTakes(description: unknown, select: Record<string, string | null>): boolean {
-  const m = /(Only|Not) for (.+)\.$/.exec(String(description ?? ''));
-  if (!m) return true;
-  const named = m[2].split('; ').some((part) => partNames(part, select));
-  return m[1] === 'Only' ? named : !named;
+  // The core appends the note last: read from the last "Only for " / "Not for ", so a spec text
+  // that happens to contain those words earlier isn't taken for the note.
+  const text = String(description ?? '');
+  const at = Math.max(text.lastIndexOf('Only for '), text.lastIndexOf('Not for '));
+  if (at < 0 || !text.endsWith('.')) return true;
+  const only = text.startsWith('Only for ', at);
+  const named = text.slice(at + (only ? 'Only for '.length : 'Not for '.length), -1).split('; ').some((part) => partNames(part, select));
+  return only ? named : !named;
 }
