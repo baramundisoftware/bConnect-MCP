@@ -14,7 +14,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { connect, createRecorder, guardEnv, ROOT, type ConnectedServer } from './lib/exerciser.js';
+import { callsOf, connect, createRecorder, guardEnv, ROOT, type ConnectedServer } from './lib/exerciser.js';
 import type { Release } from './lib/spec.js';
 
 interface Recorded { method: string; path: string; query: Array<[string, string]>; contentType: string | null; body: string }
@@ -213,6 +213,24 @@ describe('selector values follow the selected release (from the spec)', () => {
     expect(d).toContain('Only for');
     expect(d).toContain('groupKind "LogicalGroup"');
     expect(d).not.toContain('StaticGroup');
+  });
+});
+
+describe('the per-route notes say exactly which arguments each route takes', () => {
+  // The exerciser reads "Only for …" / "Not for …" to give each route its arguments; they must be
+  // exactly the arguments the old tool for that route declared (its "all" call in the fixture).
+  it.each(['25R2', '26R1'] as const)('%s: every route\'s arguments equal its old tool\'s', async (release) => {
+    const conn = use(release);
+    const calls = await callsOf('bconnect-groups-mcp', await conn.list(), release);
+    expect(calls.length).toBe(release === '25R2' ? 33 : 30);
+    const wrong = FIXTURE.filter((e) => e.release === release && e.call === 'all').flatMap((e) => {
+      const { tool, select, rename } = replacement(e.tool);
+      const route = calls.find((c) => c.name === tool && JSON.stringify(c.select) === JSON.stringify(select));
+      const want = Object.keys(e.args).map((k) => rename[k] ?? k).sort();
+      const got = Object.keys(route?.inputSchema.properties ?? {}).sort();
+      return JSON.stringify(got) === JSON.stringify(want) ? [] : [`${e.tool}: ${got.join(',')} ≠ ${want.join(',')}`];
+    });
+    expect(wrong).toEqual([]);
   });
 });
 

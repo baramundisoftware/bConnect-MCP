@@ -9,7 +9,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import {
-  describeVariant, refuseReplacedTool, variantKey, variantSelect, withToolVariants, withUnverifiedWriteMarker, withVariantSelectors,
+  describeVariant, describeVariants, refuseReplacedTool, variantKey, variantSelect, withToolVariants, withUnverifiedWriteMarker, withVariantSelectors,
   UNVERIFIED_WRITE_NOTE, type ReplacedToolTable, type ToolReleaseTable, type ToolVariantTable,
 } from '@bconnect/mcp-core';
 
@@ -280,4 +280,49 @@ it('parses a long, hostile key in linear time (no regex backtracking)', () => {
   expect(variantSelect(hostile)).toEqual({});
   expect(variantSelect(`t[${'a'.repeat(50_000)}=]`)).toEqual({ ['a'.repeat(50_000)]: null });
   expect(performance.now() - started).toBeLessThan(200);
+});
+
+describe('a tool with two selectors names whole slices (REQ-SRV-029 part 2)', () => {
+  // Shaped like list_group_members: kind A has every member type and child groups, B no child
+  // groups, D only all and Red.
+  const KEYS = ['A/', 'A/Red', 'A/Blue', 'A/Child', 'B/', 'B/Red', 'B/Blue', 'D/', 'D/Red'];
+  const key = (k: string) => `list_members[kind=${k.split('/')[0]},member=${k.split('/')[1]}]`;
+  const TABLE: ToolVariantTable = { list_members: Object.fromEntries(KEYS.map((k) => [key(k), variantSelect(key(k))])) };
+  const REL: ToolReleaseTable = { list_members: ['25R2', '26R1'], ...Object.fromEntries(KEYS.map((k) => [key(k), ['25R2', '26R1']])) };
+  const TAKES: Record<string, string[]> = {
+    Sub: ['A/', 'A/Red', 'A/Blue', 'A/Child'],
+    Host: ['A/', 'A/Red', 'B/', 'B/Red', 'D/', 'D/Red'],
+    Shade: ['A/Red', 'B/Red', 'D/Red', 'A/Blue'],
+  };
+  const argsOf = (k: string) => ['groupId', ...Object.entries(TAKES).filter(([, ks]) => ks.some((x) => key(x) === k)).map(([name]) => name)];
+  const universe = KEYS.map((k) => variantSelect(key(k)));
+  const of = (...ks: string[]) => ks.map((k) => variantSelect(key(k)));
+
+  it('describeVariants: a whole slice by its value, values of one selector together, the rest one by one', () => {
+    expect(describeVariants(of('A/', 'A/Red', 'A/Blue', 'A/Child'), universe)).toBe('kind "A"');
+    expect(describeVariants(of('A/Red', 'B/Red', 'D/Red', 'A/Child'), universe)).toBe('member "Red", "Child"');
+    expect(describeVariants(of('A/', 'B/', 'D/'), universe)).toBe('without member');
+    expect(describeVariants(of('A/Red', 'B/Red', 'D/Red', 'A/Blue'), universe)).toBe('member "Red"; kind "A" and member "Blue"');
+    // One selector: every variant by name, as before.
+    expect(describeVariants([{ type: 'Red' }, { type: 'Blue' }], [{ type: 'Red' }, { type: 'Blue' }, { type: null }])).toBe('type "Red"; type "Blue"');
+  });
+
+  it('lists "Only for" a slice, or "Not for" the slices that lack a property when shorter', async () => {
+    const list = async () => ({ tools: [{ name: 'list_members', inputSchema: { type: 'object', properties: {
+      kind: { type: 'string' }, member: { type: 'string' }, groupId: { type: 'string' },
+      Sub: { type: 'boolean', description: 'Sub.' }, Host: { type: 'string', description: 'Host.' }, Shade: { type: 'string', description: 'Shade.' },
+    } } }] });
+    const props = (await withVariantSelectors(TABLE, REL, argsOf, list)()).tools[0].inputSchema.properties;
+    expect(props.Sub.description).toBe('Sub. Only for kind "A".');
+    expect(props.Host.description).toBe('Host. Not for member "Blue", "Child".');
+    // The variants without Shade are not whole slices: say who has it.
+    expect(props.Shade.description).toBe('Shade. Only for member "Red"; kind "A" and member "Blue".');
+    expect(props.groupId).toEqual({ type: 'string' });
+  });
+
+  it('a refused argument names the slices that take it', async () => {
+    const handler = withToolVariants(TABLE, REL, argsOf, async () => 'ran');
+    const e = await refusal(() => handler(call('list_members', { kind: 'B', groupId: 'g', Sub: true })));
+    expect(e.message).toContain('Sub is not available for list_members with kind "B" without member (only with kind "A").');
+  });
 });

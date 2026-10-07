@@ -122,6 +122,8 @@ export interface ParamCall {
   /** The tool call returned an error. */
   failed: boolean;
   requests: Array<{ method: string; path: string; query: Array<[string, string]>; body: string }>;
+  /** The selector arguments of a merged tool's route (REQ-SRV-029), e.g. { groupKind: "LogicalGroup" }. */
+  select?: Record<string, string>;
 }
 
 /** Path-slot names of a spec template, e.g. ['logicalGroupId'] for /v2.0/LogicalGroups/{logicalGroupId}/Endpoints. */
@@ -131,11 +133,15 @@ const slotsOf = (template: string): Array<string | null> =>
 /**
  * True when the argument fills the slot by name: the same name ignoring case
  * and a trailing `Id`, or either side is the generic `id`. `dynamicGroupId`
- * doesn't fit `{universalDynamicGroupId}`: different entities.
+ * doesn't fit `{universalDynamicGroupId}`: different entities. A merged tool's `groupId` fits
+ * the slot of the group kind its call selects, and no other.
  */
-function slotFits(slot: string, arg: string): boolean {
+function slotFits(slot: string, arg: string, select: Record<string, string> = {}): boolean {
   const norm = (s: string): string => s.toLowerCase().replace(/id$/, '');
-  return norm(slot) === '' || norm(arg) === '' || norm(slot) === norm(arg);
+  if (norm(slot) === '' || norm(arg) === '' || norm(slot) === norm(arg)) return true;
+  // A merged tool's generic argument (groupId) fits the slot its route's selector names
+  // (groupKind "LogicalGroup" → {logicalGroupId}), never another kind's (REQ-SRV-029).
+  return Object.values(select).some((value) => value.toLowerCase() === norm(slot)) && norm(slot).endsWith(norm(arg));
 }
 
 /**
@@ -207,7 +213,7 @@ export function checkParams(args: {
       slotsOf(op.path).forEach((slot, i) => {
         if (!slot) return;
         const arg = Object.entries(call.idsByArg).find(([, guid]) => guid === segments[i])?.[0];
-        if (arg && !slotFits(slot, arg)) v('path-slot', call.tool, `{${slot}} ← ${arg}`);
+        if (arg && !slotFits(slot, arg, call.select)) v('path-slot', call.tool, `{${slot}} ← ${arg}`);
       });
     }
   }

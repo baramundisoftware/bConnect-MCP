@@ -44,6 +44,55 @@ export function describeVariant(select: VariantSelect): string {
     .reduce((text, part) => (text === "" ? part : `${text}${part.startsWith("without ") ? " " : " and "}${part}`), "");
 }
 
+const sameVariant = (names: readonly string[], a: VariantSelect, b: VariantSelect): boolean => names.every((n) => a[n] === b[n]);
+
+/** The whole slices of one selector that `selects` cover (named), and the variants left over. */
+function slices(selects: readonly VariantSelect[], universe: readonly VariantSelect[]): { parts: string[]; rest: VariantSelect[] } {
+  const names = Object.keys(universe[0] ?? {});
+  const chosen = (u: VariantSelect): boolean => selects.some((s) => sameVariant(names, s, u));
+  let best: { covered: VariantSelect[]; parts: string[] } = { covered: [], parts: [] };
+  for (const n of names) {
+    const values = [...new Set(universe.map((u) => u[n]))].filter((v) => universe.filter((u) => u[n] === v).every(chosen));
+    const covered = universe.filter((u) => values.includes(u[n]));
+    if (covered.length > best.covered.length) {
+      const named = values.filter((v): v is string => v !== null);
+      best = { covered, parts: [...(named.length > 0 ? [`${n} ${named.map((v) => `"${v}"`).join(", ")}`] : []), ...(values.includes(null) ? [`without ${n}`] : [])] };
+    }
+  }
+  return { parts: best.parts, rest: selects.filter((s) => !best.covered.some((u) => sameVariant(names, s, u))) };
+}
+
+/**
+ * Variants of a merged tool, named as briefly as the tool's variants in the release
+ * (`universe`) allow: with two or more selectors, the whole slices of one selector are named
+ * by the slice (`memberType "WindowsEndpoint", "MacEndpoint"` = every variant with one of
+ * those member types; `without memberType`), the rest one by one; parts joined with "; ".
+ * A tool with one selector names each variant. The generator names them the same way.
+ */
+export function describeVariants(selects: readonly VariantSelect[], universe: readonly VariantSelect[]): string {
+  if (Object.keys(universe[0] ?? {}).length < 2) {
+    return selects.map(describeVariant).join("; ");
+  }
+  const { parts, rest } = slices(selects, universe);
+  return [...parts, ...rest.map(describeVariant)].join("; ");
+}
+
+/**
+ * Which of a tool's variants take a property, for its description: "Only for …", or, with
+ * two or more selectors, "Not for …" when the variants that don't take it are whole slices
+ * and that is shorter.
+ */
+function takenBy(taking: readonly VariantSelect[], universe: readonly VariantSelect[]): string {
+  const only = `Only for ${describeVariants(taking, universe)}.`;
+  const names = Object.keys(universe[0] ?? {});
+  if (names.length < 2) {
+    return only;
+  }
+  const others = slices(universe.filter((u) => !taking.some((t) => sameVariant(names, t, u))), universe);
+  const not = `Not for ${others.parts.join("; ")}.`;
+  return others.rest.length === 0 && not.length < only.length ? not : only;
+}
+
 /** The selector values of a variant key: `tool[type=X]` → { type: "X" }; `tool[type=]` → { type: null }. */
 export function variantSelect(key: string): VariantSelect {
   // Plain string search, no regex: the key can come from a caller's table (linear time, no backtracking).
@@ -119,7 +168,7 @@ export function withVariantSelectors<Result extends { tools: object[] }>(
             properties[name] = property;
             continue;
           }
-          const only = `Only for ${taking.map(([, select]) => describeVariant(select)).join("; ")}.`;
+          const only = takenBy(taking.map(([, select]) => select), here.map(([, select]) => select));
           properties[name] = { ...property, description: `${typeof property.description === "string" ? property.description : ""} ${only}`.trim() };
         }
         const required = Array.isArray(tool.inputSchema.required)
@@ -175,7 +224,8 @@ function checkVariant(table: ToolVariantTable, releases: ToolReleaseTable, argum
       return [];
     }
     const listed = taking.filter(([key]) => inRelease(releases, key, release));
-    return [`${name} is not available for ${tool} with ${describeVariant(select)} (only with ${(listed.length > 0 ? listed : taking).map(([, s]) => describeVariant(s)).join("; ")}).`];
+    const universe = (listed.length > 0 ? here : variants).map(([, s]) => s);
+    return [`${name} is not available for ${tool} with ${describeVariant(select)} (only with ${describeVariants((listed.length > 0 ? listed : taking).map(([, s]) => s), universe)}).`];
   });
   if (problems.length > 0) {
     // "with without type" reads "without type".

@@ -91,7 +91,7 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
       await conn.call(tool.call, { ...requiredArguments(tool.inputSchema), ...tool.select, [UNKNOWN_NAME]: UNKNOWN_VALUE });
       const pass3 = recorder.take();
       paramCalls.push({
-        tool: tool.name, inputSchema: tool.inputSchema, idsByArg,
+        tool: tool.name, inputSchema: tool.inputSchema, idsByArg, select: tool.select,
         unknownName: UNKNOWN_NAME, unknownValue: UNKNOWN_VALUE, failed: isError,
         requests: [...pass2, ...pass3].map((r) => ({ method: r.method, path: r.path, query: r.query, body: r.body })),
       });
@@ -352,6 +352,21 @@ describe('the checks report known-bad cases (self-test)', () => {
       });
       expect(checkParams({ release: '26R1', server: 'demo-server', domain: 'demo', table: { list_things_by_group: ['GetThingsByUdg'] }, calls: [c], operations: ops })
         .map((x) => `${x.check} ${x.detail}`)).toEqual(['path-slot {universalDynamicGroupId} ← dynamicGroupId']);
+    });
+
+    it('lets a merged tool\'s groupId fill only the slot of the group kind its call selects (REQ-SRV-029)', () => {
+      const ops = [op('GET', '/v2.0/LogicalGroups/{logicalGroupId}/Things', 'GetThingsByLogicalGroup')];
+      const via = (groupKind: string) => call({
+        inputSchema: { properties: { groupId: { type: 'string' } } }, idsByArg: { groupId: G }, select: { groupKind },
+        requests: [{ method: 'GET', path: `/demo/v2.0/LogicalGroups/${G}/Things`, query: [], body: '' }],
+      });
+      const check = (c: ParamCall) => checkParams({ release: '26R1', server: 'demo-server', domain: 'demo', table: { list_things_by_group: ['GetThingsByLogicalGroup'] }, calls: [c], operations: ops })
+        .map((x) => `${x.check} ${x.detail}`);
+      expect(check(via('LogicalGroup'))).toEqual([]);
+      expect(check(via('StaticGroup'))).toEqual(['path-slot {logicalGroupId} ← groupId']);
+      const noSelect = via('LogicalGroup');
+      delete noSelect.select;
+      expect(check(noSelect)).toEqual(['path-slot {logicalGroupId} ← groupId']);
     });
 
     it('reports a 1-based or missing Page description and a PageSize without the 1000 limit', () => {
