@@ -25,7 +25,7 @@
  * The checks themselves are proven on known-bad fixtures below.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { RELEASES, type Release, type ApiOperation, loadOperations } from './lib/spec.js';
@@ -33,7 +33,7 @@ import {
   ID, ROOT, SERVERS, UNKNOWN_NAME, UNKNOWN_VALUE, allArguments, callsOf, connect, createRecorder, domainOf, guardEnv, requiredArguments,
 } from './lib/exerciser.js';
 import {
-  type Baseline, type ParamCall, type Violation, type WriteCall,
+  type Baseline, type ParamCall, type UnsupportedOperations, type Violation, type WriteCall,
   checkBodies, checkCoverage, checkParams, checkStaleBindings, checkTools, checkUnsupported, checkWritesOff, compareWithBaseline, keyOf,
 } from './lib/conformance.js';
 import { bodyValidator, jsonPatchProblems } from './lib/bodies.js';
@@ -52,6 +52,12 @@ afterAll(() => {
   recorder.close();
   process.env = savedEnv;
 });
+
+/** A server's declared-unsupported operations (REQ-SRV-031); none when it has no such file. */
+async function unsupportedOf(server: string): Promise<UnsupportedOperations> {
+  const file = join(ROOT, server, 'src', 'unsupported-operations.ts');
+  return existsSync(file) ? (await import(pathToFileURL(file).href)).UNSUPPORTED_OPERATIONS : {};
+}
 
 async function tableOf(server: string): Promise<Readonly<Record<string, readonly string[]>>> {
   const mod = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
@@ -132,7 +138,16 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
     await conn.close();
     violations.push(...checkWritesOff(release, server, calls));
   }
-  for (const [domain, covered] of coveredByDomain) violations.push(...checkCoverage(release, domain, covered));
+  // Declared-unsupported operations: no coverage gap in their release, and every declaration must hold (REQ-SRV-031).
+  const unsupportedByDomain = new Map<string, Record<string, Record<string, string>>>();
+  for (const server of SERVERS) {
+    const unsupported = await unsupportedOf(server);
+    const merged = unsupportedByDomain.get(domainOf(server)) ?? {};
+    for (const [id, releases] of Object.entries(unsupported)) merged[id] = { ...merged[id], ...releases };
+    unsupportedByDomain.set(domainOf(server), merged);
+    violations.push(...checkUnsupported({ release, server, domain: domainOf(server), unsupported, table: await tableOf(server), listed: registered.get(server) ?? new Set() }));
+  }
+  for (const [domain, covered] of coveredByDomain) violations.push(...checkCoverage(release, domain, covered, undefined, unsupportedByDomain.get(domain)));
   return { violations, registered };
 }
 

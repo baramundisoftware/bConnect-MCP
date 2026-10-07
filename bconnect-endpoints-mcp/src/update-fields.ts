@@ -11,7 +11,8 @@
  * One table drives the input schema, the validation rules and the JSON Patch,
  * so they can't drift apart.
  */
-import { CommonRules, patchFromArguments, type JsonPatchOperation, type ValidationRule } from "@bconnect/mcp-core";
+import { CommonRules, patchFromArguments, type JsonPatchOperation, type Release, type ValidationRule } from "@bconnect/mcp-core";
+import { WINDOW_TYPES } from "./maintenance-window.js";
 
 export interface Field {
   path: string;
@@ -38,13 +39,27 @@ export const MAINTENANCE_INTERVAL = {
   required: ["start", "end"],
 };
 
+/** The maintenance-window fields of 26R1 (create and update; the update tools need 26R1). */
 export const maintenanceWindowFields: Record<string, Field> = {
   maintenanceWindowDefinitionType: choice("/maintenancewindowdefinitiontype",
     "Window type: Anytime (no restriction, the default), Everyday (same slot every day), WorkdayWeekend, IndividualWeekday, or Never. Anytime and Never take no intervals; the others need at least one.",
-    ["Anytime", "Never", "Everyday", "WorkdayWeekend", "IndividualWeekday"]), // Anytime first: the default (spec)
+    WINDOW_TYPES["26R1"]), // Anytime first: the default (spec)
   intervals: { path: "/intervals", type: "array", items: MAINTENANCE_INTERVAL,
     description: "The periods in which jobs may run, e.g. [{\"maintenancePeriod\":\"Everyday\",\"start\":{\"hour\":22,\"minute\":0},\"end\":{\"hour\":6,\"minute\":0}}]. Required, at least one, for Everyday, WorkdayWeekend and IndividualWeekday; leave out for Anytime and Never." },
 };
+
+/** The same fields with 25R2's window types and rule (REQ-SRV-031): create on 25R2 sends a body its schema accepts. */
+const maintenanceWindowFields25R2: Record<string, Field> = {
+  maintenanceWindowDefinitionType: choice("/maintenancewindowdefinitiontype",
+    "Window type: Unrestricted (no restriction, the default), Everyday (same slot every day), WorkdayWeekend or IndividualWeekday. Unrestricted takes no intervals; the others need at least one.",
+    WINDOW_TYPES["25R2"]), // Unrestricted first: the default (spec)
+  intervals: { ...maintenanceWindowFields.intervals,
+    description: "The periods in which jobs may run, e.g. [{\"maintenancePeriod\":\"Everyday\",\"start\":{\"hour\":22,\"minute\":0},\"end\":{\"hour\":6,\"minute\":0}}]. Required, at least one, for Everyday, WorkdayWeekend and IndividualWeekday; leave out for Unrestricted." },
+};
+
+/** The maintenance-window fields of a release. */
+export const maintenanceWindowFieldsOf = (release: Release): Record<string, Field> =>
+  (release === "25R2" ? maintenanceWindowFields25R2 : maintenanceWindowFields);
 
 /**
  * Per update tool, and per endpoint type of update_endpoint (its variant key,

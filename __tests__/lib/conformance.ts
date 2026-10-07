@@ -86,11 +86,46 @@ export function checkStaleBindings(server: string, table: Readonly<Record<string
     .map((tool) => ({ check: 'binding-stale', release: '-', server, tool, detail: '-' }));
 }
 
-/** `coverage`: an operation of the release's spec that no tool's request reached. */
-export function checkCoverage(release: Release, domain: string, covered: Set<string>, operations?: ApiOperation[]): Violation[] {
+/** A server's src/unsupported-operations.ts: operationId → release → reason (REQ-SRV-031). */
+export type UnsupportedOperations = Readonly<Record<string, Readonly<Record<string, string>>>>;
+
+/**
+ * `coverage`: an operation of the release's spec that no tool's request reached, unless a server
+ * of the domain declares it unsupported in that release.
+ */
+export function checkCoverage(release: Release, domain: string, covered: Set<string>, operations?: ApiOperation[], unsupported: UnsupportedOperations = {}): Violation[] {
   return (operations ?? loadOperations(release))
-    .filter((op) => op.domain === domain && !covered.has(op.operationId))
+    .filter((op) => op.domain === domain && !covered.has(op.operationId) && !(Object.hasOwn(unsupported, op.operationId) && Object.hasOwn(unsupported[op.operationId], release)))
     .map((op) => ({ check: 'coverage', release, server: domain, tool: '-', detail: op.operationId }));
+}
+
+/**
+ * A declaration in src/unsupported-operations.ts that no longer holds, for one release:
+ * - `unsupported-unknown`: the operation isn't in the release's spec (of the domain);
+ * - `unsupported-no-tool`: no tool of the server calls it (operations.ts), so nothing is withheld;
+ * - `unsupported-listed`: a tool that calls it is listed in the release, so it is offered after all;
+ * - `unsupported-reason`: the reason is missing or too short to tell a reader why.
+ */
+export function checkUnsupported(args: {
+  release: Release; server: string; domain: string; unsupported: UnsupportedOperations;
+  table: Readonly<Record<string, readonly string[]>>; listed: Set<string>; operations?: ApiOperation[];
+}): Violation[] {
+  const { release, server, domain, unsupported, table, listed } = args;
+  const ops = (args.operations ?? loadOperations(release)).filter((op) => op.domain === domain);
+  const out: Violation[] = [];
+  const v = (check: string, detail: string): void => { out.push({ check, release, server, tool: '-', detail }); };
+  for (const [id, releases] of Object.entries(unsupported)) {
+    if (!Object.hasOwn(releases, release)) continue;
+    if (!ops.some((op) => op.operationId === id)) {
+      v('unsupported-unknown', id);
+      continue;
+    }
+    const tools = Object.entries(table).filter(([, ids]) => ids.includes(id)).map(([tool]) => tool);
+    if (tools.length === 0) v('unsupported-no-tool', id);
+    if (tools.some((tool) => listed.has(tool))) v('unsupported-listed', id);
+    if (releases[release].trim().length < 20) v('unsupported-reason', id);
+  }
+  return out;
 }
 
 export type Baseline = Record<string, number>;
