@@ -22,7 +22,7 @@ Contributions are licensed under the repository's [MIT License](LICENSE).
 ## Build and test
 
 Node.js 22.15 or 24 (the versions CI tests). On Windows, make Git Bash npm's script shell
-first, see [README.md](README.md#getting-started).
+first, see [README.md](README.md#quick-start).
 
 ```bash
 npm ci

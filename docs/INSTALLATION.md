@@ -75,7 +75,7 @@ needed, the image brings its own:
 docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest   # or pin a version, e.g. :26.1.9
 ```
 
-The [README](../README.md#docker-deployment) shows a `docker run` with the bMS settings and the
+The [README](../README.md#gateway-http-multi-user) shows a `docker run` with the bMS settings and the
 health check; [DOCKER.md](DOCKER.md) is the full guide (Compose, TLS and authentication, an
 internal CA, mounted secrets).
 
