@@ -5,8 +5,8 @@
  * 26.1.161: "The maintenance window of type 'Anytime' must not contain any
  * intervals"); the spec lists Never as interval-free too, and requires at least
  * one interval for every other type. 25R2 has neither Anytime nor Never: its
- * interval-free type is Unrestricted (its default). The tools leave 26R1's
- * Unrestricted out (REQ-SRV-031 Q2). The create and update tools check the rule
+ * interval-free type is Unrestricted (its default). 26R1's spec marks Unrestricted
+ * deprecated ("use 'Anytime' instead"), so the tools don't offer it there (REQ-SRV-031 Q2). The create and update tools check the rule
  * before sending, and an update to an interval-free type removes the intervals
  * the previous type left behind.
  */
@@ -25,6 +25,7 @@ const NO_INTERVALS_IN: Readonly<Record<Release, readonly string[]>> = {
   "25R2": ["Unrestricted"],
 };
 
+/** 26R1's interval-free types: the update tools (26R1 only, REQ-SRV-031) remove intervals on a change to one. */
 export const NO_INTERVALS: readonly string[] = NO_INTERVALS_IN["26R1"];
 
 /** The rule in words, for the tool descriptions. */
@@ -40,14 +41,15 @@ const hasIntervals = (value: unknown): boolean => Array.isArray(value) && value.
  * Refuses a call bMS would reject: a window type the release doesn't have, intervals with an
  * interval-free type, or a type that needs intervals without them.
  */
-export function checkIntervalRule(args: Record<string, unknown>, release: Release = "26R1"): void {
+export function checkIntervalRule(args: Record<string, unknown>, release: Release): void {
   const type = args.maintenanceWindowDefinitionType;
   if (typeof type !== "string") {
     return;
   }
   if (!WINDOW_TYPES[release].includes(type)) {
-    const hint = type === "Unrestricted" ? " Unrestricted isn't offered on 26R1: use Anytime for a window without restriction." : "";
-    throw new McpError(ErrorCode.InvalidParams, `'${type}' isn't a maintenance window type of bMS ${release}: use ${WINDOW_TYPES[release].join(", ")}.${hint}`);
+    throw new McpError(ErrorCode.InvalidParams, release === "26R1" && type === "Unrestricted"
+      ? "'Unrestricted' is deprecated in bMS 26R1 and not offered: use Anytime for a window without restriction."
+      : `'${type}' isn't a maintenance window type of bMS ${release}: use ${WINDOW_TYPES[release].join(", ")}.`);
   }
   if (NO_INTERVALS_IN[release].includes(type)) {
     if (hasIntervals(args.intervals)) {

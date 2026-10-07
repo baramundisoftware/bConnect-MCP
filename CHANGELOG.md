@@ -31,9 +31,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   window types: their default, `Anytime`, and `Never` don't exist in 25R2, and 25R2's `Unrestricted`
   was missing (#307). Creating a maintenance window now offers and accepts the selected release's
   types and applies its interval rule: on 25R2 `Unrestricted` (the default, no intervals),
-  `Everyday`, `WorkdayWeekend` and `IndividualWeekday`; on 26R1 unchanged (`Unrestricted` stays out
-  there; the refusal says to use `Anytime`). A type the release doesn't have is refused before
-  anything is sent. Updating a maintenance window still needs 26R1: 25R2 updates with `PUT`, and its
+  `Everyday`, `WorkdayWeekend` and `IndividualWeekday`; on 26R1 the same types as before.
+  `Unrestricted`, which the 26R1 specification marks deprecated, isn't offered there: a call with
+  it, which used to be passed on, is now refused with "use Anytime". A type the release doesn't have
+  is refused before anything is sent. Updating a maintenance window still needs 26R1: 25R2 updates with `PUT`, and its
   API specification describes that request in two contradicting ways, so it isn't offered until a
   25R2 bMS confirms it. Not breaking: on 26R1 the tool list is unchanged.
 - **A server whose APIs the bMS release lacks says so at startup.** Started against a bMS 2025 R2,

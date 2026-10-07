@@ -91,11 +91,14 @@ describe.each(['endpoint', 'logical_group'])('%s', (target) => {
     ]);
   });
 
-  it('26R1: Unrestricted is not offered and is refused (Q2 a); Anytime still goes through', async () => {
+  it('26R1: Unrestricted (deprecated there) is not offered and is refused, saying to use Anytime (Q2 a); Anytime goes through', async () => {
     const conn = use('26R1');
     recorder.take();
-    const r = await conn.call(create, { id: ID, maintenanceWindowDefinitionType: 'Unrestricted' });
-    expect(r.isError).toBe(true);
+    for (const args of [{}, { intervals: INTERVALS }]) {
+      const r = await conn.call(create, { id: ID, maintenanceWindowDefinitionType: 'Unrestricted', ...args });
+      expect(r.isError).toBe(true);
+      expect(r.text).toContain("'Unrestricted' is deprecated in bMS 26R1 and not offered: use Anytime");
+    }
     expect(recorder.take()).toEqual([]);
     expect((await conn.call(create, { id: ID, maintenanceWindowDefinitionType: 'Anytime' })).isError).toBe(false);
     expect(recorder.take().map((x) => [x.method, x.path, JSON.parse(x.body)])).toEqual([['POST', route(target), { maintenanceWindowDefinitionType: 'Anytime' }]]);
