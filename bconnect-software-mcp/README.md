@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Software inventory and deployment — installed Windows software inventory and software bundle management  
-**Tools:** 19 (4 with `BCONNECT_RELEASE=25R2`)
+**Tools:** 19 (4 on bMS 25R2)
 
 ---
 
@@ -72,7 +72,7 @@ been checked against a real bMS yet.
 | `delete_bundle_folder` | **(26R1)** Delete a bundle folder by GUID |
 | `update_bundle_folder` | **(26R1)** Update a bundle folder via JSON Patch |
 
-> Tools marked **(26R1)** require `BCONNECT_RELEASE=26R1` and baramundi Management Suite 2026 R1 or later.
+> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1.
 
 ---
 

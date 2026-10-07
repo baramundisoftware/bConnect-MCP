@@ -54,11 +54,9 @@ const EXPECTED_26R1_ONLY_TOOLS = [
 
 /** Start a server with BCONNECT_RELEASE set to `release`, or unset when omitted. */
 async function startServer(release?: string): Promise<{ client: InstanceType<typeof Client> }> {
-  // Assigning undefined to process.env stores the string "undefined"; delete really unsets it.
-  if (release === undefined) {delete process.env.BCONNECT_RELEASE;}
-  else {process.env.BCONNECT_RELEASE = release;}
+  // Kept for the whole test (afterEach restores it): the tool list follows the release per request (#159).
+  vi.stubEnv('BCONNECT_RELEASE', release);
   const { server } = createServer();
-  delete process.env.BCONNECT_RELEASE;
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
 

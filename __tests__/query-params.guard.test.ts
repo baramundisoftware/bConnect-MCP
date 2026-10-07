@@ -17,7 +17,7 @@ import { describe, expect, it } from 'vitest';
 import { RELEASES, loadOperations, type Schema } from './lib/spec.js';
 import { ROOT, SERVERS } from './lib/exerciser.js';
 
-const REGENERATE = 'run `node scripts/generate-query-parameters.mjs` and commit the src/query-params.ts and src/tool-methods.ts files';
+const REGENERATE = 'run `node scripts/generate-query-parameters.mjs` and commit the src/query-params.ts, src/tool-methods.ts and src/tool-releases.ts files';
 
 it('every table is up to date with the specs', () => {
   expect(existsSync(join(ROOT, 'scripts', 'generate-query-parameters.mjs')), 'generator missing').toBe(true);

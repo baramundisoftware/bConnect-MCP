@@ -68,18 +68,11 @@ const ENDPOINTS_TOOLS = [
   // Maintenance windows (Phase 24: added GET)
   'get_maintenance_window_for_endpoint',
   'create_maintenance_window_for_endpoint',
-  'update_maintenance_window_for_endpoint',
   'delete_maintenance_window_for_endpoint',
   'get_maintenance_window_for_logical_group',
   'create_maintenance_window_for_logical_group',
-  'update_maintenance_window_for_logical_group',
   'delete_maintenance_window_for_logical_group',
-  // Industrial & network endpoints (Phase 24: added list + get for industrial + network)
-  'list_industrial_endpoints',
-  'get_industrial_endpoint',
-  'create_industrial_endpoint',
-  'update_industrial_endpoint',
-  'delete_industrial_endpoint',
+  // Network endpoints (Phase 24: added list + get); industrial endpoints are 25R2 only (below)
   'list_network_endpoints',
   'get_network_endpoint',
   'create_network_endpoint',
@@ -89,14 +82,26 @@ const ENDPOINTS_TOOLS = [
   'delete_endpoint',
 ] as const;
 
-// 26R1-only tools (gated by BCONNECT_RELEASE=26R1)
+// Tools whose routes only 26R1 has (#159: listed per the spec). The maintenance-window updates
+// send PATCH, which only 26R1 offers (25R2: PUT).
 const ENDPOINTS_TOOLS_26R1_ONLY = [
+  'update_maintenance_window_for_endpoint',
+  'update_maintenance_window_for_logical_group',
   'list_unmanaged_endpoints',
   'get_unmanaged_endpoint',
   'delete_unmanaged_endpoint',
   'get_entra_id_data',
   'link_entra_id_data',
   'unlink_entra_id_data',
+] as const;
+
+// Tools whose routes only 25R2 has: the industrial endpoint API was removed in 26R1.
+const ENDPOINTS_TOOLS_25R2_ONLY = [
+  'list_industrial_endpoints',
+  'get_industrial_endpoint',
+  'create_industrial_endpoint',
+  'update_industrial_endpoint',
+  'delete_industrial_endpoint',
 ] as const;
 
 // The default is BCONNECT_RELEASE=26R1, so the full set includes the 26R1-only tools.
@@ -281,14 +286,17 @@ describe('bconnect-endpoints-mcp server — tool registration', () => {
       }
     });
 
-    it('excludes 26R1-only tools when BCONNECT_RELEASE=25R2', async () => {
+    it('excludes 26R1-only tools and includes the 25R2-only ones when BCONNECT_RELEASE=25R2', async () => {
       vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
       process.env.BCONNECT_RELEASE = '25R2';
       const toolNames = await getToolNames();
 
-      expect(toolNames).toHaveLength(ENDPOINTS_TOOLS.length);
+      expect(toolNames).toHaveLength(ENDPOINTS_TOOLS.length + ENDPOINTS_TOOLS_25R2_ONLY.length);
       for (const tool of ENDPOINTS_TOOLS_26R1_ONLY) {
         expect(toolNames, `26R1-only tool "${tool}" must NOT appear in 25R2 mode`).not.toContain(tool);
+      }
+      for (const tool of ENDPOINTS_TOOLS_25R2_ONLY) {
+        expect(toolNames, `25R2-only tool "${tool}" should appear in 25R2 mode`).toContain(tool);
       }
     });
 

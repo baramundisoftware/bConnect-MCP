@@ -19,8 +19,9 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, releaseRefusal } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
+import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
@@ -37,7 +38,6 @@ const clients = serverClients(BConnectClient);
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const release = selectedRelease();
-  const is26R1 = release === "26R1";
 
   const server = new Server(
     {
@@ -114,198 +114,196 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
     ];
 
-    // 26R1-only tools: bundle and folder management
-    if (is26R1) {
-      tools.push(
+    // 26R1-only tools: bundle and folder management (listed per TOOL_RELEASES, #159)
+    tools.push(
 
-        // ── Software Bundles ─────────────────────────────────────────────
-        {
-          name: "list_software_bundles",
-          description: "[26R1] List all software bundles defined in baramundi Management Suite. Returns a paged list with bundle id, name, folder, and associated applications for each bundle. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {},
-            required: []
-          }
-        },
-        {
-          name: "get_software_bundle",
-          description: "[26R1] Get details of a specific software bundle by its GUID. Returns bundle id, name, folder id, and list of contained applications defined in baramundi Management Suite. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              bundleId: { type: "string", description: "GUID of the software bundle to retrieve." }
-            },
-            required: ["bundleId"]
-          }
-        },
-        {
-          name: "create_software_bundle",
-          description: "[26R1] Create a new software bundle in baramundi Management Suite. Requires a name and optional folder id to place the bundle within the folder hierarchy. Returns the newly created bundle with its assigned GUID. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              name: { type: "string", description: "Display name for the new software bundle." },
-              folderId: { type: "string", description: "Optional GUID of the folder to place the bundle in." },
-              type: { type: "string", enum: ["Install", "Uninstall"], description: "Install (default) or Uninstall bundle." },
-              ignoreDependencies: { type: "boolean", description: "Ignore application dependencies (always true for Uninstall bundles)." },
-              comment: { type: "string", description: "Optional comment." }
-            },
-            required: ["name"]
-          }
-        },
-        {
-          name: "delete_software_bundle",
-          description: "[26R1] Delete a software bundle from baramundi Management Suite by its GUID. The operation returns no content on success (204). If the bundle does not exist, the operation is treated as successful. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              bundleId: { type: "string", description: "GUID of the software bundle to delete." }
-            },
-            required: ["bundleId"]
-          }
-        },
-
-        // ── Bundle Applications ──────────────────────────────────────────
-        {
-          name: "list_bundle_applications",
-          description: "[26R1] List all bundle application assignments across all software bundles in baramundi Management Suite. Returns a paged list with bundle name, application name, vendor, and order index for each assignment. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {},
-            required: []
-          }
-        },
-        {
-          name: "list_bundle_applications_by_bundle",
-          description: "[26R1] List all applications contained in a specific software bundle identified by its GUID. Returns a paged list with application id, name, vendor, and order within the bundle. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              bundleId: { type: "string", description: "GUID of the software bundle to list applications for." },
-            },
-            required: ["bundleId"]
-          }
-        },
-        {
-          name: "add_application_to_bundle",
-          description: "[26R1] Assign an application to a software bundle in baramundi Management Suite. Requires the bundle GUID and the application GUID to add. Returns the created bundle application assignment with order index. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              bundleId: { type: "string", description: "GUID of the software bundle to add the application to." },
-              applicationId: { type: "string", description: "GUID of the application to assign to the bundle." }
-            },
-            required: ["bundleId", "applicationId"]
-          }
-        },
-        {
-          name: "delete_bundle_application",
-          description: "[26R1] Remove an application assignment from a software bundle in baramundi Management Suite by the assignment GUID. Returns no content on success (204). If the assignment does not exist, the operation is treated as successful. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "GUID of the bundle application assignment to delete." }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "replace_application_in_bundle",
-          description: "[26R1] Replace an application within a software bundle using a JSON Patch document. Updates the ApplicationId field of the bundle application assignment to point to a different application. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              bundleId: { type: "string", description: "GUID of the software bundle containing the assignment." },
-              id: { type: "string", description: "GUID of the bundle application assignment to update." },
-              patchOperations: {
-                type: "array",
-                description: "JSON Patch operations array. Use op=replace, path=/ApplicationId, value=<new-app-guid>."
-              }
-            },
-            required: ["bundleId", "id", "patchOperations"]
-          }
-        },
-
-        // ── Bundle Folders ───────────────────────────────────────────────
-        {
-          name: "list_bundle_folders",
-          description: "[26R1] List all software bundle folders in baramundi Management Suite. Returns a paged list with folder id, name, parent folder id, and optional comment for each folder in the bundle folder hierarchy. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {},
-            required: []
-          }
-        },
-        {
-          name: "get_bundle_folder",
-          description: "[26R1] Get details of a specific software bundle folder by its GUID. Returns folder id, name, parent folder id, and comment for the specified folder in the baramundi Management Suite bundle hierarchy. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "GUID of the bundle folder to retrieve." }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "list_bundle_folders_by_folder",
-          description: "[26R1] List all sub-folders contained within a specific software bundle folder identified by its GUID. Optionally include all nested sub-folders recursively. Returns folder id, name, parent id, and comment for each contained folder. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              folderId: { type: "string", description: "GUID of the parent bundle folder to list sub-folders for." },
-            },
-            required: ["folderId"]
-          }
-        },
-        {
-          name: "create_bundle_folder",
-          description: "[26R1] Create a new software bundle folder in baramundi Management Suite. Requires a name and optional parent folder id and comment. Returns the newly created folder with its assigned GUID. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              name: { type: "string", description: "Display name for the new bundle folder." },
-              parentId: { type: "string", description: "Optional GUID of the parent folder (creates in root if omitted)." },
-              comment: { type: "string", description: "Optional comment or description for the folder." }
-            },
-            required: ["name"]
-          }
-        },
-        {
-          name: "delete_bundle_folder",
-          description: "[26R1] Delete a software bundle folder from baramundi Management Suite by its GUID. The folder must be empty before deletion. Returns no content on success (204). If the folder does not exist, the operation is treated as successful. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "GUID of the bundle folder to delete." }
-            },
-            required: ["id"]
-          }
-        },
-        {
-          name: "update_bundle_folder",
-          description: "[26R1] Update a software bundle folder in baramundi Management Suite using a JSON Patch document. Supports modifying name, parentId (move folder), and comment fields. Returns the updated folder with all current properties. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "GUID of the bundle folder to update." },
-              patchOperations: {
-                type: "array",
-                description: "JSON Patch operations array. Supported paths: /name, /parentId, /comment. Use op=replace."
-              }
-            },
-            required: ["id", "patchOperations"]
-          }
+      // ── Software Bundles ─────────────────────────────────────────────
+      {
+        name: "list_software_bundles",
+        description: "[26R1] List all software bundles defined in baramundi Management Suite. Returns a paged list with bundle id, name, folder, and associated applications for each bundle. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: []
         }
-      );
-    }
+      },
+      {
+        name: "get_software_bundle",
+        description: "[26R1] Get details of a specific software bundle by its GUID. Returns bundle id, name, folder id, and list of contained applications defined in baramundi Management Suite. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            bundleId: { type: "string", description: "GUID of the software bundle to retrieve." }
+          },
+          required: ["bundleId"]
+        }
+      },
+      {
+        name: "create_software_bundle",
+        description: "[26R1] Create a new software bundle in baramundi Management Suite. Requires a name and optional folder id to place the bundle within the folder hierarchy. Returns the newly created bundle with its assigned GUID. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Display name for the new software bundle." },
+            folderId: { type: "string", description: "Optional GUID of the folder to place the bundle in." },
+            type: { type: "string", enum: ["Install", "Uninstall"], description: "Install (default) or Uninstall bundle." },
+            ignoreDependencies: { type: "boolean", description: "Ignore application dependencies (always true for Uninstall bundles)." },
+            comment: { type: "string", description: "Optional comment." }
+          },
+          required: ["name"]
+        }
+      },
+      {
+        name: "delete_software_bundle",
+        description: "[26R1] Delete a software bundle from baramundi Management Suite by its GUID. The operation returns no content on success (204). If the bundle does not exist, the operation is treated as successful. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            bundleId: { type: "string", description: "GUID of the software bundle to delete." }
+          },
+          required: ["bundleId"]
+        }
+      },
+
+      // ── Bundle Applications ──────────────────────────────────────────
+      {
+        name: "list_bundle_applications",
+        description: "[26R1] List all bundle application assignments across all software bundles in baramundi Management Suite. Returns a paged list with bundle name, application name, vendor, and order index for each assignment. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: []
+        }
+      },
+      {
+        name: "list_bundle_applications_by_bundle",
+        description: "[26R1] List all applications contained in a specific software bundle identified by its GUID. Returns a paged list with application id, name, vendor, and order within the bundle. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            bundleId: { type: "string", description: "GUID of the software bundle to list applications for." },
+          },
+          required: ["bundleId"]
+        }
+      },
+      {
+        name: "add_application_to_bundle",
+        description: "[26R1] Assign an application to a software bundle in baramundi Management Suite. Requires the bundle GUID and the application GUID to add. Returns the created bundle application assignment with order index. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            bundleId: { type: "string", description: "GUID of the software bundle to add the application to." },
+            applicationId: { type: "string", description: "GUID of the application to assign to the bundle." }
+          },
+          required: ["bundleId", "applicationId"]
+        }
+      },
+      {
+        name: "delete_bundle_application",
+        description: "[26R1] Remove an application assignment from a software bundle in baramundi Management Suite by the assignment GUID. Returns no content on success (204). If the assignment does not exist, the operation is treated as successful. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "GUID of the bundle application assignment to delete." }
+          },
+          required: ["id"]
+        }
+      },
+      {
+        name: "replace_application_in_bundle",
+        description: "[26R1] Replace an application within a software bundle using a JSON Patch document. Updates the ApplicationId field of the bundle application assignment to point to a different application. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            bundleId: { type: "string", description: "GUID of the software bundle containing the assignment." },
+            id: { type: "string", description: "GUID of the bundle application assignment to update." },
+            patchOperations: {
+              type: "array",
+              description: "JSON Patch operations array. Use op=replace, path=/ApplicationId, value=<new-app-guid>."
+            }
+          },
+          required: ["bundleId", "id", "patchOperations"]
+        }
+      },
+
+      // ── Bundle Folders ───────────────────────────────────────────────
+      {
+        name: "list_bundle_folders",
+        description: "[26R1] List all software bundle folders in baramundi Management Suite. Returns a paged list with folder id, name, parent folder id, and optional comment for each folder in the bundle folder hierarchy. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: []
+        }
+      },
+      {
+        name: "get_bundle_folder",
+        description: "[26R1] Get details of a specific software bundle folder by its GUID. Returns folder id, name, parent folder id, and comment for the specified folder in the baramundi Management Suite bundle hierarchy. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "GUID of the bundle folder to retrieve." }
+          },
+          required: ["id"]
+        }
+      },
+      {
+        name: "list_bundle_folders_by_folder",
+        description: "[26R1] List all sub-folders contained within a specific software bundle folder identified by its GUID. Optionally include all nested sub-folders recursively. Returns folder id, name, parent id, and comment for each contained folder. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            folderId: { type: "string", description: "GUID of the parent bundle folder to list sub-folders for." },
+          },
+          required: ["folderId"]
+        }
+      },
+      {
+        name: "create_bundle_folder",
+        description: "[26R1] Create a new software bundle folder in baramundi Management Suite. Requires a name and optional parent folder id and comment. Returns the newly created folder with its assigned GUID. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Display name for the new bundle folder." },
+            parentId: { type: "string", description: "Optional GUID of the parent folder (creates in root if omitted)." },
+            comment: { type: "string", description: "Optional comment or description for the folder." }
+          },
+          required: ["name"]
+        }
+      },
+      {
+        name: "delete_bundle_folder",
+        description: "[26R1] Delete a software bundle folder from baramundi Management Suite by its GUID. The folder must be empty before deletion. Returns no content on success (204). If the folder does not exist, the operation is treated as successful. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "GUID of the bundle folder to delete." }
+          },
+          required: ["id"]
+        }
+      },
+      {
+        name: "update_bundle_folder",
+        description: "[26R1] Update a software bundle folder in baramundi Management Suite using a JSON Patch document. Supports modifying name, parentId (move folder), and comment fields. Returns the updated folder with all current properties. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "GUID of the bundle folder to update." },
+            patchOperations: {
+              type: "array",
+              description: "JSON Patch operations array. Supported paths: /name, /parentId, /comment. Use op=replace."
+            }
+          },
+          required: ["id", "patchOperations"]
+        }
+      }
+    );
 
     return { tools };
   })));
   // With writes off, tools/list leaves out the write tools; the gate still refuses them by name (REQ-SRV-026).
-  server.setRequestHandler(ListToolsRequestSchema, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
-    withToolAnnotations(TOOL_METHODS, toolCatalog.list)));
+  server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
+    withToolAnnotations(TOOL_METHODS, toolCatalog.list))));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -361,6 +359,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // countOnly (#165): count with one 1-row request instead of loading a page.
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
+    // A tool the selected release lacks is refused by name first, before its arguments are
+    // checked against a schema the release doesn't list, and before anything is sent (#159).
+    refuseUnavailableTool(TOOL_RELEASES, name);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
 
@@ -388,13 +389,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     try {
       const bconnect = lazyClient(getBconnect);
       const sw = lazyClient(() => bconnect.software);
-
-      // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
-      const requires26R1 = (): void => {
-        if (!is26R1) {
-          throw new McpError(ErrorCode.MethodNotFound, releaseRefusal(name, "26R1"));
-        }
-      };
 
       // Dispatch — arguments already validated by validateToolArguments above.
       switch (name) {
@@ -425,19 +419,16 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         // ── Software Bundles (26R1) ────────────────────────────────────
         case "list_software_bundles": {
-          requires26R1();
           const result = await sw.getSoftwareBundles(pickArguments(args ?? {}, sends("list_software_bundles")));
           return toolJsonResult(result);
         }
 
         case "get_software_bundle": {
-          requires26R1();
           const result = await sw.getSoftwareBundle(args!.bundleId as string);
           return toolJsonResult(result);
         }
 
         case "create_software_bundle": {
-          requires26R1();
           // The API calls the folder parentId.
           const result = await sw.createSoftwareBundle(
             pickArguments(args!, ["name", "folderId", "type", "ignoreDependencies", "comment"], { folderId: "parentId" })
@@ -446,65 +437,55 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "delete_software_bundle": {
-          requires26R1();
           await sw.deleteSoftwareBundle(args!.bundleId as string);
           return toolJsonResult({ success: true });
         }
 
         // ── Bundle Applications (26R1) ─────────────────────────────────
         case "list_bundle_applications": {
-          requires26R1();
           const result = await sw.getBundleApplications(pickArguments(args ?? {}, sends("list_bundle_applications")));
           return toolJsonResult(result);
         }
 
         case "list_bundle_applications_by_bundle": {
-          requires26R1();
           const { bundleId, ...params } = args as Record<string, unknown>;
           const result = await sw.getBundleApplicationsByBundle(bundleId as string, pickArguments(params, sends("list_bundle_applications_by_bundle")));
           return toolJsonResult(result);
         }
 
         case "add_application_to_bundle": {
-          requires26R1();
           const result = await sw.addApplicationToBundle(args!.bundleId as string, pickArguments(args!, ["applicationId"]));
           return toolJsonResult(result);
         }
 
         case "delete_bundle_application": {
-          requires26R1();
           await sw.deleteBundleApplication(args!.id as string);
           return toolJsonResult({ success: true });
         }
 
         case "replace_application_in_bundle": {
-          requires26R1();
           const result = await sw.replaceApplicationInBundle(args!.bundleId as string, args!.id as string, args!.patchOperations as never);
           return toolJsonResult(result);
         }
 
         // ── Bundle Folders (26R1) ──────────────────────────────────────
         case "list_bundle_folders": {
-          requires26R1();
           const result = await sw.getBundleFolders(pickArguments(args ?? {}, sends("list_bundle_folders")));
           return toolJsonResult(result);
         }
 
         case "get_bundle_folder": {
-          requires26R1();
           const result = await sw.getBundleFolder(args!.id as string);
           return toolJsonResult(result);
         }
 
         case "list_bundle_folders_by_folder": {
-          requires26R1();
           const { folderId, ...params } = args as Record<string, unknown>;
           const result = await sw.getBundleFoldersByFolder(folderId as string, pickArguments(params, sends("list_bundle_folders_by_folder")));
           return toolJsonResult(result);
         }
 
         case "create_bundle_folder": {
-          requires26R1();
           const body: Record<string, unknown> = { name: args!.name };
           if (typeof args!.parentId === "string") {body.parentId = args!.parentId;}
           if (typeof args!.comment === "string") {body.comment = args!.comment;}
@@ -513,13 +494,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "delete_bundle_folder": {
-          requires26R1();
           await sw.deleteBundleFolder(args!.id as string);
           return toolJsonResult({ success: true });
         }
 
         case "update_bundle_folder": {
-          requires26R1();
           const result = await sw.updateBundleFolder(args!.id as string, args!.patchOperations as never);
           return toolJsonResult(result);
         }

@@ -72,7 +72,7 @@ carrying your proxy/IdP token).
 | **Authentication** | **None** on a trusted private network. If a proxy fronts the gateway, use **Bearer Auth** or **Header Auth** with whatever token the proxy requires. |
 | **Tools to Include** | **All**, or **Selected** to offer the agent only some tools (fewer tokens, see below) |
 
-The AI Agent now has access to exactly the 27 endpoints read tools (~6,400 tokens) —
+The AI Agent now has access to exactly the 25 endpoints read tools (~6,200 tokens) —
 nothing from the other 12 domains is loaded. The gateway keeps write tools off and leaves
 them out of the tool list.
 
@@ -80,7 +80,7 @@ them out of the tool list.
 Workflow:
   [Trigger] → [AI Agent] → (answer)
                   │
-                  └── [MCP Client Tool]  → /endpoints/mcp (27 tools)
+                  └── [MCP Client Tool]  → /endpoints/mcp (25 tools)
 ```
 
 **Adding a second domain** — add another MCP Client Tool node with that domain's endpoint:
@@ -88,7 +88,7 @@ Workflow:
 ```
   [AI Agent]
       │
-      ├── [MCP Client Tool]  → /endpoints/mcp  (27 tools)
+      ├── [MCP Client Tool]  → /endpoints/mcp  (25 tools)
       └── [MCP Client Tool]  → /software/mcp   (11 tools)
                                         total: ~9,800 tokens
 ```
@@ -217,24 +217,24 @@ are not loaded lazily.
 
 Each tool definition costs roughly 300 tokens on average (from about 200 to
 over 400; the group member tools carry the largest schemas). The bConnect MCP
-suite has 276 tools across 13 domains on 26R1 (240 on 25R2); through the gateway, where write
-tools are off and left out of the list, an agent sees the 178 read tools (156 on 25R2).
+suite has 268 tools across 13 domains on 26R1 (230 on 25R2); through the gateway, where write
+tools are off and left out of the list, an agent sees the 173 read tools (148 on 25R2).
 
 ### Token cost per configuration
 
 | Domains connected | Tools | Approx. tokens consumed |
 |-------------------|-------|------------------------|
-| `endpoints` only | 27 | ~6,400 |
-| `endpoints` + `software` | 38 | ~9,800 |
-| `endpoints` + `jobs` + `assets` | 62 | ~17,000 |
-| `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 89 | ~25,000 |
-| All 13 domains | 178 | ~53,000 |
+| `endpoints` only | 25 | ~6,200 |
+| `endpoints` + `software` | 36 | ~9,800 |
+| `endpoints` + `jobs` + `assets` | 60 | ~17,700 |
+| `endpoints` + `software` + `jobs` + `assets` + `activedirectory` | 87 | ~26,300 |
+| All 13 domains | 173 | ~53,900 |
 
 Measured on 26R1 from the gateway's `tools/list` answers, which contain only read tools (about
-185,000 characters of tool definitions for all 13 domains, at roughly 3.5 characters per token). The
+189,000 characters of tool definitions for all 13 domains, at roughly 3.5 characters per token). The
 exact count depends on the model's tokenizer and on how n8n passes the tools on.
 
-At ~53,000 tokens for tool definitions alone, every call of the AI Agent spends a
+At ~54,000 tokens for tool definitions alone, every call of the AI Agent spends a
 large part of the context window before any conversation, user data, or system
 instructions.
 
@@ -257,7 +257,7 @@ Client Tool node per domain you need and leave the rest out. Within a domain,
 
 ### Never connect all 13 domains to a single AI Agent
 
-Even with a large-context model, loading all 178 tool definitions wastes tokens
+Even with a large-context model, loading all 173 tool definitions wastes tokens
 on tools the workflow will never call, increases latency, and reduces the model's
 effective reasoning budget for actual work.
 

@@ -17,6 +17,9 @@ const saved = { ...process.env };
 beforeAll(() => recorder.listen());
 afterAll(() => { recorder.close(); process.env = saved; });
 
+/** Write tools found in either release: a release lists only the tools whose routes it has (#159). */
+const writeToolsOfAnyRelease = new Set<string>();
+
 describe.each(RELEASES)('bMS %s', (release) => {
   const found: Array<{ server: string; tool: string; writes: boolean; described: boolean }> = [];
 
@@ -29,6 +32,7 @@ describe.each(RELEASES)('bMS %s', (release) => {
         await conn.call(tool.name, requiredArguments(tool.inputSchema));
         const writes = recorder.take().some((r) => r.method !== 'GET');
         found.push({ server, tool: tool.name, writes, described: (tool.description ?? '').endsWith(UNVERIFIED_WRITE_NOTE) });
+        if (writes) {writeToolsOfAnyRelease.add(tool.name);}
       }
       await conn.close();
     }
@@ -50,8 +54,10 @@ describe.each(RELEASES)('bMS %s', (release) => {
     expect(wrong).toEqual([]);
   });
 
+});
+
+describe('both releases', () => {
   it('keeps the live-verified list to existing write tools', () => {
-    const writeTools = new Set(found.filter((f) => f.writes).map((f) => f.tool));
-    expect([...LIVE_VERIFIED_WRITE_TOOLS.keys()].filter((t) => !writeTools.has(t))).toEqual([]);
+    expect([...LIVE_VERIFIED_WRITE_TOOLS.keys()].filter((t) => !writeToolsOfAnyRelease.has(t))).toEqual([]);
   });
 });

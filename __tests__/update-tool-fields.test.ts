@@ -98,7 +98,12 @@ describe.each([
 
 describe('update_industrial_endpoint (25R2 route)', () => {
   it('declares named fields instead of an untyped updateData object', async () => {
-    const t = await tool('update_industrial_endpoint');
+    // Only 25R2 has the route, so only 25R2 lists the tool (#159); the list follows the release per request.
+    const before = process.env.BCONNECT_RELEASE;
+    process.env.BCONNECT_RELEASE = '25R2';
+    const t = await tool('update_industrial_endpoint').finally(() => {
+      if (before === undefined) {delete process.env.BCONNECT_RELEASE;} else {process.env.BCONNECT_RELEASE = before;}
+    });
     expect(Object.keys(t.inputSchema.properties ?? {})).toEqual(expect.arrayContaining(['id', 'displayName', 'port']));
     expect(Object.keys(t.inputSchema.properties ?? {})).not.toContain('updateData');
   });

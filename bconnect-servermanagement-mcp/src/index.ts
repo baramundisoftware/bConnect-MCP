@@ -19,8 +19,9 @@ import {
   McpError
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, jsonPatchArgument, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, releaseRefusal } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, jsonPatchArgument, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
+import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
 /** The query parameters a list tool sends: exactly what its route declares in the selected release (#179). */
@@ -37,7 +38,6 @@ const clients = serverClients(BConnectClient);
 
 export function createServer(credentials?: BConnectCredentials): { server: Server } {
   const release = selectedRelease();
-  const is26R1 = release === "26R1";
 
   const server = new Server(
     {
@@ -321,48 +321,46 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
     ];
 
-    // ── 26R1-only tools ───────────────────────────────────────────────────
-    if (is26R1) {
-      tools.push(
-        {
-          name: "list_api_keys",
-          description: "[26R1] List all API keys configured in the baramundi Management Suite. Returns a list of API keys with their names, descriptions, associated permissions, and creation metadata. Available in bConnect 26R1 and later.",
-          inputSchema: { type: "object", properties: {}, required: [] }
-        },
-        {
-          name: "simulate_msw_cleanup",
-          description: "[26R1] Simulate a Managed Software Wizard (MSW) cleanup operation on the Distribution and Inventory Point. Performs a dry-run cleanup simulation without making actual changes. Available in bConnect 26R1 and later.",
-          inputSchema: { type: "object", properties: {}, required: [] }
-        },
-        {
-          name: "msw_cleanup",
-          description: "[26R1] Execute a Managed Software Wizard (MSW) cleanup operation on the Distribution and Inventory Point server. Removes obsolete managed software packages from the DIP. Use with caution. Available in bConnect 26R1 and later.",
-          inputSchema: { type: "object", properties: {}, required: [] }
-        },
-        {
-          name: "list_download_jobs",
-          description: "[26R1] List all download jobs configured and queued in the baramundi Management Suite. Returns a list of download jobs with their status, progress, target packages, and associated distribution details. Available in bConnect 26R1 and later.",
-          inputSchema: { type: "object", properties: {}, required: [] }
-        },
-        {
-          name: "get_download_job",
-          description: "[26R1] Get the details of a specific download job identified by its GUID in baramundi Management Suite. Returns job name, status, progress, target package details, and download configuration. Available in bConnect 26R1 and later.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              id: { type: "string", description: "GUID of the download job to retrieve details for." }
-            },
-            required: ["id"]
-          }
+    // ── 26R1-only tools (listed per TOOL_RELEASES, #159) ───────────────────────────────────────────────────
+    tools.push(
+      {
+        name: "list_api_keys",
+        description: "[26R1] List all API keys configured in the baramundi Management Suite. Returns a list of API keys with their names, descriptions, associated permissions, and creation metadata. Available in bConnect 26R1 and later.",
+        inputSchema: { type: "object", properties: {}, required: [] }
+      },
+      {
+        name: "simulate_msw_cleanup",
+        description: "[26R1] Simulate a Managed Software Wizard (MSW) cleanup operation on the Distribution and Inventory Point. Performs a dry-run cleanup simulation without making actual changes. Available in bConnect 26R1 and later.",
+        inputSchema: { type: "object", properties: {}, required: [] }
+      },
+      {
+        name: "msw_cleanup",
+        description: "[26R1] Execute a Managed Software Wizard (MSW) cleanup operation on the Distribution and Inventory Point server. Removes obsolete managed software packages from the DIP. Use with caution. Available in bConnect 26R1 and later.",
+        inputSchema: { type: "object", properties: {}, required: [] }
+      },
+      {
+        name: "list_download_jobs",
+        description: "[26R1] List all download jobs configured and queued in the baramundi Management Suite. Returns a list of download jobs with their status, progress, target packages, and associated distribution details. Available in bConnect 26R1 and later.",
+        inputSchema: { type: "object", properties: {}, required: [] }
+      },
+      {
+        name: "get_download_job",
+        description: "[26R1] Get the details of a specific download job identified by its GUID in baramundi Management Suite. Returns job name, status, progress, target package details, and download configuration. Available in bConnect 26R1 and later.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            id: { type: "string", description: "GUID of the download job to retrieve details for." }
+          },
+          required: ["id"]
         }
-      );
-    }
+      }
+    );
 
     return { tools };
   })));
   // With writes off, tools/list leaves out the write tools; the gate still refuses them by name (REQ-SRV-026).
-  server.setRequestHandler(ListToolsRequestSchema, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
-    withToolAnnotations(TOOL_METHODS, toolCatalog.list)));
+  server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
+    withToolAnnotations(TOOL_METHODS, toolCatalog.list))));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -444,6 +442,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // countOnly (#165): count with one 1-row request instead of loading a page.
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
+    // A tool the selected release lacks is refused by name first, before its arguments are
+    // checked against a schema the release doesn't list, and before anything is sent (#159).
+    refuseUnavailableTool(TOOL_RELEASES, name);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
 
@@ -471,13 +472,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     try {
       const bconnect = lazyClient(getBconnect);
       const sm = lazyClient(() => bconnect.serverManagement);
-
-      // Helper to enforce 26R1-only tools (defence-in-depth; ListTools already filters)
-      const requires26R1 = (): void => {
-        if (!is26R1) {
-          throw new McpError(ErrorCode.MethodNotFound, releaseRefusal(name, "26R1"));
-        }
-      };
 
       // Dispatch — arguments already validated by validateToolArguments above.
       switch (name) {
@@ -611,34 +605,29 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return { content: [{ type: "text", text: "Scheduled restart cancelled." }] };
         }
 
-        // ── 26R1-only tools ───────────────────────────────────────────────
+        // ── 26R1-only tools (listed per TOOL_RELEASES, #159) ───────────────────────────────────────────────
 
         case "list_api_keys": {
-          requires26R1();
           const result = await sm.getApiKeys();
           return toolJsonResult(result);
         }
 
         case "simulate_msw_cleanup": {
-          requires26R1();
           const result = await sm.simulateMSWCleanup();
           return toolJsonResult(result, { lead: "MSW cleanup simulation completed:" });
         }
 
         case "msw_cleanup": {
-          requires26R1();
           const result = await sm.mswCleanup();
           return toolJsonResult(result, { lead: "MSW cleanup executed:" });
         }
 
         case "list_download_jobs": {
-          requires26R1();
           const result = await sm.getDownloadJobs(pickArguments(args ?? {}, sends("list_download_jobs")));
           return toolJsonResult(result);
         }
 
         case "get_download_job": {
-          requires26R1();
           const result = await sm.getDownloadJob(args!.id as string);
           return toolJsonResult(result);
         }
