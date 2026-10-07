@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Runs the mock-integration tier against a running bConnect-Mock (REQ-CI-002).
  *
@@ -22,6 +21,9 @@
  *   output of passing tests.
  * - Runs the tests without BCONNECT_BASE_URL and the credential variables: the
  *   test client prefers them over the mock URL and would send them elsewhere.
+ *
+ * No `#!` line: a test imports this module, and on a Windows checkout with CRLF
+ * line endings that line ends in `\r`, which fails the import (SyntaxError).
  */
 import { spawnSync } from "node:child_process";
 import { readdirSync, realpathSync } from "node:fs";
