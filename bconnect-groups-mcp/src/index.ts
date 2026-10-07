@@ -182,4 +182,4 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-runServer({ name: "bconnect-groups-mcp", createServer, clients });
+runServer({ name: "bconnect-groups-mcp", createServer, clients, releases: TOOL_RELEASES });

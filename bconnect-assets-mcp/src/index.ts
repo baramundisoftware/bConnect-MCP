@@ -727,4 +727,4 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-runServer({ name: "bconnect-assets-mcp", createServer, clients });
+runServer({ name: "bconnect-assets-mcp", createServer, clients, releases: TOOL_RELEASES });

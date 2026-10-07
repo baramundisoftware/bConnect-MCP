@@ -435,4 +435,4 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
 
-runServer({ name: "bconnect-defensecontrol-mcp", createServer, clients });
+runServer({ name: "bconnect-defensecontrol-mcp", createServer, clients, releases: TOOL_RELEASES });
