@@ -56,10 +56,10 @@ describe('Endpoints — list Endpoints', () => {
 });
 
 describe('Endpoints — countOnly (#165)', () => {
-  it('list_windows_endpoints counts what a normal call reports as totalItems', async () => {
+  it('list_endpoints (WindowsEndpoint) counts what a normal call reports as totalItems', async () => {
     if (!available) {return;}
-    const normal = await callTool('list_windows_endpoints', {});
-    const count = await callTool('list_windows_endpoints', { countOnly: true });
+    const normal = await callTool('list_endpoints', { type: 'WindowsEndpoint' });
+    const count = await callTool('list_endpoints', { type: 'WindowsEndpoint', countOnly: true });
     expect(normal.isError, normal.text).toBe(false);
     expect(count.isError, count.text).toBe(false);
     const { totalItems } = JSON.parse(normal.text) as { totalItems: number };

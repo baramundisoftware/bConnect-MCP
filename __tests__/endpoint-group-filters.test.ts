@@ -2,8 +2,9 @@
  * Endpoint and group list tools offer every filter their route declares (#179).
  *
  * The filters come from the generated tables, per bMS release, and reach
- * bConnect exactly as given. search_endpoints keeps its own `query` and
- * `pageSize` and gains the route's other filters.
+ * bConnect exactly as given. Endpoint lists take the type as an argument
+ * (REQ-SRV-029): list_endpoints offers every type's filters and sends the
+ * chosen type's; search_endpoints is gone (list_endpoints with SearchQuery).
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { setupServer } from 'msw/node';
@@ -48,25 +49,25 @@ async function call(server: string, name: string, args: Record<string, unknown>)
 }
 
 describe('endpoints', () => {
-  it('list_windows_endpoints offers and sends HostName, Domain and the 26R1 EntraIdDeviceId', async () => {
-    expect(await propsOf('endpoints', 'list_windows_endpoints')).toEqual(expect.arrayContaining(['HostName', 'Domain', 'DisplayName', 'EntraIdDeviceId', 'OrderBy', 'Page']));
-    expect(await call('endpoints', 'list_windows_endpoints', { HostName: 'pc01', Domain: 'corp', EntraIdDeviceId: G }))
+  it('list_endpoints offers and, with type WindowsEndpoint, sends HostName, Domain and the 26R1 EntraIdDeviceId', async () => {
+    expect(await propsOf('endpoints', 'list_endpoints')).toEqual(expect.arrayContaining(['type', 'HostName', 'Domain', 'DisplayName', 'EntraIdDeviceId', 'OrderBy', 'Page']));
+    expect(await call('endpoints', 'list_endpoints', { type: 'WindowsEndpoint', HostName: 'pc01', Domain: 'corp', EntraIdDeviceId: G }))
       .toEqual([{ path: '/endpoints/v2.0/WindowsEndpoints', query: { HostName: 'pc01', Domain: 'corp', EntraIdDeviceId: G } }]);
   });
 
   it('does not offer the 26R1-only EntraIdDeviceId on 25R2', async () => {
     process.env.BCONNECT_RELEASE = '25R2';
-    const props = await propsOf('endpoints', 'list_windows_endpoints');
+    const props = await propsOf('endpoints', 'list_endpoints');
     expect(props).toContain('HostName');
     expect(props).not.toContain('EntraIdDeviceId');
   });
 
-  it('search_endpoints keeps query and pageSize and gains the other filters', async () => {
-    const props = await propsOf('endpoints', 'search_endpoints');
-    expect(props).toEqual(expect.arrayContaining(['query', 'pageSize', 'HostName', 'DisplayName', 'OrderBy', 'Page']));
-    expect(props).not.toContain('SearchQuery');
-    expect(props).not.toContain('PageSize');
-    expect(await call('endpoints', 'search_endpoints', { query: 'x', HostName: 'pc01' }))
+  it('list_endpoints searches with SearchQuery (search_endpoints\' query) and sends no type-specific filter without a type', async () => {
+    const props = await propsOf('endpoints', 'list_endpoints');
+    expect(props).toEqual(expect.arrayContaining(['SearchQuery', 'PageSize', 'HostName', 'DisplayName', 'OrderBy', 'Page']));
+    expect(props).not.toContain('query');
+    expect(props).not.toContain('pageSize');
+    expect(await call('endpoints', 'list_endpoints', { SearchQuery: 'x', PageSize: 50, HostName: 'pc01' }))
       .toEqual([{ path: '/endpoints/v2.0/Endpoints', query: { SearchQuery: 'x', PageSize: '50', HostName: 'pc01' } }]);
   });
 });

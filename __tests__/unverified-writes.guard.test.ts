@@ -10,7 +10,19 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { LIVE_VERIFIED_WRITE_TOOLS, UNVERIFIED_WRITE_NOTE } from '../packages/mcp-core/src/unverified-writes.js';
 import { RELEASES } from './lib/spec.js';
-import { SERVERS, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
+import { SERVERS, callsOf, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
+import { describeVariant, variantOf } from './lib/variants.js';
+
+/** The note a merged write tool ends with when only some of its routes are unverified (REQ-SRV-029). */
+const PARTIAL = UNVERIFIED_WRITE_NOTE.replace(/\.$/, '') + ' for: ';
+
+/** Whether a route is marked: the whole tool carries the note, or the merged tool names this route. */
+function marked(description: string, key: string): boolean {
+  if (description.endsWith(UNVERIFIED_WRITE_NOTE)) {return true;}
+  const { tool, select } = variantOf(key);
+  const at = description.lastIndexOf(PARTIAL);
+  return tool !== key && at >= 0 && description.slice(at + PARTIAL.length).replace(/\.$/, '').split('; ').includes(describeVariant(select));
+}
 
 const recorder = createRecorder();
 const saved = { ...process.env };
@@ -27,12 +39,14 @@ describe.each(RELEASES)('bMS %s', (release) => {
     Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
     for (const server of SERVERS) {
       const conn = await connect(server);
-      for (const tool of conn.tools) {
+      // Per route: a merged tool once per variant of the release, recorded by its key.
+      for (const route of await callsOf(server, conn.tools, release)) {
+        const description = String((conn.tools.find((t) => t.name === route.name) as { description?: string }).description ?? '');
         recorder.take();
-        await conn.call(tool.name, requiredArguments(tool.inputSchema));
+        await conn.call(route.name, { ...requiredArguments(route.inputSchema), ...route.select });
         const writes = recorder.take().some((r) => r.method !== 'GET');
-        found.push({ server, tool: tool.name, writes, described: (tool.description ?? '').endsWith(UNVERIFIED_WRITE_NOTE) });
-        if (writes) {writeToolsOfAnyRelease.add(tool.name);}
+        found.push({ server, tool: route.key, writes, described: marked(description, route.key) });
+        if (writes) {writeToolsOfAnyRelease.add(route.key);}
       }
       await conn.close();
     }

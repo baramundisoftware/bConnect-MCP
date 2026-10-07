@@ -16,70 +16,34 @@ afterEach(() => { vi.unstubAllEnvs(); });
 // ── Expected tool sets ─────────────────────────────────────────────────────
 
 const ENDPOINTS_TOOLS = [
-  // Read operations
+  // One tool per operation, the endpoint type as an argument (REQ-SRV-029)
   'list_endpoints',
   'get_endpoint',
-  'search_endpoints',
-  'list_windows_endpoints',
-  'get_windows_endpoint',
+  'delete_endpoint',
+  'update_endpoint',
+  'start_enrollment',
+  'list_endpoints_by_logical_group',
+  // Create stays per type: the required fields differ; industrial is 25R2 only (below)
+  'create_android_endpoint',
+  'create_ios_endpoint',
+  'create_windows_endpoint',
+  'create_linux_endpoint',
+  'create_mac_endpoint',
+  'create_network_endpoint',
+  'trigger_intune_installation',
+  // Logical groups
   'list_logical_groups',
   'get_logical_group',
-  'list_group_endpoints',
-  'list_linux_endpoints',
-  'list_mac_endpoints',
-  'get_linux_endpoint',
-  'get_mac_endpoint',
-  'list_endpoints_by_logical_group',
-  'list_windows_endpoints_by_logical_group',
-  // Mobile enrollment
-  'start_android_enrollment',
-  'start_ios_enrollment',
-  // Android CRUD (Phase 24: added list + get)
-  'list_android_endpoints',
-  'get_android_endpoint',
-  'create_android_endpoint',
-  'update_android_endpoint',
-  'delete_android_endpoint',
-  // iOS CRUD (Phase 24: added list + get + full CRUD)
-  'list_ios_endpoints',
-  'get_ios_endpoint',
-  'create_ios_endpoint',
-  'update_ios_endpoint',
-  'delete_ios_endpoint',
-  // Windows CRUD
-  'create_windows_endpoint',
-  'update_windows_endpoint',
-  'delete_windows_endpoint',
-  'start_windows_enrollment',
-  'trigger_intune_installation',
-  // Linux CRUD
-  'create_linux_endpoint',
-  'update_linux_endpoint',
-  'delete_linux_endpoint',
-  // Mac CRUD
-  'create_mac_endpoint',
-  'update_mac_endpoint',
-  'delete_mac_endpoint',
-  'start_mac_enrollment',
-  // Logical groups CRUD
   'create_logical_group',
   'update_logical_group',
   'delete_logical_group',
-  // Maintenance windows (Phase 24: added GET)
+  // Maintenance windows
   'get_maintenance_window_for_endpoint',
   'create_maintenance_window_for_endpoint',
   'delete_maintenance_window_for_endpoint',
   'get_maintenance_window_for_logical_group',
   'create_maintenance_window_for_logical_group',
   'delete_maintenance_window_for_logical_group',
-  // Network endpoints (Phase 24: added list + get); industrial endpoints are 25R2 only (below)
-  'list_network_endpoints',
-  'get_network_endpoint',
-  'create_network_endpoint',
-  'update_network_endpoint',
-  'delete_network_endpoint',
-  // Generic delete
-  'delete_endpoint',
 ] as const;
 
 // Tools whose routes only 26R1 has (#159: listed per the spec). The maintenance-window updates
@@ -95,13 +59,10 @@ const ENDPOINTS_TOOLS_26R1_ONLY = [
   'unlink_entra_id_data',
 ] as const;
 
-// Tools whose routes only 25R2 has: the industrial endpoint API was removed in 26R1.
+// Tools whose routes only 25R2 has: the industrial endpoint API was removed in 26R1 (its list,
+// get, update and delete are the IndustrialEndpoint type of the merged tools there).
 const ENDPOINTS_TOOLS_25R2_ONLY = [
-  'list_industrial_endpoints',
-  'get_industrial_endpoint',
   'create_industrial_endpoint',
-  'update_industrial_endpoint',
-  'delete_industrial_endpoint',
 ] as const;
 
 // The default is BCONNECT_RELEASE=26R1, so the full set includes the 26R1-only tools.

@@ -20,13 +20,14 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   RELEASES, type Release, findOperation, loadOperations, secretBearingOperations,
 } from './lib/spec.js';
-import { ID, SERVERS, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
+import { ID, SERVERS, callsOf, connect, createRecorder, guardEnv, requiredArguments } from './lib/exerciser.js';
 
 /** Tools allowed to reach a secret-bearing operation with ALLOW_SECRET_READ unset. */
 const SECRET_ALLOW: Record<string, string> = {
-  start_android_enrollment: 'deferred: enrollment-token classification pending (separate issue)',
-  start_ios_enrollment: 'deferred: enrollment-token classification pending (separate issue)',
-  start_mac_enrollment: 'deferred: enrollment-token classification pending (separate issue)',
+  // Keyed by route: start_enrollment per type (REQ-SRV-029); the Windows route returns no secret field.
+  'start_enrollment[type=AndroidEndpoint]': 'deferred: enrollment-token classification pending (separate issue)',
+  'start_enrollment[type=IOSEndpoint]': 'deferred: enrollment-token classification pending (separate issue)',
+  'start_enrollment[type=MacEndpoint]': 'deferred: enrollment-token classification pending (separate issue)',
 };
 
 interface Call {
@@ -46,12 +47,13 @@ async function exerciseAll(release: Release, secretRead: boolean): Promise<Call[
   const calls: Call[] = [];
   for (const server of SERVERS) {
     const conn = await connect(server);
-    for (const tool of conn.tools) {
+    // Every route: a merged tool once per variant of the release (REQ-SRV-029).
+    for (const tool of await callsOf(server, conn.tools, release)) {
       recorder.take();
-      const { text } = await conn.call(tool.name, requiredArguments(tool.inputSchema));
+      const { text } = await conn.call(tool.name, { ...requiredArguments(tool.inputSchema), ...tool.select });
       const requests = recorder.take().map((r) => ({ method: r.method, path: r.path }));
       calls.push({
-        release, server, tool: tool.name, requests,
+        release, server, tool: tool.key, requests,
         refusedBySecretGate: requests.length === 0 && /ALLOW_SECRET_READ/.test(text),
       });
     }

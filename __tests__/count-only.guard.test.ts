@@ -19,14 +19,16 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { RELEASES, loadOperations, type Schema } from './lib/spec.js';
-import { ID, ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, requiredArguments, type RecordedRequest } from './lib/exerciser.js';
+import { ID, ROOT, SERVERS, callsOf, connect, createRecorder, domainOf, guardEnv, requiredArguments, type RecordedRequest } from './lib/exerciser.js';
 
 /**
  * Tools offering countOnly per release: the paged tools with a route in that release (bundled
  * specs). Since #159 a tool whose route only the other release has is not listed (it was, with
- * that release's parameters: +6 on 25R2, +4 on 26R1).
+ * that release's parameters: +6 on 25R2, +4 on 26R1). Counted per route: a merged tool's
+ * variants each count (REQ-SRV-029); search_endpoints and list_group_endpoints are gone (−2),
+ * their routes stay reachable through list_endpoints and list_endpoints_by_logical_group.
  */
-const COUNTABLE = { '25R2': 105, '26R1': 119 } as const;
+const COUNTABLE = { '25R2': 103, '26R1': 117 } as const;
 const TOTAL = 4242;
 const INVALID_PARAMS = -32602;
 /** Arguments that page or sort; everything else the caller gives is a filter. */
@@ -92,20 +94,22 @@ describe.each(RELEASES)('bMS %s', (release) => {
     for (const server of SERVERS) {
       const { TOOL_OPERATIONS } = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
       const conn = await connect(server);
-      expected[server] = countableTools(server, release, TOOL_OPERATIONS).filter((t) => conn.tools.some((l) => l.name === t)).sort();
-      offering[server] = conn.tools.filter((t) => 'countOnly' in (t.inputSchema.properties ?? {})).map((t) => t.name).sort();
+      // One call per route: a merged tool per variant of the release, with its selector (REQ-SRV-029).
+      const calls = await callsOf(server, conn.tools, release);
+      expected[server] = countableTools(server, release, TOOL_OPERATIONS).filter((t) => calls.some((c) => c.key === t)).sort();
+      offering[server] = calls.filter((c) => 'countOnly' in (c.inputSchema.properties ?? {})).map((c) => c.key).sort();
       recorder.take();
-      for (const tool of conn.tools) {
-        const args = requiredArguments(tool.inputSchema);
-        if (!offering[server].includes(tool.name)) {
-          const r = await conn.call(tool.name, { ...args, countOnly: true });
-          refused.push({ server, tool: tool.name, code: r.code, text: r.text, sent: recorder.take().length });
+      for (const call of calls) {
+        const args = { ...requiredArguments(call.inputSchema), ...call.select };
+        if (!offering[server].includes(call.key)) {
+          const r = await conn.call(call.name, { ...args, countOnly: true });
+          refused.push({ server, tool: call.key, code: r.code, text: r.text, sent: recorder.take().length });
           continue;
         }
-        const count = { ...(await conn.call(tool.name, { ...args, countOnly: true })), sent: recorder.take() };
-        const normal = { ...(await conn.call(tool.name, args)), sent: recorder.take() };
-        await conn.call(tool.name, { ...args, countOnly: false });
-        counted.push({ server, tool: tool.name, args, count, normal, off: { sent: recorder.take() } });
+        const count = { ...(await conn.call(call.name, { ...args, countOnly: true })), sent: recorder.take() };
+        const normal = { ...(await conn.call(call.name, args)), sent: recorder.take() };
+        await conn.call(call.name, { ...args, countOnly: false });
+        counted.push({ server, tool: call.key, args, count, normal, off: { sent: recorder.take() } });
       }
       await conn.close();
     }

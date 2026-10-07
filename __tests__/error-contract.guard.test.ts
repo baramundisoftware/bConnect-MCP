@@ -199,9 +199,9 @@ describe('MCP-level faults win over missing credentials', () => {
 
   it('invalid arguments found in the handler are InvalidParams (endpoints update, jobs folder update)', async () => {
     Object.assign(process.env, guardEnv('26R1', { writes: true, secretRead: false }), noCredentials);
-    for (const [server, tool] of [['bconnect-endpoints-mcp', 'update_windows_endpoint'], ['bconnect-jobs-mcp', 'update_job_folder']]) {
+    for (const [server, tool, select] of [['bconnect-endpoints-mcp', 'update_endpoint', { type: 'WindowsEndpoint' }], ['bconnect-jobs-mcp', 'update_job_folder', {}]] as const) {
       const conn = await connect(server);
-      const result = await conn.call(tool, { id: '00000000-0000-4000-8000-000000000001' });
+      const result = await conn.call(tool, { ...select, id: '00000000-0000-4000-8000-000000000001' });
       await conn.close();
       expect({ tool, code: result.code }).toEqual({ tool, code: ErrorCode.InvalidParams });
     }

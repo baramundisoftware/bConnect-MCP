@@ -49,20 +49,24 @@ async function call(name: string, args: Record<string, unknown>) {
 const tool = async (name: string) => (await client.listTools()).tools.find((t) => t.name === name)!;
 const replace = (path: string, value: unknown) => ({ op: 'replace', path, value });
 
+/** update_endpoint takes the endpoint type (REQ-SRV-029): "update_endpoint WindowsEndpoint" calls it with that type. */
+const nameOf = (name: string) => name.split(' ')[0];
+const selectOf = (name: string): Record<string, string> => (name.includes(' ') ? { type: name.split(' ')[1] } : {});
+
 describe.each([
-  ['update_windows_endpoint', `/endpoints/v2.0/WindowsEndpoints/${ID}`,
+  ['update_endpoint WindowsEndpoint', `/endpoints/v2.0/WindowsEndpoints/${ID}`,
     { displayName: 'PC-01', logicalGroupId: GROUP, isDeactivated: true, registeredUserUpdateMode: 'EnterManually' },
     [replace('/displayName', 'PC-01'), replace('/logicalGroupId', GROUP), replace('/registeredUserUpdateMode', 'EnterManually'), replace('/isDeactivated', true)]],
-  ['update_linux_endpoint', `/endpoints/v2.0/LinuxEndpoints/${ID}`,
+  ['update_endpoint LinuxEndpoint', `/endpoints/v2.0/LinuxEndpoints/${ID}`,
     { hostName: 'srv-01', managementMode: 'SSH' },
     [replace('/hostName', 'srv-01'), replace('/managementMode', 'SSH')]],
-  ['update_mac_endpoint', `/endpoints/v2.0/MacEndpoints/${ID}`,
+  ['update_endpoint MacEndpoint', `/endpoints/v2.0/MacEndpoints/${ID}`,
     { displayName: 'Mac-01', owner: 'Company' },
     [replace('/DisplayName', 'Mac-01'), replace('/Owner', 'Company')]],
   ['update_logical_group', `/endpoints/v2.0/LogicalGroups/${ID}`,
     { name: 'Berlin', parentId: GROUP },
     [replace('/name', 'Berlin'), replace('/parentId', GROUP)]],
-  ['update_network_endpoint', `/endpoints/v2.0/NetworkEndpoints/${ID}`,
+  ['update_endpoint NetworkEndpoint', `/endpoints/v2.0/NetworkEndpoints/${ID}`,
     { primaryIP: '10.0.0.5', webInterfaceUrl: 'https://switch-01' },
     [replace('/primaryIP', '10.0.0.5'), replace('/webInterfaceUrl', 'https://switch-01')]],
   ['update_maintenance_window_for_endpoint', `/endpoints/v2.0/Endpoints/${ID}/MaintenanceWindow`,
@@ -74,51 +78,52 @@ describe.each([
     [replace('/maintenancewindowdefinitiontype', 'Never'), { op: 'remove', path: '/intervals' }]],
 ])('%s', (name, path, args, expectedPatch) => {
   it('sends a JSON Patch built from the given fields, with the spec path spelling', async () => {
-    const r = await call(name, { id: ID, ...args });
+    const r = await call(nameOf(name), { ...selectOf(name), id: ID, ...args });
     expect(r.isError).toBe(false);
     expect(sent).toEqual([{ method: 'PATCH', path, body: expectedPatch }]);
   });
 
   it('refuses a call that changes nothing, before any request', async () => {
-    const r = await call(name, { id: ID });
+    const r = await call(nameOf(name), { ...selectOf(name), id: ID });
     expect(r.isError).toBe(true);
     expect(sent).toEqual([]);
   });
 
-  it('declares named fields and "id plus at least one field"', async () => {
-    const t = await tool(name);
+  it('declares named fields and "id plus at least one field" (plus the type, where it takes one)', async () => {
+    const t = await tool(nameOf(name));
     const props = Object.keys(t.inputSchema.properties ?? {});
     expect(props).toContain('id');
     expect(props.length).toBeGreaterThan(1);
     expect(props).not.toContain('updateData');
     expect(props).not.toContain('maintenanceWindowData');
-    expect((t.inputSchema as { minProperties?: number }).minProperties).toBe(2);
+    expect((t.inputSchema as { minProperties?: number }).minProperties).toBe(name.includes(' ') ? 3 : 2);
   });
 });
 
-describe('update_industrial_endpoint (25R2 route)', () => {
+describe('update_endpoint with type IndustrialEndpoint (25R2 route)', () => {
   it('declares named fields instead of an untyped updateData object', async () => {
     // Only 25R2 has the route, so only 25R2 lists the tool (#159); the list follows the release per request.
     const before = process.env.BCONNECT_RELEASE;
     process.env.BCONNECT_RELEASE = '25R2';
-    const t = await tool('update_industrial_endpoint').finally(() => {
+    const t = await tool('update_endpoint').finally(() => {
       if (before === undefined) {delete process.env.BCONNECT_RELEASE;} else {process.env.BCONNECT_RELEASE = before;}
     });
     expect(Object.keys(t.inputSchema.properties ?? {})).toEqual(expect.arrayContaining(['id', 'displayName', 'port']));
+    expect((t.inputSchema.properties as Record<string, { description?: string }>).port.description).toMatch(/Only for type "IndustrialEndpoint"\.$/);
     expect(Object.keys(t.inputSchema.properties ?? {})).not.toContain('updateData');
   });
 });
 
 describe('typed values', () => {
   it('refuses a logicalGroupId that is not a GUID', async () => {
-    const r = await call('update_windows_endpoint', { id: ID, logicalGroupId: 'not-a-guid' });
+    const r = await call('update_endpoint', { type: 'WindowsEndpoint', id: ID, logicalGroupId: 'not-a-guid' });
     expect(r.isError).toBe(true);
     expect(r.text).toMatch(/logicalGroupId/);
     expect(sent).toEqual([]);
   });
 
   it('offers the enums the spec declares', async () => {
-    const t = await tool('update_windows_endpoint');
+    const t = await tool('update_endpoint');
     const p = t.inputSchema.properties as Record<string, { enum?: string[]; type?: string }>;
     expect(p.registeredUserUpdateMode.enum).toEqual(['UseNextLogonUser', 'DoNotUseRegisteredUser', 'UpdateContinously', 'EnterManually']);
     expect(p.isDeactivated.type).toBe('boolean');

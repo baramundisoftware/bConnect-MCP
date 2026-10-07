@@ -9,13 +9,15 @@
  * of the tool's GET operation, with the spec's type and enum values, plus the
  * client-side `countOnly` on every paged operation whose answer has totalItems (#165).
  */
-import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { RELEASES, loadOperations, type Schema } from './lib/spec.js';
 import { ROOT, SERVERS } from './lib/exerciser.js';
+import { variantOf } from './lib/variants.js';
 
 const REGENERATE = 'run `node scripts/generate-query-parameters.mjs` and commit the src/query-params.ts, src/tool-methods.ts and src/tool-releases.ts files';
 
@@ -23,6 +25,69 @@ it('every table is up to date with the specs', () => {
   expect(existsSync(join(ROOT, 'scripts', 'generate-query-parameters.mjs')), 'generator missing').toBe(true);
   const out = execFileSync(process.execPath, [join(ROOT, 'scripts', 'generate-query-parameters.mjs'), '--check'], { cwd: ROOT, encoding: 'utf8' });
   expect(out, REGENERATE).toMatch(/up to date/);
+});
+
+describe('merged tools (REQ-SRV-029, ADR-0015)', () => {
+  /** Runs the generator on a temporary tree with one server whose operations.ts is `operations`. */
+  function generate(operations: string): { status: number; out: string } {
+    const tree = mkdtempSync(join(tmpdir(), 'gen-variants-'));
+    try {
+      symlinkSync(join(ROOT, 'openapi-specs'), join(tree, 'openapi-specs'), 'dir');
+      mkdirSync(join(tree, 'bconnect-endpoints-mcp', 'src'), { recursive: true });
+      writeFileSync(join(tree, 'bconnect-endpoints-mcp', 'src', 'operations.ts'), `export const TOOL_OPERATIONS = {\n${operations}\n};\n`);
+      const r = spawnSync(process.execPath, [join(ROOT, 'scripts', 'generate-query-parameters.mjs'), `--root=${tree}`], { encoding: 'utf8' });
+      return { status: r.status ?? -1, out: `${r.stdout}${r.stderr}` };
+    } finally {
+      rmSync(tree, { recursive: true, force: true });
+    }
+  }
+
+  it('the generator refuses a merged tool whose routes mix reads and writes', () => {
+    const r = generate(`  'mixed_endpoint[type=WindowsEndpoint]': ['GetWindowsEndpoint'],\n  'mixed_endpoint[type=MacEndpoint]': ['DeleteMacEndpoint'],`);
+    expect(r.status).toBe(1);
+    expect(r.out).toContain('mixed_endpoint mixes read and destructive routes');
+  });
+
+  it('the generator refuses a merged tool whose routes mix writes and deletes', () => {
+    const r = generate(`  'mixed_endpoint[type=WindowsEndpoint]': ['UpdateWindowsEndpoint'],\n  'mixed_endpoint[type=MacEndpoint]': ['DeleteMacEndpoint'],`);
+    expect(r.status).toBe(1);
+    expect(r.out).toContain('mixed_endpoint mixes write and destructive routes');
+  });
+
+  it('the generator accepts variants of one effect and writes the variant table', () => {
+    const r = generate(`  'pick_endpoint[type=]': ['GetEndpoint'],\n  'pick_endpoint[type=WindowsEndpoint]': ['GetWindowsEndpoint'],`);
+    expect(r.out).toMatch(/files written/);
+    expect(r.status).toBe(0);
+  });
+
+  // Which variant takes a property is said at list time by the core (tool-variants.test.ts), for body fields too.
+  it.each(SERVERS)('%s: a merged tool has a union row per release, in variant order', async (server) => {
+    const { TOOL_OPERATIONS } = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
+    const { QUERY_PARAMETERS } = await import(pathToFileURL(join(ROOT, server, 'src', 'query-params.ts')).href);
+    const { TOOL_RELEASES } = await import(pathToFileURL(join(ROOT, server, 'src', 'tool-releases.ts')).href);
+    const wrong: string[] = [];
+    const merged = new Map<string, string[]>();
+    for (const key of Object.keys(TOOL_OPERATIONS)) {
+      const { tool } = variantOf(key);
+      if (tool !== key) merged.set(tool, [...(merged.get(tool) ?? []), key]);
+    }
+    for (const release of RELEASES) {
+      const table: Record<string, Record<string, Schema>> = QUERY_PARAMETERS[release] ?? {};
+      for (const [tool, keys] of merged) {
+        const here = keys.filter((k) => (TOOL_RELEASES[k] ?? []).includes(release) && table[k]);
+        if (here.length === 0) continue;
+        const union = [...new Set(here.flatMap((k) => Object.keys(table[k])))].filter((n) => n !== 'countOnly');
+        const expected = [...union, ...(here.some((k) => table[k].countOnly) ? ['countOnly'] : [])];
+        if (Object.keys(table[tool] ?? {}).join() !== expected.join()) {wrong.push(`${release} ${tool}: ${Object.keys(table[tool] ?? {}).join()} ≠ ${expected.join()}`); continue;}
+        for (const name of expected) {
+          const first = here.find((k) => table[k][name])!;
+          if (table[tool][name].type !== table[first][name].type) {wrong.push(`${release} ${tool} ${name}: type differs from ${first}`);}
+          if (!String(table[tool][name].description ?? '').startsWith(String(table[first][name].description ?? ''))) {wrong.push(`${release} ${tool} ${name}: description doesn't start with ${first}'s`);}
+        }
+      }
+    }
+    expect(wrong).toEqual([]);
+  });
 });
 
 const deref = (spec: Schema, s: Schema | undefined): Schema => {
@@ -81,8 +146,10 @@ describe.each(SERVERS)('%s', (server) => {
           if (typeof prop.description !== 'string' || prop.description.length < 5) {wrong.push(`${release} ${tool} ${name}: no description`);}
         }
       }
+      // A merged tool's own row is its variants' union (checked above in "merged tools").
+      const mergedTools = new Set(Object.keys(TOOL_OPERATIONS).map((key) => variantOf(key).tool));
       for (const tool of Object.keys(table)) {
-        if (!TOOL_OPERATIONS[tool]) {wrong.push(`${release} ${tool}: not in operations.ts`);}
+        if (!TOOL_OPERATIONS[tool] && !mergedTools.has(tool)) {wrong.push(`${release} ${tool}: not in operations.ts`);}
       }
     }
     expect(wrong).toEqual([]);
