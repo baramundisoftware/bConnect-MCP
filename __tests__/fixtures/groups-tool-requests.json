@@ -1,0 +1,5951 @@
+[
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_android_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_dynamic_group",
+  "call": "required",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_dynamic_group",
+  "call": "all",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_dynamic_group",
+  "call": "count",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/IndustrialEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/IndustrialEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/IndustrialEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/IndustrialEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/IndustrialEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/IndustrialEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/IndustrialEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/IndustrialEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_industrial_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/IndustrialEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_ios_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_linux_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_logical_groups_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LogicalGroups",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_logical_groups_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Name": "x",
+   "Dip": "x",
+   "Domain": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LogicalGroups",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Name",
+      "x"
+     ],
+     [
+      "Dip",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_logical_groups_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LogicalGroups",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_mac_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_network_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_dynamic_group",
+  "call": "required",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_dynamic_group",
+  "call": "all",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_dynamic_group",
+  "call": "count",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "25R2",
+  "tool": "list_windows_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_android_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/AndroidEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_dynamic_group",
+  "call": "required",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_dynamic_group",
+  "call": "all",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_dynamic_group",
+  "call": "count",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/Endpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_ios_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/IosEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_linux_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/LinuxEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_logical_groups_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LogicalGroups",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_logical_groups_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Name": "x",
+   "Dip": "x",
+   "Domain": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LogicalGroups",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Name",
+      "x"
+     ],
+     [
+      "Dip",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_logical_groups_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/LogicalGroups",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_mac_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/MacEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_network_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/NetworkEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_ad_user",
+  "call": "required",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_ad_user",
+  "call": "all",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "EntraIdDeviceId": "00000000-0000-4000-8000-000000000002",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "EntraIdDeviceId",
+      "00000000-0000-4000-8000-000000000002"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_ad_user",
+  "call": "count",
+  "args": {
+   "adUserId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/ADUsers/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_dynamic_group",
+  "call": "required",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_dynamic_group",
+  "call": "all",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "EntraIdDeviceId": "00000000-0000-4000-8000-000000000002",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "EntraIdDeviceId",
+      "00000000-0000-4000-8000-000000000002"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_dynamic_group",
+  "call": "count",
+  "args": {
+   "dynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/DynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "required",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "all",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "EntraIdDeviceId": "00000000-0000-4000-8000-000000000002",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "includeSubfolders": false,
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "EntraIdDeviceId",
+      "00000000-0000-4000-8000-000000000002"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ],
+     [
+      "includeSubfolders",
+      "false"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_logical_group",
+  "call": "count",
+  "args": {
+   "logicalGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/LogicalGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_static_group",
+  "call": "required",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_static_group",
+  "call": "all",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "EntraIdDeviceId": "00000000-0000-4000-8000-000000000002",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "EntraIdDeviceId",
+      "00000000-0000-4000-8000-000000000002"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_static_group",
+  "call": "count",
+  "args": {
+   "staticGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/StaticGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_universal_dynamic_group",
+  "call": "required",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001"
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_universal_dynamic_group",
+  "call": "all",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "OrderBy": "x",
+   "SearchQuery": "x",
+   "Domain": "x",
+   "EntraIdDeviceId": "00000000-0000-4000-8000-000000000002",
+   "DisplayName": "x",
+   "Page": 1,
+   "PageSize": 1,
+   "HostName": "x",
+   "countOnly": false
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "OrderBy",
+      "x"
+     ],
+     [
+      "SearchQuery",
+      "x"
+     ],
+     [
+      "Domain",
+      "x"
+     ],
+     [
+      "EntraIdDeviceId",
+      "00000000-0000-4000-8000-000000000002"
+     ],
+     [
+      "DisplayName",
+      "x"
+     ],
+     [
+      "Page",
+      "1"
+     ],
+     [
+      "PageSize",
+      "1"
+     ],
+     [
+      "HostName",
+      "x"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ },
+ {
+  "release": "26R1",
+  "tool": "list_windows_endpoints_by_universal_dynamic_group",
+  "call": "count",
+  "args": {
+   "universalDynamicGroupId": "00000000-0000-4000-8000-000000000001",
+   "countOnly": true
+  },
+  "requests": [
+   {
+    "method": "GET",
+    "path": "/endpoints/v2.0/UniversalDynamicGroups/00000000-0000-4000-8000-000000000001/WindowsEndpoints",
+    "query": [
+     [
+      "Page",
+      "0"
+     ],
+     [
+      "PageSize",
+      "1"
+     ]
+    ],
+    "contentType": "application/json",
+    "body": ""
+   }
+  ]
+ }
+]

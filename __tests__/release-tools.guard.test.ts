@@ -126,7 +126,9 @@ describe('tools per release from the spec', () => {
     ['bconnect-endpoints-mcp', 'update_maintenance_window_for_endpoint', ['26R1']], // PUT in 25R2, the tool sends PATCH
     ['bconnect-endpoints-mcp', 'list_endpoints[type=IndustrialEndpoint]', ['25R2']], // removed in 26R1
     ['bconnect-endpoints-mcp', 'list_endpoints', ['25R2', '26R1']], // merged: in every release one of its variants is in
-    ['bconnect-groups-mcp', 'list_industrial_endpoints_by_static_group', ['25R2']],
+    ['bconnect-groups-mcp', 'list_group_members[groupKind=StaticGroup,memberType=IndustrialEndpoint]', ['25R2']],
+    ['bconnect-groups-mcp', 'list_group_members', ['25R2', '26R1']],
+    ['bconnect-groups-mcp', 'list_ad_user_endpoints[endpointType=]', ['25R2', '26R1']],
     ['bconnect-compliance-mcp', 'list_vulnerabilities', ['26R1']], // no 25R2 compliance spec
     ['bconnect-universaldynamicgroups-mcp', 'list_udg_folders', ['26R1']], // GetFolders exists in other 25R2 domains only
     ['bconnect-endpoints-mcp', 'list_endpoints[type=WindowsEndpoint]', ['25R2', '26R1']],
