@@ -21,7 +21,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
 import type { GroupQueryParams, GroupsModule } from "./modules/groups.js";
-import { validateOrThrow, toolErrorResult, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, withVariantSelectors, withToolVariants, variantKey, refuseReplacedTool } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, pickArguments, declaredArgumentsOnly, queryParameters, queryProperties, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, withVariantSelectors, withToolVariants, variantKey, refuseReplacedTool } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -44,10 +44,7 @@ const PATH_ARGUMENT: Readonly<Record<string, string>> = {
  * query parameters (selected release, else the other one's). The core refuses any other.
  */
 function routeArguments(key: string): string[] {
-  const tool = key.slice(0, key.indexOf("["));
-  const release = selectedRelease();
-  const query = QUERY_PARAMETERS[release]?.[key] ?? QUERY_PARAMETERS[release === "25R2" ? "26R1" : "25R2"]?.[key] ?? {};
-  return [...(Object.hasOwn(PATH_ARGUMENT, tool) ? [PATH_ARGUMENT[tool]] : []), ...Object.keys(query)];
+  return [PATH_ARGUMENT[key.slice(0, key.indexOf("["))], ...Object.keys(queryProperties(QUERY_PARAMETERS, selectedRelease(), key))];
 }
 
 /** Per route: the client call (one per API route; the request path is the old tools' path). */
@@ -143,20 +140,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   })));
   server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withToolAnnotations(TOOL_METHODS, toolCatalog.list)));
 
-  // ── Argument-validation pre-pass (runs before getBconnect) ─────────────────
-  function validateToolArguments(route: string, args: Record<string, unknown> | undefined): void {
-    // Own keys only: an inherited name such as "constructor" must not match.
-    if (Object.hasOwn(TOOL_RULES, route)) {
-      validateOrThrow(args, TOOL_RULES[route]());
-    }
-  }
-
   // ── CallToolRequestSchema handler ───────────────────────────────────────────
 
   // A merged tool's call is checked against its routes for the selected release before anything else (REQ-SRV-029).
   // countOnly (#165): count with one 1-row request instead of loading a page.
   server.setRequestHandler(CallToolRequestSchema, withToolVariants(TOOL_VARIANTS, TOOL_RELEASES, routeArguments, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
-    const { name, arguments: args } = request.params;
+    const { name } = request.params;
+    const args = request.params.arguments ?? {};
     // A removed per-kind, per-type tool answers with its replacement; it never runs (REQ-SRV-029).
     refuseReplacedTool(REPLACED_TOOLS, TOOL_RELEASES, name);
     // A tool the selected release lacks is refused by name first, before its arguments are
@@ -167,18 +157,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
     // The route the arguments chose (checked by withToolVariants).
     const route = variantKey(TOOL_VARIANTS, name, args);
-    if (route === undefined || !Object.hasOwn(ROUTES, route)) {
+    if (route === undefined) {
       throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
     }
-    // Validate arguments first — pure, no side effects, fails fast on bad input.
-    validateToolArguments(route, args);
+    // Validate arguments first — pure, no side effects, fails fast on bad input. Every route has rules.
+    validateOrThrow(args, TOOL_RULES[route]());
 
     try {
       // The server's shared client (REQ-SRV-023). A ClientConfigError (e.g. missing
       // credentials) reaches the catch below and becomes a tool result (REQ-XC-001).
       const client = clients.get(credentials);
-      const id = args?.[PATH_ARGUMENT[name]];
-      const data = await ROUTES[route](client.groups, typeof id === "string" ? id : "", pickArguments(args ?? {}, sends(route)));
+      // The path argument is a GUID: validated above.
+      const data = await ROUTES[route](client.groups, String(args[PATH_ARGUMENT[name]]), pickArguments(args, sends(route)));
       return toolJsonResult(data);
     } catch (error) {
       // API errors, gate refusals and configuration errors are tool results the

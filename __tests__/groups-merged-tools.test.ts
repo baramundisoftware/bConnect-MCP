@@ -12,6 +12,8 @@
  * both releases, with writes on and off, and is never listed.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { callsOf, connect, createRecorder, guardEnv, ROOT, type ConnectedServer } from './lib/exerciser.js';
@@ -213,6 +215,23 @@ describe('selector values follow the selected release (from the spec)', () => {
     expect(d).toContain('Only for');
     expect(d).toContain('groupKind "LogicalGroup"');
     expect(d).not.toContain('StaticGroup');
+  });
+});
+
+describe('calls that name no route', () => {
+  it('an unknown tool name is refused, and a call without any arguments is checked like one with none', async () => {
+    Object.assign(process.env, guardEnv('26R1', { writes: false, secretRead: false }));
+    const { createServer } = await import('../bconnect-groups-mcp/src/index.ts');
+    const [a, b] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: 'groups-no-route', version: '0' });
+    await Promise.all([createServer().server.connect(a), client.connect(b)]);
+    recorder.take();
+    await expect(client.callTool({ name: 'no_such_tool' })).rejects.toThrow('Unknown tool: no_such_tool');
+    // No arguments object at all: the AD user route without a type is chosen, and the missing id is refused.
+    await expect(client.callTool({ name: 'list_ad_user_endpoints' })).rejects.toThrow(/adUserId/);
+    await expect(client.callTool({ name: 'list_group_members' })).rejects.toThrow('list_group_members needs groupKind');
+    expect(recorder.take()).toEqual([]);
+    await client.close();
   });
 });
 
