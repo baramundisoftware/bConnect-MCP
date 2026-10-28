@@ -11,7 +11,7 @@ to include.
 2. **One topic per pull request, roughly 400 changed lines or fewer** (generated files
    excluded). Larger work is split into several PRs, as agreed in the issue.
 3. **CI must be green.** `main` requires the four `build + test` checks (Linux and Windows,
-   Node.js 22.15 and 24) on the PR's latest commit, the branch up to date with `main`, one
+   Node.js 22.23.4 and 24) on the PR's latest commit, the branch up to date with `main`, one
    approving review after the last push, and all review threads resolved. Repository admins
    can merge a pull request without the review; nobody can push to `main` directly.
 4. **Security issues are never reported in a public issue or PR.** Use GitHub's private
@@ -21,7 +21,7 @@ Contributions are licensed under the repository's [MIT License](LICENSE).
 
 ## Build and test
 
-Node.js 22.15 or 24 (the versions CI tests). On Windows, make Git Bash npm's script shell
+Node.js 22.23.4 or later on 22, or 24.22.1 or later on 24 (CI tests 22.23.4 and the latest 24). On Windows, make Git Bash npm's script shell
 first, see [README.md](README.md#quick-start).
 
 ```bash

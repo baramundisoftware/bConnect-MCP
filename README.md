@@ -46,7 +46,7 @@ the full guide (release download, checksums, Claude Desktop, the gateway, certif
 
 > This README describes the current `main` branch. The latest release may predate some of it; the changes since then are listed under [Unreleased] in [CHANGELOG.md](CHANGELOG.md).
 
-**1. Install and build** (Node.js 22.15 or 24; the 13 servers share `@bconnect/mcp-core`, so they
+**1. Install and build** (Node.js 22.23.4+ or 24.22.1+; the 13 servers share `@bconnect/mcp-core`, so they
 build together from the repo root):
 
 ```bash
@@ -121,8 +121,8 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 
 - A **baramundi Management Suite** (25R2 or 26R1) with the bConnect API enabled, its address
   (e.g. `https://bms.company.com:443/bconnect`) and an **API key** or a user with API access.
-- **Node.js 22.15 or 24** ([download](https://nodejs.org/)), the versions CI tests; 22.15 and later
-  also trust the operating system's CA store. Not needed for the gateway container.
+- **Node.js 22.23.4 or later on 22, or 24.22.1 or later on 24** ([download](https://nodejs.org/)),
+  the versions CI tests and the packages allow; these also trust the operating system's CA store. Not needed for the gateway container.
 - **Port 443** (HTTPS, or your bConnect port) open from the machine that runs the servers to the bMS.
   To check the network and the certificate first, see
   [INSTALLATION.md → Verifying TLS Is Working](docs/INSTALLATION.md#verifying-tls-is-working).

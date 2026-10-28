@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Request bodies must be plain JSON.** The gateway and the servers' HTTP mode answer a body sent with
   `Content-Encoding` gzip, deflate or br with HTTP 415 and a JSON-RPC error instead of decompressing it, so
   the body-size limit applies to what is parsed. MCP clients send uncompressed JSON; nothing changes for them.
+- **Node.js 22.23.4 or later on 22, or 24.22.1 or later on 24.** Every package declares
+  `engines: { node: "^22.23.4 || ^24.22.1 || >=26.12.1" }` (was `>=20.0.0`), `.nvmrc` names
+  22.23.4, and CI tests 22.23.4 and the latest 24 (was 22.15 and 24). Older releases miss the
+  Node.js security fixes of 2026-10-21, and Node.js 20 is end-of-life. The required CI checks are
+  now named `build + test (…, node 22.23.4)` (#339).
+- **No package can be published to npm by mistake.** The 13 servers, the server template and the
+  gateway are `"private": true` like the root and the core, until #297 publishes them under
+  `@baramundi`; a guard fails for any package that is neither (#339).
 
 ### Security
 - **The gateway image runs Node.js 22.23.4** (was 22.23.1): the base image `node:22-alpine` is pinned
