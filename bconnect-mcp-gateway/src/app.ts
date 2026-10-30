@@ -95,7 +95,9 @@ export function createApp(): express.Application {
     });
   }));
   // Cap request body size (default 1mb) to bound per-request memory (audit H2).
-  app.use(express.json({ limit: process.env.MCP_GATEWAY_MAX_BODY ?? "1mb" }));
+  // MCP clients send plain JSON: a compressed body is refused (415) unread, never
+  // decompressed, so the limit holds for what is actually parsed.
+  app.use(express.json({ limit: process.env.MCP_GATEWAY_MAX_BODY ?? "1mb", inflate: false }));
   // Per-client-IP inbound rate limiting. The gateway has no built-in auth
   // (ADR-0003); identity/authN is the fronting proxy's job.
   app.use(createRateLimitMiddleware());

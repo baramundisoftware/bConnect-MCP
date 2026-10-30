@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Request bodies must be plain JSON.** The gateway and the servers' HTTP mode answer a body sent with
+  `Content-Encoding` gzip, deflate or br with HTTP 415 and a JSON-RPC error instead of decompressing it, so
+  the body-size limit applies to what is parsed. MCP clients send uncompressed JSON; nothing changes for them.
+
 ## [26.1.10] - 2026-10-07
 
 > **Breaking for anyone who calls tools by name:** the endpoint and groups tools are merged into

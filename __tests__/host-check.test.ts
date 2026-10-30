@@ -120,7 +120,8 @@ describe('servers in HTTP mode', () => {
     expect(source).toContain('const hosts = allowedHosts(env.MCP_ALLOWED_HOSTS');
     expect(check).toBeGreaterThan(-1);
     // Before the body parser and the MCP handler, so a refused request isn't parsed first.
-    expect(check).toBeLessThan(source.indexOf('app.use(express.json())'));
+    expect(check).toBeLessThan(source.indexOf('app.use(express.json('));
+    expect(source.indexOf('app.use(express.json(')).toBeGreaterThan(-1);
     expect(check).toBeLessThan(source.indexOf('app.post("/mcp"'));
   });
 
