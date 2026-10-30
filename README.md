@@ -14,9 +14,8 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 > Avoid using sensitive, confidential, or personal data unless you have verified that your security, privacy, and compliance requirements are met.
 >  
 > Keep an eye on AI token usage, especially during testing, as costs can add up quickly depending on the model and workload.
->
-<img width="1335" height="1129" alt="Screenshot 2026-10-09 095510" src="https://github.com/user-attachments/assets/6af3c394-4180-42cf-bfd0-8097b7f8b7f2" />
 
+<img width="1335" height="1129" alt="Screenshot 2026-10-09 095510" src="https://github.com/user-attachments/assets/6af3c394-4180-42cf-bfd0-8097b7f8b7f2" />
 
 **212 tools** across **13 servers** (211 on bMS 26R1, 166 on 25R2), compatible with **baramundi Management Suite 2025 R2 and 2026 R1**.
 
