@@ -10,7 +10,7 @@
 # core is one module for the gateway and all 13 servers (the bMS release they
 # share is detected there once, #159).
 
-FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 AS builder
+FROM node:22-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914 AS builder
 WORKDIR /app
 
 # Source only — build/, node_modules and tests are excluded via .dockerignore.
@@ -41,7 +41,7 @@ RUN npm run build \
 # symlinks to core and the 13 servers.
 
 # ── Runtime stage ────────────────────────────────────────────────
-FROM node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2
+FROM node:22-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914
 
 RUN addgroup -S bconnect && adduser -S bconnect -G bconnect
 
