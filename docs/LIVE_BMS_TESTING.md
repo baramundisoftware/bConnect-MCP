@@ -24,7 +24,7 @@ URL has no TLS at all: the servers refuse it for any host other than this machin
 
 ## Setup on Windows
 
-1. **Node.js** 22.15 or 24, the versions CI tests. Check with `node -v`.
+1. **Node.js** 22.23.4+ or 24.22.1+, the versions CI tests. Check with `node -v`.
 2. **Git Bash as npm's script shell**, because the build scripts are bash. Once:
 
    ```bash

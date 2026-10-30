@@ -91,19 +91,20 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        # 22.15+ is the floor that matters: below it Node does not consult the
-        # OS trust store, which is how an internal CA signing the bMS
+        # 22.23.4 is the oldest version the manifests allow (engines, .nvmrc; the
+        # Node.js security release of 2026-10-21). Below 22.15 Node also does not
+        # consult the OS trust store, which is how an internal CA signing the bMS
         # certificate becomes invisible (issue #59). 24.x is the forward check.
-        node: ["22.15", "24"]
+        node: ["22.23.4", "24"]
     # The ruleset "main protection" requires these checks BY NAME, from the
     # GitHub Actions app (REQ-CI-001). Renaming this job or changing the matrix
     # changes the names: update the ruleset in the same PR, or every PR waits
     # for a check that never arrives. `__tests__/ci-workflow.guard.test.ts`
     # fails if this list and the matrix drift apart.
     # required-checks:begin
-    #   - build + test (ubuntu-latest, node 22.15)
+    #   - build + test (ubuntu-latest, node 22.23.4)
     #   - build + test (ubuntu-latest, node 24)
-    #   - build + test (windows-latest, node 22.15)
+    #   - build + test (windows-latest, node 22.23.4)
     #   - build + test (windows-latest, node 24)
     # required-checks:end
 
@@ -211,7 +212,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: "22.15"
+          node-version: "22.23.4"
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
@@ -256,7 +257,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: "22.15"
+          node-version: "22.23.4"
           cache: npm
           cache-dependency-path: package-lock.json
       - name: Start bConnect-Mock
@@ -304,7 +305,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
-          node-version: "22.15"
+          node-version: "22.23.4"
           cache: npm
           cache-dependency-path: package-lock.json
       - run: npm ci
