@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.1.11] - 2026-10-30
+
+> **Security and maintenance release.** Node.js 22.23.4 / 24.22.1 or later (the Node.js security
+> release of 2026-10-21), a gateway image on Node.js 22.23.4, request bodies must be plain JSON, and
+> runtime dependencies without known advisories. No tool changes. See "Upgrading from 26.1.10" below.
+
 ### Changed
 - **Request bodies must be plain JSON.** The gateway and the servers' HTTP mode answer a body sent with
   `Content-Encoding` gzip, deflate or br with HTTP 415 and a JSON-RPC error instead of decompressing it, so
@@ -26,6 +32,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ip-address 10.7.5, qs 6.17.1, all within the ranges the depending packages declare (REQ-DEP-001).
 - **The gateway image runs Node.js 22.23.4** (was 22.23.1): the base image `node:22-alpine` is pinned
   to a digest that includes the Node.js security release of 2026-10-21. Rebuild or pull the image (#349).
+
+### Upgrading from 26.1.10
+- **Node.js 22.23.4 or later on 22, or 24.22.1 or later on 24.** Older versions, including Node.js 20,
+  are refused by `engines` (`npm ci --engine-strict`) and miss the Node.js security fixes. Check with
+  `node -v` before updating. The gateway container brings its own Node.js.
+- **Gateway container:** pull `ghcr.io/baramundisoftware/bconnect-mcp-gateway:26.1.11` (or `latest`) or
+  rebuild it; the 26.1.10 image runs Node.js 22.23.1.
+- **Gateway from source:** if `bconnect-mcp-gateway/node_modules` exists from an older build, delete it
+  before `npm ci` (`rm -rf bconnect-mcp-gateway/node_modules`). The gateway runs on the root install;
+  a leftover folder can hold Express 4 and is loaded first (#365). The release zip and the image aren't
+  affected.
+- **HTTP clients that compress request bodies** get HTTP 415; send plain JSON. MCP clients don't compress.
+
+### Verified
+- CI on `b7bed59`: Linux and Windows × Node.js 22.23.4 and 24, coverage floors, mock tier 25R2 and 26R1.
+- Linux (Node.js 22.23.4): release checks 22/22, mock tier 26R1 64 / 25R2 51 passed, gateway image
+  (`/health`, `tools/list`, compressed body → 415), `npm audit --omit=dev` 0.
+- Live, read-only, bMS 26R1 (26.1.161.0) on Windows 11, Node.js 24.22.1: 13/13 servers started, TLS
+  verified, read tools 73 ok, 2 expected answers, 0 failed; 4 not verified live (no MDM, no Entra ID on
+  the test bMS). 25R2: not verified live (no test installation).
 
 ## [26.1.10] - 2026-10-07
 
@@ -804,7 +830,8 @@ providing 212 tools across endpoints, jobs, assets, software, compliance, and mo
 - Transport modes: stdio (local) and HTTP (network/Docker)
 - Unit tests and mock-integration tests across all servers
 
-[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.10...HEAD
+[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.11...HEAD
+[26.1.11]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.10...v26.1.11
 [26.1.10]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.9...v26.1.10
 [26.1.9]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.7...v26.1.9
 [26.1.7]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.2...v26.1.7
