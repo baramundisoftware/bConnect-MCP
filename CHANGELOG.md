@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `@baramundi`; a guard fails for any package that is neither (#339).
 
 ### Security
+- **Runtime dependencies without known advisories** (`npm audit --omit=dev`: 0, was 3 high and 4 moderate):
+  body-parser 2.4.0, follow-redirects 1.16.2, zod 4.6.7, @hono/node-server 2.1.5, fast-uri 3.1.9,
+  ip-address 10.7.5, qs 6.17.1, all within the ranges the depending packages declare (REQ-DEP-001).
 - **The gateway image runs Node.js 22.23.4** (was 22.23.1): the base image `node:22-alpine` is pinned
   to a digest that includes the Node.js security release of 2026-10-21. Rebuild or pull the image (#349).
 
