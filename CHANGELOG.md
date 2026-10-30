@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Content-Encoding` gzip, deflate or br with HTTP 415 and a JSON-RPC error instead of decompressing it, so
   the body-size limit applies to what is parsed. MCP clients send uncompressed JSON; nothing changes for them.
 
+### Security
+- **The gateway image runs Node.js 22.23.4** (was 22.23.1): the base image `node:22-alpine` is pinned
+  to a digest that includes the Node.js security release of 2026-10-21. Rebuild or pull the image (#349).
+
 ## [26.1.10] - 2026-10-07
 
 > **Breaking for anyone who calls tools by name:** the endpoint and groups tools are merged into
