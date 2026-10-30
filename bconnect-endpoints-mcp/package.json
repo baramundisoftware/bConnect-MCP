@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.12",
     "msw": "^2.11.6",
     "openapi-typescript": "^7.0.0",
     "typescript": "^5.9.3",
