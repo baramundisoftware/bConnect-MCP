@@ -2,7 +2,8 @@
  * bconnect-mcp-gateway — request errors are JSON, never an HTML page (REQ-GW-004, #319)
  *
  * A body the gateway can't read (malformed JSON, over MCP_GATEWAY_MAX_BODY,
- * an unsupported charset) gets a JSON-RPC error with the error's status; a
+ * an unsupported charset, a compressed body) gets a JSON-RPC error with the
+ * error's status; a
  * path no route matches gets a JSON 404. The gateway keeps serving afterwards.
  * The answers that were JSON already (unknown domain, 405, 429, host check,
  * handler failure) are covered in app.test.ts, app-errors.test.ts and
@@ -11,6 +12,7 @@
 
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import http from "node:http";
+import { brotliCompressSync, deflateSync, gzipSync } from "node:zlib";
 import { createApp, logServerErrors } from "../app.js";
 
 async function startApp(): Promise<{ baseUrl: string; close: () => Promise<void> }> {
@@ -70,6 +72,28 @@ describe("request errors", () => {
   it("an unsupported charset → 415, JSON-RPC internal error", async () => {
     const res = await post("/endpoints/mcp", "{}", { ...MCP_HEADERS, "Content-Type": "application/json; charset=koi8-r" });
     expect(await answer(res)).toMatchObject({ status: 415, body: INTERNAL_ERROR });
+  });
+
+  // MCP clients send plain JSON. A compressed body is refused unread rather than
+  // decompressed: no client needs it, and it would be expanded before any limit.
+  it.each([
+    ["br", brotliCompressSync],
+    ["gzip", gzipSync],
+    ["deflate", deflateSync],
+  ])("a %s-compressed body → 415, JSON-RPC internal error, not decompressed", async (encoding, compress) => {
+    const res = await fetch(`${gateway.baseUrl}/endpoints/mcp`, {
+      method: "POST",
+      headers: { ...MCP_HEADERS, "Content-Encoding": encoding },
+      body: compress(Buffer.from(JSON.stringify(MCP_INITIALIZE))),
+      signal: AbortSignal.timeout(5000),
+    });
+    expect(await answer(res)).toMatchObject({ status: 415, body: INTERNAL_ERROR });
+  });
+
+  it("Content-Encoding: identity is plain JSON and still served", async () => {
+    const res = await post("/endpoints/mcp", JSON.stringify(MCP_INITIALIZE), { ...MCP_HEADERS, "Content-Encoding": "identity" });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain('"serverInfo"');
   });
 
   it("malformed JSON to any other path is JSON as well", async () => {

@@ -230,7 +230,8 @@ async function serveHttp<C extends BConnectClientBase>(entry: ServerEntry<C>, io
   app.use(hostCheck(hosts, (reason) => {
     io.error(`${name}: refused a request whose ${reason} isn't an allowed host name (MCP_ALLOWED_HOSTS)`);
   }));
-  app.use(express.json());
+  // MCP clients send plain JSON: a compressed body is refused (415) unread, never decompressed.
+  app.use(express.json({ inflate: false }));
 
   app.post("/mcp", async (req, res) => {
     const { server } = entry.createServer();

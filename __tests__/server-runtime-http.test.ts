@@ -9,6 +9,7 @@ import { request as httpRequest, type Server as HttpServer } from 'node:http';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { brotliCompressSync, gzipSync } from 'node:zlib';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { BConnectClientBase } from '../packages/mcp-core/src/bconnect-client-base.js';
@@ -36,7 +37,7 @@ function mcpServer(): { server: Server } {
 }
 
 /** A request with a chosen Host header (fetch does not let a caller set it). */
-function send(port: number, init: { method: string; host?: string; body?: string; headers?: Record<string, string> }) {
+function send(port: number, init: { method: string; host?: string; body?: string | Buffer; headers?: Record<string, string> }) {
   return new Promise<{ status: number; body: string; type: string }>((resolve, reject) => {
     const req = httpRequest({
       host: '127.0.0.1', port, path: '/mcp', method: init.method,
@@ -116,6 +117,13 @@ describe('standalone HTTP mode', () => {
     const res = await send(port, { method });
     expect(res.status).toBe(405);
     expect(JSON.parse(res.body).error).toMatch(/Method Not Allowed/);
+  });
+
+  // MCP clients send plain JSON; a compressed body is refused unread, not decompressed.
+  it.each([['br', brotliCompressSync], ['gzip', gzipSync]] as const)('refuses a %s-compressed body with 415 and a JSON-RPC internal error', async (encoding, compress) => {
+    const res = await send(port, { method: 'POST', headers: { ...MCP_HEADERS, 'content-encoding': encoding }, body: compress(Buffer.from(rpc('tools/list', 5))) });
+    expect(res.status).toBe(415);
+    expect(JSON.parse(res.body)).toEqual({ jsonrpc: '2.0', error: { code: -32603, message: 'Internal error' }, id: null });
   });
 
   it('answers a body over the size limit with a JSON-RPC internal error, no stack', async () => {
