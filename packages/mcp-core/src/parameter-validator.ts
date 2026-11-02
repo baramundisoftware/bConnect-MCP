@@ -5,7 +5,8 @@
  * Validates types, formats, ranges, and required fields.
  */
 
-import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
+import { protocolError } from "./protocol-errors.js";
 
 /**
  * Validation rule definition
@@ -192,12 +193,12 @@ export function validateParameters(args: Record<string, unknown> | undefined, ru
 }
 
 /**
- * Validate and throw McpError if validation fails
+ * Validate and throw a protocol error (InvalidParams) if validation fails
  */
 export function validateOrThrow(args: Record<string, unknown> | undefined, rules: ValidationRule[]): void {
   const result = validateParameters(args, rules);
   if (!result.valid) {
-    throw new McpError(
+    throw protocolError(
       ErrorCode.InvalidParams,
       `Invalid parameters: ${result.errors.join('; ')}`
     );

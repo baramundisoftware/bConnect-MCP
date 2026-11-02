@@ -9,7 +9,8 @@
  * what it can't use falls back with a warning that says why. Nothing else
  * reads BCONNECT_RELEASE (release-source.guard.test.ts).
  */
-import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
+import { protocolError } from "./protocol-errors.js";
 import { BConnectApiError } from "./api-errors.js";
 import type { BConnectClientBase } from "./bconnect-client-base.js";
 import { checkRelease, ClientConfigError, RELEASES } from "./client-config.js";
@@ -206,5 +207,5 @@ export function refuseUnavailableTool(table: ToolReleaseTable, tool: string): vo
   if (!Object.hasOwn(table, tool) || table[tool].includes(selectedRelease())) {
     return;
   }
-  throw new McpError(ErrorCode.MethodNotFound, releaseRefusal(tool, table[tool].join(" or ")));
+  throw protocolError(ErrorCode.MethodNotFound, releaseRefusal(tool, table[tool].join(" or ")));
 }

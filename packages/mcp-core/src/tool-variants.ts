@@ -12,7 +12,8 @@
  *   (`withToolVariants`); the server's dispatch reads the variant with `variantKey`;
  * - answers a removed tool name with its replacement (`refuseReplacedTool`).
  */
-import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
+import { protocolError } from "./protocol-errors.js";
 import { releaseDescription, releaseRefusal, selectedRelease, type ToolReleaseTable } from "./release.js";
 
 /** A variant's selector values; null means the argument is left out. */
@@ -187,7 +188,7 @@ function checkVariant(table: ToolVariantTable, releases: ToolReleaseTable, argum
   const here = variants.filter(([key]) => inRelease(releases, key, release));
   const selectors = selectorsOf(variants);
   const refuse = (message: string): never => {
-    throw new McpError(ErrorCode.InvalidParams, message);
+    throw protocolError(ErrorCode.InvalidParams, message);
   };
   for (const name of selectors) {
     const value = args[name];
@@ -276,5 +277,5 @@ export function refuseReplacedTool(replaced: ReplacedToolTable, releases: ToolRe
   if (!inRelease(releases, variant, selectedRelease())) {
     message += ` That route is only available in bMS ${(releases[variant] ?? []).join(" or ")}; this server uses ${releaseDescription()}.`;
   }
-  throw new McpError(ErrorCode.MethodNotFound, message);
+  throw protocolError(ErrorCode.MethodNotFound, message);
 }

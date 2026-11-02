@@ -4,7 +4,8 @@
  * gets a real type instead of casting an argument it hasn't looked at, and a
  * malformed argument is refused before any request.
  */
-import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
+import { protocolError } from "./protocol-errors.js";
 
 /**
  * One RFC 6902 operation. The generated spec types declare `value` as
@@ -26,7 +27,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 /** The argument as a plain object, or an InvalidParams error naming it. */
 export function objectArgument(value: unknown, name: string): Record<string, unknown> {
   if (!isRecord(value)) {
-    throw new McpError(ErrorCode.InvalidParams, `${name} must be an object`);
+    throw protocolError(ErrorCode.InvalidParams, `${name} must be an object`);
   }
   return value;
 }
@@ -34,11 +35,11 @@ export function objectArgument(value: unknown, name: string): Record<string, unk
 /** The argument as a JSON Patch document (a non-empty list of operations), or an InvalidParams error. */
 export function jsonPatchArgument(value: unknown, name: string): JsonPatchOperation[] {
   if (!Array.isArray(value) || value.length === 0) {
-    throw new McpError(ErrorCode.InvalidParams, `${name} must be a non-empty JSON Patch list, e.g. [{"op":"replace","path":"/name","value":"New name"}]`);
+    throw protocolError(ErrorCode.InvalidParams, `${name} must be a non-empty JSON Patch list, e.g. [{"op":"replace","path":"/name","value":"New name"}]`);
   }
   return value.map((entry, i) => {
     if (!isRecord(entry) || !isPatchOp(entry.op) || typeof entry.path !== "string") {
-      throw new McpError(ErrorCode.InvalidParams, `${name}[${i}] must have "op" (${Object.keys(PATCH_OPS).join(", ")}) and a string "path"`);
+      throw protocolError(ErrorCode.InvalidParams, `${name}[${i}] must have "op" (${Object.keys(PATCH_OPS).join(", ")}) and a string "path"`);
     }
     return {
       op: entry.op,
@@ -122,7 +123,7 @@ export function declaredArgumentsOnly<Result extends { tools: object[] }>(
       const accepted = declaredNames(tool);
       const unknown = Object.keys(args).filter((arg) => !accepted.includes(arg));
       if (unknown.length > 0) {
-        throw new McpError(ErrorCode.InvalidParams, undeclaredMessage(name, unknown, accepted));
+        throw protocolError(ErrorCode.InvalidParams, undeclaredMessage(name, unknown, accepted));
       }
     },
   };

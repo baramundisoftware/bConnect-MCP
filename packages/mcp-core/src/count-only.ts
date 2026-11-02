@@ -16,7 +16,8 @@
  * page size the caller gives is replaced; every other argument the caller gave
  * (path ids included) is echoed as `filters`.
  */
-import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
+import { protocolError } from "./protocol-errors.js";
 import { offersQueryProperty, type QueryParameterTable } from "./tool-arguments.js";
 import { toolJsonResult, type ToolJsonResult } from "./tool-results.js";
 
@@ -77,7 +78,7 @@ export function withCountOnly<Rest extends unknown[], Result>(
     }
     const { countOnly, ...callArgs } = args;
     if (typeof countOnly !== "boolean") {
-      throw new McpError(ErrorCode.InvalidParams, `countOnly for ${name} must be true or false`);
+      throw protocolError(ErrorCode.InvalidParams, `countOnly for ${name} must be true or false`);
     }
     if (!countOnly) {
       return handler({ ...request, params: { ...request.params, arguments: callArgs } }, ...rest);

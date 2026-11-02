@@ -16,12 +16,11 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  ErrorCode,
-  McpError
+  ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
 import type { GroupQueryParams, GroupsModule } from "./modules/groups.js";
-import { validateOrThrow, toolErrorResult, pickArguments, declaredArgumentsOnly, queryParameters, queryProperties, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, withVariantSelectors, withToolVariants, variantKey, refuseReplacedTool } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, pickArguments, declaredArgumentsOnly, queryParameters, queryProperties, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, withVariantSelectors, withToolVariants, variantKey, refuseReplacedTool, protocolError } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -158,7 +157,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     // The route the arguments chose (checked by withToolVariants).
     const route = variantKey(TOOL_VARIANTS, name, args);
     if (route === undefined) {
-      throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+      throw protocolError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
     }
     // Validate arguments first — pure, no side effects, fails fast on bad input. Every route has rules.
     validateOrThrow(args, TOOL_RULES[route]());
