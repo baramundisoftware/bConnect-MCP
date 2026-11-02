@@ -14,18 +14,27 @@
  *    template literal of production code, where `${…}` counts as a placeholder.
  */
 import { describe, expect, it } from 'vitest';
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import ts from 'typescript';
 import { ROOT } from './lib/exerciser.js';
 import { envReads } from './lib/env-reads.js';
 
-/** The guides published under docs/ (the rest of docs/ is git-ignored), and the root documents. */
-const GUIDES = [
-  ...['AUDIT', 'CLIENTS', 'CONFIGURATION', 'DOCKER', 'INSTALLATION', 'LIVE_BMS_TESTING', 'MOCK_INTEGRATION_TESTING', 'N8N', 'TROUBLESHOOTING']
-    .map((name) => join(ROOT, 'docs', `${name}.md`)),
-  ...['README', 'SECURITY', 'CONTRIBUTING', 'SUPPORT'].map((name) => join(ROOT, `${name}.md`)),
-];
+/** The tracked Markdown files under docs/ and at the root, found in the repository (#338). */
+const TRACKED_DOCS = execFileSync('git', ['ls-files', '-z', '--', 'docs/*.md', '*.md'], { cwd: ROOT, encoding: 'utf8' })
+  .split('\0')
+  .filter((file) => /^(?:docs\/)?[^/]+\.md$/.test(file))
+  .sort();
+
+/** Tracked documents the settings and message checks leave out, each with the reason. */
+const NOT_GUIDES: Record<string, string> = {
+  'CHANGELOG.md': 'release history: it names settings and messages of earlier releases on purpose',
+  'CODE_OF_CONDUCT.md': 'names no settings or messages; its links are checked',
+};
+
+/** The guides: every tracked document under docs/ and at the root, except NOT_GUIDES. */
+const GUIDES = TRACKED_DOCS.filter((file) => !(file in NOT_GUIDES)).map((file) => join(ROOT, file));
 
 /** Every published Markdown file whose links are checked: the guides plus each server's README. */
 const LINKED = [
@@ -77,6 +86,19 @@ const SOURCES = [
 const readNames = new Set(
   SOURCES.flatMap((file) => envReads(readFileSync(file, 'utf8'), file).map((r) => r.name).filter((n): n is string => Boolean(n))),
 );
+
+describe('docs — which documents are checked (#338)', () => {
+  it('finds the tracked guides in the repository, not in a hand-written list', () => {
+    for (const file of ['docs/CONFIGURATION.md', 'docs/TROUBLESHOOTING.md', 'README.md', 'SECURITY.md', 'SUPPORT.md']) {
+      expect(GUIDES, file).toContain(join(ROOT, file));
+    }
+    expect(GUIDES.length).toBeGreaterThanOrEqual(13);
+  });
+
+  it('leaves out only documents that are tracked', () => {
+    expect(Object.keys(NOT_GUIDES).filter((file) => !TRACKED_DOCS.includes(file))).toEqual([]);
+  });
+});
 
 describe('docs — settings the guides name exist', () => {
   it('finds the reads it compares against (self-check)', () => {
