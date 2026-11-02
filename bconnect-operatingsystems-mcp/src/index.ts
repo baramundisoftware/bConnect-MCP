@@ -278,7 +278,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_os_folder": {
-          const result = await os.createFolder(pickArguments(args!, ["name", "parentId", "comment"]) as never);
+          const result = await os.createFolder({
+            name: args!.name as string,
+            ...(args!.parentId !== undefined && { parentId: args!.parentId as string }),
+            ...(args!.comment !== undefined && { comment: args!.comment as string }),
+          });
           return toolJsonResult(result);
         }
 

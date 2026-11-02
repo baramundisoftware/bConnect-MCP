@@ -545,7 +545,10 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_security_group": {
-          const result = await sm.createSecurityGroup(pickArguments(args!, ["name", "profiles"]) as never);
+          const result = await sm.createSecurityGroup({
+            name: args!.name as string,
+            ...(args!.profiles !== undefined && { profiles: args!.profiles as string[] }),
+          });
           return toolJsonResult(result);
         }
 
@@ -570,7 +573,12 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_security_profile": {
-          const result = await sm.createSecurityProfile(pickArguments(args!, ["name", "comment", "displayAdministratorIdentities", "displayEndpointUserIdentities"]) as never);
+          const result = await sm.createSecurityProfile({
+            name: args!.name as string,
+            ...(args!.comment !== undefined && { comment: args!.comment as string }),
+            ...(args!.displayAdministratorIdentities !== undefined && { displayAdministratorIdentities: args!.displayAdministratorIdentities as boolean }),
+            ...(args!.displayEndpointUserIdentities !== undefined && { displayEndpointUserIdentities: args!.displayEndpointUserIdentities as boolean }),
+          });
           return toolJsonResult(result);
         }
 

@@ -21,11 +21,6 @@
   },
   "bconnect-operatingsystems-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 3
-    }
-  },
-  "bconnect-servermanagement-mcp/src/index.ts": {
-    "no-restricted-syntax": {
       "count": 2
     }
   },
