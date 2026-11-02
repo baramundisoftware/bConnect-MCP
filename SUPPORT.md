@@ -10,15 +10,17 @@
 
 ## Getting Help
 
-> **bConnect-MCP is not supported through baramundi Support.** It is a separate project.
-> Do not contact the baramundi support portal for questions about these MCP servers.
+bConnect-MCP is a **Technical Preview**. There are three ways to reach us, depending on what you
+have:
 
-For questions, bugs, or feature requests specific to **bConnect-MCP**, contact:
+- **Questions:** contact baramundi Support at **support@baramundi.com** and mention
+  **bConnect-MCP** in the subject.
+- **Bugs and change requests:** open a GitHub issue with the bug report or change proposal
+  template.
+- **Security vulnerabilities:** report them privately first, as [SECURITY.md](SECURITY.md)
+  describes, never in a public issue.
 
-**bernd.wiedemann@baramundi.de**
-
-For a bug or a change you'd like, open a GitHub issue with the bug report or change proposal
-template. Please include:
+In an issue or a mail to Support, please include:
 
 - bConnect MCP Suite release tag or commit (e.g. `v26.1.11`)
 - baramundi Management Suite release (`BCONNECT_RELEASE` value)

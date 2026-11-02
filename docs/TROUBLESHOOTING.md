@@ -563,7 +563,7 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 - **README.md** — project overview and quick start
 - **docs/DOCKER.md** — Docker deployment
 - **docs/INSTALLATION.md** — full installation and TLS setup
-- **bConnect-MCP support**: bernd.wiedemann@baramundi.de (bConnect-MCP is **not** supported through baramundi Support — see [../SUPPORT.md](../SUPPORT.md))
+- **Questions**: baramundi Support at support@baramundi.com, mentioning bConnect-MCP (see [../SUPPORT.md](../SUPPORT.md))
 - **GitHub Issues**: open an issue in this repository
 
 ---
