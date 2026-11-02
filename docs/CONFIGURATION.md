@@ -252,6 +252,10 @@ The gateway serves all 13 servers over HTTP with one bConnect service credential
 settings above (except `MCP_TRANSPORT`, `MCP_PORT`, `MCP_BIND` and `MCP_ALLOWED_HOSTS`) and these. The image and the compose file set a
 few defaults of their own; [DOCKER.md](DOCKER.md) says which.
 
+Like a server, the gateway doesn't start without `BCONNECT_BASE_URL` and a credential (an API key,
+or a username and a password, also as `*_FILE` secrets), or with an `http://` address other than
+loopback; it stops with one line naming the setting. A bMS it can't reach is only a warning.
+
 ### `MCP_GATEWAY_PORT`
 
 **Default:** `3001`. Gateway listen port.
@@ -271,7 +275,10 @@ Host names the gateway answers to besides `localhost`, `127.0.0.1` and `[::1]`, 
 ### `MCP_GATEWAY_RATE_LIMIT_ENABLED`
 
 **Default:** `true`. Per-client-IP rate limiting of the requests the gateway receives; only exactly
-`false` turns it off. `/health` is never limited.
+`false` turns it off. The limit applies before the request body is read. `GET /health` (and `HEAD`)
+counts in a limit of its own with the same settings, so health checks and MCP requests can't use up
+each other's; `/health` answers other methods with 405. The gateway tracks up to 10,000 client
+addresses at once and forgets one that sent nothing for a whole window.
 
 ### `MCP_GATEWAY_RATE_LIMIT_MAX`
 
@@ -284,7 +291,9 @@ Host names the gateway answers to besides `localhost`, `127.0.0.1` and `[::1]`, 
 ### `MCP_GATEWAY_MAX_BODY`
 
 **Default:** `1mb`. Largest request body the gateway accepts; a larger one gets HTTP 413 with a
-JSON-RPC error. Bodies must be plain JSON: a request with a `Content-Encoding` other than
+JSON-RPC error. A whole number of bytes, optionally followed by `b`, `kb` or `mb` (any case,
+1kb = 1024 bytes), from `1kb` to `100mb`, for example `512kb` or `2mb`. Any other value (`1m`,
+`10mib`, `1.5mb`) stops the gateway at startup with one line. Bodies must be plain JSON: a request with a `Content-Encoding` other than
 `identity` (gzip, deflate, br) gets HTTP 415 and is not decompressed. MCP clients don't compress
 requests; the servers' own HTTP mode behaves the same.
 

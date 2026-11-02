@@ -26,6 +26,7 @@ import { createServer as createUpdatemanagementServer } from "bconnect-updateman
 import { createServer as createVariablesServer } from "bconnect-variables-mcp";
 
 import { createRateLimitMiddleware } from "./rate-limit.js";
+import { maxBodyBytes } from "./body-limit.js";
 import { createLogger, type Logger } from "./logger.js";
 import { createAccessLogMiddleware } from "./access-log.js";
 
@@ -94,13 +95,13 @@ export function createApp(): express.Application {
       ...(origin !== undefined && { origin: JSON.stringify(origin.slice(0, 100)) }),
     });
   }));
-  // Cap request body size (default 1mb) to bound per-request memory (audit H2).
-  // MCP clients send plain JSON: a compressed body is refused (415) unread, never
-  // decompressed, so the limit holds for what is actually parsed.
-  app.use(express.json({ limit: process.env.MCP_GATEWAY_MAX_BODY ?? "1mb", inflate: false }));
-  // Per-client-IP inbound rate limiting. The gateway has no built-in auth
-  // (ADR-0003); identity/authN is the fronting proxy's job.
+  // Per-client-IP inbound rate limiting, before any body is read (#330). The gateway
+  // has no built-in auth (ADR-0003); identity/authN is the fronting proxy's job.
   app.use(createRateLimitMiddleware());
+  // Cap request body size (MCP_GATEWAY_MAX_BODY, default 1mb) to bound per-request
+  // memory (audit H2). MCP clients send plain JSON: a compressed body is refused (415)
+  // unread, never decompressed, so the limit holds for what is actually parsed.
+  app.use(express.json({ limit: maxBodyBytes(), inflate: false }));
 
   // MCP Streamable HTTP handler — stateless, one server+transport per request
   app.post("/:domain/mcp", async (req: Request, res: Response) => {
@@ -165,6 +166,10 @@ export function createApp(): express.Application {
   // Health endpoint
   app.get("/health", (_req: Request, res: Response) => {
     res.json({ status: "ok", servers: domains, count: domains.length });
+  });
+  app.all("/health", (_req: Request, res: Response) => {
+    res.setHeader("Allow", "GET, HEAD");
+    res.status(405).json({ error: "Method Not Allowed. Use GET for /health." });
   });
 
   // A path no route matches: JSON, not Express's HTML page. This also answers OPTIONS

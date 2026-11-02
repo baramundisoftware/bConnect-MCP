@@ -19,12 +19,15 @@
  *   MCP_ALLOW_NO_AUTH   — "true" to permit a non-loopback bind, asserting an
  *                         authenticating proxy is in front (fail-closed default).
  *   BCONNECT_BASE_URL / BCONNECT_API_KEY / BCONNECT_USERNAME / BCONNECT_PASSWORD
- *                       — the service credential (see secrets.ts for *_FILE support).
+ *                       — the service credential (see secrets.ts for *_FILE support);
+ *                         required: the gateway doesn't start without it.
+ *   MCP_GATEWAY_MAX_BODY — request body limit (see body-limit.ts); checked at startup.
  *   ALLOW_WRITE_OPERATIONS / ALLOW_SECRET_READ — ignored: kept off (see gates.ts).
  */
 
 import { BConnectClientBase, checkReleaseSetting, clientConfigFromEnv, detectRelease, loadEnvOnce, prettyJsonSetting } from "@bconnect/mcp-core";
 import { createApp, domains, gatewayAllowedHosts } from "./app.js";
+import { maxBodyBytes } from "./body-limit.js";
 import { closeGates } from "./gates.js";
 import { createLogger } from "./logger.js";
 import { resolveFileSecrets } from "./secrets.js";
@@ -51,6 +54,7 @@ loadEnvOnce();
 try {
   checkReleaseSetting();
   prettyJsonSetting(process.env.BCONNECT_PRETTY_JSON);
+  maxBodyBytes();
 } catch (err) {
   log.error((err as Error).message);
   process.exit(1);
@@ -61,6 +65,16 @@ try {
   resolveFileSecrets();
 } catch (err) {
   log.error("cannot read a *_FILE secret referenced in the environment", { error: String(err) });
+  process.exit(1);
+}
+
+// The service credential, checked as a stdio server checks its own (#330): without a
+// base URL or credentials, or with an http:// address, every tool call would fail.
+// An unreachable bMS is not checked here; the release detection below warns about it.
+try {
+  clientConfigFromEnv(process.env);
+} catch (err) {
+  log.error((err as Error).message);
   process.exit(1);
 }
 

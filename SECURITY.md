@@ -138,7 +138,7 @@ The optional `bconnect-mcp-gateway` exposes all 13 servers over **HTTP** for mul
 - **Allowed host names only.** The gateway answers only requests addressed to `localhost`, `127.0.0.1`, `[::1]` or a name in `MCP_GATEWAY_ALLOWED_HOSTS`, and refuses a browser request whose `Origin` isn't one of them. A server's HTTP mode does the same (`MCP_ALLOWED_HOSTS`).
 - **Write tools and secret reads stay off.** Because the gateway has no authentication of its own, it ignores `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ`, wherever they are set. Its tool lists contain only read tools.
 - **Tenant isolation.** The gateway is stateless and builds a fresh MCP server + bConnect client per request; the response cache is per-request, so there is no cross-caller leakage.
-- **Rate limiting / body cap.** A per-client-IP token-bucket limiter (`MCP_GATEWAY_RATE_LIMIT_*`) plus a request body-size cap (`MCP_GATEWAY_MAX_BODY`) bound abuse. Behind a proxy, every request comes from the proxy's address (the gateway doesn't read `X-Forwarded-For`), so all callers share one limit: do per-caller limiting at the proxy.
+- **Rate limiting / body cap.** A per-client-IP token-bucket limiter (`MCP_GATEWAY_RATE_LIMIT_*`), applied before the body is read and bounded to 10,000 tracked addresses, plus a request body-size cap (`MCP_GATEWAY_MAX_BODY`, checked at startup) bound abuse. Behind a proxy, every request comes from the proxy's address (the gateway doesn't read `X-Forwarded-For`), so all callers share one limit: do per-caller limiting at the proxy.
 - **Structured access log.** Every request is logged with method / path / status / duration and the client address, which behind a proxy is the proxy's (`LOG_LEVEL` / `LOG_FORMAT`).
 
 ### Operational Hardening
