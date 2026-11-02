@@ -8,7 +8,6 @@ import { BConnectClient } from '../../bconnect-client.js';
 import { TOOL_RELEASES } from '../../tool-releases.js';
 import {
   getMockHealth,
-  MOCK_BASE_URL,
   mockAvailable,
   mockClientConfig,
   NONEXISTENT_GUID,

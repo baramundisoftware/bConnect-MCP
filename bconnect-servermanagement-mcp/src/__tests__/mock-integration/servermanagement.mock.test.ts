@@ -8,7 +8,6 @@ import { detectRelease, forgetDetectedRelease } from '@bconnect/mcp-core';
 import { BConnectClient } from '../../bconnect-client.js';
 import {
   getMockHealth,
-  MOCK_BASE_URL,
   mockAvailable,
   mockClientConfig,
   NONEXISTENT_GUID,

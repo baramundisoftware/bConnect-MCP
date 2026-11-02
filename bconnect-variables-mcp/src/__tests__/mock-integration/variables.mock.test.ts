@@ -6,7 +6,6 @@
 import { describe, it, beforeAll, expect } from 'vitest';
 import { BConnectClient } from '../../bconnect-client.js';
 import {
-  MOCK_BASE_URL,
   mockAvailable,
   mockClientConfig,
   NONEXISTENT_GUID,
