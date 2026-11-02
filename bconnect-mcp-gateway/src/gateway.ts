@@ -22,12 +22,15 @@
  *                       — the service credential (see secrets.ts for *_FILE support);
  *                         required: the gateway doesn't start without it.
  *   MCP_GATEWAY_MAX_BODY — request body limit (see body-limit.ts); checked at startup.
+ *   MCP_GATEWAY_TRUST_PROXY — the proxy whose X-Forwarded-For to trust (see trust-proxy.ts);
+ *                         checked at startup.
  *   ALLOW_WRITE_OPERATIONS / ALLOW_SECRET_READ — ignored: kept off (see gates.ts).
  */
 
 import { BConnectClientBase, checkReleaseSetting, clientConfigFromEnv, detectRelease, loadEnvOnce, prettyJsonSetting } from "@bconnect/mcp-core";
 import { createApp, domains, gatewayAllowedHosts } from "./app.js";
 import { maxBodyBytes } from "./body-limit.js";
+import { trustProxySetting } from "./trust-proxy.js";
 import { closeGates } from "./gates.js";
 import { createLogger } from "./logger.js";
 import { resolveFileSecrets } from "./secrets.js";
@@ -55,6 +58,7 @@ try {
   checkReleaseSetting();
   prettyJsonSetting(process.env.BCONNECT_PRETTY_JSON);
   maxBodyBytes();
+  trustProxySetting();
 } catch (err) {
   log.error((err as Error).message);
   process.exit(1);
@@ -112,6 +116,10 @@ app.listen(port, bind, () => {
     log.warn("MCP_GATEWAY_ALLOWED_HOSTS entry ignored: not a host name or address", { entry: JSON.stringify(entry) });
   });
   log.info("allowed host names", { hosts: hosts.join(",") });
+  const trustProxy = trustProxySetting();
+  log.info("client address", {
+    from: trustProxy === false ? "connection" : `X-Forwarded-For via ${Array.isArray(trustProxy) ? trustProxy.join(",") : `${trustProxy} proxy hop(s)`}`,
+  });
   log.warn(
     "no built-in auth — authentication is delegated to the fronting reverse proxy (ADR-0003); " +
       "the gateway uses a single BCONNECT_* service credential",

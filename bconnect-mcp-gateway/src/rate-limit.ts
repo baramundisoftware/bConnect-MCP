@@ -17,8 +17,8 @@
  *
  * This is a coarse in-app DoS backstop. The gateway has no built-in auth
  * (ADR-0003), so richer edge/flood/per-identity limiting belongs at the
- * fronting reverse proxy. Behind a proxy, set Express `trust proxy` if you need
- * the real client IP rather than the proxy's.
+ * fronting reverse proxy. Behind a proxy, MCP_GATEWAY_TRUST_PROXY makes the
+ * limit key on the client address the proxy reports (#331).
  */
 
 import type { Request, Response, NextFunction } from "express";

@@ -27,6 +27,7 @@ import { createServer as createVariablesServer } from "bconnect-variables-mcp";
 
 import { createRateLimitMiddleware } from "./rate-limit.js";
 import { maxBodyBytes } from "./body-limit.js";
+import { trustProxySetting } from "./trust-proxy.js";
 import { createLogger, type Logger } from "./logger.js";
 import { createAccessLogMiddleware } from "./access-log.js";
 
@@ -84,6 +85,12 @@ export function logServerErrors(logger: Pick<Logger, "error">): (status: number,
 export function createApp(): express.Application {
   const app = express();
   const logger = createLogger();
+  // Behind a proxy: the client address from X-Forwarded-For, for the rate limit and the
+  // access log, when MCP_GATEWAY_TRUST_PROXY names the proxy (#331). Off by default.
+  const trustProxy = trustProxySetting();
+  if (trustProxy !== false) {
+    app.set("trust proxy", trustProxy);
+  }
   // Access log first so it records every request's final status (incl. 401/429).
   app.use(createAccessLogMiddleware(logger));
   // Only requests addressed to an allowed host name: loopback names plus

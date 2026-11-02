@@ -36,7 +36,7 @@ const READ = [
   "ALLOW_WRITE_OPERATIONS", "ALLOW_SECRET_READ", "BCONNECT_RELEASE", "BCONNECT_PRETTY_JSON",
   "BCONNECT_USERNAME", "BCONNECT_PASSWORD", "BCONNECT_API_KEY",
   "BCONNECT_USERNAME_FILE", "BCONNECT_PASSWORD_FILE", "BCONNECT_API_KEY_FILE",
-  "MCP_GATEWAY_PORT", "MCP_GATEWAY_BIND", "MCP_ALLOW_NO_AUTH", "MCP_GATEWAY_ALLOWED_HOSTS", "MCP_GATEWAY_MAX_BODY",
+  "MCP_GATEWAY_PORT", "MCP_GATEWAY_BIND", "MCP_ALLOW_NO_AUTH", "MCP_GATEWAY_ALLOWED_HOSTS", "MCP_GATEWAY_MAX_BODY", "MCP_GATEWAY_TRUST_PROXY",
   "LOG_LEVEL", "LOG_FORMAT", "BCONNECT_BASE_URL", "BCONNECT_SKIP_CONNECTIVITY_CHECK", "BCONNECT_ALLOW_INSECURE_HTTP",
 ];
 
@@ -198,6 +198,12 @@ describe("gateway entry point: refuses to start without a usable service credent
     expect(listen).toHaveBeenCalledOnce();
   });
 
+  it.each(["true", "0", "proxy.example.com", "10.0.0.0/33"])("with MCP_GATEWAY_TRUST_PROXY=%s (#331)", async (value) => {
+    withService();
+    vi.stubEnv("MCP_GATEWAY_TRUST_PROXY", value);
+    expect((await refused()).startsWith(`MCP_GATEWAY_TRUST_PROXY=${JSON.stringify(value)} isn't valid. `)).toBe(true);
+  });
+
   it.each(["1m", "10mib", "1.5mb", "-1kb", "1 gb", "lots", "0", "1023", "101mb"])("with MCP_GATEWAY_MAX_BODY=%s", async (value) => {
     withService();
     vi.stubEnv("MCP_GATEWAY_MAX_BODY", value);
@@ -222,6 +228,20 @@ describe("gateway entry point", () => {
     expect(msgs.find((m) => m.msg === "listening")).toMatchObject({ url: "http://127.0.0.1:3001", servers: 13 });
     expect(msgs.find((m) => m.msg === "allowed host names")?.hosts).toMatch(/localhost/);
     expect(msgs.some((m) => m.level === "warn" && /no built-in auth/.test(m.msg))).toBe(true);
+  });
+
+  it("says where it takes the client address from: the connection by default (#331)", async () => {
+    await start();
+    expect(logged().find((m) => m.msg === "client address")).toMatchObject({ level: "info", from: "connection" });
+  });
+
+  it.each([
+    ["1", "X-Forwarded-For via 1 proxy hop(s)"],
+    ["10.0.0.5,10.0.0.0/8", "X-Forwarded-For via 10.0.0.5,10.0.0.0/8"],
+  ])("with MCP_GATEWAY_TRUST_PROXY=%s it says which proxy it trusts", async (value, from) => {
+    vi.stubEnv("MCP_GATEWAY_TRUST_PROXY", value);
+    await start();
+    expect(logged().find((m) => m.msg === "client address")?.from).toBe(from);
   });
 
   it("takes the port and bind from MCP_GATEWAY_PORT and MCP_GATEWAY_BIND", async () => {
