@@ -34,6 +34,26 @@ the path.
 Control characters in a path are escaped, so one entry can't forge another. Request parameters and
 bodies aren't recorded (no setting turns that on), so neither are credentials.
 
+## Keeping the entries
+
+The servers write the entries to stderr and keep no file of their own; whoever starts the server
+decides where they go.
+
+- **The gateway in Docker:** the entries are part of the container log. Keep them with a Docker
+  logging driver that ships the log off the host (for example `syslog`, `journald`, `fluentd` or
+  `gelf`), or collect the `json-file` log with your log agent; with `LOG_FORMAT=json` the gateway's
+  own log lines are JSON as well. The default `json-file` driver keeps the log only as long as the
+  container exists and rotates it only when configured to (`max-size`, `max-file`).
+- **A server in stdio mode:** the MCP client starts it and receives its stderr. Claude Desktop
+  writes it to its MCP server log files; other clients differ, and some discard it. Where an audit
+  trail matters, run the servers behind the gateway, or start them through a wrapper that appends
+  stderr to a file.
+- **A server's own HTTP mode:** like any service, through the service manager (systemd journal,
+  Windows service log) or your container platform.
+
+bMS keeps its own record of the bConnect API calls it receives. These entries add which MCP server
+and tool sent them and what a server refused before sending anything.
+
 ## Security-relevant routes
 
 Derived from the bConnect API specifications:

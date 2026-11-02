@@ -84,6 +84,22 @@ secrets) instead of plain env vars — see [HTTP Gateway](#http-gateway-bconnect
 > encrypted at rest (OS credential store — Windows DPAPI / Credential Manager, macOS
 > Keychain — or an external secret store) is planned in #60.
 
+### What the key may see
+
+The servers act with the bMS account behind the configured credential; bMS decides what it may
+see and do, and list results contain only what that account may read. Give the MCP servers a
+dedicated account or API key whose security profile has read rights on the areas they need, and no
+rights on API keys, security groups and profiles, object permissions, server settings or stored
+secrets (BitLocker, LAPS) unless that use is intended. See
+[docs/CONFIGURATION.md](docs/CONFIGURATION.md#what-the-key-may-see).
+
+### What leaves the network
+
+The servers and the gateway connect only to `BCONNECT_BASE_URL` and send no telemetry. Tool results
+go to the MCP client that called the tool and from there to the language model that client uses;
+what that model's provider keeps is set by the client, not by these servers. See
+[docs/CONFIGURATION.md](docs/CONFIGURATION.md#what-leaves-the-network).
+
 ### Connection to bConnect
 
 - **HTTPS only.** A `BCONNECT_BASE_URL` with `http://` is refused, except for this machine

@@ -21,13 +21,15 @@ where a setting behaves differently for that server.
 **Invalid values.** A server stops at startup, with a message naming the setting, on a missing base
 URL or credential, a non-ASCII password, a CA file it can't read, and an invalid
 `BCONNECT_RELEASE`, `BCONNECT_TIMEOUT_MS`, `BCONNECT_MAX_RETRIES`, `BCONNECT_AUDIT_LEVEL` or
-`BCONNECT_PRETTY_JSON`. The gateway stops at startup on an invalid `BCONNECT_RELEASE` or
-`BCONNECT_PRETTY_JSON` or a `*_FILE` it can't read; for the others, every tool call reports the
-problem. The switches (`ALLOW_*`, `MCP_ALLOW_NO_AUTH`, `BCONNECT_RATE_LIMIT_ENABLED`,
+`BCONNECT_PRETTY_JSON`. The gateway stops at startup on the same base URL and credential problems,
+an invalid `BCONNECT_RELEASE`, `BCONNECT_PRETTY_JSON` or `MCP_GATEWAY_MAX_BODY`, or a `*_FILE` it
+can't read; for the others, every tool call reports the problem. The switches (`ALLOW_*`, `MCP_ALLOW_NO_AUTH`, `BCONNECT_RATE_LIMIT_ENABLED`,
 `BCONNECT_SKIP_CONNECTIVITY_CHECK`, …) take effect only when set to exactly `true`; other numbers
 and levels that aren't checked fall back to their default.
 
-**Contents:** [Connection](#connection) · [TLS and CA certificates](#tls-and-ca-certificates) ·
+**Contents:** [What the key may see](#what-the-key-may-see) ·
+[What leaves the network](#what-leaves-the-network) ·
+[Connection](#connection) · [TLS and CA certificates](#tls-and-ca-certificates) ·
 [Write and secret gates](#write-and-secret-gates) ·
 [Results, auditing and rate limiting](#results-auditing-and-rate-limiting) ·
 [A server's own HTTP mode](#a-servers-own-http-mode) · [Gateway](#gateway) ·
@@ -36,6 +38,43 @@ and levels that aren't checked fall back to their default.
 
 ---
 
+## What the key may see
+
+The servers act with the bMS account behind the configured credential (API key, or username and
+password), and bMS decides what that account may see and do. A list tool returns only the objects
+the account may read; an object it may not read is missing from the list, not reported as an error.
+A tool that needs a right the account lacks gets HTTP 403 from bMS, which the tool reports.
+
+Use a dedicated account or API key for the MCP servers, with a security profile that gives it only
+what the servers you run need:
+
+- **Read rights** on the areas of those servers (endpoints, jobs, software, …). That is enough as
+  long as [`ALLOW_WRITE_OPERATIONS`](#allow_write_operations) is off.
+- **No rights on API keys, security groups and profiles, object permissions or server settings**,
+  unless you deliberately run the servermanagement tools for them. With such rights, a model can
+  read who may do what in bMS.
+- **No rights on BitLocker recovery keys, startup PINs or local administrator passwords**, unless
+  reading them is an intended use (they also need [`ALLOW_SECRET_READ`](#allow_secret_read)).
+- **Write rights** only where [`ALLOW_WRITE_OPERATIONS`](#allow_write_operations) is on, and only
+  for the areas that may change.
+
+A server's startup check reads one list route of its domain. If the account may not read it, the
+server starts with a warning naming the route ([TROUBLESHOOTING.md](TROUBLESHOOTING.md)).
+
+## What leaves the network
+
+- **To bMS only.** The servers and the gateway send requests only to
+  [`BCONNECT_BASE_URL`](#bconnect_base_url), over https. They follow no redirects, so no request
+  goes to another host.
+- **No telemetry.** Nothing is sent to baramundi, Anthropic or anyone else: no usage data, no error
+  reports, no update checks.
+- **Tool results go to the client's model.** Whatever a tool returns is passed to the MCP client
+  that called it (Claude Desktop, Claude Code, VS Code, n8n, …), and from there to the language
+  model that client uses. Where that model runs and what its provider keeps is set by the client
+  you chose, not by these servers. Limit what the model can see with the account's rights (above),
+  the write and secret gates, and the servers you run.
+- **Audit entries stay local**: one line per recorded call on stderr ([AUDIT.md](AUDIT.md)).
+
 ## Connection
 
 ### `BCONNECT_BASE_URL`
@@ -43,7 +82,7 @@ and levels that aren't checked fall back to their default.
 **Required.** The bConnect base URL, e.g. `https://bms.corp.local:443/bconnect` (see
 [How to find your bMS server URL](#how-to-find-your-bms-server-url)). It must be `https://`, except
 to this machine (see [`BCONNECT_ALLOW_INSECURE_HTTP`](#bconnect_allow_insecure_http)). Without it a
-server doesn't start; in the gateway every tool call fails.
+server or the gateway doesn't start.
 
 ### `BCONNECT_API_KEY`
 
