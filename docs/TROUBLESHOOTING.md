@@ -44,6 +44,15 @@ The cause in brackets says what went wrong (wrong credentials, untrusted certifi
 or a network error with its code, e.g. `[ECONNREFUSED]` or `[ENOTFOUND]`); the sections below explain each one. Every startup error is one such line,
 starting with the server's name.
 
+If bMS answers the check with 403, the server **starts** with a warning instead of "API connectivity
+verified" (#334): bMS is reachable and the credentials were accepted, but they may not read the route
+the check uses. Tools that need that route fail with 403; the others work within the key's rights.
+
+```text
+bconnect-endpoints-mcp: warning: the connectivity check was answered with 403 for GET /endpoints/v2.0/Endpoints: bMS is reachable and the credentials were accepted, but they may not read this route. Tools that need it will fail with 403; check the rights of the configured user or API key.
+bconnect-endpoints-mcp started on stdio
+```
+
 ### Verify Configuration
 
 A server reads the environment it is started with, plus a `.env` file in the **current working
@@ -89,7 +98,10 @@ failed or disconnected; the reason is in the client's MCP log.
 | `<server>: cannot reach bConnect API at <url> (<cause>). Check BCONNECT_BASE_URL, credentials, and network.` | The startup call failed. The cause in brackets: 401, TLS, timeout, unreachable | See [Authentication Errors](#authentication-errors), [TLS Certificate Errors](#tls-certificate-errors) or [Network & Connection Errors](#network--connection-errors) |
 | `<server>: needs bMS <release>; this server uses <release in use>. None of its APIs exist in that release.` | A server whose APIs the bMS release doesn't have (compliance, universaldynamicgroups on 25R2) | Use it with a 26R1 bMS, or remove it from your config; see [Wrong bMS Release](#wrong-bms-release) |
 
-The startup call goes to a light list route of the server's domain. Two cases to know:
+The startup call goes to a light list route of the server's domain. Three cases to know:
+
+- **A key restricted to some areas:** a 403 on the startup call is a warning, not a stop (see
+  above); 401 (credentials rejected), TLS and network errors still stop the server.
 
 - **25R2 and the software server:** on 25R2 the software server checks
   `/software/v2.0/InstalledWindowsSoftware`, which can take longer than the default 30 s on a
