@@ -40,6 +40,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `parentId` and `comment`. A call with the old object is refused before anything is sent. The
   spec-conformance checks now cover these tools.
 
+- **Contact: support@baramundi.com** (#341). SUPPORT.md, SECURITY.md, CODE_OF_CONDUCT.md,
+  TROUBLESHOOTING.md and the package author name baramundi Support (mention bConnect-MCP) instead of a
+  personal address. SUPPORT.md describes one path: questions to Support, bugs and change requests as
+  GitHub issues, vulnerabilities privately first. A guard refuses any other baramundi address.
+
 ### Fixed
 - **Tool descriptions and results that misstated bMS** (#327). `start_microservice` and
   `restart_microservice` report that bMS accepted the request (it answers "Microservice starting." /

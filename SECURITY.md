@@ -18,7 +18,8 @@ Report vulnerabilities privately through GitHub:
 **[Report a vulnerability](https://github.com/baramundisoftware/bConnect-MCP/security/advisories/new)**
 (the repository's *Security* tab → *Report a vulnerability*). Only the maintainers see the report.
 
-If you can't use GitHub, email **bernd.wiedemann@baramundi.de**.
+If you can't use GitHub, email baramundi Support at **support@baramundi.com** and mention
+**bConnect-MCP** and a security vulnerability in the subject.
 
 Include as much of the following as possible:
 
