@@ -7,6 +7,7 @@
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createServer as createHttpServer, type Server as HttpServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -176,6 +177,58 @@ describe('startServer: the one startup routine', () => {
     expect(failure).toHaveLength(1);
     expect(failure[0]).toMatch(/^bconnect-runtime-mcp: /);
     expect(failure[0]).not.toContain('runtime-pass');
+  });
+
+  describe('a key that may not read the probe route (#334)', () => {
+    it('starts with a warning naming the route and what the 403 means, never "verified"', async () => {
+      msw.use(http.get('*/runtime/v2.0/Things', () => HttpResponse.json({ title: 'Forbidden' }, { status: 403 })));
+      const env = { ...ENV };
+      const t = io(env);
+      await startServer(entry(env), t.options);
+      expect(t.connectStdio).toHaveBeenCalledOnce();
+      expect(t.lines.join('\n')).not.toMatch(/verified/);
+      const warnings = t.lines.filter((l) => /403/.test(l));
+      expect(warnings).toHaveLength(1);
+      expect(warnings[0]).toMatch(/^bconnect-runtime-mcp: warning: the connectivity check was answered with 403 for GET \/runtime\/v2\.0\/Things\b/);
+      expect(warnings[0]).toMatch(/credentials were accepted/);
+      expect(warnings[0]).not.toContain('runtime-pass');
+      expect(warnings[0]).not.toContain('bms.runtime.test');
+    });
+
+    it('still stops on 401: the credentials were rejected', async () => {
+      msw.use(http.get('*/runtime/v2.0/Things', () => HttpResponse.json({ title: 'Unauthorized' }, { status: 401 })));
+      const env = { ...ENV };
+      const t = io(env);
+      await expect(startServer(entry(env), t.options)).rejects.toThrow('exit 1');
+      expect(t.connectStdio).not.toHaveBeenCalled();
+      expect(t.lines.at(-1)).toMatch(/^bconnect-runtime-mcp: cannot reach bConnect API/);
+    });
+
+    it('still stops when the connection is refused or the TLS handshake fails', async () => {
+      msw.close();
+      // A port nobody listens on, and a plain HTTP server spoken to over https (handshake fails).
+      const plain = createHttpServer((_req, res) => res.end('[]'));
+      try {
+        await new Promise<void>((resolve) => plain.listen(0, '127.0.0.1', resolve));
+        const tls = `https://127.0.0.1:${(plain.address() as AddressInfo).port}/bconnect`;
+        const idle = createHttpServer();
+        await new Promise<void>((resolve) => idle.listen(0, '127.0.0.1', resolve));
+        const refused = `http://127.0.0.1:${(idle.address() as AddressInfo).port}/bconnect`;
+        await new Promise<void>((resolve) => idle.close(() => resolve()));
+        for (const [base, cause] of [[refused, /ECONNREFUSED/], [tls, /cannot reach bConnect API/]] as const) {
+          forgetDetectedRelease();
+          const env = { ...ENV, BCONNECT_BASE_URL: base, BCONNECT_TIMEOUT_MS: '2000' };
+          const t = io(env);
+          await expect(startServer(entry(env), t.options), base).rejects.toThrow('exit 1');
+          expect(t.connectStdio).not.toHaveBeenCalled();
+          expect(t.lines.at(-1)).toMatch(/^bconnect-runtime-mcp: cannot reach bConnect API/);
+          expect(t.lines.at(-1)).toMatch(cause);
+        }
+      } finally {
+        await new Promise<void>((resolve) => plain.close(() => resolve()));
+        msw.listen({ onUnhandledRequest: 'error' });
+      }
+    });
   });
 
   it('reports an unexpected error as one line without a stack trace (AC 2)', async () => {

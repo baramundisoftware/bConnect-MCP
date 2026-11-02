@@ -190,11 +190,18 @@ async function serve<C extends BConnectClientBase>(entry: ServerEntry<C>, io: St
     io.error(`${name}: connectivity check skipped (BCONNECT_SKIP_CONNECTIVITY_CHECK=true); the settings were checked.`);
   } else {
     io.error(`${name}: verifying bConnect API connectivity...`);
-    const reason = await client.checkConnection();
-    if (reason !== undefined) {
-      return `cannot reach bConnect API at ${client.baseUrl} (${oneLine(reason)}). Check BCONNECT_BASE_URL, credentials, and network.`;
+    const check = await client.startupCheck();
+    if (check.result === "failed") {
+      return `cannot reach bConnect API at ${client.baseUrl} (${oneLine(check.reason)}). Check BCONNECT_BASE_URL, credentials, and network.`;
     }
-    io.error(`${name}: API connectivity verified.`);
+    if (check.result === "forbidden") {
+      // bMS answered and accepted the credentials; other tools may work within the key's rights (#334).
+      io.error(`${name}: warning: the connectivity check was answered with 403 for GET ${oneLine(check.route)}: ` +
+        "bMS is reachable and the credentials were accepted, but they may not read this route. " +
+        "Tools that need it will fail with 403; check the rights of the configured user or API key.");
+    } else {
+      io.error(`${name}: API connectivity verified.`);
+    }
   }
 
   if ((env.MCP_TRANSPORT ?? "stdio") === "http") {

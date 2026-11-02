@@ -150,6 +150,12 @@ export interface BConnectConfig {
 }
 
 /** What a client gets besides its config (REQ-SRV-023, ADR-0010). */
+/** The outcome of the startup check (#334); `route` is the probed path below the base URL. */
+export type StartupCheck =
+  | { result: "verified" }
+  | { result: "forbidden"; route: string; reason: string }
+  | { result: "failed"; reason: string };
+
 export interface ClientOptions {
   /** The server's one rate limiter, shared by all its clients; overrides config.rateLimit. */
   rateLimiter?: RateLimiter;
@@ -768,17 +774,30 @@ export class BConnectClientBase {
    * (runServer), not the client's.
    */
   async checkConnection(): Promise<string | undefined> {
+    const check = await this.startupCheck();
+    return check.result === "verified" ? undefined : check.reason;
+  }
+
+  /**
+   * The startup check (#334): verified; forbidden, when bMS answered 403 (it is
+   * reachable and accepted the credentials, which may not read the probe
+   * route); or failed, with why.
+   */
+  async startupCheck(): Promise<StartupCheck> {
     const path = this.config.healthCheckPath ?? this.probePath();
     if (!path) {
-      return "this server's client sets no probeRoute";
+      return { result: "failed", reason: "this server's client sets no probeRoute" };
     }
     try {
       await this.client.get(path, { params: { PageSize: 1 } });
-      return undefined;
+      return { result: "verified" };
     } catch (error) {
+      if (error instanceof BConnectApiError && error.status === 403) {
+        return { result: "forbidden", route: path, reason: error.message };
+      }
       // The system code (ECONNREFUSED, ENOTFOUND, …) tells the operator which network problem it is.
       const code = error instanceof BConnectConnectionError && error.code ? ` [${error.code}]` : "";
-      return error instanceof Error ? `${error.message}${code}` : String(error);
+      return { result: "failed", reason: error instanceof Error ? `${error.message}${code}` : String(error) };
     }
   }
 

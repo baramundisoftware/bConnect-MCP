@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   check reads SecurityGroups. `none` switches auditing off as before. The `.env` examples and
   `docker-compose.gateway.yml` set `security`; with `ALLOW_WRITE_OPERATIONS=true`, `write` is
   recommended ([AUDIT.md](docs/AUDIT.md)).
+- **A 403 on the startup check is a warning, not a stop** (#334). A key that may not read the route a
+  server checks at startup (one list route of its domain) no longer stops the server: bMS answered and
+  accepted the credentials, so the server starts with one warning line naming the route, and its other
+  tools work within the key's rights. 401 (credentials rejected), TLS and network errors still stop it.
 - **A stale `bconnect-mcp-gateway/node_modules` is refused** (#365). The gateway runs on the root
   install; a folder left over from an older source build is loaded first and can hold Express 4. The
   gateway's build and tests and the root `npm test` now stop with one line naming the folder and the
