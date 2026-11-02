@@ -164,8 +164,9 @@ universal dynamic groups comes from `fixtures/standard-26r1/`.
 
 ## What this tier deliberately does NOT do
 
-- It doesn't run during `npm test` or `npm run ci`: it needs a running mock. CI
-  runs it in its own job (see "In CI").
+- It doesn't run during `npm test`: it needs a running mock. CI runs it in its own
+  job (see "In CI"), and `npm run ci` starts the pinned mock in Docker and runs it
+  for both releases.
 - It doesn't replace the unit tier. Argument-validation, dispatch wiring,
   and tool-name coverage are all unit concerns.
 - It doesn't try to be exhaustive. 2–5 tests per server is enough to catch

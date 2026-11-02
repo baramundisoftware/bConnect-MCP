@@ -76,6 +76,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   credentials from the environment as headers, and exits 1 on any failure. The test-only request
   override in endpoints and jobs and an unused LAPS method in defensecontrol are removed.
 
+- **CI: actions pinned, `npm run ci` runs what CI runs** (#337, part 1). Every action in `ci.yml` and
+  `image.yml` is pinned to a commit SHA with its version in a comment (Dependabot keeps them current).
+  `scripts/ci-local.sh` runs the root suite, the coverage floors and the mock tier for both releases (in
+  Docker; `--no-mock` leaves it out), as CI does; it ran only the per-server tests before. Removed: the
+  CI step for an installer that doesn't exist, outdated comments, the gateway's inert `overrides`, and
+  the gateway from `npm run sbom` (it has no lockfile; the root SBOM and audit cover what it loads). A
+  guard keeps the pins, the local script and the referenced paths in step.
+
 ### Fixed
 - **Tool descriptions and results that misstated bMS** (#327). `start_microservice` and
   `restart_microservice` report that bMS accepted the request (it answers "Microservice starting." /

@@ -80,7 +80,8 @@ Shared logic is **not** copy-pasted across servers. It lives once in the workspa
 | Per-server tool validation rules (`src/utils/mcp-tool-validation-rules.ts`) | each server (domain-specific) |
 
 Fix shared logic **once** in `packages/mcp-core`; every server picks it up through the npm
-workspace. `scripts/ci-local.sh` also runs a jscpd duplication check (not part of GitHub CI).
+workspace. `npm run ci` (`scripts/ci-local.sh`) runs what GitHub CI runs, including the mock tier
+(Docker needed; `--no-mock` leaves it out), plus a jscpd duplication check and Semgrep.
 
 > `bconnect-mcp-gateway` is a standalone project (not a workspace member); it depends on the
 > servers and `@bconnect/mcp-core` via `file:` references.

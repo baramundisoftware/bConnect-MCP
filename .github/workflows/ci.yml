@@ -1,42 +1,18 @@
 # Continuous integration.
 #
-# ── Why this exists, when scripts/ci-local.sh already did ───────────────────
-# It did not exist, and its own header said so: "GitHub Actions is not used;
-# this replaces it." That was defensible while this was an internal rebuild
-# with one machine and one operator. It is not defensible for a public
-# repository, where the first thing a contributor's pull request needs is a
-# gate that runs without asking them to trust — or reproduce — someone's
-# local shell.
+# Four jobs:
+# - `gate` (required): build, lint, cast check and the root test suite, on Linux
+#   and Windows. The Windows leg catches line-ending and path defects a Linux
+#   runner can't see (a CRLF checkout once failed the suite with a clean tree).
+# - `coverage`: the root suite with coverage floors per workspace (not required).
+# - `mock`: the mock-integration tier against a pinned bConnect-Mock, once per
+#   bMS release (not required).
+# - `strict`: the dependency audit, reported but not blocking (see the job).
 #
-# ── Four jobs, and the split is deliberate ─────────────────────────────────
-# `gate` runs on BOTH Linux and Windows. That is not box-ticking. This repo
-# shipped a defect where a clone on Windows with core.autocrlf=true failed its
-# own test suite, aborted a package's build, and cascaded into failures in two
-# unrelated servers — while `git status` and `git diff` showed a clean tree, so
-# a contributor had no way to self-diagnose. A Linux-only runner would have
-# been green throughout. The Windows leg is there to catch that class.
-#
-# Lint moved INTO `gate` on 2026-08-03 and is blocking. `strict` now carries
-# only the dependency audit, which reports and does not block — `npm audit
-# --audit-level=high` at the root is clean (0 vulnerabilities, measured
-# 2026-08-04), so this is a standing policy rather than an untriaged backlog.
-# See the rationale on the `strict` job for why a clean audit is not by itself
-# a reason to promote it into `gate`.
-#
-# `coverage` measures every shipped workspace in one run and fails below a
-# floor; it is not one of the required checks (see the job).
-#
-# `mock` runs the mock-integration tier against bConnect-Mock, once per bMS
-# release (25r2, 26r1); not one of the required checks either (see the job).
-#
-# ── Relationship to scripts/ci-local.sh ────────────────────────────────────
-# That script remains the richer local gate (jscpd, semgrep). The
-# mock-integration tier runs in the `mock` job below, against a pinned
-# bConnect-Mock image (REQ-CI-002); by hand it is `node scripts/mock-tier.mjs`
-# (docs/MOCK_INTEGRATION_TESTING.md). This workflow is
-# deliberately NOT a second copy of it: it runs the root `vitest run`, which
-# covers every per-server suite and every suite-wide guard in one pass, so
-# there is no per-server list here to drift out of step with the one there.
+# scripts/ci-local.sh runs the same commands on a developer's machine, plus a
+# jscpd duplication check and Semgrep; __tests__/ci-local.guard.test.ts keeps
+# the two in step. Every action is pinned to a commit SHA with its version in a
+# comment; Dependabot (.github/dependabot.yml) keeps them current.
 
 name: CI
 
@@ -57,31 +33,8 @@ concurrency:
 permissions:
   contents: read
 
-# ── Why every `run` step needs a working directory ─────────────────────────
-# This workflow lives at the ROOT of the working repository, because that is
-# the only place GitHub Actions looks for it. The npm workspace root is one
-# level down, in `bConnect-MCP-main/`, and that subtree is what gets published
-# as its own repository — where this file sits at ITS root and needs no such
-# indirection. Both layouts are real; this setting is what makes the file
-# correct in the one it is currently checked out in.
-#
-# `defaults.run` applies to `run` steps ONLY. It does NOT reach `uses:` steps,
-# which is why each `setup-node` below carries an explicit
-# `cache-dependency-path` — without it, `cache: npm` globs from the workspace
-# root, finds no lockfile there, and fails the job before anything is built.
-#
-# The installer step looks in BOTH `install/lib` and `../install/lib`. With the
-# working directory set below, `..` is the checkout root, where `install/` lives
-# here; in a publication cut the suite IS the root and `install/` is inside it.
-#
-# This paragraph used to say the step "correctly finds nothing and skips" in the
-# published subtree. That was wrong twice over: the cut ships `install/`, and
-# the skip meant `test-catalog-drift` had never executed in CI under any layout
-# while reporting success. Both fixed; the explanation is corrected here because
-# it read perfectly reasonably and was the reason nobody looked.
-defaults:
-  run:
-    working-directory: .
+# `cache-dependency-path` is set on each `setup-node` so the npm cache keys on the
+# root lockfile.
 
 jobs:
   gate:
@@ -109,12 +62,12 @@ jobs:
     # required-checks:end
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Two commits: the PR merge commit and its base, for the cast diff check.
           fetch-depth: 2
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node }}
           cache: npm
@@ -161,38 +114,6 @@ jobs:
       - name: Test
         run: npx vitest run
 
-      # The installer's own guards are plain Node. `test-catalog-drift` is the
-      # one that matters here: it derives the truth from the BUILT servers and
-      # caught catalog.json naming a read probe the round-3 collapse had
-      # removed — drift no TypeScript test could see.
-      #
-      # `install/` sits BESIDE this subtree in the working repository and INSIDE
-      # the tree in a publication cut, whose root is this suite. Looking in only
-      # one of those is how `test-catalog-drift` has never once executed in CI:
-      # the publication tree's own workflow tests `../install/lib` while its
-      # `install/` is at the root, so the step printed "installer guards skipped"
-      # and went green, in the one tree where the guard matters most.
-      #
-      # Still skipped rather than failed when genuinely absent — a step that
-      # reddens a public contributor's partial checkout is noise, and noise is how
-      # a gate stops being read — but the skip now says which paths it looked in,
-      # so a path bug cannot go on looking like a legitimate absence.
-      - name: Installer guards (skipped when the installer is not in the checkout)
-        shell: bash
-        run: |
-          if [ -d install/lib ]; then
-            LIB=install/lib
-          elif [ -d ../install/lib ]; then
-            LIB=../install/lib
-          else
-            echo "install/ is not part of this checkout — installer guards skipped."
-            echo "  looked in: ./install/lib and ../install/lib (from $(pwd))"
-            exit 0
-          fi
-          echo "installer guards running from $LIB"
-          node "$LIB/test-host-emitters.mjs"
-          node "$LIB/test-catalog-drift.mjs"
-
   coverage:
     name: coverage floors
     runs-on: ubuntu-latest
@@ -209,8 +130,8 @@ jobs:
     # 100 %. `__tests__/coverage-config.guard.test.ts` fails when a workspace
     # is missing from the root include list or has no floor.
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22.23.4"
           cache: npm
@@ -223,7 +144,7 @@ jobs:
       # The report is kept when the floors fail too: that is when it is read.
       - name: Upload the HTML coverage report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-report
           path: coverage/
@@ -239,12 +160,12 @@ jobs:
     # and fixtures, which is where a wrong path or field shows. Not one of the
     # ruleset's required checks (decided separately).
     #
-    # scripts/mock-tier.mjs checks the mock's /health for the release first and
-    # fails on a failed server AND on a skipped one: a mock test returns early
-    # when the mock isn't reachable, and vitest reports that as passed. The
-    # mock's rate limit is off for the same reason (a 429 on /health reads as
-    # "not reachable"). On 25r2 the runner leaves out the servers whose APIs
-    # are 26R1 only; `__tests__/mock-tier.guard.test.ts` checks this job.
+    # scripts/mock-tier.mjs checks the mock's /health for the release first, runs
+    # the tests with MOCK_REQUIRED=true and fails a server whose passed tests fall
+    # short of the tests it declares for the release (#336). The mock's rate limit
+    # is off: a 429 on /health would read as "not reachable". On 25r2 the runner
+    # leaves out the servers whose APIs are 26R1 only;
+    # `__tests__/mock-tier.guard.test.ts` checks this job.
     strategy:
       fail-fast: false
       matrix:
@@ -254,8 +175,8 @@ jobs:
       BCONNECT_MOCK_IMAGE: ghcr.io/baramundisoftware/bconnect-mock:0.9.1
       BCONNECT_MOCK_URL: http://127.0.0.1:13433
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22.23.4"
           cache: npm
@@ -277,33 +198,20 @@ jobs:
   strict:
     name: dependency audit (reported, not blocking)
     runs-on: ubuntu-latest
-    # Never fails the build, and this is now a decision rather than a holding
-    # pattern.
+    # Reported, never blocking: `npm audit` queries the live advisory database, so
+    # its result can change overnight with no commit, for a dependency no
+    # contributor touched. Blocking on it would turn every open PR red and teach
+    # people to override CI. What blocks instead is `npm ci` in `gate`: the
+    # dependency graph can't change without a reviewed lockfile change.
     #
-    # The earlier comment here said each reported check "becomes a `gate` step
-    # when its backlog is actually clear". The audit backlog IS clear —
-    # `npm audit --audit-level=high` at the root reports 0 vulnerabilities
-    # (measured 2026-08-04) — and it still does not move, because the trigger
-    # assumed something untrue of this particular check: `npm audit` is the one
-    # step whose result can change with no commit at all. It queries the live
-    # advisory database, so a new advisory published overnight against a
-    # transitive dependency turns every open pull request red for a reason no
-    # contributor introduced and most cannot fix. Blocking on it does not make
-    # the advisory get fixed sooner; it makes CI something people learn to
-    # override, and an overridden gate protects nothing.
+    # The root lockfile covers the gateway too: it has no lockfile of its own and
+    # runs on the root install (REQ-DEP-002), so this audit includes what it loads.
     #
-    # Reported as a warning annotation plus a job-summary line, not via
-    # job-level `continue-on-error`, which left a red check on every PR
-    # (REQ-CI-001). A failed `npm ci` still fails the job.
-    #
-    # What blocks instead is the property this repo can actually hold: `gate`
-    # runs `npm ci`, which fails if the lockfile and the manifests would
-    # diverge — so the dependency graph cannot change without review, which is
-    # the half a contributor's PR is genuinely responsible for. Read this job's
-    # output when it warns; do not gate a merge on it.
+    # Reported as a warning annotation plus a job-summary line, not via job-level
+    # `continue-on-error`, which left a red check on every PR (REQ-CI-001).
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "22.23.4"
           cache: npm
