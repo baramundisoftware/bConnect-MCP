@@ -9,10 +9,13 @@ Levels are cumulative: each one records everything the level before it records.
 
 | Level | Records |
 |---|---|
-| `none` (default) | nothing |
-| `security` | every call to a security-relevant route (list below), and every request the client refuses before sending it (a credential route while `ALLOW_SECRET_READ` is off, or a path that isn't in canonical form) |
+| `none` | nothing |
+| `security` (default) | every call to a security-relevant route (list below), and every request the client refuses before sending it (a credential route while `ALLOW_SECRET_READ` is off, or a path that isn't in canonical form) |
 | `write` | the above, plus every write (POST, PATCH, PUT, DELETE) |
 | `all` | every request |
+
+Unset or empty means `security`. With `ALLOW_WRITE_OPERATIONS=true`, set `write`, so every change
+a tool makes is recorded. `none` switches auditing off.
 
 The value is read in any case (`Security` works). Any other value stops the server, so a typo
 can't switch auditing off; in the gateway, every tool call reports it instead.

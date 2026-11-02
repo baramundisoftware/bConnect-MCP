@@ -372,11 +372,11 @@ describe.each(SERVERS)('%s: the client a tool call builds', (server) => {
     expect(config.rateLimit).toEqual({ enabled: true, maxRequests: 7, windowMs: 1500 });
   });
 
-  it('verifies certificates by default, with no CA, audit or rate limit', async () => {
+  it('verifies certificates by default, with no CA or rate limit, and audit level security (#333)', async () => {
     const config = await clientConfig(server, {});
     expect(config.rejectUnauthorized).toBe(true);
     expect(config.ca).toBeUndefined();
-    expect(config.auditLog?.level ?? 'none').toBe('none');
+    expect(config.auditLog?.level).toBe('security');
     expect(config.rateLimit?.enabled ?? false).toBe(false);
     expect(config).toMatchObject({ username: 'guard', password: 'guard' });
   });
@@ -561,6 +561,22 @@ describe('audit output in stdio mode', () => {
   it('accepts the level in any case and with surrounding spaces', async () => {
     const session = await stdioSession('bconnect-groups-mcp', { BCONNECT_AUDIT_LEVEL: ' ALL ' });
     expect(auditProblems(session)).toEqual([]);
+  }, 30_000);
+
+  it('without BCONNECT_AUDIT_LEVEL records security-relevant calls only (default security, #333)', async () => {
+    // servermanagement's startup check reads SecurityGroups, a security-relevant route; groups' reads none.
+    const security = await stdioSession('bconnect-servermanagement-mcp', {});
+    expect(security.stderr).toMatch(/^\[SECURITY AUDIT\] .*SecurityGroups/m);
+    expect(nonJsonRpcLines(security.stdout)).toEqual([]);
+    const plain = await stdioSession('bconnect-groups-mcp', {});
+    expect(plain.requests.length, 'the startup check must reach the stand-in').toBeGreaterThan(0);
+    expect(plain.stderr).not.toMatch(/\[(SECURITY )?AUDIT\]/);
+  }, 60_000);
+
+  it('BCONNECT_AUDIT_LEVEL=none still records nothing', async () => {
+    const session = await stdioSession('bconnect-servermanagement-mcp', { BCONNECT_AUDIT_LEVEL: 'none' });
+    expect(session.requests.length).toBeGreaterThan(0);
+    expect(session.stderr).not.toMatch(/\[(SECURITY )?AUDIT\]/);
   }, 30_000);
 
   it.each(SERVERS)('%s with the check skipped: says skipped, never verified (REQ-SRV-023 AC 3)', async (server) => {

@@ -65,7 +65,7 @@ describe('serverClients: one client per server process (D1 = a)', () => {
     const second = clients.get();
     expect(second).not.toBe(first);
     expect(second).toBe(clients.get());
-    expect(TestClient.built.map((b) => b.config.auditLog?.level)).toEqual(['none', 'all']);
+    expect(TestClient.built.map((b) => b.config.auditLog?.level)).toEqual(['security', 'all']);
   });
 
   it('reads the CA file only when it builds a client', () => {
