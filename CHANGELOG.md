@@ -51,6 +51,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that never reads the real `BCONNECT_*` settings and keeps certificate checks on; a guard refuses copies.
   This found a compliance test that had skipped on 26R1 since its fixture changed; it now runs.
 
+- **Docs: what the key may see, what leaves the network, keeping the audit** (#340).
+  CONFIGURATION.md and SECURITY.md describe the rights of the configured account (with a recommended
+  security profile for the MCP key) and the data flow: requests only to `BCONNECT_BASE_URL`, no
+  telemetry, results to the client's model. AUDIT.md says how to keep the stderr entries. Every
+  `.env.example` names `ALLOW_WRITE_OPERATIONS=false` (and `ALLOW_SECRET_READ=false` in
+  defensecontrol) and drops the outdated #160 comment; a guard keeps them consistent.
+
 ### Fixed
 - **Tool descriptions and results that misstated bMS** (#327). `start_microservice` and
   `restart_microservice` report that bMS accepted the request (it answers "Microservice starting." /
