@@ -70,6 +70,7 @@ const SOURCES = [
   ...tsFiles(join(ROOT, 'packages', 'mcp-core', 'src')),
   ...tsFiles(join(ROOT, 'bconnect-mcp-gateway', 'src')),
   ...tsFiles(join(ROOT, '__tests__', 'live')),
+  join(ROOT, '__tests__', 'lib', 'mock-integration.ts'),
   ...readdirSync(ROOT).filter((d) => /^bconnect-.+-mcp$/.test(d)).flatMap((d) => tsFiles(join(ROOT, d, 'src'))),
 ];
 

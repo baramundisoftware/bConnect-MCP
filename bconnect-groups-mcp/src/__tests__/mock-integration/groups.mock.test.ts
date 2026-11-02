@@ -15,19 +15,19 @@ import { createServer } from '../../index.js';
 import { TOOL_VARIANTS } from '../../tool-variants.js';
 import { TOOL_RELEASES } from '../../tool-releases.js';
 import {
-  checkMockAvailable,
-  createClient,
   getMockHealth,
   MOCK_BASE_URL,
+  MOCK_CREDENTIALS,
+  mockAvailable,
+  mockClientConfig,
   rawGet,
-} from './helpers.js';
+} from '../../../../__tests__/lib/mock-integration.js';
 
 /** Calls a tool of this server against the mock: text and isError of the result. */
 async function callTool(name: string, args: Record<string, unknown>): Promise<{ text: string; isError: boolean }> {
   const { server } = createServer({
-    baseUrl: process.env.BCONNECT_BASE_URL || MOCK_BASE_URL,
-    username: process.env.BCONNECT_USERNAME || 'integration-test',
-    password: process.env.BCONNECT_PASSWORD || 'integration-test',
+    baseUrl: MOCK_BASE_URL,
+    ...MOCK_CREDENTIALS,
   });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
@@ -53,12 +53,9 @@ const STATIC_GROUP_ID = 'e1000001-0001-0001-0001-000000000001';
 const DYNAMIC_GROUP_ID = 'e2000001-0001-0001-0001-000000000001';
 
 beforeAll(async () => {
-  available = await checkMockAvailable();
-  if (!available) {
-    console.warn(`⚠  bConnectMock not reachable at ${MOCK_BASE_URL} — groups mock tests skipped`);
-    return;
-  }
-  client = createClient();
+  available = await mockAvailable('groups');
+  if (!available) {return;}
+  client = new BConnectClient(mockClientConfig());
   // With the domain segment, as a real bMS requires: since bConnect-Mock 0.4.0 the mock
   // answers /v2.0/LogicalGroups with 404. Fail here rather than let every test return early.
   const lg = await rawGet('/endpoints/v2.0/LogicalGroups', { PageSize: 1 });
@@ -69,8 +66,8 @@ beforeAll(async () => {
 });
 
 describe('Groups — list Endpoints by LogicalGroup', () => {
-  it('returns paged data', async () => {
-    if (!available) {return;}
+  it('returns paged data', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.groups.getEndpointsByLogicalGroup(logicalGroupId, { PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -78,8 +75,8 @@ describe('Groups — list Endpoints by LogicalGroup', () => {
 });
 
 describe('Groups — list WindowsEndpoints by LogicalGroup', () => {
-  it('returns paged data', async () => {
-    if (!available) {return;}
+  it('returns paged data', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.groups.getWindowsEndpointsByLogicalGroup(logicalGroupId, { PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -87,8 +84,8 @@ describe('Groups — list WindowsEndpoints by LogicalGroup', () => {
 });
 
 describe('Groups — list Endpoints by StaticGroup', () => {
-  it('returns paged data', async () => {
-    if (!available) {return;}
+  it('returns paged data', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.groups.getEndpointsByStaticGroup(STATIC_GROUP_ID, { PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -96,8 +93,8 @@ describe('Groups — list Endpoints by StaticGroup', () => {
 });
 
 describe('Groups — unknown LogicalGroup id', () => {
-  it('rejects with HTTP error for nonexistent GUID', async () => {
-    if (!available) {return;}
+  it('rejects with HTTP error for nonexistent GUID', async (ctx) => {
+    if (!available) {ctx.skip();}
     await expect(
       client.groups.getEndpointsByLogicalGroup('00000000-0000-0000-0000-000000000000'),
     ).rejects.toThrow();
@@ -122,8 +119,8 @@ describe('Groups — every route of the merged tools (REQ-SRV-029, #174)', () =>
     return typeof id === 'string' ? id : undefined;
   };
 
-  it('list_group_members answers for every group kind and member type of the release', async () => {
-    if (!available) {return;}
+  it('list_group_members answers for every group kind and member type of the release', async (ctx) => {
+    if (!available) {ctx.skip();}
     const release = await useMockRelease();
     // The mock has universal dynamic groups in its 26R1 data only.
     const udg = release === '26R1' ? await firstId('/universaldynamicgroups/v2.0/UniversalDynamicGroups') : undefined;
@@ -141,8 +138,8 @@ describe('Groups — every route of the merged tools (REQ-SRV-029, #174)', () =>
     expect(called).toBe(release === '25R2' ? 19 : 24);
   });
 
-  it('list_ad_user_endpoints answers with and without endpointType', async () => {
-    if (!available) {return;}
+  it('list_ad_user_endpoints answers with and without endpointType', async (ctx) => {
+    if (!available) {ctx.skip();}
     const release = await useMockRelease();
     const adUserId = await firstId('/activedirectory/v2.0/ADUsers');
     expect(adUserId).toBeTruthy();
@@ -154,8 +151,8 @@ describe('Groups — every route of the merged tools (REQ-SRV-029, #174)', () =>
     }
   });
 
-  it('countOnly counts a logical group with its sub-groups', async () => {
-    if (!available) {return;}
+  it('countOnly counts a logical group with its sub-groups', async (ctx) => {
+    if (!available) {ctx.skip();}
     await useMockRelease();
     const normal = await callTool('list_group_members', { groupKind: 'LogicalGroup', groupId: logicalGroupId, includeSubfolders: true });
     const count = await callTool('list_group_members', { groupKind: 'LogicalGroup', groupId: logicalGroupId, includeSubfolders: true, countOnly: true });
@@ -166,8 +163,8 @@ describe('Groups — every route of the merged tools (REQ-SRV-029, #174)', () =>
     expect(JSON.parse(count.text)).toMatchObject({ totalItems });
   });
 
-  it('a removed per-kind name answers with its replacement', async () => {
-    if (!available) {return;}
+  it('a removed per-kind name answers with its replacement', async (ctx) => {
+    if (!available) {ctx.skip();}
     await useMockRelease();
     await expect(callTool('list_mac_endpoints_by_static_group', {})).rejects.toThrow(/replaced by list_group_members: call list_group_members with groupKind "StaticGroup" and with memberType "MacEndpoint", with groupId \(was staticGroupId\)/);
   });

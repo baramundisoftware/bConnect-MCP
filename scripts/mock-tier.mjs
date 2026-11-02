@@ -14,13 +14,16 @@
  *   release. On 25R2, compliance and universaldynamicgroups list none (their
  *   APIs are 26R1 only); __tests__/mock-tier.guard.test.ts checks this list
  *   against the generated release tables.
- * - Fails when a server's tests fail, and when they skipped because the mock
- *   wasn't reachable: those tests return early and vitest reports them passed.
- *   Only the warning line shows it, so the tier runs with vitest's default
- *   reporter: the one vitest picks inside an AI-agent shell hides the console
- *   output of passing tests.
- * - Runs the tests without BCONNECT_BASE_URL and the credential variables: the
- *   test client prefers them over the mock URL and would send them elsewhere.
+ * - Runs the tests with MOCK_REQUIRED=true: a mock that isn't reachable fails
+ *   them instead of skipping them (#336).
+ * - Fails when a server's tests fail, and when fewer tests passed than the
+ *   server declares: vitest's summary line ("Tests  N passed | M skipped (T)")
+ *   must show T - expected skips passed. The only expected skips are tests of
+ *   APIs the release doesn't have (EXPECTED_SKIPS). The tier runs with
+ *   vitest's default reporter: the one vitest picks inside an AI-agent shell
+ *   prints no summary line of that form.
+ * - Runs the tests without BCONNECT_BASE_URL and the credential variables;
+ *   the tests don't read them either (__tests__/lib/mock-integration.ts).
  *
  * No `#!` line: a test imports this module, and on a Windows checkout with CRLF
  * line endings that line ends in `\r`, which fails the import (SyntaxError).
@@ -37,8 +40,8 @@ const ONLY_26R1 = ["bconnect-compliance-mcp", "bconnect-universaldynamicgroups-m
 
 const RELEASES = ["26r1", "25r2"];
 
-/** The line a mock test prints when it skips because the mock isn't reachable. */
-const SKIPPED = "not reachable";
+/** Tests skipped on purpose: their API doesn't exist in that release (software bundles: 26R1 on). */
+export const EXPECTED_SKIPS = { "25r2": { "bconnect-software-mcp": 3 }, "26r1": {} };
 
 /** Settings the test client would prefer over the mock: never passed to the tests. */
 const NOT_PASSED = ["BCONNECT_BASE_URL", "BCONNECT_USERNAME", "BCONNECT_PASSWORD", "BCONNECT_API_KEY"];
@@ -63,7 +66,7 @@ export function testCommand(platform) {
 
 /** The environment the tests get: `env` with the mock URL, without NOT_PASSED. */
 export function testEnv(env, baseUrl) {
-  const out = { ...env, BCONNECT_MOCK_URL: baseUrl };
+  const out = { ...env, BCONNECT_MOCK_URL: baseUrl, MOCK_REQUIRED: "true" };
   for (const name of NOT_PASSED) {
     delete out[name];
   }
@@ -81,13 +84,30 @@ export function serversFor(release) {
   return release === "25r2" ? servers.filter((name) => !ONLY_26R1.includes(name)) : servers;
 }
 
-/** Why a server's run fails, or undefined when it passed. */
-export function verdict(status, output) {
+/** The counts of vitest's summary line ("Tests  1 failed | 6 passed | 1 skipped (8)"), or undefined without one. */
+export function testCounts(output) {
+  // eslint-disable-next-line no-control-regex -- colour codes, should a reporter print them
+  const plain = output.replace(/\u001b\[[0-9;]*m/g, "");
+  const line = plain.split(/\r?\n/).find((l) => /^\s*Tests\s+.*\(\d+\)\s*$/.test(l));
+  if (!line) {
+    return undefined;
+  }
+  const count = (word) => Number(new RegExp(`(\\d+) ${word}`).exec(line)?.[1] ?? 0);
+  const total = Number(/\((\d+)\)\s*$/.exec(line)[1]);
+  return { passed: count("passed"), failed: count("failed"), skipped: count("skipped"), total };
+}
+
+/** Why a server's run fails, or undefined when it passed: `expectedSkips` tests may skip, no more. */
+export function verdict(status, output, expectedSkips = 0) {
   if (status !== 0) {
     return "tests failed";
   }
-  if (output.includes(SKIPPED)) {
-    return `tests skipped: the mock was ${SKIPPED}`;
+  const counts = testCounts(output);
+  if (!counts || counts.total === 0) {
+    return "no test summary: no tests ran";
+  }
+  if (counts.passed !== counts.total - expectedSkips) {
+    return `${counts.passed} of ${counts.total} tests passed, ${counts.total - expectedSkips} declared for this release (${counts.skipped} skipped)`;
   }
   return undefined;
 }
@@ -132,7 +152,7 @@ async function main() {
     const run = spawnSync(command, args, { cwd: join(ROOT, server), env: testEnv(process.env, baseUrl), encoding: "utf8", shell });
     const output = `${run.stdout ?? ""}${run.stderr ?? ""}`;
     process.stdout.write(`\n── ${server}\n${output}`);
-    const reason = run.error ? run.error.message : verdict(run.status ?? 1, output);
+    const reason = run.error ? run.error.message : verdict(run.status ?? 1, output, EXPECTED_SKIPS[release][server] ?? 0);
     if (reason) {
       failed.push(`${server}: ${reason}`);
     }

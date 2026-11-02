@@ -9,18 +9,18 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../../index.js';
 import {
-  checkMockAvailable,
-  createClient,
   MOCK_BASE_URL,
+  MOCK_CREDENTIALS,
+  mockAvailable,
+  mockClientConfig,
   NONEXISTENT_GUID,
-} from './helpers.js';
+} from '../../../../__tests__/lib/mock-integration.js';
 
 /** Calls a tool of this server against the mock: text and isError of the result. */
 async function callTool(name: string, args: Record<string, unknown>): Promise<{ text: string; isError: boolean }> {
   const { server } = createServer({
-    baseUrl: process.env.BCONNECT_BASE_URL || MOCK_BASE_URL,
-    username: process.env.BCONNECT_USERNAME || 'integration-test',
-    password: process.env.BCONNECT_PASSWORD || 'integration-test',
+    baseUrl: MOCK_BASE_URL,
+    ...MOCK_CREDENTIALS,
   });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
@@ -35,17 +35,14 @@ let available = false;
 let client: BConnectClient;
 
 beforeAll(async () => {
-  available = await checkMockAvailable();
-  if (!available) {
-    console.warn(`⚠  bConnectMock not reachable at ${MOCK_BASE_URL} — jobs mock tests skipped`);
-    return;
-  }
-  client = createClient();
+  available = await mockAvailable('jobs');
+  if (!available) {return;}
+  client = new BConnectClient(mockClientConfig());
 });
 
 describe('Jobs — list JobDefinitions', () => {
-  it('returns paged data with totalItems', async () => {
-    if (!available) {return;}
+  it('returns paged data with totalItems', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.jobs.getJobDefinitions({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -54,8 +51,8 @@ describe('Jobs — list JobDefinitions', () => {
 });
 
 describe('Jobs — get JobDefinition by id', () => {
-  it('returns the same definition surfaced by the list', async () => {
-    if (!available) {return;}
+  it('returns the same definition surfaced by the list', async (ctx) => {
+    if (!available) {ctx.skip();}
     const list = await client.jobs.getJobDefinitions({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
     if (!id) {throw new Error('mock returned empty JobDefinitions list');}
@@ -65,8 +62,8 @@ describe('Jobs — get JobDefinition by id', () => {
 });
 
 describe('Jobs — list JobInstances', () => {
-  it('returns paged data', async () => {
-    if (!available) {return;}
+  it('returns paged data', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.jobs.getJobInstances({ PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -74,15 +71,15 @@ describe('Jobs — list JobInstances', () => {
 });
 
 describe('Jobs — unknown JobDefinition id', () => {
-  it('rejects on get with nonexistent GUID', async () => {
-    if (!available) {return;}
+  it('rejects on get with nonexistent GUID', async (ctx) => {
+    if (!available) {ctx.skip();}
     await expect(client.jobs.getJobDefinition(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });
 
 describe('Jobs — kiosk releases of a job definition (REQ-XC-005 AC 5, #166)', () => {
-  it('a nonexistent job definition is never reported as "no kiosk releases"', async () => {
-    if (!available) {return;}
+  it('a nonexistent job definition is never reported as "no kiosk releases"', async (ctx) => {
+    if (!available) {ctx.skip();}
     // The mock answers 404 as the spec documents; a live 26R1 answers 200 + empty list,
     // which the existence check covers (unit test kiosk-releases-existence.test.ts).
     const { text, isError } = await callTool('list_kiosk_releases_by_job_definition', { jobDefinitionId: NONEXISTENT_GUID });
@@ -90,8 +87,8 @@ describe('Jobs — kiosk releases of a job definition (REQ-XC-005 AC 5, #166)', 
     expect(text).not.toMatch(/has no kiosk releases/i);
   });
 
-  it('an existing job definition gives its list; an empty one carries the "no kiosk releases" note', async () => {
-    if (!available) {return;}
+  it('an existing job definition gives its list; an empty one carries the "no kiosk releases" note', async (ctx) => {
+    if (!available) {ctx.skip();}
     const list = await client.jobs.getJobDefinitions({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
     if (!id) {throw new Error('mock returned no job definitions');}

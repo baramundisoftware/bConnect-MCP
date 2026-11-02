@@ -11,19 +11,19 @@ import { createServer } from '../../index.js';
 import { TOOL_VARIANTS } from '../../tool-variants.js';
 import { TOOL_RELEASES } from '../../tool-releases.js';
 import {
-  checkMockAvailable,
-  createClient,
   getMockHealth,
   MOCK_BASE_URL,
+  MOCK_CREDENTIALS,
+  mockAvailable,
+  mockClientConfig,
   NONEXISTENT_GUID,
-} from './helpers.js';
+} from '../../../../__tests__/lib/mock-integration.js';
 
 /** Calls a tool of this server against the mock: text and isError of the result. */
 async function callTool(name: string, args: Record<string, unknown>): Promise<{ text: string; isError: boolean }> {
   const { server } = createServer({
-    baseUrl: process.env.BCONNECT_BASE_URL || MOCK_BASE_URL,
-    username: process.env.BCONNECT_USERNAME || 'integration-test',
-    password: process.env.BCONNECT_PASSWORD || 'integration-test',
+    baseUrl: MOCK_BASE_URL,
+    ...MOCK_CREDENTIALS,
   });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
@@ -38,17 +38,14 @@ let available = false;
 let client: BConnectClient;
 
 beforeAll(async () => {
-  available = await checkMockAvailable();
-  if (!available) {
-    console.warn(`⚠  bConnectMock not reachable at ${MOCK_BASE_URL} — endpoints mock tests skipped`);
-    return;
-  }
-  client = createClient();
+  available = await mockAvailable('endpoints');
+  if (!available) {return;}
+  client = new BConnectClient(mockClientConfig());
 });
 
 describe('Endpoints — list Endpoints', () => {
-  it('returns paged data with totalItems', async () => {
-    if (!available) {return;}
+  it('returns paged data with totalItems', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.endpoints.getEndpoints({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -60,8 +57,8 @@ describe('Endpoints — list Endpoints', () => {
 });
 
 describe('Endpoints — countOnly (#165)', () => {
-  it('list_endpoints (WindowsEndpoint) counts what a normal call reports as totalItems', async () => {
-    if (!available) {return;}
+  it('list_endpoints (WindowsEndpoint) counts what a normal call reports as totalItems', async (ctx) => {
+    if (!available) {ctx.skip();}
     const normal = await callTool('list_endpoints', { type: 'WindowsEndpoint' });
     const count = await callTool('list_endpoints', { type: 'WindowsEndpoint', countOnly: true });
     expect(normal.isError, normal.text).toBe(false);
@@ -74,8 +71,8 @@ describe('Endpoints — countOnly (#165)', () => {
 });
 
 describe('Endpoints — get Endpoint by id', () => {
-  it('returns the same endpoint surfaced by the list', async () => {
-    if (!available) {return;}
+  it('returns the same endpoint surfaced by the list', async (ctx) => {
+    if (!available) {ctx.skip();}
     const list = await client.endpoints.getEndpoints({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
     if (!id) {throw new Error('mock returned empty Endpoints list');}
@@ -85,8 +82,8 @@ describe('Endpoints — get Endpoint by id', () => {
 });
 
 describe('Endpoints — list WindowsEndpoints', () => {
-  it('returns paged data', async () => {
-    if (!available) {return;}
+  it('returns paged data', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.endpoints.getWindowsEndpoints({ PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -94,8 +91,8 @@ describe('Endpoints — list WindowsEndpoints', () => {
 });
 
 describe('Endpoints — unknown id', () => {
-  it('rejects on get with nonexistent GUID', async () => {
-    if (!available) {return;}
+  it('rejects on get with nonexistent GUID', async (ctx) => {
+    if (!available) {ctx.skip();}
     await expect(client.endpoints.getEndpoint(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });
@@ -112,8 +109,8 @@ describe('Endpoints — every read route of the merged tools (REQ-SRV-029, #174)
     .filter(([key]) => (TOOL_RELEASES[key] ?? []).some((r) => r === release))
     .map(([, select]) => (select.type ? { type: select.type } : {}));
 
-  it('list_endpoints and get_endpoint answer for every type of the release', async () => {
-    if (!available) {return;}
+  it('list_endpoints and get_endpoint answer for every type of the release', async (ctx) => {
+    if (!available) {ctx.skip();}
     const release = await useMockRelease();
     const types = routes('list_endpoints', release);
     expect(types.length).toBe(release === '25R2' ? 8 : 7);
@@ -127,8 +124,8 @@ describe('Endpoints — every read route of the merged tools (REQ-SRV-029, #174)
     }
   });
 
-  it('list_endpoints_by_logical_group answers with and without type', async () => {
-    if (!available) {return;}
+  it('list_endpoints_by_logical_group answers with and without type', async (ctx) => {
+    if (!available) {ctx.skip();}
     const release = await useMockRelease();
     const groups = await callTool('list_logical_groups', { PageSize: 1 });
     const logicalGroupId = (JSON.parse(groups.text) as { data?: Array<{ id?: string }> }).data?.[0]?.id;
@@ -139,8 +136,8 @@ describe('Endpoints — every read route of the merged tools (REQ-SRV-029, #174)
     }
   });
 
-  it('a removed per-type name answers with its replacement', async () => {
-    if (!available) {return;}
+  it('a removed per-type name answers with its replacement', async (ctx) => {
+    if (!available) {ctx.skip();}
     await useMockRelease();
     await expect(callTool('list_windows_endpoints', {})).rejects.toThrow(/replaced by list_endpoints: call list_endpoints with type "WindowsEndpoint"/);
   });
