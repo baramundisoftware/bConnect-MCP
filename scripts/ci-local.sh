@@ -1,54 +1,87 @@
 #!/usr/bin/env bash
 #
-# Local CI — the project's validation gate (GitHub Actions is not used; this
-# replaces it). Build + test all workspaces + gateway, jscpd, audit, semgrep.
-# minutes. Run before merging when hosted CI is unavailable.
+# Local CI: runs what .github/workflows/ci.yml runs, on this machine (#337).
 #
-#   npm run ci            # full run
-#   npm run ci -- --fast  # skip the semgrep SAST step (no docker pull)
+#   npm run ci                 # everything below
+#   npm run ci -- --no-mock    # without the mock tier (no Docker needed)
+#   npm run ci -- --fast       # without the mock tier and Semgrep
 #
-# Exit non-zero if build, tests, or the duplication guard fail. Audit and
-# semgrep are reported but non-blocking.
+# Blocking, as in CI (`gate`, `coverage`, `mock`):
+#   build, lint, no new casts, the root test suite, the coverage floors, and the
+#   mock tier for 26r1 and 25r2 against the bConnect-Mock image ci.yml pins
+#   (started here in its own containers, rate limit off).
+# Reported, not blocking, as in CI (`strict`): npm audit --audit-level=high.
+# Local extras, not in CI: jscpd duplication check (blocking), Semgrep (reported).
+#
+# Expects `npm ci` to have run. __tests__/ci-local.guard.test.ts fails when a
+# command CI runs is missing here.
 
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-FAST=0
-[ "${1:-}" = "--fast" ] && FAST=1
+MOCK=1
+SEMGREP=1
+for arg in "$@"; do
+  case "$arg" in
+    --no-mock) MOCK=0 ;;
+    --fast) MOCK=0; SEMGREP=0 ;;
+    *) echo "unknown option: $arg (use --no-mock or --fast)"; exit 2 ;;
+  esac
+done
 
 fail=0
 section() { printf '\n\033[1m=== %s ===\033[0m\n' "$*"; }
 check()   { if [ "$1" -ne 0 ]; then echo "  ✗ $2"; fail=1; else echo "  ✓ $2"; fi; }
 
-section "Build shared core (@bconnect/mcp-core)"
-npm run build -w @bconnect/mcp-core >/dev/null 2>&1; check $? "core build"
+section "Build (core, servers, template)"
+npm run build >/dev/null 2>&1; check $? "npm run build"
 
-section "Build + test servers and template"
-for d in bconnect-*-mcp bconnect-server-template; do
-  [ -d "$d" ] || continue
-  npm run build -w "$d" >/dev/null 2>&1; check $? "$d build"
-  if grep -q '"test"' "$d/package.json" 2>/dev/null; then
-    ( cd "$d" && npx vitest run --passWithNoTests >/dev/null 2>&1 ); check $? "$d test"
-  fi
-done
+section "Lint and casts"
+npm run lint >/dev/null 2>&1; check $? "npm run lint"
+bash scripts/check-new-casts.sh >/dev/null 2>&1; check $? "scripts/check-new-casts.sh (vs origin/main)"
 
-section "Lint (servers + core, casts ratcheted)"
-npm run lint >/dev/null 2>&1; check $? "lint"
-bash scripts/check-new-casts.sh >/dev/null 2>&1; check $? "no new casts vs origin/main"
+section "Tests (every server, the gateway and the suite-wide guards)"
+npx vitest run >/dev/null 2>&1; check $? "npx vitest run"
 
-section "Build + test gateway (non-workspace)"
-( cd bconnect-mcp-gateway && npx tsc >/dev/null 2>&1 ); check $? "gateway build"
-( cd bconnect-mcp-gateway && npx vitest run --passWithNoTests >/dev/null 2>&1 ); check $? "gateway test"
+section "Coverage floors"
+npm run test:coverage >/dev/null 2>&1; check $? "npm run test:coverage"
 
-section "Duplication guard (jscpd — config in .jscpd.json)"
+section "Mock tier (26r1, 25r2)"
+if [ "$MOCK" -eq 0 ]; then
+  echo "  skipped (--no-mock / --fast)"
+elif ! command -v docker >/dev/null 2>&1; then
+  echo "  ✗ docker not found: install it, or run with --no-mock"; fail=1
+else
+  image=$(sed -n 's/^ *BCONNECT_MOCK_IMAGE: *//p' .github/workflows/ci.yml | head -1)
+  for release in 26r1 25r2; do
+    name="bconnect-mock-ci-local-$release"
+    docker rm -f "$name" >/dev/null 2>&1
+    # Docker picks a free port on 127.0.0.1: a fixed one may be taken by another mock.
+    if docker run -d --rm --name "$name" -p "127.0.0.1::3433" \
+        -e BCONNECT_BMS_VERSION="$release" -e RATE_LIMIT_ENABLED=false "$image" >/dev/null 2>&1; then
+      address=$(docker port "$name" 3433/tcp | head -1)
+      BCONNECT_MOCK_URL="http://$address" node scripts/mock-tier.mjs "$release" >/dev/null 2>&1
+      check $? "node scripts/mock-tier.mjs $release ($image)"
+      docker stop "$name" >/dev/null 2>&1
+    else
+      check 1 "start $image for $release"
+    fi
+  done
+fi
+
+section "Dependency audit (reported, not blocking)"
+if npm audit --audit-level=high >/dev/null 2>&1; then
+  echo "  ✓ npm audit: no high or critical advisories"
+else
+  echo "  ⚠ npm audit reports high/critical advisories (not blocking): run npm audit"
+fi
+
+section "Duplication guard (jscpd, local only; config in .jscpd.json)"
 npx --yes jscpd@5.0.11 bconnect-*-mcp/src bconnect-server-template/src >/dev/null 2>&1
 check $? "no copy-pasted client/util code"
 
-section "Dependency audit (non-blocking)"
-npm audit --omit=dev 2>/dev/null | tail -3 || true
-
-section "SAST — Semgrep (non-blocking)"
-if [ "$FAST" -eq 1 ]; then
+section "SAST: Semgrep (local only, reported)"
+if [ "$SEMGREP" -eq 0 ]; then
   echo "  skipped (--fast)"
 elif command -v docker >/dev/null 2>&1; then
   docker run --rm -v "$PWD":/src -w /src semgrep/semgrep \
