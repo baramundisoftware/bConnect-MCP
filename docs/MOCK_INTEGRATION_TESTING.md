@@ -19,9 +19,10 @@ which once called the wrong path (see the comment in
 
 ## Running
 
-The tests expect the mock at `http://127.0.0.1:13433`, version **0.8.0 or later**
+The tests expect the mock at `http://127.0.0.1:13433`, version **0.8.1 or later**
 (0.8.0 answers list items with exactly the specification's fields, such as an
-asset's `assetId` and an endpoint's `type`, which the tests read). Start it with
+asset's `assetId` and an endpoint's `type`, which the tests read; 0.8.1 runs on
+Node.js 22.23.4, the fix for CVE-2026-111497). Start it with
 its rate limit off: under the limit, `/health` can answer 429 and the tests skip
 as if the mock weren't there. Start it for the bMS release to test, `26r1` or
 `25r2` (`BCONNECT_BMS_VERSION`; the mock's default is 25R2). On 25R2,
