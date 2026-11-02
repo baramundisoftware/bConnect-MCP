@@ -7,35 +7,26 @@ import { describe, it, beforeAll, expect } from 'vitest';
 import { detectRelease, forgetDetectedRelease } from '@bconnect/mcp-core';
 import { BConnectClient } from '../../bconnect-client.js';
 import {
-  checkMockAvailable,
-  createClient,
   getMockHealth,
-  MOCK_BASE_URL,
+  mockAvailable,
+  mockClientConfig,
   NONEXISTENT_GUID,
-} from './helpers.js';
+} from '../../../../__tests__/lib/mock-integration.js';
 
 let available = false;
 let client: BConnectClient;
 
 beforeAll(async () => {
-  available = await checkMockAvailable();
-  if (!available) {
-    console.warn(`⚠  bConnectMock not reachable at ${MOCK_BASE_URL} — servermanagement mock tests skipped`);
-    return;
-  }
-  client = createClient();
+  available = await mockAvailable('servermanagement');
+  if (!available) {return;}
+  client = new BConnectClient(mockClientConfig());
 });
 
-describe('release detection (#159, needs bConnect-Mock 0.5.0 or later)', () => {
-  it('selects the release the mock serves, from ManagementServer.version', async () => {
-    if (!available) {return;}
+describe('release detection (#159)', () => {
+  it('selects the release the mock serves, from ManagementServer.version', async (ctx) => {
+    if (!available) {ctx.skip();}
     const health = await getMockHealth();
     const expected = health!.bmsVersion.toUpperCase();
-    // bConnect-Mock before 0.5.0 answers this fixed version for every release: nothing to check there.
-    if (await client.managementServerVersion() === '26.1.0.5678') {
-      console.warn('⚠  bConnectMock older than 0.5.0 — release detection test skipped');
-      return;
-    }
     const lines: string[] = [];
     try {
       const release = await detectRelease(client, { info: (l) => lines.push(l), warn: (l) => lines.push(`warn ${l}`) }, {});
@@ -49,8 +40,8 @@ describe('release detection (#159, needs bConnect-Mock 0.5.0 or later)', () => {
 });
 
 describe('ServerManagement — list SecurityGroups', () => {
-  it('returns paged data with totalItems', async () => {
-    if (!available) {return;}
+  it('returns paged data with totalItems', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.serverManagement.getSecurityGroups({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -59,8 +50,8 @@ describe('ServerManagement — list SecurityGroups', () => {
 });
 
 describe('ServerManagement — get SecurityGroup by id', () => {
-  it('returns the same group surfaced by the list', async () => {
-    if (!available) {return;}
+  it('returns the same group surfaced by the list', async (ctx) => {
+    if (!available) {ctx.skip();}
     const list = await client.serverManagement.getSecurityGroups({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
     if (!id) {throw new Error('mock returned empty SecurityGroups list');}
@@ -70,16 +61,16 @@ describe('ServerManagement — get SecurityGroup by id', () => {
 });
 
 describe('ServerManagement — get ManagementServer (singleton)', () => {
-  it('returns the management-server payload', async () => {
-    if (!available) {return;}
+  it('returns the management-server payload', async (ctx) => {
+    if (!available) {ctx.skip();}
     const ms = await client.serverManagement.getManagementServer();
     expect(ms).toBeDefined();
   });
 });
 
 describe('ServerManagement — unknown SecurityGroup id', () => {
-  it('rejects on get with nonexistent GUID', async () => {
-    if (!available) {return;}
+  it('rejects on get with nonexistent GUID', async (ctx) => {
+    if (!available) {ctx.skip();}
     await expect(client.serverManagement.getSecurityGroup(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

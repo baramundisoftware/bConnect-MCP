@@ -6,27 +6,23 @@
 import { describe, it, beforeAll, expect } from 'vitest';
 import { BConnectClient } from '../../bconnect-client.js';
 import {
-  checkMockAvailable,
-  createClient,
-  MOCK_BASE_URL,
+  mockAvailable,
+  mockClientConfig,
   NONEXISTENT_GUID,
-} from './helpers.js';
+} from '../../../../__tests__/lib/mock-integration.js';
 
 let available = false;
 let client: BConnectClient;
 
 beforeAll(async () => {
-  available = await checkMockAvailable();
-  if (!available) {
-    console.warn(`⚠  bConnectMock not reachable at ${MOCK_BASE_URL} — variables mock tests skipped`);
-    return;
-  }
-  client = createClient();
+  available = await mockAvailable('variables');
+  if (!available) {return;}
+  client = new BConnectClient(mockClientConfig());
 });
 
 describe('Variables — list VariableDefinitions', () => {
-  it('returns paged data with totalItems', async () => {
-    if (!available) {return;}
+  it('returns paged data with totalItems', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.variables.getVariableDefinitions({ PageSize: 10 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -35,8 +31,8 @@ describe('Variables — list VariableDefinitions', () => {
 });
 
 describe('Variables — get VariableDefinition by id', () => {
-  it('returns the same definition surfaced by the list', async () => {
-    if (!available) {return;}
+  it('returns the same definition surfaced by the list', async (ctx) => {
+    if (!available) {ctx.skip();}
     const list = await client.variables.getVariableDefinitions({ PageSize: 1 } as never);
     const id = list.data?.[0]?.id;
     if (!id) {throw new Error('mock returned empty VariableDefinitions list');}
@@ -46,8 +42,8 @@ describe('Variables — get VariableDefinition by id', () => {
 });
 
 describe('Variables — list VariableInstances', () => {
-  it('returns paged data', async () => {
-    if (!available) {return;}
+  it('returns paged data', async (ctx) => {
+    if (!available) {ctx.skip();}
     const result = await client.variables.getVariableInstances({ PageSize: 5 } as never);
     expect(Array.isArray(result.data)).toBe(true);
     expect(typeof result.totalItems).toBe('number');
@@ -55,8 +51,8 @@ describe('Variables — list VariableInstances', () => {
 });
 
 describe('Variables — unknown VariableDefinition id', () => {
-  it('rejects on get with nonexistent GUID', async () => {
-    if (!available) {return;}
+  it('rejects on get with nonexistent GUID', async (ctx) => {
+    if (!available) {ctx.skip();}
     await expect(client.variables.getVariableDefinition(NONEXISTENT_GUID)).rejects.toThrow();
   });
 });

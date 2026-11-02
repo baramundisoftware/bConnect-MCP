@@ -3,9 +3,9 @@
  *
  * The `mock` job in ci.yml starts one pinned bConnect-Mock image per bMS
  * release, with its rate limit off, and runs scripts/mock-tier.mjs. The runner
- * checks the mock's /health first and fails the job when a server's tests fail
- * or skip because the mock isn't reachable: a skipped tier must never look
- * passed. On 25R2 it leaves out the servers that list no tool there; this
+ * checks the mock's /health first, runs the tests with MOCK_REQUIRED=true, and
+ * fails the job when a server's tests fail or fewer pass than it declares for
+ * the release (#336): a skipped tier must never look passed. On 25R2 it leaves out the servers that list no tool there; this
  * guard reads that set from the generated release tables.
  */
 import { describe, expect, it } from 'vitest';
@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import yaml from 'js-yaml';
 import { ROOT, SERVERS } from './lib/exerciser.js';
-import { checkHealth, serversFor, TEST_ARGS, testCommand, testEnv, verdict } from '../scripts/mock-tier.mjs';
+import { checkHealth, EXPECTED_SKIPS, serversFor, TEST_ARGS, testCommand, testCounts, testEnv, verdict } from '../scripts/mock-tier.mjs';
 
 const ci = readFileSync(join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8');
 
@@ -101,14 +101,33 @@ describe('scripts/mock-tier.mjs — verdict per server', () => {
     expect(verdict(1, 'Tests  1 failed | 7 passed (8)')).toMatch(/failed/);
   });
 
-  it('fails a run that skipped because the mock was not reachable, although vitest says passed', () => {
-    const output = '⚠  bConnectMock not reachable at http://127.0.0.1:13433 — endpoints mock tests skipped\n      Tests  8 passed (8)';
-    expect(verdict(0, output)).toMatch(/not reachable/);
+  it('fails a run in which tests skipped, although none failed (#336)', () => {
+    expect(verdict(0, '      Tests  8 skipped (8)')).toBe('0 of 8 tests passed, 8 declared for this release (8 skipped)');
+    expect(verdict(0, '      Tests  7 passed | 1 skipped (8)')).toMatch(/^7 of 8 tests passed/);
+  });
+
+  it('allows exactly the skips expected for the release, no more and no fewer', () => {
+    expect(verdict(0, '      Tests  5 passed | 3 skipped (8)', 3)).toBeUndefined();
+    expect(verdict(0, '      Tests  4 passed | 4 skipped (8)', 3)).toMatch(/^4 of 8 tests passed, 5 declared/);
+    expect(verdict(0, '      Tests  8 passed (8)', 3)).toMatch(/^8 of 8 tests passed, 5 declared/);
+  });
+
+  it('fails a run without a summary line: nothing ran', () => {
+    expect(verdict(0, 'No test files found, exiting with code 0')).toBe('no test summary: no tests ran');
+  });
+
+  it('reads the summary line, colour codes and all', () => {
+    expect(testCounts('\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[31m1 failed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m\u001b[1m\u001b[32m6 passed\u001b[39m\u001b[22m\u001b[2m | \u001b[22m1 skipped (8)'))
+      .toEqual({ passed: 6, failed: 1, skipped: 1, total: 8 });
+  });
+
+  it('expects skips only where a release lacks the API: software bundles on 25R2', () => {
+    expect(EXPECTED_SKIPS).toEqual({ '25r2': { 'bconnect-software-mcp': 3 }, '26r1': {} });
   });
 });
 
 describe('scripts/mock-tier.mjs — how each server runs', () => {
-  it("runs test:mock with vitest's default reporter, which prints the skip warning (an agent shell's reporter hides it)", () => {
+  it("runs test:mock with vitest's default reporter, which prints the summary line (an agent shell's reporter doesn't)", () => {
     expect(TEST_ARGS).toEqual(['run', '-s', 'test:mock', '--', '--reporter=default']);
   });
 
@@ -122,9 +141,9 @@ describe('scripts/mock-tier.mjs — how each server runs', () => {
     expect(testCommand('win32')).toEqual({ command: 'npm run -s test:mock -- --reporter=default', args: [], shell: true });
   });
 
-  it('gives the tests the mock URL and never the bConnect URL or credentials the client would prefer', () => {
+  it('gives the tests the mock URL and MOCK_REQUIRED=true, never the bConnect URL or credentials', () => {
     const env = testEnv({ PATH: '/bin', BCONNECT_BASE_URL: 'https://bms.example', BCONNECT_USERNAME: 'u', BCONNECT_PASSWORD: 'p', BCONNECT_API_KEY: 'k' }, 'http://127.0.0.1:13433');
-    expect(env).toEqual({ PATH: '/bin', BCONNECT_MOCK_URL: 'http://127.0.0.1:13433' });
+    expect(env).toEqual({ PATH: '/bin', BCONNECT_MOCK_URL: 'http://127.0.0.1:13433', MOCK_REQUIRED: 'true' });
   });
 });
 

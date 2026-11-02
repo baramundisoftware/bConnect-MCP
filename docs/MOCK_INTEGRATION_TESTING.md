@@ -23,7 +23,7 @@ The tests expect the mock at `http://127.0.0.1:13433`, version **0.8.1 or later*
 (0.8.0 answers list items with exactly the specification's fields, such as an
 asset's `assetId` and an endpoint's `type`, which the tests read; 0.8.1 runs on
 Node.js 22.23.4, the fix for CVE-2026-111497). Start it with
-its rate limit off: under the limit, `/health` can answer 429 and the tests skip
+its rate limit off: under the limit, `/health` can answer 429 and the tests act
 as if the mock weren't there. Start it for the bMS release to test, `26r1` or
 `25r2` (`BCONNECT_BMS_VERSION`; the mock's default is 25R2). On 25R2,
 compliance and universaldynamicgroups have no API at all and aren't run, and the
@@ -41,8 +41,11 @@ cd bconnect-<domain>-mcp && npm run test:mock        # or one server's tier
 ```
 
 `scripts/mock-tier.mjs <26r1|25r2>` checks that the mock answers `/health` for
-that release, runs each applicable server's tier, and fails when a server's
-tests fail or skipped because the mock wasn't reachable.
+that release and runs each applicable server's tier with `MOCK_REQUIRED=true`. It
+fails when a server's tests fail, and when fewer tests passed than the server
+declares for the release: vitest's summary line must show every test passed,
+except the software Bundles tests on 25R2, which skip because that API doesn't
+exist there.
 
 ## In CI
 
@@ -52,15 +55,19 @@ against the mock image pinned in the job's `env` (to move to a newer mock, chang
 that one line). The job log names the image digest.
 It isn't a required check.
 
-Unset `BCONNECT_BASE_URL`, `BCONNECT_USERNAME` and `BCONNECT_PASSWORD` in your
-shell first. The test client prefers them over the mock URL, so with them set
-the tests would send those credentials to that host, with certificate checks off.
+The tests never read `BCONNECT_BASE_URL` or the credential variables: they send
+fixed test credentials to the mock URL only, with certificate checks on.
 
-Skip behavior: every test calls `checkMockAvailable()` in `beforeAll`.
-If the mock is unreachable, every test in the file early-returns and the run
-**passes without testing anything**; only a console warning
-(`bConnectMock not reachable at … — … mock tests skipped`) says so. Check for that warning before you
-trust a green run.
+Without the mock: every test file calls `mockAvailable('<domain>')` in `beforeAll`.
+If the mock doesn't answer `/health`, the file's tests are **skipped**
+(`ctx.skip()`), vitest reports them as skipped, and a warning
+(`bConnect-Mock not reachable at … — <domain> mock tests skipped`) names the
+server. With `MOCK_REQUIRED=true` a missing mock fails the run instead; the
+runner sets it, so CI never passes without the mock:
+
+```bash
+MOCK_REQUIRED=true npm run test:mock    # fails when the mock isn't there
+```
 
 Override the mock URL with `BCONNECT_MOCK_URL`:
 
@@ -74,7 +81,12 @@ default), which a 25R2 mock answers with 404, so the server would stop at startu
 
 ## Layout
 
-Each server holds its own copy of the tier. Per-server files:
+Each server holds its own tests; the helpers are one shared module,
+`__tests__/lib/mock-integration.ts` (`mockAvailable`, `mockClientConfig`,
+`getMockHealth`, `rawGet`, `reset`). `__tests__/mock-integration.guard.test.ts`
+refuses a helper module in a server, a test that reads a real `BCONNECT_*`
+setting or turns certificate checks off, and a test that returns early instead
+of skipping. Per-server files:
 
 ```
 bconnect-<domain>-mcp/
@@ -82,11 +94,10 @@ bconnect-<domain>-mcp/
   package.json                                       # adds `test:mock` script
   vitest.config.ts                                   # excludes mock-integration from `npm test`
   src/__tests__/mock-integration/
-    helpers.ts                                       # client factory + mock probe
     <domain>.mock.test.ts                            # 2–5 tests
 ```
 
-The helpers and `vitest.mock.config.ts` are identical across servers. Each server's
+`vitest.mock.config.ts` is identical across servers. Each server's
 `BConnectClient` (`src/bconnect-client.ts`) is a thin wrapper over the shared
 `BConnectClientBase` in `@bconnect/mcp-core`, so this tier exercises the real
 production client path per server against the mock.
@@ -122,14 +133,13 @@ production client path per server against the mock.
    "test:mock": "vitest run -c vitest.mock.config.ts"
    ```
 
-4. Drop in `src/__tests__/mock-integration/helpers.ts` (copy from any
-   existing server — it imports `../../bconnect-client.js` which is
-   server-local).
+4. Write `src/__tests__/mock-integration/<domain>.mock.test.ts`, importing the
+   helpers from `'../../../../__tests__/lib/mock-integration.js'` (no copy):
 
-5. Write `src/__tests__/mock-integration/<domain>.mock.test.ts`:
-
-   - `beforeAll` calls `checkMockAvailable()` and constructs `client = createClient()`.
-   - 2–5 `it()` blocks. Each starts with `if (!available) return;`.
+   - `beforeAll` sets `available = await mockAvailable('<domain>')`, returns when
+     it is false, and constructs `client = new BConnectClient(mockClientConfig())`.
+   - 2–5 `it()` blocks, each `async (ctx) => {` starting with
+     `if (!available) {ctx.skip();}`.
    - Cover at minimum:
      - one **list** call — assert `data` array, `totalItems` number, `length >= 1`.
      - one **get-by-id** call — pass the id you grabbed from the list, assert
@@ -139,9 +149,9 @@ production client path per server against the mock.
      add a create→verify→delete cycle. Use `reset()` between tests for
      isolation.
 
-6. Confirm:
+5. Confirm:
    - `npm run test:mock` passes while the mock is up.
-   - `BCONNECT_MOCK_URL=http://127.0.0.1:1 npm run test:mock` skips cleanly.
+   - `BCONNECT_MOCK_URL=http://127.0.0.1:1 npm run test:mock` reports every test skipped, and fails with `MOCK_REQUIRED=true`.
    - `npm test` still runs only the unit tier and passes.
 
 ## Fixture IDs

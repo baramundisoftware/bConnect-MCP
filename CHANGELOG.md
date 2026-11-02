@@ -44,6 +44,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   TROUBLESHOOTING.md and the package author name baramundi Support (mention bConnect-MCP) instead of a
   personal address. SUPPORT.md describes one path: questions to Support, bugs and change requests as
   GitHub issues, vulnerabilities privately first. A guard refuses any other baramundi address.
+- **Mock tier: a run without the mock reports "skipped", not "passed"** (#336). Without bConnect-Mock,
+  `npm run test:mock` now reports the tests skipped; with `MOCK_REQUIRED=true` it fails.
+  `scripts/mock-tier.mjs` sets it and fails a server whose passed tests fall short of the tests it declares
+  for the release. The 13 copies of the test helpers are one module (`__tests__/lib/mock-integration.ts`)
+  that never reads the real `BCONNECT_*` settings and keeps certificate checks on; a guard refuses copies.
+  This found a compliance test that had skipped on 26R1 since its fixture changed; it now runs.
 
 ### Fixed
 - **Tool descriptions and results that misstated bMS** (#327). `start_microservice` and
