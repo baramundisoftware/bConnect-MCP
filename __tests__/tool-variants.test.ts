@@ -8,6 +8,10 @@
  */
 import { afterEach, describe, expect, it } from 'vitest';
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
+
+/** A tool's properties, as the tests read them. */
+type Props = Record<string, Schema>;
+import type { Schema } from './lib/spec.js';
 import {
   describeVariant, describeVariants, refuseReplacedTool, variantKey, variantSelect, withToolVariants, withUnverifiedWriteMarker, withVariantSelectors,
   UNVERIFIED_WRITE_NOTE, type ReplacedToolTable, type ToolReleaseTable, type ToolVariantTable,
@@ -71,7 +75,7 @@ describe('variantKey', () => {
 });
 
 describe('withVariantSelectors', () => {
-  const list = async () => ({ tools: [
+  const list = async (): Promise<{ tools: Array<{ name: string; inputSchema: Schema }> }> => ({ tools: [
     { name: 'list_things', inputSchema: { type: 'object', properties: { type: { type: 'string', description: 'Type.' }, Page: { type: 'integer', description: 'Page.' }, Shade: { type: 'string', description: 'Shade.' }, Depth: { type: 'integer', description: 'Depth.' } } } },
     { name: 'list_members', inputSchema: { type: 'object', properties: { kind: { type: 'string' }, member: { type: 'string' }, groupId: { type: 'string' } } } },
     { name: 'plain', inputSchema: { type: 'object', properties: { x: { type: 'string' } } } },
@@ -83,23 +87,23 @@ describe('withVariantSelectors', () => {
   ])('lists on %s only the values whose route the release has, in variant order', async (release, values) => {
     process.env.BCONNECT_RELEASE = release;
     const { tools } = await withVariantSelectors(VARIANTS, RELEASES, (key) => ARGS[key], list)();
-    expect((tools[0].inputSchema.properties as any).type).toEqual({ type: 'string', description: 'Type.', enum: values });
-    expect((tools[1].inputSchema.properties as any).kind.enum).toEqual(['Static', 'Dynamic']);
-    expect((tools[1].inputSchema.properties as any).member.enum).toEqual(['Red']);
+    expect((tools[0].inputSchema.properties as Props).type).toEqual({ type: 'string', description: 'Type.', enum: values });
+    expect((tools[1].inputSchema.properties as Props).kind.enum).toEqual(['Static', 'Dynamic']);
+    expect((tools[1].inputSchema.properties as Props).member.enum).toEqual(['Red']);
     expect(tools[2]).toEqual((await list()).tools[2]);
   });
 
   it('says which variants take a property not all of them take; one no listed variant takes is left out', async () => {
     process.env.BCONNECT_RELEASE = '25R2';
-    let props = (await withVariantSelectors(VARIANTS, RELEASES, (key) => ARGS[key], list)()).tools[0].inputSchema.properties as any;
+    let props = (await withVariantSelectors(VARIANTS, RELEASES, (key) => ARGS[key], list)()).tools[0].inputSchema.properties as Props;
     expect(props.Page.description).toBe('Page.');
     expect(props.Shade.description).toBe('Shade. Only for type "Red".');
     expect(props.Depth.description).toBe('Depth. Only for type "Blue".');
     process.env.BCONNECT_RELEASE = '26R1';
-    props = (await withVariantSelectors(VARIANTS, RELEASES, (key) => ARGS[key], list)()).tools[0].inputSchema.properties as any;
+    props = (await withVariantSelectors(VARIANTS, RELEASES, (key) => ARGS[key], list)()).tools[0].inputSchema.properties as Props;
     expect(props.Depth).toBeUndefined();
     expect(props.Shade.description).toBe('Shade. Only for type "Red".');
-    const members = (await withVariantSelectors(VARIANTS, RELEASES, (key) => ARGS[key], list)()).tools[1].inputSchema.properties as any;
+    const members = (await withVariantSelectors(VARIANTS, RELEASES, (key) => ARGS[key], list)()).tools[1].inputSchema.properties as Props;
     expect(members.groupId).toEqual({ type: 'string' });
   });
 });
@@ -246,7 +250,7 @@ describe('edge cases', () => {
     process.env.BCONNECT_RELEASE = '26R1';
     const { tools } = await withVariantSelectors(REQUIRED, REQUIRED_RELEASES, (key) => (key.endsWith('Red]') ? ['odd'] : []), list)();
     expect(tools[0]).toEqual({ name: 'set_thing' });
-    expect((tools[1] as any).inputSchema).toEqual({ type: 'object', properties: { type: { type: 'string', enum: ['Red', 'Blue'] }, odd: 'x' } });
+    expect(tools[1].inputSchema).toEqual({ type: 'object', properties: { type: { type: 'string', enum: ['Red', 'Blue'] }, odd: 'x' } });
   });
 
   it('describes and parses variant keys', () => {
@@ -271,7 +275,7 @@ it('keeps a property no variant takes, and drops from required what it leaves ou
   } }] });
   const { tools } = await withVariantSelectors(VARIANTS, RELEASES, (key) => ARGS[key], list)();
   // Depth only has 25R2 routes: left out on 26R1, with its required entry.
-  expect((tools[0] as any).inputSchema).toEqual({ type: 'object', properties: { free: { type: 'string' } }, required: ['free'] });
+  expect(tools[0].inputSchema).toEqual({ type: 'object', properties: { free: { type: 'string' } }, required: ['free'] });
 });
 
 it('parses a long, hostile key in linear time (no regex backtracking)', () => {

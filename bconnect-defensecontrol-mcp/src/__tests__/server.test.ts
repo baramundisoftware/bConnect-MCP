@@ -38,7 +38,7 @@ const EXPECTED_TOOLS_26R1_ONLY = [
   'update_bitlocker_pin',
 ];
 
-async function startServer(): Promise<void> {
+async function startServer(): Promise<{ client: Client }> {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);

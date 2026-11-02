@@ -45,7 +45,7 @@ function replacement(old: string): Replacement {
   }
   const [head, scope] = old.split('_endpoints_by_');
   const type = head === 'list' ? undefined : TYPE[head.slice('list_'.length)];
-  if (scope === 'ad_user') return { tool: 'list_ad_user_endpoints', select: type ? { endpointType: type } : {}, rename: {} };
+  if (scope === 'ad_user') {return { tool: 'list_ad_user_endpoints', select: type ? { endpointType: type } : {}, rename: {} };}
   const [kind, idArg] = KIND[scope];
   return { tool: 'list_group_members', select: { groupKind: kind, ...(type && { memberType: type }) }, rename: { [idArg]: 'groupId' } };
 }
@@ -104,7 +104,7 @@ describe('AC 1: every replaced tool\'s request is sent unchanged by its replacem
     let refused = 0;
     for (const groupKind of t.inputSchema.properties.groupKind.enum as string[]) {
       for (const memberType of [undefined, ...(t.inputSchema.properties.memberType.enum as string[])]) {
-        if (supported.has(`${groupKind}/${memberType ?? ''}`)) continue;
+        if (supported.has(`${groupKind}/${memberType ?? ''}`)) {continue;}
         recorder.take();
         const r = await conn.call('list_group_members', { groupKind, groupId: G, ...(memberType && { memberType }) });
         expect(r.code, `${groupKind}/${memberType}`).toBe(-32602);
@@ -131,8 +131,8 @@ describe('AC 2: a removed name answers with its replacement', () => {
       ? `with groupKind "${select.groupKind}" and ${select.memberType ? `with memberType "${select.memberType}"` : 'without memberType'}`
       : select.endpointType ? `with endpointType "${select.endpointType}"` : 'without endpointType';
     expect(r.text).toContain(`${tool} was replaced by ${next}: call ${next} ${how}`);
-    for (const [from, to] of Object.entries(rename)) expect(r.text).toContain(`with ${to} (was ${from})`);
-    if (release === '26R1' && select.memberType === 'IndustrialEndpoint') expect(r.text).toContain('That route is only available in bMS 25R2; this server uses 26R1');
+    for (const [from, to] of Object.entries(rename)) {expect(r.text).toContain(`with ${to} (was ${from})`);}
+    if (release === '26R1' && select.memberType === 'IndustrialEndpoint') {expect(r.text).toContain('That route is only available in bMS 25R2; this server uses 26R1');}
     expect(recorder.take()).toEqual([]);
   });
 

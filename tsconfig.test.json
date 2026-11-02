@@ -1,0 +1,19 @@
+{
+  // Type-checks the tests, which the build configs leave out (#337). `npm run typecheck:tests`.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": false
+  },
+  "include": [
+    "__tests__/**/*.ts",
+    "bconnect-*-mcp/src/**/__tests__/**/*.ts",
+    "bconnect-server-template/src/**/__tests__/**/*.ts"
+  ],
+  "exclude": ["**/node_modules", "**/build"]
+}

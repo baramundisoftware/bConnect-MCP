@@ -43,7 +43,7 @@ import { bodyValidator, jsonPatchProblems } from './lib/bodies.js';
 const BASELINE_PATH = join(ROOT, '__tests__', 'spec-conformance.baseline.json');
 const baseline: Baseline = JSON.parse(readFileSync(BASELINE_PATH, 'utf8'));
 const mode = process.env.SPEC_BASELINE ?? '';
-if (!['', 'prune', 'add-new'].includes(mode)) throw new Error(`SPEC_BASELINE must be prune or add-new, not '${mode}'`);
+if (!['', 'prune', 'add-new'].includes(mode)) {throw new Error(`SPEC_BASELINE must be prune or add-new, not '${mode}'`);}
 
 /** Every API answer carries this; a tool that returns what the API sent shows it in its result. */
 const MARKER = 'zz-guard-response-marker';
@@ -145,11 +145,11 @@ async function examine(release: Release): Promise<{ violations: Violation[]; reg
   for (const server of SERVERS) {
     const unsupported = await unsupportedOf(server);
     const merged = unsupportedByDomain.get(domainOf(server)) ?? {};
-    for (const [id, releases] of Object.entries(unsupported)) merged[id] = { ...merged[id], ...releases };
+    for (const [id, releases] of Object.entries(unsupported)) {merged[id] = { ...merged[id], ...releases };}
     unsupportedByDomain.set(domainOf(server), merged);
     violations.push(...checkUnsupported({ release, server, domain: domainOf(server), unsupported, table: await tableOf(server), listed: registered.get(server) ?? new Set() }));
   }
-  for (const [domain, covered] of coveredByDomain) violations.push(...checkCoverage(release, domain, covered, undefined, unsupportedByDomain.get(domain)));
+  for (const [domain, covered] of coveredByDomain) {violations.push(...checkCoverage(release, domain, covered, undefined, unsupportedByDomain.get(domain)));}
   return { violations, registered };
 }
 
@@ -173,8 +173,8 @@ describe('spec conformance (REQ-QA-001)', () => {
     if (mode === 'prune' || mode === 'add-new') {
       const keys = new Set(observed.map(keyOf));
       const next: Baseline = {};
-      for (const [k, issue] of Object.entries(baseline)) if (keys.has(k)) next[k] = issue;
-      if (mode === 'add-new') for (const k of keys) if (!(k in next)) next[k] = 0;
+      for (const [k, issue] of Object.entries(baseline)) {if (keys.has(k)) {next[k] = issue;}}
+      if (mode === 'add-new') {for (const k of keys) {if (!(k in next)) {next[k] = 0;}}}
       const sorted = Object.fromEntries(Object.entries(next).sort(([a], [b]) => a.localeCompare(b)));
       writeFileSync(BASELINE_PATH, JSON.stringify(sorted, null, 2) + '\n');
     }
@@ -437,10 +437,10 @@ describe('the checks report known-bad cases (self-test)', () => {
     ];
     // A stand-in validator: object schema → required + additionalProperties; patch → RFC 6902 shape.
     const validate = (o: ApiOperation, contentType: string, body: string): string[] => {
-      if (body === '' && !o.bodyRequired) return [];
+      if (body === '' && !o.bodyRequired) {return [];}
       const type = o.requestBodies[contentType] ? contentType : Object.keys(o.requestBodies)[0];
       const data = body ? JSON.parse(body) : undefined;
-      if (type === 'application/json-patch+json') return jsonPatchProblems(data);
+      if (type === 'application/json-patch+json') {return jsonPatchProblems(data);}
       return data && typeof data.name === 'string' && Object.keys(data).length === 1 ? [] : ['invalid'];
     };
     const table = { create_thing: ['CreateThing'], update_thing: ['UpdateThing'], delete_thing: ['DeleteThing'], reset_thing: ['ResetThing'] };

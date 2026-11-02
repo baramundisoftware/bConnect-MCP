@@ -55,7 +55,7 @@ describe('not verified live', () => {
   it('reads only yes or no from the env file; anything else is undeclared and counts as absent', () => {
     expect(declared('yes')).toBe('yes');
     expect(declared(' No ')).toBe('no');
-    for (const value of [undefined, '', 'maybe', 'true', '1']) expect(declared(value), String(value)).toBe('not declared');
+    for (const value of [undefined, '', 'maybe', 'true', '1']) {expect(declared(value), String(value)).toBe('not declared');}
     const [rules] = classifyByProfile([run('list_mobile_device_rules', 'compliance /v2.0/Rules')], { ...profile, mdm: declared(undefined) });
     expect(rules.outcome).toBe('not verified live');
   });

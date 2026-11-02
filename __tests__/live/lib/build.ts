@@ -16,7 +16,7 @@ export interface OutdatedBuild {
 
 /** Source files compiled into the build: .ts/.mts/.cts under src/, without declarations and tests. */
 function sourceFiles(dir: string): string[] {
-  if (!existsSync(dir)) return [];
+  if (!existsSync(dir)) {return [];}
   return readdirSync(dir, { withFileTypes: true, recursive: true })
     .filter((e) => e.isFile() && /\.[mc]?ts$/.test(e.name) && !/\.d\.[mc]?ts$/.test(e.name))
     .map((e) => join(e.parentPath, e.name))
@@ -27,7 +27,7 @@ function sourceFiles(dir: string): string[] {
 export function outdatedBuilds(root: string, packages: string[]): OutdatedBuild[] {
   return packages.flatMap((pkg): OutdatedBuild[] => {
     const entry = join(root, pkg, 'build', 'index.js');
-    if (!existsSync(entry)) return [{ pkg, reason: 'not built' }];
+    if (!existsSync(entry)) {return [{ pkg, reason: 'not built' }];}
     const built = statSync(entry).mtimeMs;
     const newer = sourceFiles(join(root, pkg, 'src')).filter((f) => statSync(f).mtimeMs > built);
     return newer.length === 0 ? [] : [{

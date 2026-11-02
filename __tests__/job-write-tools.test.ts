@@ -33,10 +33,10 @@ const msw = setupServer(
     const url = new URL(request.url);
     const text = await request.text();
     sent.push({ method: request.method, path: url.pathname.replace(/^\/bconnect/, ''), body: text ? JSON.parse(text) : undefined });
-    if (url.pathname.endsWith('/AssignJobDefinition')) return HttpResponse.json(PROBLEM_207, { status: 207 });
-    if (url.pathname.endsWith('/JobInstances')) return HttpResponse.json({ id: 'instance-1', jobDefinitionId: JOB, endpointId: ENDPOINT }, { status: 201 });
-    if (url.pathname.endsWith('/KioskReleases')) return HttpResponse.json({ id: 'release-1' }, { status: 201 });
-    if (url.pathname.includes('/Folders/')) return HttpResponse.json({ id: FOLDER, name: 'Renamed' });
+    if (url.pathname.endsWith('/AssignJobDefinition')) {return HttpResponse.json(PROBLEM_207, { status: 207 });}
+    if (url.pathname.endsWith('/JobInstances')) {return HttpResponse.json({ id: 'instance-1', jobDefinitionId: JOB, endpointId: ENDPOINT }, { status: 201 });}
+    if (url.pathname.endsWith('/KioskReleases')) {return HttpResponse.json({ id: 'release-1' }, { status: 201 });}
+    if (url.pathname.includes('/Folders/')) {return HttpResponse.json({ id: FOLDER, name: 'Renamed' });}
     return HttpResponse.json({});
   }),
 );
@@ -137,6 +137,6 @@ describe.each([
     expect(t.description).toMatch(/every (member|endpoint)/i);
     expect(t.description).toMatch(/starts? unless/i);
     expect(t.description).toMatch(/confirm/i);
-    if (name === 'assign_job_to_logical_group') expect(t.description).toMatch(/sub-?groups/i);
+    if (name === 'assign_job_to_logical_group') {expect(t.description).toMatch(/sub-?groups/i);}
   });
 });

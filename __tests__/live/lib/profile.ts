@@ -33,7 +33,7 @@ export function declared(value: string | undefined): Declared {
 }
 
 function isEnrolled(item: unknown): boolean {
-  if (typeof item !== 'object' || item === null || !('managementState' in item)) return true;
+  if (typeof item !== 'object' || item === null || !('managementState' in item)) {return true;}
   return item.managementState !== 'Enrollable';
 }
 
@@ -42,9 +42,9 @@ export function endpointTypesFrom(answers: Array<{ domain: string; path: string;
   const types: Profile['endpointTypes'] = {};
   for (const a of answers) {
     const m = a.domain === 'endpoints' ? /^\/v2\.0\/(\w+)Endpoints$/.exec(a.path) : null;
-    if (!m || typeof a.body !== 'object' || a.body === null || !('totalItems' in a.body) || !('data' in a.body)) continue;
+    if (!m || typeof a.body !== 'object' || a.body === null || !('totalItems' in a.body) || !('data' in a.body)) {continue;}
     const { totalItems, data } = a.body;
-    if (typeof totalItems !== 'number' || !Array.isArray(data)) continue;
+    if (typeof totalItems !== 'number' || !Array.isArray(data)) {continue;}
     types[m[1]] = { total: totalItems, enrolled: data.filter(isEnrolled).length };
   }
   return types;
@@ -71,7 +71,7 @@ export function missingClass(route: string, profile: Profile): string | undefine
 /** Runs of tools whose data class is missing become "not verified live"; failures stay failures. */
 export function classifyByProfile(runs: ToolRun[], profile: Profile): ToolRun[] {
   return runs.map((run) => {
-    if (run.outcome === 'failed' || !run.route) return run;
+    if (run.outcome === 'failed' || !run.route) {return run;}
     const missing = missingClass(run.route, profile);
     return missing ? { ...run, outcome: 'not verified live', detail: `no ${missing} on this bMS` } : run;
   });

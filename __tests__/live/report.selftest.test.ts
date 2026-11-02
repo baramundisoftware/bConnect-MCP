@@ -65,6 +65,6 @@ describe('sanitised summary', () => {
   });
 
   it('holds no host, credentials, object IDs or answer text', () => {
-    for (const leak of [HOST, ...SECRETS, GUID, 'WIN-FINANCE-07', 'LG-Finance-Clients', 'MaintenanceWindow', 'SearchQuery', 'Admin', 'https://']) expect(summary, leak).not.toContain(leak);
+    for (const leak of [HOST, ...SECRETS, GUID, 'WIN-FINANCE-07', 'LG-Finance-Clients', 'MaintenanceWindow', 'SearchQuery', 'Admin', 'https://']) {expect(summary, leak).not.toContain(leak);}
   });
 });

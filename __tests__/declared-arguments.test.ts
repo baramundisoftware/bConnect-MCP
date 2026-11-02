@@ -71,7 +71,7 @@ describe('withQueryProperties (#179)', () => {
     '25R2': { list_things: { SearchQuery: { type: 'string', description: 'old' } } },
     '26R1': { list_things: { SearchQuery: { type: 'string', description: 'new' }, EntraIdDeviceId: { type: 'string', description: 'x' } } },
   };
-  const list = async () => ({ tools: [
+  const list = async (): Promise<{ tools: Array<{ name: string; inputSchema: Record<string, unknown> }> }> => ({ tools: [
     { name: 'list_things', inputSchema: { type: 'object', properties: { groupId: { type: 'string' }, EntraIdDeviceId: { type: 'string' } }, required: ['groupId'] } },
     { name: 'get_thing', inputSchema: { type: 'object', properties: { id: { type: 'string' } } } },
   ] });

@@ -94,7 +94,7 @@ jobs:
         run: npm run build
 
       # Blocking: 0 errors, 0 warnings (`--max-warnings 0` in the root `lint`
-      # script), servers, template and the shared core. Type-defeating casts
+      # script): servers, template, the shared core, the gateway and every test. Type-defeating casts
       # (`as never`, `as unknown as`, angle-bracket casts) are errors; the `as`
       # casts that existed when the rule came in are listed per file in
       # eslint-suppressions.json: a file's total can't grow, and a removed cast
@@ -103,6 +103,11 @@ jobs:
       # `lint` script and passed without linting anything.
       - name: Lint
         run: npm run lint
+
+      # The build configs leave the tests out; this checks them (and the root
+      # suite) against the same strict settings (#337).
+      - name: Type-check tests
+        run: npm run typecheck:tests
 
       # The suppressions above count casts per file; this fails on any added
       # line with a cast, so one can't move between handlers (REQ-QA-002 AC 3).

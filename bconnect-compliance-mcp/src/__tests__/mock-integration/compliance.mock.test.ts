@@ -70,7 +70,7 @@ describe('Compliance — list DetectedVulnerabilities for an endpoint (P29.2 reg
   it('uses the correct WindowsEndpoints/{id}/DetectedVulnerabilities path', async (ctx) => {
     if (!available) {ctx.skip();}
     const { body: epList } = await rawGet('/endpoints/v2.0/WindowsEndpoints', { PageSize: 1 });
-    const endpointId = epList?.data?.[0]?.id;
+    const endpointId = (epList as { data?: Array<{ id?: string }> } | null)?.data?.[0]?.id;
     if (!endpointId) {throw new Error('mock returned no Windows endpoints');}
     const result = await client.compliance.getDetectedVulnerabilitiesByEndpoint(endpointId);
     expect(Array.isArray(result.data)).toBe(true);

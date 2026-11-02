@@ -62,11 +62,11 @@ function withPolymorphism(spec: Schema): Schema {
   const tags = new Map<string, { property: string; value: string }>();  // subtype name → its discriminator value
   for (const base of Object.values(schemas)) {
     const { propertyName, mapping } = base?.discriminator ?? {};
-    if (typeof propertyName !== 'string' || !mapping) continue;
+    if (typeof propertyName !== 'string' || !mapping) {continue;}
     for (const [value, ref] of Object.entries(mapping)) {
       const name = refName(ref) ?? '';
       const sub = schemas[name];
-      if (!sub) throw new Error(`discriminator mapping ${value} → ${String(ref)}: no such schema`);
+      if (!sub) {throw new Error(`discriminator mapping ${value} → ${String(ref)}: no such schema`);}
       sub.allOf = [...(sub.allOf ?? []), { properties: { [propertyName]: { const: value } } }];
       tags.set(name, { property: propertyName, value });
     }
@@ -75,7 +75,7 @@ function withPolymorphism(spec: Schema): Schema {
   const resolve = (s: Schema): Schema | undefined => {
     const seen = new Set<Schema>();
     while (s?.$ref) {
-      if (seen.has(s)) throw new Error(`cyclic $ref ${String(s.$ref)}`);
+      if (seen.has(s)) {throw new Error(`cyclic $ref ${String(s.$ref)}`);}
       seen.add(s);
       s = schemas[refName(s.$ref) ?? ''];
     }
@@ -83,21 +83,21 @@ function withPolymorphism(spec: Schema): Schema {
   };
   const isClosed = (member: Schema, seen = new Set<Schema>()): boolean => {
     const s = resolve(member);
-    if (!s || seen.has(s)) return false;
+    if (!s || seen.has(s)) {return false;}
     seen.add(s);
     return s.additionalProperties === false || (Array.isArray(s.allOf) && s.allOf.some((m: Schema) => isClosed(m, seen)));
   };
   const propertyNames = (s: Schema | undefined, seen: Set<Schema>): string[] => {
-    if (!s || seen.has(s)) return [];
+    if (!s || seen.has(s)) {return [];}
     seen.add(s);
-    if (s.$ref) return propertyNames(resolve(s), seen);
+    if (s.$ref) {return propertyNames(resolve(s), seen);}
     return [...Object.keys(s.properties ?? {}), ...(s.allOf ?? []).flatMap((m: Schema) => propertyNames(m, seen))];
   };
   const inlining = new Set<Schema>();
   /** A closed member, inlined and normalised, without its own closing. */
   const opened = (member: Schema): Schema => {
     const s = resolve(member)!;
-    if (inlining.has(s)) throw new Error(`cyclic allOf through ${String(member.$ref)}`);
+    if (inlining.has(s)) {throw new Error(`cyclic allOf through ${String(member.$ref)}`);}
     inlining.add(s);
     const out = walk(s) as Schema;
     inlining.delete(s);
@@ -106,11 +106,11 @@ function withPolymorphism(spec: Schema): Schema {
     return out;
   };
   const walk = (node: unknown): unknown => {
-    if (Array.isArray(node)) return node.map(walk);
-    if (!node || typeof node !== 'object') return node;
+    if (Array.isArray(node)) {return node.map(walk);}
+    if (!node || typeof node !== 'object') {return node;}
     const n = node as Schema;
     const out: Schema = {};
-    for (const [k, v] of Object.entries(n)) out[k] = walk(v);
+    for (const [k, v] of Object.entries(n)) {out[k] = walk(v);}
     if (Array.isArray(n.allOf) && n.allOf.some((m: Schema) => isClosed(m))) {
       const names = new Set([...Object.keys(n.properties ?? {}), ...n.allOf.flatMap((m: Schema) => propertyNames(m, new Set()))]);
       out.allOf = n.allOf.map((m: Schema) => (isClosed(m) ? opened(m) : walk(m)));
@@ -139,15 +139,15 @@ function withPolymorphism(spec: Schema): Schema {
 
 /** OpenAPI 3.0 `nullable` → JSON Schema. */
 function withoutNullable(node: unknown): unknown {
-  if (Array.isArray(node)) return node.map(withoutNullable);
-  if (!node || typeof node !== 'object') return node;
+  if (Array.isArray(node)) {return node.map(withoutNullable);}
+  if (!node || typeof node !== 'object') {return node;}
   const out: Schema = {};
-  for (const [k, v] of Object.entries(node)) out[k] = withoutNullable(v);
+  for (const [k, v] of Object.entries(node)) {out[k] = withoutNullable(v);}
   const nullable = out.nullable === true;
   delete out.nullable;
-  if (!nullable) return out;
+  if (!nullable) {return out;}
   if (typeof out.type === 'string' && !out.$ref) {
-    if (Array.isArray(out.enum) && !out.enum.includes(null)) out.enum = [...out.enum, null];
+    if (Array.isArray(out.enum) && !out.enum.includes(null)) {out.enum = [...out.enum, null];}
     return { ...out, type: [out.type, 'null'] };
   }
   return { anyOf: [out, { type: 'null', [NULLABLE]: true }], [NULLABLE]: true };
@@ -163,7 +163,7 @@ function newAjv(): AjvInstance {
   // warns about an unknown format, so the logger turns that warning into a compile error.
   const failOnUnknownFormat = (...args: unknown[]): void => {
     const text = args.map(String).join(' ');
-    if (/unknown format/.test(text)) throw new Error(text);
+    if (/unknown format/.test(text)) {throw new Error(text);}
   };
   const ajv = new Ajv({ strict: false, allErrors: true, verbose: true, logger: { log() {}, warn: failOnUnknownFormat, error: failOnUnknownFormat } });
   addFormats(ajv);
@@ -176,7 +176,7 @@ function findingsOf(errors: ErrorObject[] | null | undefined): SchemaFinding[] {
   const seen = new Map<string, SchemaFinding>();
   for (const e of errors ?? []) {
     // The nullable wrapper's own errors and the dispatch's "must match then" repeat what the branch reports.
-    if (e.parentSchema?.[NULLABLE] === true || e.keyword === 'if') continue;
+    if (e.parentSchema?.[NULLABLE] === true || e.keyword === 'if') {continue;}
     // ajv names a missing required property in the message already, an additional one only in params.
     const extra = e.keyword === 'additionalProperties' ? ` '${String(e.params.additionalProperty)}'` : '';
     const finding = {
@@ -194,7 +194,7 @@ const escapePointer = (s: string): string => s.replace(/~/g, '~0').replace(/\//g
 
 /** Differences between `data` and a named schema of an OpenAPI document (fixture tests). */
 export function checkSchema(spec: Schema, name: string, data: unknown): SchemaFinding[] {
-  if (!spec.components?.schemas?.[name]) throw new Error(`no schema ${name} in the document`);
+  if (!spec.components?.schemas?.[name]) {throw new Error(`no schema ${name} in the document`);}
   const ajv = newAjv();
   ajv.addSchema(toJsonSchema(spec), 'fixture');
   const validate = ajv.getSchema(`fixture#/components/schemas/${escapePointer(name)}`)!;
@@ -216,11 +216,11 @@ const validators = new Map<Release, SpecValidator>();
 /** The validator for one release: one ajv, one compiled spec document per domain. */
 export function specValidator(release: Release): SpecValidator {
   const cached = validators.get(release);
-  if (cached) return cached;
+  if (cached) {return cached;}
   const ajv = newAjv();
   const ids = new Map<Schema, string>();
   for (const op of loadOperations(release)) {
-    if (ids.has(op.spec)) continue;
+    if (ids.has(op.spec)) {continue;}
     const id = `spec-${release}-${op.domain}`;
     ajv.addSchema(toJsonSchema(op.spec), id);
     ids.set(op.spec, id);
@@ -231,7 +231,7 @@ export function specValidator(release: Release): SpecValidator {
     let validate = compiled.get(key);
     if (!validate) {
       validate = ajv.getSchema(key);
-      if (!validate) throw new Error(`no schema at ${key}`);
+      if (!validate) {throw new Error(`no schema at ${key}`);}
       compiled.set(key, validate);
     }
     return validate;
@@ -240,13 +240,13 @@ export function specValidator(release: Release): SpecValidator {
   const validator: SpecValidator = {
     body(op, contentType, data, options = {}) {
       const validate = compile(op, `requestBody/content/${escapePointer(contentType)}/schema`);
-      if (validate(data)) return [];
+      if (validate(data)) {return [];}
       return (validate.errors ?? [])
         .filter((e) => !(options.ignoreFormats && e.keyword === 'format'))
         .map((e) => `${e.instancePath || '(body)'} ${e.message}`);
     },
     response(op, data) {
-      if (!op.okStatus) throw new Error(`no 2xx JSON response schema for ${op.operationId} (${op.method} ${op.path})`);
+      if (!op.okStatus) {throw new Error(`no 2xx JSON response schema for ${op.operationId} (${op.method} ${op.path})`);}
       const validate = compile(op, `responses/${op.okStatus}/content/application~1json/schema`);
       return validate(data) ? [] : findingsOf(validate.errors);
     },

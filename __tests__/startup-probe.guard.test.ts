@@ -51,8 +51,8 @@ beforeAll(() => {
 afterEach(() => { recorded = []; });
 afterAll(() => {
   msw.close();
-  if (savedSkip !== undefined) process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK = savedSkip;
-  if (savedRelease === undefined) delete process.env.BCONNECT_RELEASE; else process.env.BCONNECT_RELEASE = savedRelease;
+  if (savedSkip !== undefined) {process.env.BCONNECT_SKIP_CONNECTIVITY_CHECK = savedSkip;}
+  if (savedRelease === undefined) {delete process.env.BCONNECT_RELEASE;} else {process.env.BCONNECT_RELEASE = savedRelease;}
 });
 
 async function probe(server: string, healthCheckPath?: string): Promise<{ ok: boolean; requests: URL[] }> {

@@ -43,7 +43,7 @@ const SECRETS_SOURCE = join('bconnect-mcp-gateway', 'src', 'secrets.ts');
 const sourceFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
-    if (statSync(path).isDirectory()) return name === '__tests__' || name === 'generated' ? [] : sourceFiles(path);
+    if (statSync(path).isDirectory()) {return name === '__tests__' || name === 'generated' ? [] : sourceFiles(path);}
     return /\.ts$/.test(name) && !/\.(test|spec|d)\.ts$/.test(name) ? [path] : [];
   });
 
@@ -59,13 +59,13 @@ const read = new Map<string, string>();
 const hidden: string[] = [];
 for (const file of GATEWAY_SOURCES.flatMap(sourceFiles)) {
   for (const r of envReads(readFileSync(file, 'utf8'), file)) {
-    if (r.name === null && file.endsWith(SECRETS_SOURCE)) continue; // expanded below from SECRET_ENV_KEYS
-    if (r.name === null) hidden.push(`${file.slice(ROOT.length + 1)}:${r.line} ${r.text}`);
-    else if (!read.has(r.name)) read.set(r.name, `${file.slice(ROOT.length + 1)}:${r.line}`);
+    if (r.name === null && file.endsWith(SECRETS_SOURCE)) {continue;} // expanded below from SECRET_ENV_KEYS
+    if (r.name === null) {hidden.push(`${file.slice(ROOT.length + 1)}:${r.line} ${r.text}`);}
+    else if (!read.has(r.name)) {read.set(r.name, `${file.slice(ROOT.length + 1)}:${r.line}`);}
   }
 }
 
-for (const key of SECRET_ENV_KEYS) read.set(`${key}_FILE`, `${SECRETS_SOURCE} (from SECRET_ENV_KEYS)`);
+for (const key of SECRET_ENV_KEYS) {read.set(`${key}_FILE`, `${SECRETS_SOURCE} (from SECRET_ENV_KEYS)`);}
 
 const composeText = readFileSync(COMPOSE, 'utf8');
 const compose = yaml.load(composeText) as { services: Record<string, { environment?: Record<string, unknown> }> };
@@ -77,8 +77,8 @@ const forwarded = new Map<string, string>(); // container variable -> source var
 const fixed = new Set<string>();
 for (const [key, value] of Object.entries(environment)) {
   const sources = interpolated(String(value));
-  if (sources.length) forwarded.set(key, sources[0]);
-  else fixed.add(key);
+  if (sources.length) {forwarded.set(key, sources[0]);}
+  else {fixed.add(key);}
 }
 const operatorSettable = new Set(interpolated(composeText));
 

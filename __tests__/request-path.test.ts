@@ -79,7 +79,7 @@ describe('the shared client refuses a non-canonical path before sending', () => 
   beforeAll(() => msw.listen({ onUnhandledRequest: 'error' }));
   afterEach(() => {
     sent.length = 0;
-    if (saved === undefined) delete process.env.ALLOW_SECRET_READ; else process.env.ALLOW_SECRET_READ = saved;
+    if (saved === undefined) {delete process.env.ALLOW_SECRET_READ;} else {process.env.ALLOW_SECRET_READ = saved;}
   });
   afterAll(() => msw.close());
 

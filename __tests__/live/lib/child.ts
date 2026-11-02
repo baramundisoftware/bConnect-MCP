@@ -17,10 +17,10 @@ function isLoggedRequest(value: unknown): value is LoggedRequest {
 }
 
 export function readGuardLog(file: string): LoggedRequest[] {
-  if (!existsSync(file)) return [];
+  if (!existsSync(file)) {return [];}
   return readFileSync(file, 'utf8').split('\n').filter(Boolean).map((line): LoggedRequest => {
     const parsed: unknown = JSON.parse(line);
-    if (!isLoggedRequest(parsed)) throw new Error(`child-guard log line is not a request: ${line}`);
+    if (!isLoggedRequest(parsed)) {throw new Error(`child-guard log line is not a request: ${line}`);}
     return parsed;
   });
 }
@@ -31,21 +31,21 @@ export function readGuardLog(file: string): LoggedRequest[] {
  */
 export function startupProblems(requests: LoggedRequest[], domain: string, basePath: string): string[] {
   const problems = requests.filter((r) => r.refused).map((r) => `refused at startup: ${r.method} ${r.path} (${r.refused})`);
-  if (problems.length) return problems;
+  if (problems.length) {return problems;}
   // Since #159 a server first reads the bMS release: one GET of ManagementServer, no query.
   const detection = `${basePath}/servermanagement/v2.0/ManagementServer`.toLowerCase();
   const isDetection = (r: LoggedRequest) => r.method === 'GET' && r.path.toLowerCase() === detection && r.query === '';
   const detections = requests.filter(isDetection).length;
-  if (detections > 1) return [`${detections} release detections at startup, expected at most 1`];
+  if (detections > 1) {return [`${detections} release detections at startup, expected at most 1`];}
   const checks = requests.filter((r) => !isDetection(r));
-  if (checks.length === 0) return ['no startup check was sent'];
-  if (checks.length > 1) return [`${checks.length} startup checks, expected 1`];
+  if (checks.length === 0) {return ['no startup check was sent'];}
+  if (checks.length > 1) {return [`${checks.length} startup checks, expected 1`];}
   const [probe] = checks;
-  if (probe.method !== 'GET') return [`startup check is ${probe.method}, not GET`];
+  if (probe.method !== 'GET') {return [`startup check is ${probe.method}, not GET`];}
   if (!probe.path.toLowerCase().startsWith(`${basePath}/${domain}/`.toLowerCase())) {
     return [`startup check went to ${probe.path}, not the ${domain} API`];
   }
-  if (new URLSearchParams(probe.query).get('PageSize') !== '1') return ['startup check without PageSize=1'];
+  if (new URLSearchParams(probe.query).get('PageSize') !== '1') {return ['startup check without PageSize=1'];}
   return [];
 }
 
@@ -61,8 +61,8 @@ export function startupFailures(
   basePath: string,
 ): string[] {
   const failures: string[] = [];
-  if (!s.initialized) failures.push('no initialize answer');
-  if (s.tools === 0) failures.push('tools/list returned no tools');
-  if (s.nonJson > 0) failures.push(`${s.nonJson} stdout lines that are not JSON-RPC`);
+  if (!s.initialized) {failures.push('no initialize answer');}
+  if (s.tools === 0) {failures.push('tools/list returned no tools');}
+  if (s.nonJson > 0) {failures.push(`${s.nonJson} stdout lines that are not JSON-RPC`);}
   return [...failures, ...startupProblems(s.requests, domain, basePath)];
 }

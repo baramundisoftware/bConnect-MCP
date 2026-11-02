@@ -31,12 +31,12 @@ interface Parts { lead?: string; json?: unknown; jsonText?: string; prose?: stri
 /** A result text split into an optional lead line and its JSON, or prose when it holds no JSON. */
 function parts(text: string): Parts {
   const whole = parse(text);
-  if (whole.ok) return { json: whole.value, jsonText: text };
+  if (whole.ok) {return { json: whole.value, jsonText: text };}
   const newline = text.indexOf('\n');
   if (newline >= 0) {
     const rest = text.slice(newline + 1);
     const tail = parse(rest);
-    if (tail.ok) return { lead: text.slice(0, newline), json: tail.value, jsonText: rest };
+    if (tail.ok) {return { lead: text.slice(0, newline), json: tail.value, jsonText: rest };}
   }
   return { prose: text };
 }
@@ -51,7 +51,7 @@ function parse(text: string): { ok: true; value: unknown } | { ok: false } {
 
 /** The text of a call's first content item, or the whole serialised result for a protocol error. */
 const textOf = (result: { text: string; code?: number }): string => {
-  if (result.code !== undefined) return result.text;
+  if (result.code !== undefined) {return result.text;}
   const content = JSON.parse(result.text) as Array<{ text?: string }>;
   return content.map((c) => c.text ?? '').join('');
 };

@@ -21,7 +21,7 @@ const PROCESS_MODULES = ['process', 'node:process'];
 
 /** A string key or property name: `.x`, `['x']`. */
 const keyOf = (node: ts.Node): string | undefined => {
-  if (ts.isPropertyAccessExpression(node)) return node.name.text;
+  if (ts.isPropertyAccessExpression(node)) {return node.name.text;}
   if (ts.isElementAccessExpression(node) && ts.isStringLiteralLike(node.argumentExpression)) {
     return node.argumentExpression.text;
   }
@@ -109,7 +109,7 @@ export function envReads(source: string, fileName = 'source.ts', takers: string[
       const parent = node.parent;
       const member = isMemberBase(node);
       const inner = ts.isIdentifier(node) && isAccess(parent) && isProcess(parent);
-      if (!member && !inner) add(node, null);
+      if (!member && !inner) {add(node, null);}
     }
     if (isProcessEnv(node)) {
       const parent = node.parent;
@@ -151,13 +151,13 @@ const isMemberBase = (node: ts.Node): boolean => {
 function isBenignName(node: ts.Node): boolean {
   const parent = node.parent;
   if ((ts.isPropertyAssignment(parent) || ts.isPropertySignature(parent) || ts.isPropertyDeclaration(parent) ||
-    ts.isMethodDeclaration(parent)) && parent.name === node) return true;
-  if (ts.isModuleDeclaration(parent) || ts.isTypeOfExpression(parent)) return true;
+    ts.isMethodDeclaration(parent)) && parent.name === node) {return true;}
+  if (ts.isModuleDeclaration(parent) || ts.isTypeOfExpression(parent)) {return true;}
   for (let n: ts.Node | undefined = parent; n && !ts.isSourceFile(n); n = n.parent) {
     // `class A extends mixin(process)`: the extends expression runs; it isn't a type.
     if (ts.isExpressionWithTypeArguments(n) && ts.isHeritageClause(n.parent) &&
-      n.parent.token === ts.SyntaxKind.ExtendsKeyword && !ts.isInterfaceDeclaration(n.parent.parent)) return false;
-    if (ts.isTypeNode(n)) return true;
+      n.parent.token === ts.SyntaxKind.ExtendsKeyword && !ts.isInterfaceDeclaration(n.parent.parent)) {return false;}
+    if (ts.isTypeNode(n)) {return true;}
   }
   return false;
 }
@@ -172,8 +172,8 @@ const isDeclaredParameterDefault = (node: ts.Node): boolean =>
 /** `f(...)` or `x.f(...)` → `f`. */
 function calleeName(call: ts.CallExpression): string | undefined {
   const target = call.expression;
-  if (ts.isIdentifier(target)) return target.text;
-  if (ts.isPropertyAccessExpression(target)) return target.name.text;
+  if (ts.isIdentifier(target)) {return target.text;}
+  if (ts.isPropertyAccessExpression(target)) {return target.name.text;}
   return undefined;
 }
 

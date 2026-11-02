@@ -82,7 +82,7 @@ function setEnv(env: Record<string, string>): void {
     ...guardEnv('26R1', { writes: false, secretRead: false }),
     ...env,
   };
-  for (const [key, value] of Object.entries(all)) vi.stubEnv(key, value);
+  for (const [key, value] of Object.entries(all)) {vi.stubEnv(key, value);}
 }
 
 /** The result of the server's first read tool (never gated), under `env`. */
@@ -91,7 +91,7 @@ async function firstReadToolResult(server: string, env: Record<string, string>):
   const conn = await connect(server);
   try {
     const tool = conn.tools.find((t) => /^(list|get)_/.test(t.name));
-    if (!tool) throw new Error(`${server}: no read tool`);
+    if (!tool) {throw new Error(`${server}: no read tool`);}
     return await conn.call(tool.name, requiredArguments(tool.inputSchema));
   } finally {
     await conn.close();
@@ -120,7 +120,7 @@ async function clientConfig(
       built.length = 0;
       await conn.call(tool.name, requiredArguments(tool.inputSchema));
       const config = built.at(-1);
-      if (config) return config;
+      if (config) {return config;}
     }
   } finally {
     await conn.close();
@@ -274,7 +274,7 @@ describe('guard self-tests', () => {
   it('scans generated code and .mts/.cts files, which are compiled into the build', () => {
     const root = mkdtempSync(join(dir, 'scan-'));
     mkdirSync(join(root, 'generated'));
-    for (const f of ['generated/types.ts', 'a.mts', 'b.cts', 'c.d.ts']) writeFileSync(join(root, f), '');
+    for (const f of ['generated/types.ts', 'a.mts', 'b.cts', 'c.d.ts']) {writeFileSync(join(root, f), '');}
     expect(sourceFiles(root).map((f) => relative(root, f)).sort()).toEqual(
       ['a.mts', 'b.cts', join('generated', 'types.ts')].sort(),
     );
@@ -409,7 +409,7 @@ describe.each(SERVERS)('%s: the client a tool call builds', (server) => {
 /** Why `<pkg>/build/index.js` can't be trusted to match the sources, or undefined. */
 function staleBuild(pkg: string, extraSourceDirs: string[]): string | undefined {
   const entry = join(pkg, 'build', 'index.js');
-  if (!existsSync(entry)) return 'build/index.js is missing';
+  if (!existsSync(entry)) {return 'build/index.js is missing';}
   const built = statSync(entry).mtimeMs;
   const newer = [join(pkg, 'src'), ...extraSourceDirs]
     .flatMap((d) => sourceFiles(d))
@@ -425,7 +425,7 @@ function staleBuild(pkg: string, extraSourceDirs: string[]): string | undefined 
 function startServer(server: string, env: Record<string, string>, pkg = join(ROOT, server)) {
   const entry = join(pkg, 'build', 'index.js');
   const stale = staleBuild(pkg, [join(ROOT, 'packages', 'mcp-core', 'src')]);
-  if (stale) throw new Error(`${server}: ${stale}; run npm run build`);
+  if (stale) {throw new Error(`${server}: ${stale}; run npm run build`);}
   const blank = Object.fromEntries(CLIENT_VARS.map((v) => [v, '']));
   // cwd without a .env file; VITEST unset so main() runs.
   return spawnSync(process.execPath, [entry], {
@@ -493,7 +493,7 @@ interface StdioSession { stdout: string; stderr: string; requests: string[]; too
 async function stdioSession(server: string, env: Record<string, string>): Promise<StdioSession> {
   const entry = join(ROOT, server, 'build', 'index.js');
   const stale = staleBuild(join(ROOT, server), [join(ROOT, 'packages', 'mcp-core', 'src')]);
-  if (stale) throw new Error(`${server}: ${stale}; run npm run build`);
+  if (stale) {throw new Error(`${server}: ${stale}; run npm run build`);}
   const requests: string[] = [];
   const api = createServer((req, res) => {
     requests.push(`${req.method} ${req.url}`);
@@ -541,7 +541,7 @@ async function stdioSession(server: string, env: Record<string, string>): Promis
 /** What's missing for the session to prove the audit path ran and stayed off stdout. */
 function auditProblems(session: StdioSession): string[] {
   const problems = nonJsonRpcLines(session.stdout).map((line) => `stdout: ${line}`);
-  if (session.requests.length === 0) problems.push('no request reached the bConnect stand-in, so nothing could be audited');
+  if (session.requests.length === 0) {problems.push('no request reached the bConnect stand-in, so nothing could be audited');}
   // Audit lines name the path below the base URL (http://127.0.0.1:<port>/bconnect).
   const probe = session.requests[0]?.split(' ')[1]?.split('?')[0]?.replace(/^\/bconnect(?=\/)/, '');
   // A security-relevant route (e.g. servermanagement's SecurityGroups probe) is tagged [SECURITY AUDIT].

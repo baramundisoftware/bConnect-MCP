@@ -7,5 +7,5 @@ import { staleGatewayModules } from '../bconnect-mcp-gateway/check-install.mjs';
 
 export default function setup(): void {
   const stale = staleGatewayModules();
-  if (stale) throw new Error(stale);
+  if (stale) {throw new Error(stale);}
 }

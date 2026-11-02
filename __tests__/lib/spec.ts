@@ -43,6 +43,7 @@ export interface ApiOperation {
   matches(method: string, path: string): boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- an OpenAPI schema of any shape, read field by field
 export type Schema = Record<string, any>;
 
 const SPEC_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'openapi-specs');
@@ -57,16 +58,16 @@ function secretFieldsOf(schema: Schema | undefined, schemas: Record<string, Sche
   const hits = new Set<string>();
   const visited = new Set<string>();
   const walk = (sc: Schema | undefined, owner: string): void => {
-    if (!sc) return;
+    if (!sc) {return;}
     if (sc.$ref) {
       const name = String(sc.$ref).split('/').pop()!;
-      if (visited.has(name)) return;
+      if (visited.has(name)) {return;}
       visited.add(name);
       walk(schemas[name], name);
       return;
     }
-    for (const part of [...(sc.allOf ?? []), ...(sc.oneOf ?? []), ...(sc.anyOf ?? [])]) walk(part, owner);
-    if (sc.items) walk(sc.items, owner);
+    for (const part of [...(sc.allOf ?? []), ...(sc.oneOf ?? []), ...(sc.anyOf ?? [])]) {walk(part, owner);}
+    if (sc.items) {walk(sc.items, owner);}
     for (const [field, def] of Object.entries<Schema>(sc.properties ?? {})) {
       const lower = field.toLowerCase();
       if (isStringType(def.type) && SECRET_KEYWORDS.some((k) => lower.includes(k))) {
@@ -82,7 +83,7 @@ function secretFieldsOf(schema: Schema | undefined, schemas: Record<string, Sche
 /** Every operation of every spec of a release, with its secret classification. */
 export function loadOperations(release: Release): ApiOperation[] {
   const cached = cache.get(release);
-  if (cached) return cached;
+  if (cached) {return cached;}
   const ops: ApiOperation[] = [];
   const dir = join(SPEC_ROOT, release);
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.json'))) {
@@ -93,12 +94,12 @@ export function loadOperations(release: Release): ApiOperation[] {
     for (const [path, byMethod] of Object.entries<Schema>(spec.paths ?? {})) {
       const pattern = new RegExp('^' + path.replace(/\{[^}]+\}/g, '[^/]+') + '/?$');
       for (const [method, op] of Object.entries<Schema>(byMethod)) {
-        if (!op || typeof op !== 'object' || !op.responses) continue;
+        if (!op || typeof op !== 'object' || !op.responses) {continue;}
         const fields = new Set<string>();
         for (const [code, response] of Object.entries<Schema>(op.responses)) {
-          if (!/^2/.test(code)) continue;
+          if (!/^2/.test(code)) {continue;}
           for (const media of Object.values<Schema>(response.content ?? {})) {
-            for (const f of secretFieldsOf(media.schema, schemas)) fields.add(f);
+            for (const f of secretFieldsOf(media.schema, schemas)) {fields.add(f);}
           }
         }
         const upper = method.toUpperCase();
@@ -136,7 +137,7 @@ export function secretBearingOperations(release: Release): ApiOperation[] {
  */
 export function findOperation(release: Release, method: string, requestPath: string): ApiOperation | undefined {
   const m = /^\/([^/]+)(\/.*)$/.exec(requestPath);
-  if (!m) return undefined;
+  if (!m) {return undefined;}
   const [, domain, rest] = m;
   return loadOperations(release).find((op) => op.domain === domain.toLowerCase() && op.matches(method, rest));
 }

@@ -93,7 +93,7 @@ describe('route classification', () => {
   it('covers exactly the secret-bearing operations the specs declare', () => {
     const derived = new Set<string>();
     for (const release of RELEASES) {
-      for (const op of secretBearingOperations(release)) derived.add(`${op.method} ${op.domain} ${op.path}`);
+      for (const op of secretBearingOperations(release)) {derived.add(`${op.method} ${op.domain} ${op.path}`);}
     }
     const expected = [...derived].filter((k) => !NOT_DENIED[k]).sort();
     const actual = SECRET_ROUTES.map((r) => `${r.method} ${r.domain} ${r.path}`).sort();
@@ -118,7 +118,7 @@ describe('shared client refuses before sending', () => {
   beforeAll(() => msw.listen({ onUnhandledRequest: 'error' }));
   afterEach(() => {
     sent.length = 0;
-    if (saved === undefined) delete process.env.ALLOW_SECRET_READ; else process.env.ALLOW_SECRET_READ = saved;
+    if (saved === undefined) {delete process.env.ALLOW_SECRET_READ;} else {process.env.ALLOW_SECRET_READ = saved;}
   });
   afterAll(() => msw.close());
 

@@ -19,8 +19,7 @@ type Mode = 'hang' | 'close' | 'garbled' | 'truncated' | 502 | 503 | 504 | 500 |
 let mode: Mode = 404;
 let received = 0;
 const server = http.createServer((req, res) => {
-  let body = '';
-  req.on('data', (c) => { body += c; });
+  req.resume(); // read the body, which isn't needed
   req.on('end', () => {
     received++;
     if (mode === 'hang') {return;} // never answers

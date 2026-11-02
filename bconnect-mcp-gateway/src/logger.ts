@@ -30,7 +30,7 @@ export function createLogger(): Logger {
   const json = (process.env.LOG_FORMAT?.toLowerCase() ?? "text") === "json";
 
   function emit(lvl: LogLevel, msg: string, fields?: LogFields): void {
-    if (LEVELS[lvl] > threshold) return;
+    if (LEVELS[lvl] > threshold) {return;}
     if (json) {
       process.stderr.write(JSON.stringify({ ts: new Date().toISOString(), level: lvl, msg, ...fields }) + "\n");
     } else {

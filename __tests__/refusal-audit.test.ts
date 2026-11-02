@@ -39,7 +39,7 @@ beforeAll(() => msw.listen({ onUnhandledRequest: 'error' }));
 afterEach(() => {
   sent.length = 0;
   vi.restoreAllMocks();
-  if (saved === undefined) delete process.env.ALLOW_SECRET_READ; else process.env.ALLOW_SECRET_READ = saved;
+  if (saved === undefined) {delete process.env.ALLOW_SECRET_READ;} else {process.env.ALLOW_SECRET_READ = saved;}
 });
 afterAll(() => msw.close());
 

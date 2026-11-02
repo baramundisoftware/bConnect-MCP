@@ -28,7 +28,7 @@ describe.each(RELEASES)('bMS %s', (release) => {
       for (const tool of conn.tools) {
         for (const [name, property] of Object.entries(tool.inputSchema.properties ?? {})) {
           if (/^page(size)?$/i.test(name)) {
-            found.push({ where: `${server} ${tool.name}`, name, property });
+            found.push({ where: `${server} ${tool.name}`, name, property: property as { type?: string; description?: string } });
           }
         }
       }

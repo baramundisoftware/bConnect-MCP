@@ -12,7 +12,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest
 import { setupServer } from 'msw/node';
 import { delay, http, HttpResponse } from 'msw';
 import { BConnectClient } from '../bconnect-software-mcp/src/bconnect-client.js';
-import { detectRelease, forgetDetectedRelease } from '../packages/mcp-core/src/release.js';
+// The core the client is built against, so detection and the client share one release state.
+import { detectRelease, forgetDetectedRelease } from '@bconnect/mcp-core';
 
 const BASE = 'http://bms.software-probe.test/bconnect';
 const sent: string[] = [];

@@ -25,18 +25,19 @@ const DIRS = [...SERVERS, 'bconnect-server-template'].map((d) => join(ROOT, d, '
 const sourceFiles = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
     const path = join(dir, e.name);
-    if (e.isDirectory()) return e.name === '__tests__' || e.name === '__mocks__' || e.name === 'generated' ? [] : sourceFiles(path);
+    if (e.isDirectory()) {return e.name === '__tests__' || e.name === '__mocks__' || e.name === 'generated' ? [] : sourceFiles(path);}
     return e.name.endsWith('.ts') && !e.name.endsWith('.d.ts') && !e.name.endsWith('.test.ts') ? [path] : [];
   });
 
 /** `JSON.stringify(…)` or `JSON["stringify"](…)`. */
 const isJsonStringify = (node: ts.Node): node is ts.CallExpression => {
-  if (!ts.isCallExpression(node)) return false;
+  if (!ts.isCallExpression(node)) {return false;}
   const callee = node.expression;
   const name = ts.isPropertyAccessExpression(callee) ? callee.name.text
     : ts.isElementAccessExpression(callee) && ts.isStringLiteralLike(callee.argumentExpression) ? callee.argumentExpression.text
       : undefined;
-  return name === 'stringify' && ts.isIdentifier(callee.expression) && callee.expression.text === 'JSON';
+  const object = ts.isPropertyAccessExpression(callee) || ts.isElementAccessExpression(callee) ? callee.expression : undefined;
+  return name === 'stringify' && object !== undefined && ts.isIdentifier(object) && object.text === 'JSON';
 };
 
 /** A `JSON.stringify` call in `node` that isn't part of a template literal (prose may quote a value). */
@@ -56,7 +57,7 @@ export function selfFormatted(source: string, file = 'source.ts'): string[] {
     found.push(`${line}: ${why}: ${node.getText(sf).slice(0, 80)}`);
   };
   const visit = (node: ts.Node): void => {
-    if (isJsonStringify(node) && !noIndent(node.arguments[2])) report(node, 'indented JSON');
+    if (isJsonStringify(node) && !noIndent(node.arguments[2])) {report(node, 'indented JSON');}
     if (ts.isPropertyAssignment(node) && ts.isIdentifier(node.name) && node.name.text === 'text' &&
       stringifyOutsideProse(node.initializer)) {
       report(node, 'text set from JSON.stringify');

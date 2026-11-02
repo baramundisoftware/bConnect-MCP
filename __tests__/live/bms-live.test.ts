@@ -85,6 +85,7 @@ async function startOverStdio(server: string): Promise<Startup> {
   const messages = (): Array<Record<string, unknown> | null> => out.split('\n').filter(Boolean).map((l) => {
     try { return JSON.parse(l); } catch { return null; }
   });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- a JSON-RPC message of any shape, read field by field
   const answer = (id: number, ms: number) => new Promise<Record<string, any> | undefined>((resolve) => {
     const started = Date.now();
     const poll = setInterval(() => {
@@ -117,7 +118,7 @@ describe(`live bMS (${RELEASE}): startup`, () => {
     const s = await startOverStdio(server);
     // Counted only when every check passed: answered, listed tools, JSON-RPC only, startup check only.
     const failures = startupFailures(s, domainOf(server), basePath);
-    if (failures.length === 0) started++;
+    if (failures.length === 0) {started++;}
     expect(failures, `startup failed; last stderr lines:\n${s.stderr}`).toEqual([]);
   });
 });
@@ -162,8 +163,8 @@ function decode(raw: Buffer, encoding: string | null): string {
 
 /** The items of a list response: the body if it is an array, else its first array-valued property. */
 function itemsOf(body: unknown): unknown[] {
-  if (Array.isArray(body)) return body;
-  if (body && typeof body === 'object') return Object.values(body).find(Array.isArray) ?? [];
+  if (Array.isArray(body)) {return body;}
+  if (body && typeof body === 'object') {return Object.values(body).find(Array.isArray) ?? [];}
   return [];
 }
 
@@ -176,12 +177,12 @@ function argumentsFor(tool: { inputSchema: JsonSchema }, op: ApiOperation): Reco
   const props: Record<string, JsonSchema> = tool.inputSchema.properties ?? {};
   const required: string[] = tool.inputSchema.required ?? [];
   const args: Record<string, unknown> = {};
-  if (props.PageSize) args.PageSize = PAGE_SIZE;
-  if (required.length === 0) return args;
-  if (required.length > 1 || !/id$/i.test(required[0])) return `needs ${required.join(', ')}`;
+  if (props.PageSize) {args.PageSize = PAGE_SIZE;}
+  if (required.length === 0) {return args;}
+  if (required.length > 1 || !/id$/i.test(required[0])) {return `needs ${required.join(', ')}`;}
   const parent = parentRoute(op.path);
   const ids = parent ? idsByRoute.get(routeKey(op, parent)) : undefined;
-  if (!ids?.length) return `no ID from ${parent ?? 'a parent route'} on this bMS`;
+  if (!ids?.length) {return `no ID from ${parent ?? 'a parent route'} on this bMS`;}
   return { ...args, [required[0]]: ids[0] };
 }
 
@@ -196,26 +197,26 @@ async function exercise(server: string, conn: ConnectedServer, tool: ConnectedSe
     started = Date.now();
     result = await conn.call(tool.name, args);
     await Promise.all(pending);
-    if (attempt === 3 || !exchanges.some((e) => e.status === 429)) break;
+    if (attempt === 3 || !exchanges.some((e) => e.status === 429)) {break;}
     await new Promise((r) => setTimeout(r, 2_000 * 2 ** attempt));
   }
   const ms = Date.now() - started;
   const statuses = exchanges.map((e) => e.status);
   const schema: SchemaFinding[] = [];
   for (const e of exchanges) {
-    if (!e.op || e.status < 200 || e.status > 299) continue;
+    if (!e.op || e.status < 200 || e.status > 299) {continue;}
     // The shared validator throws for an operation without a 2xx JSON schema; those have nothing to check.
-    if (e.op.okStatus) schema.push(...validator.response(e.op, e.body));
+    if (e.op.okStatus) {schema.push(...validator.response(e.op, e.body));}
     const ids = itemsOf(e.body).map((i) => (i as Record<string, unknown>)?.id).filter((id): id is string => typeof id === 'string');
-    if (ids.length) idsByRoute.set(routeKey(e.op), ids);
+    if (ids.length) {idsByRoute.set(routeKey(e.op), ids);}
     answers.push({ domain: e.op.domain, path: e.op.path, body: e.body });
   }
   const requests = exchanges.map((e) => `${e.method} ${e.path} ${e.status}`);
   const base = { server, tool: tool.name, args, ms, statuses, requests, schema, route: routeKey(ops[0]) };
-  if (!result.isError) return { ...base, outcome: 'ok', detail: `${ops[0].method} ${ops[0].path}` };
+  if (!result.isError) {return { ...base, outcome: 'ok', detail: `${ops[0].method} ${ops[0].path}` };}
   // Only a listed tool with its listed answer is expected (lib/expected.ts); its reason is reported.
   const reason = expectedAnswer(tool.name, exchanges.filter((e) => e.status < 200 || e.status > 299));
-  if (reason) return { ...base, outcome: 'expected', detail: reason };
+  if (reason) {return { ...base, outcome: 'expected', detail: reason };}
   return { ...base, outcome: 'failed', detail: result.text.slice(0, 300) };
 }
 
@@ -237,7 +238,7 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
   }, 120_000);
 
   afterAll(async () => {
-    for (const conn of conns.values()) await conn.close();
+    for (const conn of conns.values()) {await conn.close();}
     guard.stop();
     process.env = saved;
     writeReport();
@@ -250,7 +251,7 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
       const mine: ToolRun[] = [];
       for (const tool of conn.tools) {
         const needsId = (tool.inputSchema.required ?? []).length > 0;
-        if ((pass === 'lists') === needsId) continue;
+        if ((pass === 'lists') === needsId) {continue;}
         const ops = readOperations(RELEASE, server, tables.get(server)!, tool.name);
         if (typeof ops === 'string') { runs.push({ server, tool: tool.name, outcome: 'skipped', detail: ops }); continue; }
         const args = argumentsFor(tool, ops[0]);
@@ -290,5 +291,6 @@ function writeReport(): void {
     at: new Date().toISOString(), node: process.version, platform: process.platform, profile, runs: classified,
   }, null, 2));
   writeFileSync(join(dir, 'live-bms-summary.md'), summary);
+  // eslint-disable-next-line no-console -- the run's summary is this test's output
   console.log(`${summary}\nPublish only reports/live-bms-summary.md. This console output and reports/live-bms.json stay local.`);
 }

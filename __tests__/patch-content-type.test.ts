@@ -41,9 +41,9 @@ describe('the specs', () => {
       for (const file of readdirSync(dir).filter((f) => f.endsWith('.json'))) {
         const spec = JSON.parse(readFileSync(join(dir, file), 'utf8'));
         for (const ops of Object.values<Record<string, { requestBody?: { content?: object } }>>(spec.paths)) {
-          if (!ops.patch) continue;
+          if (!ops.patch) {continue;}
           count++;
-          for (const type of Object.keys(ops.patch.requestBody?.content ?? {})) declared.add(type);
+          for (const type of Object.keys(ops.patch.requestBody?.content ?? {})) {declared.add(type);}
         }
       }
     }
