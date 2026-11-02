@@ -67,7 +67,7 @@ const READ_ELSEWHERE: Record<string, string> = {
 const NAME = /\b(?:BCONNECT|MCP|ALLOW|NODE|LOG|SSL|DEBUG)_[A-Z0-9_]*[A-Z0-9]\b|\bDEBUG\b(?==)/g;
 
 function tsFiles(dir: string): string[] {
-  if (!existsSync(dir)) return [];
+  if (!existsSync(dir)) {return [];}
   return readdirSync(dir, { withFileTypes: true, recursive: true })
     .filter((e) => e.isFile() && /\.(?:ts|mts|mjs)$/.test(e.name) && !/\.d\.mts$/.test(e.name))
     .map((e) => join(e.parentPath, e.name))
@@ -174,8 +174,8 @@ function runs(message: string): string[] {
     .split(/…|<[^>]+>|\b\d+\b|\(s\)|\b(?:GET|POST|PUT|PATCH|DELETE)\b|\([A-Z][a-z]+(?: [A-Z][a-z]+)*\)/)
     .flatMap((part) => {
       const w = words(part);
-      if (w.length < 2) return [];
-      if (w.length < 4) return [w.join(' ')];
+      if (w.length < 2) {return [];}
+      if (w.length < 4) {return [w.join(' ')];}
       return w.slice(0, w.length - 3).map((_, k) => w.slice(k, k + 4).join(' '));
     });
 }
@@ -256,7 +256,7 @@ describe('docs — relative links resolve', () => {
         .filter((target) => {
           const [path, anchor] = target.split('#');
           const resolved = path ? join(dirname(file), path) : file;
-          if (!existsSync(resolved)) return true;
+          if (!existsSync(resolved)) {return true;}
           return Boolean(anchor) && /\.md$/i.test(resolved) && !anchorsOf(resolved).has(anchor);
         })
         .map((target) => `${relative(ROOT, file)}: ${target}`);

@@ -151,7 +151,7 @@ describe.each(RELEASES)('bMS %s', (release) => {
     expect(readOnly.map((s) => s.server)).toEqual(expect.arrayContaining([
       'bconnect-activedirectory-mcp', 'bconnect-compliance-mcp', 'bconnect-groups-mcp', 'bconnect-universaldynamicgroups-mcp',
     ]));
-    for (const s of readOnly) expect(JSON.stringify(s.off), s.server).toBe(JSON.stringify(s.on));
+    for (const s of readOnly) {expect(JSON.stringify(s.off), s.server).toBe(JSON.stringify(s.on));}
   });
 
   it('the write gate refuses exactly the tools toolEffect calls writes, and exactly those are hidden', () => {

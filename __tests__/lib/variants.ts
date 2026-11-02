@@ -12,7 +12,7 @@ export interface Variant {
 
 export function variantOf(key: string): Variant {
   const m = key.match(/^([a-z0-9_]+)\[(.*)\]$/);
-  if (!m) return { tool: key, select: {} };
+  if (!m) {return { tool: key, select: {} };}
   const select: Record<string, string | null> = {};
   for (const part of m[2].split(',')) {
     const [name, value] = part.split('=');
@@ -39,15 +39,15 @@ export function selectorArguments(key: string): Record<string, string> {
  * `without memberType`).
  */
 export function partNames(part: string, select: Record<string, string | null>): boolean {
-  if (part === describeVariant(select)) return true;
-  if (part.includes(' and ')) return false;
+  if (part === describeVariant(select)) {return true;}
+  if (part.includes(' and ')) {return false;}
   if (part.startsWith('without ')) {
     const name = part.slice('without '.length);
     return !name.includes(' ') && name in select && select[name] === null;
   }
   const space = part.indexOf(' ');
   const name = part.slice(0, space);
-  if (space < 0 || !(name in select) || part.includes(' without ')) return false;
+  if (space < 0 || !(name in select) || part.includes(' without ')) {return false;}
   const values: unknown[] = JSON.parse(`[${part.slice(space + 1)}]`);
   return values.includes(select[name]);
 }
@@ -58,7 +58,7 @@ export function routeTakes(description: unknown, select: Record<string, string |
   // that happens to contain those words earlier isn't taken for the note.
   const text = String(description ?? '');
   const at = Math.max(text.lastIndexOf('Only for '), text.lastIndexOf('Not for '));
-  if (at < 0 || !text.endsWith('.')) return true;
+  if (at < 0 || !text.endsWith('.')) {return true;}
   const only = text.startsWith('Only for ', at);
   const named = text.slice(at + (only ? 'Only for '.length : 'Not for '.length), -1).split('; ').some((part) => partNames(part, select));
   return only ? named : !named;

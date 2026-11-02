@@ -27,7 +27,7 @@ const NOT_CONFIGURATION = new Set(['VITEST']);
 const sourceFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
-    if (statSync(path).isDirectory()) return name === '__tests__' || name === 'generated' ? [] : sourceFiles(path);
+    if (statSync(path).isDirectory()) {return name === '__tests__' || name === 'generated' ? [] : sourceFiles(path);}
     return /\.ts$/.test(name) && !/\.(test|spec|d)\.ts$/.test(name) ? [path] : [];
   });
 
@@ -63,7 +63,7 @@ function visible(text: string): string {
       fence = !fence;
       continue;
     }
-    if (fence) continue;
+    if (fence) {continue;}
     if (comment || line.includes('<!--')) {
       comment = !line.includes('-->') || line.lastIndexOf('<!--') > line.lastIndexOf('-->');
       continue;
@@ -81,7 +81,7 @@ const headings = (text: string): string[] => [...text.matchAll(/^### `([A-Z][A-Z
  * before it (`_MAX_REQUESTS`): a second description of the settings.
  */
 const settingRows = (text: string): string[] => text.split('\n').filter((line) => {
-  if (!line.startsWith('|')) return false;
+  if (!line.startsWith('|')) {return false;}
   const cells = line.split('|').slice(1, -1).map((c) => c.trim());
   return cells.some((cell) => [...cell.matchAll(/`(_?[A-Z][A-Z0-9_]*)`/g)].some(([, name]) =>
     SETTINGS.includes(name) || (name.startsWith('_') && SETTINGS.some((s) => s.endsWith(name)))) && /^`[^`]+`(\s*(\/|\+|,|or|and)\s*`[^`]+`)*$/.test(cell));

@@ -30,10 +30,10 @@ const SHELL_REFUSED = ['NODE_EXTRA_CA_CERTS', 'NODE_OPTIONS', 'SSL_CERT_FILE', '
 const CONTROLLED = /^(BCONNECT_|ALLOW_|MCP_|NODE_TLS_REJECT_UNAUTHORIZED$)/;
 
 function sourceFiles(dir: string): string[] {
-  if (!existsSync(dir)) return [];
+  if (!existsSync(dir)) {return [];}
   return readdirSync(dir).flatMap((name) => {
     const path = join(dir, name);
-    if (statSync(path).isDirectory()) return name === '__tests__' || name === 'generated' ? [] : sourceFiles(path);
+    if (statSync(path).isDirectory()) {return name === '__tests__' || name === 'generated' ? [] : sourceFiles(path);}
     return /\.ts$/.test(name) && !/\.test\.ts$/.test(name) ? [path] : [];
   });
 }
@@ -57,8 +57,8 @@ export function controlledKeysIn(sources: Array<{ file: string; text: string }>)
   const keys = new Set<string>([...PROXY_KEYS, ...FORCED_EMPTY]);
   for (const { file, text } of sources) {
     for (const read of envReads(text, file)) {
-      if (read.name === null) throw new LiveConfigError(`${file}:${read.line} reads the environment with a name the live run can't know: ${read.text}`);
-      if (CONTROLLED.test(read.name)) keys.add(read.name);
+      if (read.name === null) {throw new LiveConfigError(`${file}:${read.line} reads the environment with a name the live run can't know: ${read.text}`);}
+      if (CONTROLLED.test(read.name)) {keys.add(read.name);}
     }
   }
   return [...keys].sort();
@@ -91,9 +91,9 @@ export interface LiveConfig {
 
 export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS.ProcessEnv }): LiveConfig {
   const { root, file, shell } = args;
-  if (!existsSync(file)) throw new LiveConfigError(`the env file ${file} does not exist (set BCONNECT_LIVE_ENV or create .env.local)`);
+  if (!existsSync(file)) {throw new LiveConfigError(`the env file ${file} does not exist (set BCONNECT_LIVE_ENV or create .env.local)`);}
   const values = parse(readFileSync(file));
-  if (!values.BCONNECT_BASE_URL) throw new LiveConfigError(`${file} sets no BCONNECT_BASE_URL`);
+  if (!values.BCONNECT_BASE_URL) {throw new LiveConfigError(`${file} sets no BCONNECT_BASE_URL`);}
   if (!URL.canParse(values.BCONNECT_BASE_URL) || !/^https?:$/.test(new URL(values.BCONNECT_BASE_URL).protocol)) {
     throw new LiveConfigError(`BCONNECT_BASE_URL in ${file} is not an http(s) URL`);
   }
@@ -101,7 +101,7 @@ export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS
     throw new LiveConfigError(`BCONNECT_CA_CERT_PATH in ${file} names a file that does not exist`);
   }
   for (const key of FORCED_EMPTY) {
-    if (values[key]) throw new LiveConfigError(`${file} must not set ${key}: the live run keeps writes, secrets and the startup check fixed`);
+    if (values[key]) {throw new LiveConfigError(`${file} must not set ${key}: the live run keeps writes, secrets and the startup check fixed`);}
   }
   for (const key of SHELL_REFUSED) {
     if (shell[key]) {
@@ -110,10 +110,10 @@ export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS
     }
   }
   const env: Record<string, string> = {};
-  for (const key of controlledKeys(root)) env[key] = FORCED_EMPTY.includes(key) ? '' : values[key] ?? '';
+  for (const key of controlledKeys(root)) {env[key] = FORCED_EMPTY.includes(key) ? '' : values[key] ?? '';}
 
   const release = RELEASES.find((r) => r === (env.BCONNECT_RELEASE || '26R1'));
-  if (!release) throw new LiveConfigError(`BCONNECT_RELEASE must be one of ${RELEASES.join(', ')}`);
+  if (!release) {throw new LiveConfigError(`BCONNECT_RELEASE must be one of ${RELEASES.join(', ')}`);}
   env.BCONNECT_RELEASE = release;
 
   // The Basic header in both encodings: the client sends Latin-1 (#228), UTF-8 kept for safety.
@@ -146,9 +146,9 @@ export function checkReachable(config: LiveConfig): Promise<{ status: number; bm
   const { env } = config;
   const url = new URL(`${config.baseUrl.href.replace(/\/$/, '')}/info`);
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (env.BCONNECT_API_KEY) headers['X-Api-Key'] = env.BCONNECT_API_KEY;
+  if (env.BCONNECT_API_KEY) {headers['X-Api-Key'] = env.BCONNECT_API_KEY;}
   // Latin-1, as bConnect reads Basic credentials (#228): the same helper the servers use.
-  else if (env.BCONNECT_USERNAME) headers.Authorization = basicAuthHeader(env.BCONNECT_USERNAME, env.BCONNECT_PASSWORD ?? '');
+  else if (env.BCONNECT_USERNAME) {headers.Authorization = basicAuthHeader(env.BCONNECT_USERNAME, env.BCONNECT_PASSWORD ?? '');}
   const options: https.RequestOptions = {
     method: 'GET', headers, timeout: 15_000,
     rejectUnauthorized: env.NODE_TLS_REJECT_UNAUTHORIZED !== '0',
@@ -161,7 +161,7 @@ export function checkReachable(config: LiveConfig): Promise<{ status: number; bm
       res.on('data', (d: string) => { text += d; });
       res.on('end', () => {
         let bmsVersion: string | undefined;
-        try { const v: unknown = JSON.parse(text)?.bMSVersion; if (typeof v === 'string') bmsVersion = v; } catch { /* not JSON */ }
+        try { const v: unknown = JSON.parse(text)?.bMSVersion; if (typeof v === 'string') {bmsVersion = v;} } catch { /* not JSON */ }
         resolve({ status: res.statusCode ?? 0, bmsVersion });
       });
     });
@@ -175,7 +175,7 @@ export function checkReachable(config: LiveConfig): Promise<{ status: number; bm
 export function childEnv(config: LiveConfig, shell: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
   for (const [key, value] of Object.entries(shell)) {
-    if (!(key in config.env) && !SHELL_REFUSED.includes(key) && key !== 'VITEST') env[key] = value;
+    if (!(key in config.env) && !SHELL_REFUSED.includes(key) && key !== 'VITEST') {env[key] = value;}
   }
   return { ...env, ...config.env, NODE_ENV: 'production' };
 }

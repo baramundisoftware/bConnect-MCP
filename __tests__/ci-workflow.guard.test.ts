@@ -49,7 +49,7 @@ function documentedRequiredChecks(): string[] {
   const lines = text.split(/\r?\n/);
   const begin = lines.findIndex((l) => l.trim() === BEGIN);
   const end = lines.findIndex((l) => l.trim() === END);
-  if (begin < 0 || end < begin) return [];
+  if (begin < 0 || end < begin) {return [];}
   return lines
     .slice(begin + 1, end)
     .map((l) => l.trim().match(/^#\s*-\s*(.+)$/)?.[1]?.trim())
@@ -76,11 +76,11 @@ const readManifest = (dir: string): Manifest => JSON.parse(readFileSync(join(ROO
 /** Workspace directories, from the root `workspaces` patterns (`*` within one path segment). */
 function workspaceDirs(): string[] {
   const expand = (base: string, parts: string[]): string[] => {
-    if (!parts.length) return existsSync(join(ROOT, base, 'package.json')) ? [base] : [];
+    if (!parts.length) {return existsSync(join(ROOT, base, 'package.json')) ? [base] : [];}
     const [head, ...rest] = parts;
     const re = new RegExp('^' + head.split('*').map((p) => p.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*') + '$');
     const dir = join(ROOT, base);
-    if (!existsSync(dir)) return [];
+    if (!existsSync(dir)) {return [];}
     return readdirSync(dir, { withFileTypes: true })
       .filter((e) => e.isDirectory() && re.test(e.name))
       .flatMap((e) => expand(base ? `${base}/${e.name}` : e.name, rest));
@@ -100,14 +100,14 @@ function npmRuns(): NpmRun[] {
       (step.run ?? '').split(/\r?\n|&&|\|\||;|\|/).flatMap((segment): NpmRun[] => {
         const words = segment.trim().split(/\s+/);
         const npm = words.indexOf('npm');
-        if (npm < 0) return [];
+        if (npm < 0) {return [];}
         const args = words.slice(npm + 1);
         const run = args.findIndex((w) => w === 'run' || w === 'run-script');
-        if (run < 0) return [];
+        if (run < 0) {return [];}
         let workspace: string | undefined;
         args.forEach((w, i) => {
-          if (w === '-w' || w === '--workspace') workspace = args[i + 1];
-          else if (w.startsWith('--workspace=')) workspace = w.slice('--workspace='.length);
+          if (w === '-w' || w === '--workspace') {workspace = args[i + 1];}
+          else if (w.startsWith('--workspace=')) {workspace = w.slice('--workspace='.length);}
         });
         // The script is the first word after `run` that is neither a flag nor a flag's value.
         const flagValue = (i: number): boolean => i > 0 && (args[i - 1] === '-w' || args[i - 1] === '--workspace');
@@ -123,8 +123,8 @@ function npmRuns(): NpmRun[] {
 function missingScript(r: NpmRun): boolean {
   const has = (m: Manifest): boolean => r.script in (m.scripts ?? {});
   const dirs = workspaceDirs();
-  if (r.allWorkspaces) return dirs.some((d) => !has(readManifest(d)));
-  if (!r.workspace) return !has(readManifest(''));
+  if (r.allWorkspaces) {return dirs.some((d) => !has(readManifest(d)));}
+  if (!r.workspace) {return !has(readManifest(''));}
   const dir = dirs.find((d) => d === r.workspace || readManifest(d).name === r.workspace);
   return !dir || !has(readManifest(dir));
 }

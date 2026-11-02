@@ -107,7 +107,7 @@ describe('Endpoints — every read route of the merged tools (REQ-SRV-029, #174)
   }
   const routes = (tool: string, release: string): Array<Record<string, string>> => Object.entries(TOOL_VARIANTS[tool])
     .filter(([key]) => (TOOL_RELEASES[key] ?? []).some((r) => r === release))
-    .map(([, select]) => (select.type ? { type: select.type } : {}));
+    .map(([, select]): Record<string, string> => (select.type ? { type: select.type } : {}));
 
   it('list_endpoints and get_endpoint answer for every type of the release', async (ctx) => {
     if (!available) {ctx.skip();}

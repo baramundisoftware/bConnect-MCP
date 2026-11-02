@@ -24,7 +24,7 @@ const SOURCE = /\.(?:[cm]?ts|[cm]?js)$/;
 export function ajvSpecifiers(text: string): string[] {
   const found: string[] = [];
   const re = /(?:\bfrom\s*|\brequire\s*\(\s*|\bimport\s*\(\s*|\bimport\s+)(['"`])(ajv(?:-[\w-]+)?(?:\/[^'"`]*)?)\1/g;
-  for (const m of text.matchAll(re)) found.push(m[2]);
+  for (const m of text.matchAll(re)) {found.push(m[2]);}
   return found;
 }
 
@@ -33,14 +33,14 @@ export function sourceFiles(dir: string): string[] {
   const out: string[] = [];
   const walk = (d: string): void => {
     for (const entry of readdirSync(d, { withFileTypes: true })) {
-      if (entry.name === 'node_modules') continue;
+      if (entry.name === 'node_modules') {continue;}
       const full = join(d, entry.name);
-      if (entry.isDirectory()) walk(full);
-      else if (SOURCE.test(entry.name)) out.push(relative(dir, full).split('\\').join('/'));
+      if (entry.isDirectory()) {walk(full);}
+      else if (SOURCE.test(entry.name)) {out.push(relative(dir, full).split('\\').join('/'));}
     }
   };
   walk(dir);
-  if (out.length === 0) throw new Error(`no test sources found below ${dir}`);
+  if (out.length === 0) {throw new Error(`no test sources found below ${dir}`);}
   return out;
 }
 

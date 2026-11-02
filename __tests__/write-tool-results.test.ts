@@ -25,15 +25,15 @@ const answer = (path: string): [unknown, number] => {
     return [{ fqdn: 'bms.example.com', token: 'mac-token-123', tokenValidUntilUTC: '2026-10-09T12:00:00Z',
       url: 'https://bms.example.com/enroll/mac', qrCodeText: 'bms://enroll?t=mac-token-123', qrCodeImageBase64: QR_IMAGE }, 200];
   }
-  if (path.endsWith('/TriggerInstallationViaIntune')) return [intuneAnswer, 200];
-  if (path.endsWith('/MaintenanceWindow')) return [{ id: ID, name: 'Night window', isActive: true }, 200];
-  if (path.includes('/NetworkEndpoints/')) return [{ id: ID, displayName: 'Switch-01' }, 200];
-  if (path.endsWith('/MSWCleanup')) return [{ wasSuccessful: true, result: '42 files deleted' }, 200];
-  if (path.endsWith('/SimulateMSWCleanup')) return [{ simulationResult: 'ok', filesToDelete: ['a.cab', 'b.cab'] }, 200];
-  if (path.includes('/SecurityGroups/')) return [{ id: ID, name: 'Helpdesk' }, 200];
-  if (path.includes('/SecurityProfiles/')) return [{ id: ID, name: 'Read only' }, 200];
-  if (path.includes('/Objects/')) return [{ id: ID, permissions: ['Read'] }, 200];
-  if (path.endsWith('/Restart')) return ['2026-10-02T22:00:00Z', 200];
+  if (path.endsWith('/TriggerInstallationViaIntune')) {return [intuneAnswer, 200];}
+  if (path.endsWith('/MaintenanceWindow')) {return [{ id: ID, name: 'Night window', isActive: true }, 200];}
+  if (path.includes('/NetworkEndpoints/')) {return [{ id: ID, displayName: 'Switch-01' }, 200];}
+  if (path.endsWith('/MSWCleanup')) {return [{ wasSuccessful: true, result: '42 files deleted' }, 200];}
+  if (path.endsWith('/SimulateMSWCleanup')) {return [{ simulationResult: 'ok', filesToDelete: ['a.cab', 'b.cab'] }, 200];}
+  if (path.includes('/SecurityGroups/')) {return [{ id: ID, name: 'Helpdesk' }, 200];}
+  if (path.includes('/SecurityProfiles/')) {return [{ id: ID, name: 'Read only' }, 200];}
+  if (path.includes('/Objects/')) {return [{ id: ID, permissions: ['Read'] }, 200];}
+  if (path.endsWith('/Restart')) {return ['2026-10-02T22:00:00Z', 200];}
   return [{}, 200];
 };
 
@@ -86,7 +86,7 @@ describe('enrollment returns what the administrator needs (#172)', () => {
 
   it('start_enrollment (MacEndpoint) returns token, URL and QR text, and leaves out the QR image', async () => {
     const r = await call('endpoints', 'start_enrollment', { type: 'MacEndpoint', id: ID });
-    for (const v of ['mac-token-123', 'https://bms.example.com/enroll/mac', 'bms://enroll?t=mac-token-123']) expect(r.text).toContain(v);
+    for (const v of ['mac-token-123', 'https://bms.example.com/enroll/mac', 'bms://enroll?t=mac-token-123']) {expect(r.text).toContain(v);}
     expect(r.text).not.toContain(QR_IMAGE);
     expect(r.text).toMatch(/qrCodeImageBase64/);
   });
@@ -100,7 +100,7 @@ describe('trigger_intune_installation reports the result as it is (#172)', () =>
     intuneAnswer = value;
     const r = await call('endpoints', 'trigger_intune_installation', { id: ID });
     expect(r.text).toMatch(must);
-    if (mustNot.source !== '^$') expect(r.text).not.toMatch(mustNot);
+    if (mustNot.source !== '^$') {expect(r.text).not.toMatch(mustNot);}
   });
 
   it('says the result is unknown when bMS answers neither true nor false', async () => {

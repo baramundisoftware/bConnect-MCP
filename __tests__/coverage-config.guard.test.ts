@@ -97,7 +97,7 @@ describe('coverage config', () => {
   });
 
   it('the template is not measured', () => {
-    for (const ws of NOT_SHIPPED) expect(isIncluded(`${ws}/src/index.ts`)).toBe(false);
+    for (const ws of NOT_SHIPPED) {expect(isIncluded(`${ws}/src/index.ts`)).toBe(false);}
   });
 
   it('keeps the total floors', () => {

@@ -110,7 +110,7 @@ describe.each(RELEASES)('secret gate, bMS %s', (release) => {
   it('never reaches a secret-bearing operation with ALLOW_SECRET_READ unset', () => {
     const leaks: string[] = [];
     for (const call of closed) {
-      if (SECRET_ALLOW[call.tool]) continue;
+      if (SECRET_ALLOW[call.tool]) {continue;}
       for (const r of call.requests) {
         const op = findOperation(release, r.method, r.path);
         if (op && op.secretFields.length) {

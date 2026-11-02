@@ -32,14 +32,15 @@ export function domainOf(server: string): string {
   return name === 'groups' ? 'endpoints' : name;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- a JSON Schema of any shape, read field by field
 export type JsonSchema = Record<string, any>;
 
 /** A value that passes the servers' argument validation for the given property. */
 export function sample(name: string, schema: JsonSchema): unknown {
-  if (Array.isArray(schema.enum) && schema.enum.length) return schema.enum[0];
+  if (Array.isArray(schema.enum) && schema.enum.length) {return schema.enum[0];}
   switch (schema.type) {
     case 'string':
-      if (schema.format === 'date-time') return '2026-01-01T00:00:00Z';
+      if (schema.format === 'date-time') {return '2026-01-01T00:00:00Z';}
       return /id$/i.test(name) ? ID : 'x';
     case 'integer':
     case 'number': return 1;
@@ -61,13 +62,13 @@ export function requiredArguments(inputSchema: JsonSchema): Record<string, unkno
   const args: Record<string, unknown> = {};
   const properties = Object.entries<JsonSchema>(inputSchema.properties ?? {});
   for (const [name, schema] of properties) {
-    if (required.includes(name)) args[name] = sample(name, schema);
+    if (required.includes(name)) {args[name] = sample(name, schema);}
   }
   // A tool that needs more than its required arguments (e.g. "id plus at least
   // one field to change") says so with minProperties; fill up with optional ones.
   for (const [name, schema] of properties) {
-    if (Object.keys(args).length >= (inputSchema.minProperties ?? 0)) break;
-    if (!(name in args)) args[name] = sample(name, schema);
+    if (Object.keys(args).length >= (inputSchema.minProperties ?? 0)) {break;}
+    if (!(name in args)) {args[name] = sample(name, schema);}
   }
   return args;
 }
@@ -160,9 +161,9 @@ export interface ToolResult {
 
 export interface ConnectedServer {
   /** The tool list at connect time. */
-  tools: Array<{ name: string; inputSchema: JsonSchema }>;
+  tools: Array<{ name: string; description?: string; inputSchema: JsonSchema }>;
   /** Lists the tools again, under the environment as it is now. */
-  list(): Promise<Array<{ name: string; inputSchema: JsonSchema; annotations?: Record<string, unknown> }>>;
+  list(): Promise<Array<{ name: string; description?: string; inputSchema: JsonSchema; annotations?: Record<string, unknown> }>>;
   call(tool: string, args: Record<string, unknown>): Promise<ToolResult>;
   close(): Promise<void>;
 }

@@ -6,6 +6,7 @@
  * gateway checks live in shared-client.test.ts and the gateway's app test.
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import type { ToolReleaseTable } from '../packages/mcp-core/src/release.js';
 import { createServer as createHttpServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { mkdtempSync, writeFileSync } from 'node:fs';
@@ -308,7 +309,7 @@ describe('startServer: a server whose APIs the release lacks says so (REQ-SRV-03
   /** Like compliance: every tool (a merged one with its variants too) only in 26R1. */
   const ONLY_26R1 = { list_rules: ['26R1'], list_items: ['26R1'], 'list_items[type=]': ['26R1'], 'list_items[type=Red]': ['26R1'] } as const;
   let created = 0;
-  const entry = (env: NodeJS.ProcessEnv, releases: Readonly<Record<string, readonly string[]>> = ONLY_26R1) => ({
+  const entry = (env: NodeJS.ProcessEnv, releases: ToolReleaseTable = ONLY_26R1) => ({
     name: 'bconnect-runtime-mcp',
     createServer: () => { created++; return { server: {} as never }; },
     clients: serverClients(TestClient, env),
@@ -354,7 +355,9 @@ describe('startServer: a server whose APIs the release lacks says so (REQ-SRV-03
     // 26R2 stands in for a future release (#280): the needed releases are listed sorted.
     const env = { ...ENV, BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', BCONNECT_RELEASE: '25R2' };
     const t = io(env);
-    await expect(startServer(entry(env, { a: ['26R1'], b: ['26R2', '26R1'] }), t.options)).rejects.toThrow('exit 1');
+    // A release the type doesn't know yet, on purpose.
+    const future = { a: ['26R1'], b: ['26R2', '26R1'] } as unknown as ToolReleaseTable;
+    await expect(startServer(entry(env, future), t.options)).rejects.toThrow('exit 1');
     expect(t.lines.at(-1)).toMatch(/^bconnect-runtime-mcp: needs bMS 26R1 or 26R2; this server uses 25R2/);
   });
 

@@ -15,7 +15,7 @@ const EXPECTED_TOOLS = [
   'update_update_management_endpoint',
 ];
 
-async function startServer(): Promise<void> {
+async function startServer(): Promise<{ client: Client }> {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);

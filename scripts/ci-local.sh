@@ -7,7 +7,7 @@
 #   npm run ci -- --fast       # without the mock tier and Semgrep
 #
 # Blocking, as in CI (`gate`, `coverage`, `mock`):
-#   build, lint, no new casts, the root test suite, the coverage floors, and the
+#   build, lint, the tests' type check, no new casts, the root test suite, the coverage floors, and the
 #   mock tier for 26r1 and 25r2 against the bConnect-Mock image ci.yml pins
 #   (started here in its own containers, rate limit off).
 # Reported, not blocking, as in CI (`strict`): npm audit --audit-level=high.
@@ -36,8 +36,9 @@ check()   { if [ "$1" -ne 0 ]; then echo "  ✗ $2"; fail=1; else echo "  ✓ $2
 section "Build (core, servers, template)"
 npm run build >/dev/null 2>&1; check $? "npm run build"
 
-section "Lint and casts"
+section "Lint, test types and casts"
 npm run lint >/dev/null 2>&1; check $? "npm run lint"
+npm run typecheck:tests >/dev/null 2>&1; check $? "npm run typecheck:tests"
 bash scripts/check-new-casts.sh >/dev/null 2>&1; check $? "scripts/check-new-casts.sh (vs origin/main)"
 
 section "Tests (every server, the gateway and the suite-wide guards)"

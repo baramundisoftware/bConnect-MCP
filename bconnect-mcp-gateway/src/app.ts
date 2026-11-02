@@ -32,7 +32,7 @@ import { createLogger, type Logger } from "./logger.js";
 import { createAccessLogMiddleware } from "./access-log.js";
 
 // ─── Server factory registry ──────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+ 
 export const serverFactories: Record<string, Function> = {
   activedirectory: createActivedirectoryServer,
   assets: createAssetsServer,
@@ -131,7 +131,7 @@ export function createApp(): express.Application {
     let transport: StreamableHTTPServerTransport | undefined;
     // close() returns a promise; a rejection during cleanup must not become an
     // unhandled rejection either.
-    const release = () => {
+    const release = (): void => {
       void transport?.close().catch(() => undefined);
       void server?.close().catch(() => undefined);
     };

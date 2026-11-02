@@ -37,7 +37,7 @@ async function toolNames(server: string, release: '26R1' | '25R2'): Promise<stri
 /** The tool rows of the "## Available Tools" section: name and whether it is marked (26R1) or (25R2). */
 function documentedTools(readme: string): Array<{ name: string; only26R1: boolean; only25R2: boolean }> {
   const start = readme.indexOf('## Available Tools');
-  if (start < 0) return [];
+  if (start < 0) {return [];}
   const end = readme.indexOf('\n## ', start + 1);
   const section = readme.slice(start, end < 0 ? undefined : end);
   return [...section.matchAll(/^\| `([a-z_0-9]+)` \|(.*)$/gm)].map((m) => ({ name: m[1], only26R1: m[2].includes('**(26R1)**'), only25R2: m[2].includes('**(25R2)**') }));

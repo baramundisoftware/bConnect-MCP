@@ -84,6 +84,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the gateway from `npm run sbom` (it has no lockfile; the root SBOM and audit cover what it loads). A
   guard keeps the pins, the local script and the referenced paths in step.
 
+- **CI type-checks the tests and lints the gateway and the root tests** (#337, part 2). `npm run
+  typecheck:tests` (`tsconfig.test.json`) checks every test with the strict settings; a CI step and
+  `npm run ci` run it. `npm run lint` now covers `bconnect-mcp-gateway/src` and `__tests__` at zero
+  warnings; the gateway gets the cast rules of the servers, tests don't need return types. 120 type
+  errors and about 300 lint findings in the tests are fixed; the three helper types for JSON of any
+  shape keep `any`, each with its reason.
+
 ### Fixed
 - **Tool descriptions and results that misstated bMS** (#327). `start_microservice` and
   `restart_microservice` report that bMS accepted the request (it answers "Microservice starting." /

@@ -38,7 +38,7 @@ const tableOf = async (server: string): Promise<Record<string, string[]>> =>
 async function withTools(release: string): Promise<string[]> {
   const out: string[] = [];
   for (const server of SERVERS) {
-    if (Object.values(await tableOf(server)).some((releases) => releases.includes(release))) out.push(server);
+    if (Object.values(await tableOf(server)).some((releases) => releases.includes(release))) {out.push(server);}
   }
   return out;
 }

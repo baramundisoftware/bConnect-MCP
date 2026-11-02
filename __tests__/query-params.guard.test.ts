@@ -75,13 +75,13 @@ describe('merged tools (REQ-SRV-029, ADR-0015)', () => {
     const merged = new Map<string, string[]>();
     for (const key of Object.keys(TOOL_OPERATIONS)) {
       const { tool } = variantOf(key);
-      if (tool !== key) merged.set(tool, [...(merged.get(tool) ?? []), key]);
+      if (tool !== key) {merged.set(tool, [...(merged.get(tool) ?? []), key]);}
     }
     for (const release of RELEASES) {
       const table: Record<string, Record<string, Schema>> = QUERY_PARAMETERS[release] ?? {};
       for (const [tool, keys] of merged) {
         const here = keys.filter((k) => (TOOL_RELEASES[k] ?? []).includes(release) && table[k]);
-        if (here.length === 0) continue;
+        if (here.length === 0) {continue;}
         const union = [...new Set(here.flatMap((k) => Object.keys(table[k])))].filter((n) => n !== 'countOnly');
         const expected = [...union, ...(here.some((k) => table[k].countOnly) ? ['countOnly'] : [])];
         if (Object.keys(table[tool] ?? {}).join() !== expected.join()) {wrong.push(`${release} ${tool}: ${Object.keys(table[tool] ?? {}).join()} ≠ ${expected.join()}`); continue;}

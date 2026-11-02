@@ -20,8 +20,8 @@ function gateway(name: string, entries: string[] | undefined): string {
   const root = join(dir, name);
   mkdirSync(root, { recursive: true });
   cpSync(join(GATEWAY, 'check-install.mjs'), join(root, 'check-install.mjs'));
-  for (const entry of entries ?? []) mkdirSync(join(root, 'node_modules', entry), { recursive: true });
-  if (entries?.length === 0) mkdirSync(join(root, 'node_modules'));
+  for (const entry of entries ?? []) {mkdirSync(join(root, 'node_modules', entry), { recursive: true });}
+  if (entries?.length === 0) {mkdirSync(join(root, 'node_modules'));}
   return root;
 }
 

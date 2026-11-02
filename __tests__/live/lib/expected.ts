@@ -22,14 +22,14 @@ const EXPECTED: Readonly<Record<string, Expected>> = {
 };
 
 function detailOf(body: unknown): string {
-  if (typeof body !== 'object' || body === null || !('detail' in body)) return '';
+  if (typeof body !== 'object' || body === null || !('detail' in body)) {return '';}
   return typeof body.detail === 'string' ? body.detail : '';
 }
 
 /** The reason a tool's failed call is expected, or undefined when it is a failure. */
 export function expectedAnswer(tool: string, answers: Array<{ status: number; body: unknown }>): string | undefined {
   const entry = Object.hasOwn(EXPECTED, tool) ? EXPECTED[tool] : undefined;
-  if (!entry || answers.length === 0) return undefined;
+  if (!entry || answers.length === 0) {return undefined;}
   const fits = answers.every((a) => a.status === entry.status && (!entry.detail || entry.detail.test(detailOf(a.body))));
   return fits ? entry.reason : undefined;
 }

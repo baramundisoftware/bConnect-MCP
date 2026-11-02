@@ -28,8 +28,8 @@ export interface ToolRun {
 
 /** A live run that exercised nothing is a failed run, not a pass. */
 export function assertExercised(counts: { startups: number; calls: number }): void {
-  if (counts.startups === 0 && counts.calls === 0) throw new LiveConfigError('nothing was exercised: no server started and no tool was called');
-  if (counts.calls === 0) throw new LiveConfigError('no read tool was called against the bMS');
+  if (counts.startups === 0 && counts.calls === 0) {throw new LiveConfigError('nothing was exercised: no server started and no tool was called');}
+  if (counts.calls === 0) {throw new LiveConfigError('no read tool was called against the bMS');}
 }
 
 const GUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
@@ -41,7 +41,7 @@ const GUID = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g
  */
 export function sanitise(text: string, run: { hostname: string; secrets: string[] }): string {
   let out = run.secrets.reduce((acc, secret) => acc.split(secret).join('***'), text);
-  if (run.hostname) out = out.split(run.hostname).join('<bms>');
+  if (run.hostname) {out = out.split(run.hostname).join('<bms>');}
   return out.replace(GUID, '{id}');
 }
 

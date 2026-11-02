@@ -26,7 +26,7 @@ const EXPECTED_TOOLS = [
   'update_os_windows_endpoint',
 ];
 
-async function startServer(): Promise<void> {
+async function startServer(): Promise<{ client: Client }> {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);

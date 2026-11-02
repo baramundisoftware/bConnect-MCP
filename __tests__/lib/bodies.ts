@@ -21,12 +21,12 @@ const PATCH_OPS = /^(add|remove|replace|move|copy|test)$/i;
 
 /** Problems with a JSON Patch document; empty when it is well-formed. */
 export function jsonPatchProblems(data: unknown): string[] {
-  if (!Array.isArray(data)) return ['not a JSON Patch array'];
+  if (!Array.isArray(data)) {return ['not a JSON Patch array'];}
   return data.flatMap((op: Schema, i: number) => {
-    if (!op || typeof op !== 'object') return [`/${i} is not an operation`];
+    if (!op || typeof op !== 'object') {return [`/${i} is not an operation`];}
     const problems: string[] = [];
-    if (!PATCH_OPS.test(String(op.op))) problems.push(`/${i}/op is not a JSON Patch operation`);
-    if (typeof op.path !== 'string' || !op.path.startsWith('/')) problems.push(`/${i}/path must start with "/"`);
+    if (!PATCH_OPS.test(String(op.op))) {problems.push(`/${i}/op is not a JSON Patch operation`);}
+    if (typeof op.path !== 'string' || !op.path.startsWith('/')) {problems.push(`/${i}/path must start with "/"`);}
     return problems;
   });
 }
@@ -43,7 +43,7 @@ export function bodyValidator(release: Release): BodyValidator {
    */
   return (op, contentType, body, options = {}) => {
     const declared = Object.keys(op.requestBodies);
-    if (body === '' && !op.bodyRequired) return [];
+    if (body === '' && !op.bodyRequired) {return [];}
     // Validate against the declared type that matches, or the operation's first declared type.
     const type = declared.includes(contentType) ? contentType : declared[0];
     let data: unknown;
@@ -52,7 +52,7 @@ export function bodyValidator(release: Release): BodyValidator {
     } catch {
       return ['body is not JSON'];
     }
-    if (type === JSON_PATCH) return jsonPatchProblems(data);
+    if (type === JSON_PATCH) {return jsonPatchProblems(data);}
     return spec.body(op, type, data, options);
   };
 }

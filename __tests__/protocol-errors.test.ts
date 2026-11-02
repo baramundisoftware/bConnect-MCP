@@ -69,7 +69,7 @@ async function refusal(name: string, args: Record<string, unknown>): Promise<Mcp
   try {
     await client.callTool({ name, arguments: args });
   } catch (error) {
-    if (error instanceof McpError) return error;
+    if (error instanceof McpError) {return error;}
     throw error;
   }
   throw new Error(`${name} was not refused; stderr: ${stderr}`);

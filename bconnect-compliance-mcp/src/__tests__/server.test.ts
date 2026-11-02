@@ -25,7 +25,7 @@ const EXPECTED_TOOLS = [
   'get_vulnerability',
 ];
 
-async function startServer(): Promise<void> {
+async function startServer(): Promise<{ client: Client }> {
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);

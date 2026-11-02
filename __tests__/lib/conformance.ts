@@ -6,7 +6,7 @@
  * Known violations live in __tests__/spec-conformance.baseline.json, each with
  * the GitHub issue that fixes it.
  */
-import { type ApiOperation, type Release, loadOperations } from './spec.js';
+import { type ApiOperation, type Release, type Schema, loadOperations } from './spec.js';
 
 export interface Violation {
   check: string;
@@ -63,7 +63,7 @@ export function checkTools(args: {
     }
     const known = declared.map((id) => operationIn(ops, domain, id)).filter((op): op is ApiOperation => !!op);
     for (const id of declared) {
-      if (!operationIn(ops, domain, id)) v('binding-unknown-op', tool, id);
+      if (!operationIn(ops, domain, id)) {v('binding-unknown-op', tool, id);}
     }
     if (requests.length === 0) {
       v('no-request', tool, '-');
@@ -72,8 +72,8 @@ export function checkTools(args: {
     for (const r of requests) {
       const m = /^\/([^/]+)(\/.*)$/.exec(r.path);
       const hit = m && m[1].toLowerCase() === domain ? known.find((op) => op.matches(r.method, m[2])) : undefined;
-      if (hit) covered?.add(hit.operationId);
-      else v('route', tool, `${r.method} ${r.path}`);
+      if (hit) {covered?.add(hit.operationId);}
+      else {v('route', tool, `${r.method} ${r.path}`);}
     }
   }
   return out;
@@ -115,15 +115,15 @@ export function checkUnsupported(args: {
   const out: Violation[] = [];
   const v = (check: string, detail: string): void => { out.push({ check, release, server, tool: '-', detail }); };
   for (const [id, releases] of Object.entries(unsupported)) {
-    if (!Object.hasOwn(releases, release)) continue;
+    if (!Object.hasOwn(releases, release)) {continue;}
     if (!ops.some((op) => op.operationId === id)) {
       v('unsupported-unknown', id);
       continue;
     }
     const tools = Object.entries(table).filter(([, ids]) => ids.includes(id)).map(([tool]) => tool);
-    if (tools.length === 0) v('unsupported-no-tool', id);
-    if (tools.some((tool) => listed.has(tool))) v('unsupported-listed', id);
-    if (releases[release].trim().length < 20) v('unsupported-reason', id);
+    if (tools.length === 0) {v('unsupported-no-tool', id);}
+    if (tools.some((tool) => listed.has(tool))) {v('unsupported-listed', id);}
+    if (releases[release].trim().length < 20) {v('unsupported-reason', id);}
   }
   return out;
 }
@@ -148,7 +148,7 @@ export function compareWithBaseline(observed: Violation[], baseline: Baseline): 
 /** One tool call with every documented argument plus one undeclared one. */
 export interface ParamCall {
   tool: string;
-  inputSchema: Record<string, any>;
+  inputSchema: Schema;
   /** Distinct GUID per ID-like argument, so a path slot can be traced to its argument. */
   idsByArg: Record<string, string>;
   /** Name and value of the undeclared argument; neither may reach the wire. */
@@ -173,7 +173,7 @@ const slotsOf = (template: string): Array<string | null> =>
  */
 function slotFits(slot: string, arg: string, select: Record<string, string> = {}): boolean {
   const norm = (s: string): string => s.toLowerCase().replace(/id$/, '');
-  if (norm(slot) === '' || norm(arg) === '' || norm(slot) === norm(arg)) return true;
+  if (norm(slot) === '' || norm(arg) === '' || norm(slot) === norm(arg)) {return true;}
   // A merged tool's generic argument (groupId) fits the slot a *Kind selector of its route names
   // (groupKind "LogicalGroup" → {logicalGroupId}), never another kind's, and only as the kind's
   // whole last word ("Group" of "LogicalGroup", not "up"); a member type never names it (REQ-SRV-029).
@@ -214,16 +214,16 @@ export function checkParams(args: {
     out.push({ check, release, server, tool, detail });
   };
   for (const call of calls) {
-    const props: Record<string, any> = call.inputSchema.properties ?? {};
+    const props: Schema = call.inputSchema.properties ?? {};
     for (const [name, schema] of Object.entries(props)) {
       const text = String(schema?.description ?? '');
       if (/^page$/i.test(name) && !(/zero[- ]?(based|indexed)|\b0-(based|indexed)|starts? (at|from) 0\b/i.test(text)
         && !/1-based|one-based|starts? (at|from) 1\b/i.test(text))) {
         v('page-description', call.tool, name);
       }
-      if (/^page-?size$/i.test(name) && !/max\w*[^0-9]{0,12}1000\b|up to 1000\b|\b1\s*[–-]\s*1000\b/i.test(text)) v('page-description', call.tool, name);
+      if (/^page-?size$/i.test(name) && !/max\w*[^0-9]{0,12}1000\b|up to 1000\b|\b1\s*[–-]\s*1000\b/i.test(text)) {v('page-description', call.tool, name);}
     }
-    if (call.failed || call.requests.length === 0) v('params-not-exercised', call.tool, '-');
+    if (call.failed || call.requests.length === 0) {v('params-not-exercised', call.tool, '-');}
 
     const declared = (table[call.tool] ?? [])
       .map((id) => ops.find((op) => op.domain === domain && op.operationId === id))
@@ -235,23 +235,23 @@ export function checkParams(args: {
       }
       const m = /^\/([^/]+)(\/.*)$/.exec(r.path);
       const op = m && m[1].toLowerCase() === domain ? declared.find((o) => o.matches(r.method, m[2])) : undefined;
-      if (!op) continue;
+      if (!op) {continue;}
       for (const [name, val] of r.query) {
-        if (!op.queryParams.includes(name) && !val.includes(call.unknownValue)) v('query-undeclared', call.tool, name);
+        if (!op.queryParams.includes(name) && !val.includes(call.unknownValue)) {v('query-undeclared', call.tool, name);}
       }
       // Offered = in the input schema, or sent (a tool may map its own argument name onto it).
       const sent = new Set(r.query.map(([k]) => k));
       for (const name of op.queryParams) {
-        if (!(name in props) && !sent.has(name)) v('query-not-offered', call.tool, name);
+        if (!(name in props) && !sent.has(name)) {v('query-not-offered', call.tool, name);}
         // Every offered argument is given in this call (allArguments), so an offered parameter
         // missing from the request was dropped by the tool.
-        if (name in props && !sent.has(name) && !call.failed) v('query-dropped', call.tool, name);
+        if (name in props && !sent.has(name) && !call.failed) {v('query-dropped', call.tool, name);}
       }
       const segments = m![2].split('/');
       slotsOf(op.path).forEach((slot, i) => {
-        if (!slot) return;
+        if (!slot) {return;}
         const arg = Object.entries(call.idsByArg).find(([, guid]) => guid === segments[i])?.[0];
-        if (arg && !slotFits(slot, arg, call.select)) v('path-slot', call.tool, `{${slot}} ← ${arg}`);
+        if (arg && !slotFits(slot, arg, call.select)) {v('path-slot', call.tool, `{${slot}} ← ${arg}`);}
       });
     }
   }
@@ -303,16 +303,16 @@ export function checkBodies(args: {
     for (const r of call.requests) {
       const m = /^\/([^/]+)(\/.*)$/.exec(r.path);
       const op = m && m[1].toLowerCase() === domain ? declared.find((o) => o.matches(r.method, m[2])) : undefined;
-      if (!op) continue;
+      if (!op) {continue;}
       const types = Object.keys(op.requestBodies);
       const contentType = (r.contentType ?? '').split(';')[0].trim().toLowerCase();
       if (types.length === 0) {
-        if (r.body !== '') v('body-undeclared', call.tool, '-');
+        if (r.body !== '') {v('body-undeclared', call.tool, '-');}
       } else {
-        if (r.body !== '' && !types.includes(contentType)) v('body-content-type', call.tool, contentType || '(none)');
-        if (validate(op, contentType, r.body, { ignoreFormats: call.sampleValues }).length > 0) v('body-invalid', call.tool, '-');
+        if (r.body !== '' && !types.includes(contentType)) {v('body-content-type', call.tool, contentType || '(none)');}
+        if (validate(op, contentType, r.body, { ignoreFormats: call.sampleValues }).length > 0) {v('body-invalid', call.tool, '-');}
       }
-      if (call.result !== undefined && op.returnsBody && !call.result.includes(marker)) v('response-dropped', call.tool, '-');
+      if (call.result !== undefined && op.returnsBody && !call.result.includes(marker)) {v('response-dropped', call.tool, '-');}
     }
   }
   return [...new Map(out.map((x) => [keyOf(x), x])).values()];

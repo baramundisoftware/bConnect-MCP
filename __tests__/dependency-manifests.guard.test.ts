@@ -47,7 +47,7 @@ describe.each(MANIFEST_DIRS)('%s/package.json', (dir) => {
   const all = { ...manifest.dependencies, ...manifest.devDependencies };
 
   it('keeps dotenv on major 16', () => {
-    if (!all.dotenv) return;
+    if (!all.dotenv) {return;}
     expect(all.dotenv).toMatch(/^[~^]?16\./);
   });
 
@@ -66,7 +66,7 @@ it('declares every package the root tests import', () => {
       const text = readFileSync(join(ROOT, dir, file), 'utf8');
       for (const [, spec] of text.matchAll(/from ['"]([^'".][^'"]*)['"]/g)) {
         const name = spec.startsWith('@') ? spec.split('/').slice(0, 2).join('/') : spec.split('/')[0];
-        if (!spec.startsWith('node:') && !builtinModules.includes(name)) imported.add(name);
+        if (!spec.startsWith('node:') && !builtinModules.includes(name)) {imported.add(name);}
       }
     }
   }
@@ -79,14 +79,14 @@ function sourceImports(dir: string): Set<string> {
   const walk = (current: string): void => {
     for (const entry of readdirSync(current, { withFileTypes: true })) {
       if (entry.isDirectory()) {
-        if (!['node_modules', 'build', 'dist', 'generated', '__tests__'].includes(entry.name)) walk(join(current, entry.name));
+        if (!['node_modules', 'build', 'dist', 'generated', '__tests__'].includes(entry.name)) {walk(join(current, entry.name));}
         continue;
       }
-      if (!/\.(ts|js|mjs)$/.test(entry.name) || /\.test\./.test(entry.name)) continue;
+      if (!/\.(ts|js|mjs)$/.test(entry.name) || /\.test\./.test(entry.name)) {continue;}
       const text = readFileSync(join(current, entry.name), 'utf8');
       for (const [, spec] of text.matchAll(/(?:from|import)\s*\(?\s*['"]([^'".][^'"]*)['"]/g)) {
         const name = spec.startsWith('@') ? spec.split('/').slice(0, 2).join('/') : spec.split('/')[0];
-        if (!spec.startsWith('node:') && !builtinModules.includes(name)) found.add(name);
+        if (!spec.startsWith('node:') && !builtinModules.includes(name)) {found.add(name);}
       }
     }
   };
@@ -142,11 +142,11 @@ const lockedVersions = (name: string): string[] =>
 function satisfies(version: string, range: string): boolean | 'unsupported' {
   const m = /^([~^]?)(\d+)\.(\d+)\.(\d+)$/.exec(range);
   const v = /^(\d+)\.(\d+)\.(\d+)$/.exec(version);
-  if (!m || !v) return 'unsupported';
+  if (!m || !v) {return 'unsupported';}
   const [want, have] = [m.slice(2).map(Number), v.slice(1).map(Number)];
   const atLeast = have[0] !== want[0] ? have[0] > want[0] : have[1] !== want[1] ? have[1] > want[1] : have[2] >= want[2];
-  if (m[1] === '') return have.join('.') === want.join('.');
-  if (m[1] === '~') return atLeast && have[0] === want[0] && have[1] === want[1];
+  if (m[1] === '') {return have.join('.') === want.join('.');}
+  if (m[1] === '~') {return atLeast && have[0] === want[0] && have[1] === want[1];}
   return atLeast && have[0] === want[0] && (want[0] > 0 || have[1] === want[1]);
 }
 
@@ -185,7 +185,7 @@ describe('one Express major, declared as it runs (REQ-DEP-002, #69)', () => {
     const declared = { ...manifest.dependencies, ...manifest.devDependencies };
     const wrong = Object.entries(declared).filter(([, range]) => !range.startsWith('file:')).flatMap(([name, range]) => {
       const installed = LOCK[`node_modules/${name}`]?.version;
-      if (installed === undefined) return [`${name}: not in the root lockfile`];
+      if (installed === undefined) {return [`${name}: not in the root lockfile`];}
       const ok = satisfies(installed, range);
       return ok === true ? [] : [`${name}: declares ${range}, root installs ${installed}${ok === 'unsupported' ? ' (range form not checked)' : ''}`];
     });

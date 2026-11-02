@@ -52,12 +52,12 @@ const sourceFiles = (dirPath: string): string[] =>
 
 /** Whether line `at` opens a block matching `allowedAt` whose body matches `allowedBody`. */
 function isEntryGuard(lines: string[], at: number, exempt: { allowedAt: RegExp; allowedBody: RegExp }): boolean {
-  if (!exempt.allowedAt.test(lines[at] ?? '')) return false;
+  if (!exempt.allowedAt.test(lines[at] ?? '')) {return false;}
   // The block ends at the first `}` indented like the `if`.
   const indent = /^\s*/.exec(lines[at] ?? '')?.[0] ?? '';
   const end = lines.findIndex((line, i) => i > at && line === `${indent}}`);
   // No else: it would run exactly where VITEST is set (tests, and the gateway in production).
-  if (end < 0 || /^\s*else\b/.test(lines[end + 1] ?? '')) return false;
+  if (end < 0 || /^\s*else\b/.test(lines[end + 1] ?? '')) {return false;}
   const body = lines.slice(at + 1, end).map((l) => l.trim()).join(' ');
   return exempt.allowedBody.test(body);
 }
@@ -76,8 +76,8 @@ function variablesRead(dirs: string[]): { names: Set<string>; hidden: string[] }
     for (const read of envReads(source, file)) {
       const where = `${relative(ROOT, file)}:${read.line} ${read.text}`;
       const exempt = read.name !== null ? NOT_CONFIGURATION[read.name] : undefined;
-      if (read.name === null) hidden.push(where);
-      else if (!exempt) names.add(read.name);
+      if (read.name === null) {hidden.push(where);}
+      else if (!exempt) {names.add(read.name);}
       else if (!(ENTRY_FILES(file) && isEntryGuard(lines, read.line - 1, exempt))) {
         hidden.push(`${where} (${read.name} is allowed only as the entry guard)`);
       }
@@ -100,10 +100,10 @@ function withoutComments(text: string): string {
   let at = 0;
   for (;;) {
     const open = text.indexOf('<!--', at);
-    if (open < 0) return out + text.slice(at);
+    if (open < 0) {return out + text.slice(at);}
     out += text.slice(at, open);
     const close = text.indexOf('-->', open + 4);
-    if (close < 0) return out;
+    if (close < 0) {return out;}
     at = close + 3;
   }
 }
@@ -113,7 +113,7 @@ function blockRows(original: string): string[] | null {
   const readme = lf(original);
   const start = readme.indexOf(START);
   const end = readme.indexOf(END);
-  if (start < 0 || end < start) return null;
+  if (start < 0 || end < start) {return null;}
   // What a reader of the rendered README sees: no HTML comments, no fenced code.
   const block = withoutComments(readme.slice(start + START.length, end))
     // A fence may be indented up to three spaces and closes with the same character,
@@ -125,7 +125,7 @@ function blockRows(original: string): string[] | null {
 
 function listedVariables(original: string): string[] | null {
   const rows = blockRows(original);
-  if (rows === null) return null;
+  if (rows === null) {return null;}
   // `NAME`, or `NAME` linked to the configuration guide (REQ-DOC-001).
   return rows
     .map((row) => /^\s*\|\s*\[?`([A-Z][A-Z0-9_]*)`/.exec(row)?.[1])
@@ -143,11 +143,11 @@ const REMARK_MAX = 160;
  */
 function rowFormProblems(original: string): string[] {
   const rows = blockRows(original);
-  if (rows === null) return ['no block'];
+  if (rows === null) {return ['no block'];}
   const [header, separator, ...data] = rows.map((r) => r.trim());
   const problems: string[] = [];
-  if (header !== FORM_HEADER) problems.push(`header: ${header ?? '-'}`);
-  if (!/^\|\s*-{3,}\s*\|\s*-{3,}\s*\|$/.test(separator ?? '')) problems.push(`separator: ${separator ?? '-'}`);
+  if (header !== FORM_HEADER) {problems.push(`header: ${header ?? '-'}`);}
+  if (!/^\|\s*-{3,}\s*\|\s*-{3,}\s*\|$/.test(separator ?? '')) {problems.push(`separator: ${separator ?? '-'}`);}
   for (const row of data) {
     const m = /^\| \[`([A-Z][A-Z0-9_]*)`\]\(\.\.\/docs\/CONFIGURATION\.md#([a-z0-9_]+)\) \|(.*)\|$/.exec(row);
     if (!m) {
@@ -155,9 +155,9 @@ function rowFormProblems(original: string): string[] {
       continue;
     }
     const [, name, anchor, remark] = m;
-    if (anchor !== name.toLowerCase()) problems.push(`anchor: ${name} → #${anchor}`);
-    if (remark.includes('|')) problems.push(`cells: ${name}`);
-    if (remark.trim().length > REMARK_MAX) problems.push(`remark too long: ${name} (${remark.trim().length})`);
+    if (anchor !== name.toLowerCase()) {problems.push(`anchor: ${name} → #${anchor}`);}
+    if (remark.includes('|')) {problems.push(`cells: ${name}`);}
+    if (remark.trim().length > REMARK_MAX) {problems.push(`remark too long: ${name} (${remark.trim().length})`);}
   }
   return problems;
 }
@@ -320,7 +320,7 @@ describe('guard self-tests', () => {
     const { names, hidden } = variablesRead([join(ROOT, 'bconnect-groups-mcp', 'src')]);
     expect(names).not.toContain('VITEST');
     expect(hidden).toEqual([]);
-    for (const { reason } of Object.values(NOT_CONFIGURATION)) expect(reason.length).toBeGreaterThan(10);
+    for (const { reason } of Object.values(NOT_CONFIGURATION)) {expect(reason.length).toBeGreaterThan(10);}
   });
 
   describe('source fixtures', () => {
@@ -336,7 +336,7 @@ describe('guard self-tests', () => {
     const scan = (files: Record<string, string>) => {
       const dir = mkdtempSync(join(tmpdir(), 'readme-env-'));
       try {
-        for (const [name, text] of Object.entries(files)) writeFileSync(join(dir, name), text);
+        for (const [name, text] of Object.entries(files)) {writeFileSync(join(dir, name), text);}
         return variablesRead([dir]);
       } finally {
         rmSync(dir, { recursive: true, force: true });
@@ -435,7 +435,7 @@ describe.each(SERVERS)('%s README remarks', (server) => {
     const remark = remarkOf(readme(), 'ALLOW_SECRET_READ') ?? '';
     expect(remark.startsWith('No effect'), remark).toBe(!hasSecrets);
     // Where secrets can be read, the remark says what the setting enables there.
-    if (hasSecrets) expect(remark.length).toBeGreaterThan(20);
+    if (hasSecrets) {expect(remark.length).toBeGreaterThan(20);}
   });
 
   it('says what the release changes: marked tools, or that the server stops on 25R2', async () => {

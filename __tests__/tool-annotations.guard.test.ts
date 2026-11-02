@@ -45,17 +45,17 @@ function methodsOf(domain: string, ids: readonly string[]): string[] {
 
 /** What is wrong with a tool's annotations, given the methods it calls; empty when nothing is. */
 function annotationProblems(name: string, annotations: Record<string, unknown> | undefined, methods: readonly string[]): string[] {
-  if (methods.length === 0) return [`${name}: no operation in either spec`];
-  if (!annotations) return [`${name}: no annotations`];
+  if (methods.length === 0) {return [`${name}: no operation in either spec`];}
+  if (!annotations) {return [`${name}: no annotations`];}
   const problems: string[] = [];
   const readOnly = methods.every((m) => m === 'GET');
   const destructive = methods.includes('DELETE') || DESTRUCTIVE_WRITE_TOOLS.has(name);
   const extra = Object.keys(annotations).filter((k) => !ALLOWED_KEYS.includes(k));
-  if (extra.length > 0) problems.push(`${name}: unexpected ${extra.join(', ')}`);
-  if (typeof annotations.title !== 'string' || annotations.title.trim() === '') problems.push(`${name}: no title`);
-  if (annotations.readOnlyHint !== readOnly) problems.push(`${name}: readOnlyHint ${String(annotations.readOnlyHint)}, calls ${methods.join(', ')}`);
-  if (readOnly && 'destructiveHint' in annotations) problems.push(`${name}: destructiveHint on a read-only tool`);
-  if (!readOnly && annotations.destructiveHint !== destructive) problems.push(`${name}: destructiveHint ${String(annotations.destructiveHint)}, expected ${String(destructive)}`);
+  if (extra.length > 0) {problems.push(`${name}: unexpected ${extra.join(', ')}`);}
+  if (typeof annotations.title !== 'string' || annotations.title.trim() === '') {problems.push(`${name}: no title`);}
+  if (annotations.readOnlyHint !== readOnly) {problems.push(`${name}: readOnlyHint ${String(annotations.readOnlyHint)}, calls ${methods.join(', ')}`);}
+  if (readOnly && 'destructiveHint' in annotations) {problems.push(`${name}: destructiveHint on a read-only tool`);}
+  if (!readOnly && annotations.destructiveHint !== destructive) {problems.push(`${name}: destructiveHint ${String(annotations.destructiveHint)}, expected ${String(destructive)}`);}
   return problems;
 }
 
@@ -105,7 +105,7 @@ describe('DESTRUCTIVE_WRITE_TOOLS', () => {
     for (const server of SERVERS) {
       const { TOOL_OPERATIONS } = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
       for (const [tool, ids] of Object.entries<readonly string[]>(TOOL_OPERATIONS)) {
-        if (methodsOf(domainOf(server), ids).some((m) => m !== 'GET')) writes.add(tool);
+        if (methodsOf(domainOf(server), ids).some((m) => m !== 'GET')) {writes.add(tool);}
       }
     }
     expect([...DESTRUCTIVE_WRITE_TOOLS.keys()].filter((t) => !writes.has(t))).toEqual([]);
@@ -129,12 +129,12 @@ describe('generated method tables', () => {
     const byTool = new Map<string, Set<string>>();
     for (const [key, ids] of Object.entries<readonly string[]>(TOOL_OPERATIONS)) {
       const { tool } = variantOf(key);
-      if (tool === key) continue;
+      if (tool === key) {continue;}
       const set = byTool.get(tool) ?? new Set<string>();
       methodsOf(domainOf(server), ids).forEach((m) => set.add(m));
       byTool.set(tool, set);
     }
-    for (const [tool, methods] of byTool) expect(TOOL_METHODS[tool], tool).toEqual([...methods].sort());
+    for (const [tool, methods] of byTool) {expect(TOOL_METHODS[tool], tool).toEqual([...methods].sort());}
   });
 });
 

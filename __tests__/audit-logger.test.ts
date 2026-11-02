@@ -31,7 +31,10 @@ describe('audit levels are cumulative', () => {
   for (const [level, kinds] of Object.entries(RECORDED) as [AuditLevel, Kind[]][]) {
     it(`${level} records ${kinds.join(', ') || 'nothing'}`, () => {
       const logger = new AuditLogger({ level, username: 'auditor', logHandler: () => {} });
-      const recorded = (Object.keys(REQUESTS) as Kind[]).filter((kind) => logger.shouldLog(...REQUESTS[kind]));
+      const recorded = (Object.keys(REQUESTS) as Kind[]).filter((kind) => {
+        const [method, path] = REQUESTS[kind];
+        return logger.shouldLog(method, path);
+      });
       expect(recorded).toEqual(kinds);
     });
   }
@@ -54,7 +57,7 @@ describe('default audit output', () => {
     logger.logResponse('POST', '/jobs/v2.0/JobInstances', 201, start);
     logger.logResponse('GET', '/endpoints/v2.0/WindowsEndpoints', 302, start);
     logger.logError('GET', '/endpoints/v2.0/WindowsEndpoints', new Error('boom'), start);
-    for (const spy of toStdout) expect(spy).not.toHaveBeenCalled();
+    for (const spy of toStdout) {expect(spy).not.toHaveBeenCalled();}
     const lines = toStderr.mock.calls.map(([chunk]) => String(chunk));
     expect(lines.filter((l) => /^\[AUDIT\] \d{4}-/.test(l))).toHaveLength(4);
     expect(lines.some((l) => l.includes('Parameters:') && l.includes('"name": "x"'))).toBe(true);

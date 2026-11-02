@@ -33,12 +33,12 @@ const TYPE: Record<string, string> = {
 function replacement(old: string): { tool: string; select: Record<string, string>; rename?: Record<string, string>; defaults?: Record<string, unknown> } {
   let m: RegExpMatchArray | null;
   // search_endpoints sent PageSize 50 when no pageSize was given: the equivalent call passes it.
-  if (old === 'search_endpoints') return { tool: 'list_endpoints', select: {}, rename: { query: 'SearchQuery', pageSize: 'PageSize' }, defaults: { PageSize: 50 } };
-  if (old === 'list_group_endpoints') return { tool: 'list_endpoints_by_logical_group', select: {} };
-  if (old === 'list_windows_endpoints_by_logical_group') return { tool: 'list_endpoints_by_logical_group', select: { type: 'WindowsEndpoint' } };
-  if ((m = old.match(/^list_(\w+)_endpoints$/)) && TYPE[m[1]]) return { tool: 'list_endpoints', select: { type: TYPE[m[1]] } };
-  if ((m = old.match(/^(get|delete|update)_(\w+)_endpoint$/)) && TYPE[m[2]]) return { tool: `${m[1]}_endpoint`, select: { type: TYPE[m[2]] } };
-  if ((m = old.match(/^start_(\w+)_enrollment$/)) && TYPE[m[1]]) return { tool: 'start_enrollment', select: { type: TYPE[m[1]] } };
+  if (old === 'search_endpoints') {return { tool: 'list_endpoints', select: {}, rename: { query: 'SearchQuery', pageSize: 'PageSize' }, defaults: { PageSize: 50 } };}
+  if (old === 'list_group_endpoints') {return { tool: 'list_endpoints_by_logical_group', select: {} };}
+  if (old === 'list_windows_endpoints_by_logical_group') {return { tool: 'list_endpoints_by_logical_group', select: { type: 'WindowsEndpoint' } };}
+  if ((m = old.match(/^list_(\w+)_endpoints$/)) && TYPE[m[1]]) {return { tool: 'list_endpoints', select: { type: TYPE[m[1]] } };}
+  if ((m = old.match(/^(get|delete|update)_(\w+)_endpoint$/)) && TYPE[m[2]]) {return { tool: `${m[1]}_endpoint`, select: { type: TYPE[m[2]] } };}
+  if ((m = old.match(/^start_(\w+)_enrollment$/)) && TYPE[m[1]]) {return { tool: 'start_enrollment', select: { type: TYPE[m[1]] } };}
   return { tool: old, select: {} };
 }
 
@@ -117,8 +117,8 @@ describe('AC 2: a removed name answers with its replacement', () => {
     expect(r.code).toBe(-32601);
     const how = select.type ? `with type "${select.type}"` : 'without type';
     expect(r.text).toContain(`${tool} was replaced by ${next}: call ${next} ${how}`);
-    if (rename) expect(r.text).toContain('with SearchQuery (was query) and PageSize (was pageSize)');
-    if (release === '26R1' && select.type === 'IndustrialEndpoint') expect(r.text).toContain('That route is only available in bMS 25R2; this server uses 26R1');
+    if (rename) {expect(r.text).toContain('with SearchQuery (was query) and PageSize (was pageSize)');}
+    if (release === '26R1' && select.type === 'IndustrialEndpoint') {expect(r.text).toContain('That route is only available in bMS 25R2; this server uses 26R1');}
     expect(recorder.take()).toEqual([]);
   });
 
@@ -208,15 +208,15 @@ describe('merged schemas', () => {
   // A merged tool lists each field once (the first type's definition), so a field shared by
   // several types must be defined alike for all of them; only the patch path may differ (Mac).
   it.each([
-    ['update_endpoint', UPDATE_FIELDS as Record<string, Record<string, Record<string, unknown>>>],
-    ['start_enrollment', Object.fromEntries(Object.entries(CREATE_FIELDS).map(([k, v]) => [k, fieldsOf(v)])) as Record<string, Record<string, Record<string, unknown>>>],
+    ['update_endpoint', UPDATE_FIELDS as Readonly<Record<string, Record<string, { path?: string }>>>],
+    ['start_enrollment', Object.fromEntries(Object.entries(CREATE_FIELDS).map(([k, v]) => [k, fieldsOf(v)])) as Readonly<Record<string, Record<string, { path?: string }>>>],
   ])('%s: a field shared by several types has one definition', (tool, table) => {
     const seen = new Map<string, string>();
     const differ: string[] = [];
     for (const [key, fields] of Object.entries(table).filter(([k]) => k.startsWith(`${tool}[`))) {
       for (const [name, { path: _path, ...definition }] of Object.entries(fields)) {
         const text = JSON.stringify(definition);
-        if (seen.has(name) && seen.get(name) !== text) differ.push(`${key} ${name}`);
+        if (seen.has(name) && seen.get(name) !== text) {differ.push(`${key} ${name}`);}
         seen.set(name, seen.get(name) ?? text);
       }
     }

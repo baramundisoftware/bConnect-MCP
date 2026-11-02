@@ -44,8 +44,8 @@ function argumentsWith(inputSchema: JsonSchema, target: string, value: string): 
   const required: string[] = inputSchema.required ?? [];
   const args: Record<string, unknown> = {};
   for (const [name, schema] of Object.entries<JsonSchema>(inputSchema.properties ?? {})) {
-    if (name === target) args[name] = value;
-    else if (required.includes(name)) args[name] = sample(name, schema);
+    if (name === target) {args[name] = value;}
+    else if (required.includes(name)) {args[name] = sample(name, schema);}
   }
   return args;
 }
@@ -57,9 +57,9 @@ interface Finding { release: Release; server: string; tool: string; arg: string;
 /** Why a recorded request is out of bounds for this server, or undefined if it isn't. */
 function escapeOf(url: URL, domain: string): string | undefined {
   const path = url.pathname.slice(BASE_PATH.length);
-  if (path.split('/')[1] !== domain) return `left the domain: ${path}`;
-  if (/%2e|%2f|%5c|%25|\\/i.test(path)) return `non-canonical path: ${path}`;
-  if (url.searchParams.get('PageSize') === '1000') return `query injected: ${url.search}`;
+  if (path.split('/')[1] !== domain) {return `left the domain: ${path}`;}
+  if (/%2e|%2f|%5c|%25|\\/i.test(path)) {return `non-canonical path: ${path}`;}
+  if (url.searchParams.get('PageSize') === '1000') {return `query injected: ${url.search}`;}
   return undefined;
 }
 
@@ -87,13 +87,13 @@ async function sweep(release: Release): Promise<{ findings: Finding[]; pathIds: 
       for (const arg of idArgs) {
         const probe = await call(tool.name, { ...argumentsWith(schema, arg, MARKER), ...route.select });
         const isPathId = probe.requests.some((u) => u.pathname.includes(MARKER));
-        if (isPathId) pathIds++;
+        if (isPathId) {pathIds++;}
         for (const [payload, value] of Object.entries(payloads(domain))) {
           const { requests, text, isError } = await call(tool.name, { ...argumentsWith(schema, arg, value), ...route.select });
           const base = { release, server, tool: tool.key, arg, payload };
           for (const url of requests) {
             const problem = escapeOf(url, domain);
-            if (problem) findings.push({ ...base, problem });
+            if (problem) {findings.push({ ...base, problem });}
           }
           if (isPathId && !(isError && requests.length === 0 && text.includes(arg))) {
             findings.push({ ...base, problem: 'path ID not refused by the tool\'s validation' });
@@ -130,7 +130,7 @@ describe.each(RELEASES)('tool arguments, bMS %s', (release) => {
 describe.each(RULE_MAP_SERVERS)('%s validation rules', (server) => {
   let rules: Record<string, () => Array<{ name: string }>>;
   /** Every route of either release; a merged tool's variants by their key, with the arguments that variant takes. */
-  let tools: Array<{ name: string; inputSchema: JsonSchema }> = [];
+  const tools: Array<{ name: string; inputSchema: JsonSchema }> = [];
 
   beforeAll(async () => {
     const utils = await import(pathToFileURL(join(ROOT, server, 'src', 'utils', 'mcp-tool-validation-rules.ts')).href);
@@ -139,7 +139,7 @@ describe.each(RULE_MAP_SERVERS)('%s validation rules', (server) => {
       process.env.BCONNECT_RELEASE = release;
       const conn = await connect(server);
       for (const route of await callsOf(server, conn.tools, release)) {
-        if (!tools.some((t) => t.name === route.key)) tools.push({ name: route.key, inputSchema: route.inputSchema });
+        if (!tools.some((t) => t.name === route.key)) {tools.push({ name: route.key, inputSchema: route.inputSchema });}
       }
       await conn.close();
     }

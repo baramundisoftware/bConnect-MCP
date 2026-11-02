@@ -43,7 +43,7 @@ const EXPECTED_TOOLS = [
   'list_assets_by_ad_object',
 ];
 
-async function startServer(release = '26R1'): Promise<void> {
+async function startServer(release = '26R1'): Promise<{ client: Client }> {
   process.env.BCONNECT_RELEASE = release;
   const { server } = createServer();
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();

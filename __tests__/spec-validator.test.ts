@@ -107,8 +107,8 @@ describe('spec validator normalisations (fixtures)', () => {
   });
 
   it('format time accepts the .NET text a bMS sends (hh:mm, optional seconds and offset), and rejects invalid times', () => {
-    for (const t of ['02:58', '23:55', '02:00:00', '23:59:59.1234567', '00:00:00.5', '02:00:00Z', '02:00:00+02:00']) ok('Time', t);
-    for (const t of ['25:00:00', '24:00', '02:60', '2:58', '02:5', 'abc', '1.02:00:00', '02:00:00.12345678', '23:59:60Z']) bad('Time', t);
+    for (const t of ['02:58', '23:55', '02:00:00', '23:59:59.1234567', '00:00:00.5', '02:00:00Z', '02:00:00+02:00']) {ok('Time', t);}
+    for (const t of ['25:00:00', '24:00', '02:60', '2:58', '02:5', 'abc', '1.02:00:00', '02:00:00.12345678', '23:59:60Z']) {bad('Time', t);}
   });
 
   it('allOf over several levels: each level allows the union of all levels below it', () => {

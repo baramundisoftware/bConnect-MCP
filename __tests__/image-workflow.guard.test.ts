@@ -79,7 +79,7 @@ describe('image.yml — publishing (#130)', () => {
     const build = workflow.jobs.build?.steps ?? [];
     const login = build.filter((s) => /docker login/.test(s.run ?? ''));
     expect(login.length).toBeGreaterThan(0);
-    for (const s of login) expect(s.if).toBe("env.PUBLISH == 'true'");
+    for (const s of login) {expect(s.if).toBe("env.PUBLISH == 'true'");}
     const upload = build.find((s) => s.uses?.startsWith('actions/upload-artifact@'));
     expect(upload?.if).toBe("env.PUBLISH == 'true'");
     const buildStep = build.find((s) => /docker buildx build/.test(s.run ?? ''));

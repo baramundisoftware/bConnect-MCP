@@ -54,7 +54,7 @@ describe('live env: isolated', () => {
 
   it('sets every controlled key, empty when the file has no value', () => {
     const config = loadLiveConfig({ root: ROOT, file: envFile('basic.env', [BASE, 'BCONNECT_USERNAME=u', 'BCONNECT_PASSWORD=p']), shell: {} });
-    for (const key of controlledKeys(ROOT)) expect(config.env, key).toHaveProperty(key);
+    for (const key of controlledKeys(ROOT)) {expect(config.env, key).toHaveProperty(key);}
     expect(config.env.BCONNECT_API_KEY).toBe('');
     expect(config.env.BCONNECT_CA_CERT_PATH).toBe('');
     expect(config.env.BCONNECT_USERNAME).toBe('u');
@@ -130,8 +130,8 @@ describe('live env: isolated', () => {
     };
     const child = childEnv(config, dirty);
     expect(child.PATH).toBe('/bin');
-    for (const key of ['ALLOW_WRITE_OPERATIONS', 'ALLOW_SECRET_READ', 'BCONNECT_SKIP_CONNECTIVITY_CHECK']) expect(child[key], key).toBe('');
-    for (const key of ['NODE_EXTRA_CA_CERTS', 'NODE_OPTIONS', 'SSL_CERT_FILE', 'SSL_CERT_DIR', 'NODE_USE_ENV_PROXY']) expect(child, key).not.toHaveProperty(key);
+    for (const key of ['ALLOW_WRITE_OPERATIONS', 'ALLOW_SECRET_READ', 'BCONNECT_SKIP_CONNECTIVITY_CHECK']) {expect(child[key], key).toBe('');}
+    for (const key of ['NODE_EXTRA_CA_CERTS', 'NODE_OPTIONS', 'SSL_CERT_FILE', 'SSL_CERT_DIR', 'NODE_USE_ENV_PROXY']) {expect(child, key).not.toHaveProperty(key);}
   });
 
   it('refuses NODE_EXTRA_CA_CERTS from the shell, which the test process cannot drop', () => {
