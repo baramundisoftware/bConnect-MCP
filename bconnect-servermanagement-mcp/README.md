@@ -58,19 +58,19 @@ been checked against a real bMS yet.
 | `get_vpn_appliance` | Get VPN Appliance configuration and status |
 | `list_microservices` | List all registered microservices |
 | `get_microservice` | Get details of a specific microservice by GUID |
-| `start_microservice` | Start a specific microservice |
+| `start_microservice` | Ask bMS to start a microservice (the request is accepted; check with `get_microservice`) |
 | `stop_microservice` | Stop a specific microservice |
-| `restart_microservice` | Restart a specific microservice |
+| `restart_microservice` | Ask bMS to restart a microservice (the request is accepted; check with `get_microservice`) |
 | `list_cloud_connectors` | List all configured Cloud Connectors |
 | `list_pxe_relays` | List all configured PXE Relay servers |
 | `list_security_groups` | List all security groups in baramundi |
 | `get_security_group` | Get details of a specific security group |
-| `create_security_group` | Create a new security group |
+| `create_security_group` | Create a security group (`name`, optional `profiles`) |
 | `update_security_group` | Update a security group via JSON Patch |
 | `delete_security_group` | Delete a security group by GUID |
 | `list_security_profiles` | List all security profiles in baramundi |
 | `get_security_profile` | Get details of a specific security profile |
-| `create_security_profile` | Create a new security profile |
+| `create_security_profile` | Create a security profile (`name`, optional `comment`, `displayAdministratorIdentities`, `displayEndpointUserIdentities`) |
 | `update_security_profile` | Update a security profile via JSON Patch |
 | `delete_security_profile` | Delete a security profile by GUID |
 | `get_access_rights` | Get object permissions for a specific object |
@@ -79,7 +79,7 @@ been checked against a real bMS yet.
 | `cancel_scheduled_restart` | Cancel a scheduled server restart |
 | `list_api_keys` | **(26R1)** List all API keys configured in baramundi |
 | `simulate_msw_cleanup` | **(26R1)** Simulate an MSW cleanup operation (dry run) |
-| `msw_cleanup` | **(26R1)** Execute an MSW cleanup on the DIP |
+| `msw_cleanup` | **(26R1)** Clean up managed software files on the master DIP; reports `wasSuccessful` |
 | `list_download_jobs` | **(26R1)** List all download jobs |
 | `get_download_job` | **(26R1)** Get details of a specific download job |
 

@@ -60,7 +60,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       tools: [
         {
           name: "list_update_management_endpoints",
-          description: "List all Windows endpoints with their Microsoft Update Management status in baramundi Management Suite. Returns a paged list with endpoint name, update profile name, last inventory date, and last successful update timestamp for each endpoint.",
+          description: "List the Microsoft Update Management status of Windows endpoints, paged: for each, its endpoint GUID and name, update profile (GUID and name), missing critical, security and other updates (missingCriticalUpdates, missingSecurityUpdates, missingOtherUpdates), deferred and blocked updates, whether feature updates are available, updateState, update download mode, target release version, and the last inventory and last successful update with their sources.",
           inputSchema: {
             type: "object",
             properties: {},
@@ -69,7 +69,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         },
         {
           name: "get_update_management_endpoint",
-          description: "Get the Microsoft Update Management status for a specific Windows endpoint identified by its GUID. Returns the endpoint name, assigned update profile name, last inventory date, last successful update date, and update profile configuration details.",
+          description: "Get the Microsoft Update Management status of one Windows endpoint by its GUID: endpoint GUID and name, update profile (GUID and name), missing critical, security and other updates (missingCriticalUpdates, missingSecurityUpdates, missingOtherUpdates), deferred and blocked updates, whether feature updates are available, updateState, update download mode, target release version, and the last inventory and last successful update with their sources.",
           inputSchema: {
             type: "object",
             properties: {
@@ -80,7 +80,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         },
         {
           name: "update_update_management_endpoint",
-          description: "Update the Microsoft Update Management profile assignment for a specific Windows endpoint using a JSON Patch document. Allows changing the assigned update profile or resetting it to null (no profile). Returns the updated endpoint with its new update profile configuration.",
+          description: "Change the update profile assigned to a Windows endpoint with a JSON Patch document, or remove it (null). Returns the endpoint's updated Update Management status.",
           inputSchema: {
             type: "object",
             properties: {

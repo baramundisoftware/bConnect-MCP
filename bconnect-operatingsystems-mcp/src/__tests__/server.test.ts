@@ -114,11 +114,11 @@ describe('bconnect-operatingsystems-mcp', () => {
       ).rejects.toThrow(/folderId is required/i);
     });
 
-    it('create_os_folder: missing folderData', async () => {
+    it('create_os_folder: missing name', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({ name: 'create_os_folder', arguments: {} })
-      ).rejects.toThrow(/folderData is required/i);
+      ).rejects.toThrow(/name is required/i);
     });
 
     it('update_os_folder: patchOperations not an array', async () => {

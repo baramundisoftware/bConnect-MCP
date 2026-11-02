@@ -64,7 +64,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── OS Folders ────────────────────────────────────────────────────────
       {
         name: "list_os_folders",
-        description: "List all Operating Systems folders in baramundi Management Suite. Returns a paged list of OS folders used to organize operating system configurations with their names, IDs, and hierarchy structure.",
+        description: "List the Operating Systems folders of the baramundi Management Suite, paged: for each, its GUID, name, comment and parent folder. Supports filtering, searching and pagination.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -73,7 +73,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "get_os_folder",
-        description: "Get the details of a specific Operating Systems folder by its GUID. Returns the folder name, ID, parent folder reference, and other metadata for the specified OS folder in baramundi Management Suite.",
+        description: "Get one Operating Systems folder of the baramundi Management Suite by its GUID: its name, comment and parent folder (GUID and name).",
         inputSchema: {
           type: "object",
           properties: {
@@ -97,7 +97,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Windows Endpoints OS Info ─────────────────────────────────────────
       {
         name: "list_os_windows_endpoints",
-        description: "List all Windows endpoints with Operating System installation information managed in baramundi Management Suite. Returns a paged list of Windows endpoints including their OS installation configuration, target OS details, and installation status.",
+        description: "List the OS installation settings of Windows endpoints, paged: for each, the endpoint's GUID and name, boot environment, hardware profile, whether OS installation is allowed, whether it inherits automatic installation, and its operating system.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -106,7 +106,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "get_os_windows_endpoint",
-        description: "Get the Operating System installation configuration for a specific Windows endpoint identified by its GUID. Returns the target OS details, installation parameters, and configuration settings for the specified Windows endpoint in baramundi Management Suite.",
+        description: "Get the OS installation settings of one Windows endpoint by its GUID: endpoint name, boot environment, hardware profile, whether OS installation is allowed, whether it inherits automatic installation, and its operating system.",
         inputSchema: {
           type: "object",
           properties: {
@@ -119,21 +119,20 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── OS Folder Write Operations ────────────────────────────────────────
       {
         name: "create_os_folder",
-        description: "Create a new Operating Systems folder in baramundi Management Suite. Accepts folder creation data including name and optional parent folder ID, and returns the newly created OS folder with its assigned GUID and metadata.",
+        description: "Create an Operating Systems folder with a name and, optionally, a parent folder GUID and a comment. Returns the new folder with its GUID.",
         inputSchema: {
           type: "object",
           properties: {
-            folderData: {
-              type: "object",
-              description: "Folder creation properties including Name and optional ParentId."
-            }
+            name: { type: "string", minLength: 1, maxLength: 255, description: "Name of the folder." },
+            parentId: { type: "string", description: "GUID of the parent folder; omit for a top-level folder." },
+            comment: { type: "string", description: "Comment on the folder." }
           },
-          required: ["folderData"]
+          required: ["name"]
         }
       },
       {
         name: "update_os_folder",
-        description: "Update an existing Operating Systems folder using a JSON Patch document. Applies patch operations to modify the specified OS folder properties such as name or parent folder in baramundi Management Suite and returns the updated folder.",
+        description: "Update an Operating Systems folder with a JSON Patch document, for example its name, comment or parent folder. Returns the updated folder.",
         inputSchema: {
           type: "object",
           properties: {
@@ -279,7 +278,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_os_folder": {
-          const result = await os.createFolder(args!.folderData as never);
+          const result = await os.createFolder({
+            name: args!.name as string,
+            ...(args!.parentId !== undefined && { parentId: args!.parentId as string }),
+            ...(args!.comment !== undefined && { comment: args!.comment as string }),
+          });
           return toolJsonResult(result);
         }
 

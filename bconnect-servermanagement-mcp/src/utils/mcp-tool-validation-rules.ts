@@ -52,12 +52,8 @@ export const ServerManagementRules = {
   listSecurityGroups: (): ValidationRule[] => paginationRules(),
   getSecurityGroup: (): ValidationRule[] => [CommonRules.guid('id')],
   createSecurityGroup: (): ValidationRule[] => [
-    {
-      name: 'groupData',
-      required: true,
-      type: 'object',
-      message: 'groupData must be an object containing at least Name'
-    }
+    { name: 'name', required: true, type: 'string', minLength: 1, maxLength: 255, message: 'name is required: 1 to 255 characters' },
+    { name: 'profiles', required: false, type: 'array', message: 'profiles must be a list of security profile GUIDs' }
   ],
   updateSecurityGroup: (): ValidationRule[] => [CommonRules.guid('id'), patchOperationsRule],
   deleteSecurityGroup: (): ValidationRule[] => [CommonRules.guid('id')],
@@ -66,12 +62,10 @@ export const ServerManagementRules = {
   listSecurityProfiles: (): ValidationRule[] => paginationRules(),
   getSecurityProfile: (): ValidationRule[] => [CommonRules.guid('id')],
   createSecurityProfile: (): ValidationRule[] => [
-    {
-      name: 'profileData',
-      required: true,
-      type: 'object',
-      message: 'profileData must be an object containing at least Name'
-    }
+    { name: 'name', required: true, type: 'string', minLength: 1, maxLength: 50, message: 'name is required: 1 to 50 characters' },
+    { name: 'comment', required: false, type: 'string', maxLength: 255, message: 'comment must be a string of up to 255 characters' },
+    { name: 'displayAdministratorIdentities', required: false, type: 'boolean', message: 'displayAdministratorIdentities must be true or false' },
+    { name: 'displayEndpointUserIdentities', required: false, type: 'boolean', message: 'displayEndpointUserIdentities must be true or false' }
   ],
   updateSecurityProfile: (): ValidationRule[] => [CommonRules.guid('id'), patchOperationsRule],
   deleteSecurityProfile: (): ValidationRule[] => [CommonRules.guid('id')],

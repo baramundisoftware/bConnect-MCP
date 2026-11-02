@@ -57,7 +57,7 @@ been checked against a real bMS yet.
 | `list_os_folders_by_folder` | List sub-folders within a specific OS folder |
 | `list_os_windows_endpoints` | List all Windows endpoints with OS install info |
 | `get_os_windows_endpoint` | Get OS install configuration for a specific endpoint |
-| `create_os_folder` | Create a new OS folder |
+| `create_os_folder` | Create an OS folder (`name`, optional `parentId`, `comment`) |
 | `update_os_folder` | Update an OS folder via JSON Patch |
 | `delete_os_folder` | Delete an OS folder by GUID |
 | `update_os_windows_endpoint` | Update OS install configuration for a Windows endpoint |

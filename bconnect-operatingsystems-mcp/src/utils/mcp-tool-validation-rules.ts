@@ -49,12 +49,9 @@ export const OperatingSystemsRules = {
 
   // POST /v2.0/OS/Folders
   createOsFolder: (): ValidationRule[] => [
-    {
-      name: 'folderData',
-      required: true,
-      type: 'object',
-      message: 'folderData must be an object with at least a Name property'
-    }
+    { name: 'name', required: true, type: 'string', minLength: 1, maxLength: 255, message: 'name is required: 1 to 255 characters' },
+    CommonRules.guidOptional('parentId'),
+    { name: 'comment', required: false, type: 'string', message: 'comment must be a string' }
   ],
 
   // PATCH /v2.0/OS/Folders/{id}

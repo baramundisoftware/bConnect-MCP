@@ -413,7 +413,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // Kiosk releases
         {
           name: "create_kiosk_release",
-          description: "Create a kiosk release to make a job definition available for execution via the baramundi Kiosk portal. Allows end users to self-service install software. WARNING: Creates a kiosk release that enables end-user triggered deployment.",
+          description: "Create a kiosk release: assign a job definition to an AD object, a logical group or an endpoint, so that user or device can choose it for execution in the baramundi Kiosk portal. Requires JobAssignTarget rights on the job definition and SystemOrAdObjectAssignJob rights on the assignment target. WARNING: enables end-user triggered deployment.",
           inputSchema: {
             type: "object",
             properties: {
