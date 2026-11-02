@@ -7,6 +7,8 @@
 import type { JsonPatchOperation } from "@bconnect/mcp-core";
 import type { AxiosInstance } from "axios";
 import type { paths } from "../generated/endpoints-types.js";
+// The Industrial endpoint routes exist only in 25R2.
+import type { paths as paths25R2 } from "../generated/endpoints-25r2-types.js";
 
 // Type aliases for cleaner code - READ operations
 type EndpointsList = paths["/v2.0/Endpoints"]["get"]["responses"]["200"]["content"]["application/json"];
@@ -76,9 +78,9 @@ type NetworkEndpointGet = paths["/v2.0/NetworkEndpoints/{id}"]["get"]["responses
 type NetworkEndpointsList = paths["/v2.0/NetworkEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 
 // Type aliases for Industrial Endpoint operations
-type IndustrialEndpointsList = paths["/v2.0/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
-type IndustrialEndpointGet = paths["/v2.0/IndustrialEndpoints/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
-type IndustrialEndpoint = paths["/v2.0/IndustrialEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
+type IndustrialEndpointsList = paths25R2["/v2.0/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type IndustrialEndpointGet = paths25R2["/v2.0/IndustrialEndpoints/{id}"]["get"]["responses"]["200"]["content"]["application/json"];
+type IndustrialEndpoint = paths25R2["/v2.0/IndustrialEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];
 
 // Type aliases for Network Endpoint WRITE operations - Phase 3
 type NetworkEndpoint = paths["/v2.0/NetworkEndpoints"]["post"]["responses"]["201"]["content"]["application/json"];

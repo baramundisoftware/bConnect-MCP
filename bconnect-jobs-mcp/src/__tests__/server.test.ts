@@ -9,6 +9,8 @@
 
 import { describe, it, expect, afterEach, vi } from 'vitest';
 
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { createServer } from '../index.js';
 
 afterEach(() => { vi.unstubAllEnvs(); });
@@ -231,13 +233,11 @@ const _ALL_FORBIDDEN_TOOLS: string[] = [
 
 async function getToolNames(): Promise<string[]> {
   const { server } = createServer();
-
-  const response = await server.request(
-    { method: 'tools/list', params: {} },
-    {} as never
-  );
-
-  const tools = (response as { tools: Array<{ name: string }> }).tools;
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: 'test-client', version: '1.0.0' });
+  await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+  const { tools } = await client.listTools();
+  await client.close();
   return tools.map((t) => t.name);
 }
 

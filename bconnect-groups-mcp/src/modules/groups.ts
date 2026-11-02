@@ -10,6 +10,8 @@
 
 import type { AxiosInstance } from "axios";
 import type { paths } from "../generated/endpoints-types.js";
+// The Industrial endpoint routes exist only in 25R2.
+import type { paths as paths25R2 } from "../generated/endpoints-25r2-types.js";
 
 // ── Response type aliases ──────────────────────────────────────────────────
 
@@ -21,7 +23,7 @@ type LinuxEndpointsByLogicalGroup    = paths["/v2.0/LogicalGroups/{logicalGroupI
 type MacEndpointsByLogicalGroup      = paths["/v2.0/LogicalGroups/{logicalGroupId}/MacEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type NetworkEndpointsByLogicalGroup  = paths["/v2.0/LogicalGroups/{logicalGroupId}/NetworkEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type WindowsEndpointsByLogicalGroup  = paths["/v2.0/LogicalGroups/{logicalGroupId}/WindowsEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
-type IndustrialEndpointsByLogicalGroup = paths["/v2.0/LogicalGroups/{logicalGroupId}/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type IndustrialEndpointsByLogicalGroup = paths25R2["/v2.0/LogicalGroups/{logicalGroupId}/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type LogicalGroupsByLogicalGroup     = paths["/v2.0/LogicalGroups/{logicalGroupId}/LogicalGroups"]["get"]["responses"]["200"]["content"]["application/json"];
 
 // Static Group response types
@@ -32,7 +34,7 @@ type LinuxEndpointsByStaticGroup     = paths["/v2.0/StaticGroups/{staticGroupId}
 type MacEndpointsByStaticGroup       = paths["/v2.0/StaticGroups/{staticGroupId}/MacEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type NetworkEndpointsByStaticGroup   = paths["/v2.0/StaticGroups/{staticGroupId}/NetworkEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type WindowsEndpointsByStaticGroup   = paths["/v2.0/StaticGroups/{staticGroupId}/WindowsEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
-type IndustrialEndpointsByStaticGroup = paths["/v2.0/StaticGroups/{staticGroupId}/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type IndustrialEndpointsByStaticGroup = paths25R2["/v2.0/StaticGroups/{staticGroupId}/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 
 // Dynamic Group response types
 type EndpointsByDynamicGroup         = paths["/v2.0/DynamicGroups/{dynamicGroupId}/Endpoints"]["get"]["responses"]["200"]["content"]["application/json"];
@@ -54,7 +56,7 @@ type LinuxEndpointsByUDG             = paths["/v2.0/UniversalDynamicGroups/{univ
 type MacEndpointsByUDG               = paths["/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/MacEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type NetworkEndpointsByUDG           = paths["/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/NetworkEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 type WindowsEndpointsByUDG           = paths["/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/WindowsEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
-type IndustrialEndpointsByUDG        = paths["/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
+type IndustrialEndpointsByUDG        = paths25R2["/v2.0/UniversalDynamicGroups/{universalDynamicGroupId}/IndustrialEndpoints"]["get"]["responses"]["200"]["content"]["application/json"];
 
 // ── Query params ───────────────────────────────────────────────────────────
 

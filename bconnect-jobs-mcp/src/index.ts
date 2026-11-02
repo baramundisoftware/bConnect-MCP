@@ -742,26 +742,6 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     }
   }));
 
-  // ── Direct handler dispatch for testing ──────────────────────────────────
-  //
-  // Override server.request() so that tests can call
-  //   server.request({ method: 'tools/list', params: {} }, {} as never)
-  // and get the server's registered ListTools handler result directly,
-  // without going through the transport or schema-validation layers.
-  //
-  // In production the real stdio transport is used (see main()), so this override
-  // only affects test scenarios that call the exported createServer() factory.
-  const originalRequest = server.request.bind(server);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (server as any).request = async (req: { method: string; params?: unknown }, _schema: unknown) => {
-    const handlers = (server as unknown as { _requestHandlers: Map<string, (req: unknown) => Promise<unknown>> })._requestHandlers;
-    const handler = handlers.get(req.method);
-    if (handler) {
-      return handler({ ...req, jsonrpc: '2.0', id: 0 });
-    }
-    return originalRequest(req as never, _schema as never);
-  };
-
   return { server };
 }
 
