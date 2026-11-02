@@ -196,11 +196,11 @@ describe('bconnect-servermanagement-mcp', () => {
       ).rejects.toThrow(/guid/i);
     });
 
-    it('create_security_group: missing groupData', async () => {
+    it('create_security_group: missing name', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({ name: 'create_security_group', arguments: {} })
-      ).rejects.toThrow(/groupData is required/i);
+      ).rejects.toThrow(/name is required/i);
     });
 
     it('update_security_profile: patchOperations not an array', async () => {

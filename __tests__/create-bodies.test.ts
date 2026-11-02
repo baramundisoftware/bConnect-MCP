@@ -1,5 +1,5 @@
 /**
- * Create and enrollment tools send the body their request schema declares (#189).
+ * Create and enrollment tools send the body their request schema declares (#189, #327).
  *
  * Required fields are required arguments, enums are enums, no untyped object
  * argument is passed through, and an operation that takes no body gets none.
@@ -28,7 +28,7 @@ beforeAll(async () => {
     BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', BCONNECT_RELEASE: '26R1', ALLOW_WRITE_OPERATIONS: 'true', ALLOW_SECRET_READ: 'true',
   });
   msw.listen({ onUnhandledRequest: 'error' });
-  for (const server of ['endpoints', 'assets', 'variables', 'software', 'defensecontrol']) {
+  for (const server of ['endpoints', 'assets', 'variables', 'software', 'defensecontrol', 'servermanagement', 'operatingsystems']) {
     const { createServer } = await import(`../bconnect-${server}-mcp/src/index.ts`);
     const [a, b] = InMemoryTransport.createLinkedPair();
     const c = new Client({ name: 'create-bodies', version: '0' });
@@ -74,6 +74,12 @@ describe.each([
     'POST', '/software/v2.0/Bundles', { name: 'Office', parentId: G }, ['name']],
   ['software', 'add_application_to_bundle', { bundleId: ID, applicationId: G },
     'POST', `/software/v2.0/Bundles/${ID}/BundleApplications`, { applicationId: G }, ['applicationId', 'bundleId']],
+  ['servermanagement', 'create_security_group', { name: 'Helpdesk', profiles: [G] },
+    'POST', '/servermanagement/v2.0/SecurityGroups', { name: 'Helpdesk', profiles: [G] }, ['name']],
+  ['servermanagement', 'create_security_profile', { name: 'Read only', comment: 'Audit', displayAdministratorIdentities: false, displayEndpointUserIdentities: true },
+    'POST', '/servermanagement/v2.0/SecurityProfiles', { name: 'Read only', comment: 'Audit', displayAdministratorIdentities: false, displayEndpointUserIdentities: true }, ['name']],
+  ['operatingsystems', 'create_os_folder', { name: 'Windows 11', parentId: G, comment: 'Images' },
+    'POST', '/operatingsystems/v2.0/Folders', { name: 'Windows 11', parentId: G, comment: 'Images' }, ['name']],
 ])('%s %s', (server, name, args, method, path, body, required) => {
   it('sends exactly the fields the request schema declares', async () => {
     const r = await call(server, name, args);
@@ -99,6 +105,9 @@ describe('enums and removed arguments', () => {
     ['endpoints', 'start_enrollment', 'emailRecipient'],
     ['variables', 'create_variable_definition', 'dataType'],
     ['software', 'add_application_to_bundle', 'order'],
+    ['servermanagement', 'create_security_group', 'groupData'],
+    ['servermanagement', 'create_security_profile', 'profileData'],
+    ['operatingsystems', 'create_os_folder', 'folderData'],
   ])('%s %s no longer offers %s', async (server, name, arg) => {
     expect(Object.keys((await schemaOf(server, name)).properties)).not.toContain(arg);
   });
@@ -108,5 +117,17 @@ describe('refresh_local_admin_account_expiry', () => {
   it('sends no body to an operation that takes none', async () => {
     await call('defensecontrol', 'refresh_local_admin_account_expiry', { endpointId: ID });
     expect(sent.map((s) => [s.method, s.body])).toEqual([['POST', '']]);
+  });
+});
+
+describe('the former object arguments (#327)', () => {
+  it.each([
+    ['servermanagement', 'create_security_group', { groupData: { name: 'Helpdesk' } }],
+    ['servermanagement', 'create_security_profile', { profileData: { name: 'Read only' } }],
+    ['operatingsystems', 'create_os_folder', { folderData: { name: 'Windows 11' } }],
+  ])('%s %s refuses the old object and sends nothing', async (server, name, args) => {
+    const r = await call(server, name, args);
+    expect(r.isError).toBe(true);
+    expect(sent).toEqual([]);
   });
 });

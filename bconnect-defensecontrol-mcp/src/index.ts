@@ -203,7 +203,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     tools.splice(2, 0,
       {
         name: "get_bitlocker_secrets",
-        description: "[26R1] Get the BitLocker secrets including recovery keys and startup PIN for a specific Windows endpoint. Returns the initial startup PIN and BitLocker recovery keys stored for the specified managed Windows endpoint. Available in bConnect 26R1 and later.",
+        description: "[26R1] Returns LIVE BitLocker secrets of a Windows endpoint: its recovery keys and initial startup PIN, in clear text. Needs ALLOW_SECRET_READ=true. Available in bConnect 26R1 and later.",
         inputSchema: {
           type: "object",
           properties: {

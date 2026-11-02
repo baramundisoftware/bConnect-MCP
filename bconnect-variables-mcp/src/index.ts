@@ -65,7 +65,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Variable Definitions ─────────────────────────────────────────
       {
         name: "list_variable_definitions",
-        description: "List all variable definitions configured in baramundi Management Suite. Returns a paged list with variable id, name, data type, default value, and description for each defined variable available for assignment to endpoints and other objects.",
+        description: "List the variable definitions of the baramundi Management Suite, paged: for each, its GUID, name, category, type, scopes, default value and comment. Supports filtering and pagination.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -74,7 +74,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "get_variable_definition",
-        description: "Get the details of a specific variable definition by its GUID. Returns the variable id, name, data type, default value, description, and scope settings for the specified variable defined in baramundi Management Suite.",
+        description: "Get one variable definition of the baramundi Management Suite by its GUID: its name, category, type, scopes, default value and comment.",
         inputSchema: {
           type: "object",
           properties: {
@@ -85,7 +85,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "create_variable_definition",
-        description: "Create a new variable definition in baramundi Management Suite. Requires a name, a category and at least one scope. Variable definitions act as templates that can be instantiated with specific values on endpoints, groups, and other objects.",
+        description: "Create a variable definition with a name, a category and at least one scope, and optionally a type, default value and comment. Values are then set per object as variable instances (update_variable_instance).",
         inputSchema: {
           type: "object",
           properties: {
@@ -101,7 +101,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "update_variable_definition",
-        description: "Update an existing variable definition in baramundi Management Suite using a JSON Patch document. Allows modifying the variable name, default value, description, or scope settings. Returns the updated variable definition.",
+        description: "Update a variable definition with a JSON Patch document, for example its name, category, default value, comment or scopes. Returns the updated variable definition.",
         inputSchema: {
           type: "object",
           properties: {
@@ -116,7 +116,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "delete_variable_definition",
-        description: "Delete a variable definition from baramundi Management Suite by its GUID. Removing a variable definition also removes all its instance values across all associated objects. Returns no content on success (204).",
+        description: "Delete a variable definition by its GUID. bMS answers 409 while the definition is still in use, and 204 when it was deleted or doesn't exist.",
         inputSchema: {
           type: "object",
           properties: {
@@ -129,7 +129,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Variable Instances ───────────────────────────────────────────
       {
         name: "list_variable_instances",
-        description: "List all variable instances across all objects in baramundi Management Suite. Returns a paged list with variable instance id, associated object, variable definition name, and current value for each assigned variable instance.",
+        description: "List the variable instances of all objects, paged: for each, its GUID, owner (GUID and name), variable definition GUID, name, scope, category, type, value and whether it is the default value.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -138,7 +138,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "get_variable_instance",
-        description: "Get the details of a specific variable instance by its GUID. Returns the instance id, associated object reference, variable definition name, data type, and current value for the specified variable instance in baramundi Management Suite.",
+        description: "Get one variable instance by its GUID: owner (GUID and name), variable definition GUID, name, scope, category, type, value and whether it is the default value.",
         inputSchema: {
           type: "object",
           properties: {
@@ -149,7 +149,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "list_variable_instances_by_endpoint",
-        description: "List all variable instances assigned to a specific endpoint identified by its GUID. Returns a paged list of variable instances with their definition names, data types, and current values for all variables configured on that endpoint.",
+        description: "List the variable instances of one endpoint, identified by its GUID, paged: for each, its GUID, owner (GUID and name), variable definition GUID, name, scope, category, type, value and whether it is the default value.",
         inputSchema: {
           type: "object",
           properties: {
@@ -160,7 +160,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "list_variable_instances_by_logical_group",
-        description: "List all variable instances assigned to a specific logical group identified by its GUID. Returns a paged list of variable instances with their definition names, data types, and current values configured for that logical group in baramundi Management Suite.",
+        description: "List the variable instances of one logical group, identified by its GUID, paged: for each, its GUID, owner (GUID and name), variable definition GUID, name, scope, category, type, value and whether it is the default value.",
         inputSchema: {
           type: "object",
           properties: {
@@ -171,7 +171,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "list_variable_instances_by_ad_object",
-        description: "List all variable instances assigned to a specific Active Directory object identified by its GUID. Returns a paged list of variable instances with their definition names, data types, and current values configured for that AD object in baramundi Management Suite.",
+        description: "List the variable instances of one Active Directory object, identified by its GUID, paged: for each, its GUID, owner (GUID and name), variable definition GUID, name, scope, category, type, value and whether it is the default value.",
         inputSchema: {
           type: "object",
           properties: {
@@ -182,7 +182,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "list_variable_instances_by_job_definition",
-        description: "List all variable instances assigned to a specific Windows job definition identified by its GUID. Returns a paged list of variable instances with their definition names, data types, and current values configured for that job definition in baramundi Management Suite.",
+        description: "List the variable instances of one Windows job definition, identified by its GUID, paged: for each, its GUID, owner (GUID and name), variable definition GUID, name, scope, category, type, value and whether it is the default value.",
         inputSchema: {
           type: "object",
           properties: {
@@ -193,7 +193,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "list_variable_instances_by_application",
-        description: "List all variable instances assigned to a specific Windows application identified by its GUID. Returns a paged list of variable instances with their definition names, data types, and current values configured for that application in baramundi Management Suite.",
+        description: "List the variable instances of one Windows application, identified by its GUID, paged: for each, its GUID, owner (GUID and name), variable definition GUID, name, scope, category, type, value and whether it is the default value.",
         inputSchema: {
           type: "object",
           properties: {

@@ -33,7 +33,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and other methods on `/health` get 405. The limiter tracks at most 10,000 client addresses and
   forgets idle ones.
 
+- **Typed arguments for three create tools** (#327). **Breaking:** `create_security_group`,
+  `create_security_profile` and `create_os_folder` no longer take one object (`groupData`, `profileData`,
+  `folderData`); they take the fields of the bConnect request: `name` and `profiles` (GUIDs);
+  `name`, `comment`, `displayAdministratorIdentities` and `displayEndpointUserIdentities`; `name`,
+  `parentId` and `comment`. A call with the old object is refused before anything is sent. The
+  spec-conformance checks now cover these tools.
+
 ### Fixed
+- **Tool descriptions and results that misstated bMS** (#327). `start_microservice` and
+  `restart_microservice` report that bMS accepted the request (it answers "Microservice starting." /
+  "restarting.") and point to `get_microservice`, instead of "started/restarted successfully".
+  `msw_cleanup` leads with success or failure from `wasSuccessful`; it said "executed" either way.
+  Descriptions in servermanagement, operating systems, variables and update management name only fields
+  the responses have; `delete_variable_definition` names the 409 while a definition is in use,
+  `create_kiosk_release` the rights it needs, `get_bitlocker_secrets` that it returns live secrets, and
+  `list_installed_software_by_dynamic_group` that it expects a universal dynamic group. No tool name changes.
 - **Protocol errors show the "MCP error" prefix once** (#326). An undeclared or invalid argument, an
   unknown tool or a tool the selected release doesn't have reached the client as
   `MCP error -32602: MCP error -32602: …`. The servers now send the bare message and the client adds

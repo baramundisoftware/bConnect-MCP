@@ -77,34 +77,34 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Server Information ────────────────────────────────────────────────
       {
         name: "get_management_server",
-        description: "Get the baramundi Management Server information and configuration details. Returns server version, hostname, license information, and current operational status of the baramundi Management Suite instance.",
+        description: "Get the baramundi Management Server of this bMS installation: its name, version, state and planned server restart times. Takes no arguments.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
         name: "get_gateway",
-        description: "Get the Gateway configuration and status for the baramundi Management Suite. Returns gateway hostname, availability status, configuration status, and connection details for the baramundi Gateway component.",
+        description: "Get the status of the baramundi Gateway that connects endpoints from outside the network: its configuration status, availability and last contact.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
         name: "get_dip_status",
-        description: "Get the status of all Distribution and Inventory Points (DIPs) configured in baramundi Management Suite. Returns a list of DIP servers with their synchronization status, availability, and operational state information.",
+        description: "Get the status of all Distribution and Inventory Points (DIPs): for each, its ID, host name, state, last update and details.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
         name: "get_vpn_appliance",
-        description: "Get the VPN Appliance configuration and status for the baramundi Management Suite. Returns the VPN appliance hostname, status, and connectivity information used for secure baramundi client communication.",
+        description: "Get the VPN appliance that the baramundi Management Suite uses for endpoint communication: its name and status. Takes no arguments and changes nothing.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
 
       // ── Microservices ─────────────────────────────────────────────────────
       {
         name: "list_microservices",
-        description: "List all microservices registered and managed in the baramundi Management Suite. Returns a list of microservices with their names, versions, current service state, and operational status information.",
+        description: "List all microservices of the baramundi Management Suite: for each, its GUID, name, state and status message. Use the GUID with get_microservice or the start, stop and restart tools.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
         name: "get_microservice",
-        description: "Get the details of a specific microservice by its GUID in baramundi Management Suite. Returns the microservice name, version, current service state, and detailed status information for the specified microservice.",
+        description: "Get one microservice of the baramundi Management Suite by its GUID: its name, state and status message. Use it to check a start or restart request.",
         inputSchema: {
           type: "object",
           properties: {
@@ -115,7 +115,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "start_microservice",
-        description: "Start a specific microservice identified by its GUID in baramundi Management Suite. Initiates the microservice startup process and requires server setting rights. Returns no content on successful start request.",
+        description: "Ask bMS to start a microservice, identified by its GUID. Requires server setting rights. bMS only accepts the request; check the result with get_microservice.",
         inputSchema: {
           type: "object",
           properties: {
@@ -126,7 +126,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "stop_microservice",
-        description: "Stop a specific microservice identified by its GUID in baramundi Management Suite. Initiates the microservice shutdown process and requires server setting rights. Returns no content on successful stop request.",
+        description: "Stop a microservice of the baramundi Management Suite, identified by its GUID. Requires server setting rights. Tools that depend on the microservice stop working until it is started again.",
         inputSchema: {
           type: "object",
           properties: {
@@ -137,7 +137,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "restart_microservice",
-        description: "Restart a specific microservice identified by its GUID in baramundi Management Suite. Stops and restarts the microservice and requires server setting rights. Returns no content on successful restart request.",
+        description: "Ask bMS to restart a microservice, identified by its GUID. Requires server setting rights. bMS only accepts the request; check the result with get_microservice.",
         inputSchema: {
           type: "object",
           properties: {
@@ -150,19 +150,19 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Infrastructure ────────────────────────────────────────────────────
       {
         name: "list_cloud_connectors",
-        description: "List all Cloud Connectors configured in the baramundi Management Suite. Returns a list of cloud connector instances with their names, connection status, and configuration details for cloud-based endpoint management.",
+        description: "List all Cloud Connectors configured in the baramundi Management Suite: for each, its name and state. Takes no arguments and changes nothing.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
         name: "list_pxe_relays",
-        description: "List all PXE Relay servers configured in the baramundi Management Suite. Returns a list of PXE relay servers with their names, IP addresses, and status information used for network-based OS deployment.",
+        description: "List all PXE relays configured in the baramundi Management Suite, which serve network boot for OS installation: for each, its name and state.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
 
       // ── Security Groups ───────────────────────────────────────────────────
       {
         name: "list_security_groups",
-        description: "List all Security Groups defined in the baramundi Management Suite. Returns a paged list of security groups with their names, descriptions, assigned members, and permission configurations.",
+        description: "List the security groups of the baramundi Management Suite, paged: for each, its GUID, group name and assigned security profiles. Members and rights are not part of the answer.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -171,7 +171,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "get_security_group",
-        description: "Get the details of a specific Security Group by its GUID in baramundi Management Suite. Returns group name, description, assigned members, and permission configuration for the specified security group.",
+        description: "Get one security group of the baramundi Management Suite by its GUID: its group name and assigned security profiles. Members and rights are not part of the answer.",
         inputSchema: {
           type: "object",
           properties: {
@@ -182,18 +182,19 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "create_security_group",
-        description: "Create a new Security Group in baramundi Management Suite. Accepts group creation data including name, description, and member assignments, and returns the newly created security group with its assigned GUID.",
+        description: "Create a security group with a name and, optionally, the GUIDs of security profiles to assign. Returns the new group with its GUID. bMS answers 409 when the name is taken.",
         inputSchema: {
           type: "object",
           properties: {
-            groupData: { type: "object", description: "Security group creation data including Name and optional Description." }
+            name: { type: "string", minLength: 1, maxLength: 255, description: "Name of the security group." },
+            profiles: { type: "array", items: { type: "string" }, description: "GUIDs of the security profiles to assign." }
           },
-          required: ["groupData"]
+          required: ["name"]
         }
       },
       {
         name: "update_security_group",
-        description: "Update an existing Security Group using a JSON Patch document in baramundi Management Suite. Applies patch operations to modify the security group properties such as name, description, or member assignments.",
+        description: "Update a security group of the baramundi Management Suite with a JSON Patch document, for example its name or its assigned security profiles. Returns the updated group.",
         inputSchema: {
           type: "object",
           properties: {
@@ -218,7 +219,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── Security Profiles ─────────────────────────────────────────────────
       {
         name: "list_security_profiles",
-        description: "List all Security Profiles defined in the baramundi Management Suite. Returns a paged list of security profiles with their names, descriptions, assigned permissions, and configuration details.",
+        description: "List the security profiles, paged: for each, its GUID, name, comment and whether it shows administrator and endpoint user identities.",
         inputSchema: {
           type: "object",
           properties: {},
@@ -227,7 +228,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "get_security_profile",
-        description: "Get the details of a specific Security Profile by its GUID in baramundi Management Suite. Returns profile name, description, and detailed permission configuration for the specified security profile.",
+        description: "Get one security profile of the baramundi Management Suite by its GUID: its name, comment, and whether it shows administrator and endpoint user identities.",
         inputSchema: {
           type: "object",
           properties: {
@@ -238,18 +239,21 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "create_security_profile",
-        description: "Create a new Security Profile in baramundi Management Suite. Accepts profile creation data including name, description, and permission settings, and returns the newly created security profile with its assigned GUID.",
+        description: "Create a security profile with a name and, optionally, a comment and whether it shows administrator and endpoint user identities. Returns the new profile with its GUID. bMS answers 409 when the name is taken.",
         inputSchema: {
           type: "object",
           properties: {
-            profileData: { type: "object", description: "Security profile creation data including Name and optional permissions." }
+            name: { type: "string", minLength: 1, maxLength: 50, description: "Name of the security profile." },
+            comment: { type: "string", maxLength: 255, description: "Comment on the security profile." },
+            displayAdministratorIdentities: { type: "boolean", description: "Whether the profile shows administrator identities." },
+            displayEndpointUserIdentities: { type: "boolean", description: "Whether the profile shows endpoint user identities." }
           },
-          required: ["profileData"]
+          required: ["name"]
         }
       },
       {
         name: "update_security_profile",
-        description: "Update an existing Security Profile using a JSON Patch document in baramundi Management Suite. Applies patch operations to modify the security profile properties such as name, description, or permission assignments.",
+        description: "Update a security profile of the baramundi Management Suite with a JSON Patch document, for example its name, comment or identity display settings. Returns the updated profile.",
         inputSchema: {
           type: "object",
           properties: {
@@ -324,27 +328,27 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     tools.push(
       {
         name: "list_api_keys",
-        description: "[26R1] List all API keys configured in the baramundi Management Suite. Returns a list of API keys with their names, descriptions, associated permissions, and creation metadata. Available in bConnect 26R1 and later.",
+        description: "[26R1] List the API keys: for each, its name, expiration date, comment, whether it is active and available via the gateway, and its assigned security profiles. Available in bConnect 26R1 and later.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
         name: "simulate_msw_cleanup",
-        description: "[26R1] Simulate a Managed Software Wizard (MSW) cleanup operation on the Distribution and Inventory Point. Performs a dry-run cleanup simulation without making actual changes. Available in bConnect 26R1 and later.",
+        description: "[26R1] Simulate the cleanup of managed software files on the master DIP, without deleting anything. Returns the simulation result and the files a cleanup would delete. Available in bConnect 26R1 and later.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
         name: "msw_cleanup",
-        description: "[26R1] Execute a Managed Software Wizard (MSW) cleanup operation on the Distribution and Inventory Point server. Removes obsolete managed software packages from the DIP. Use with caution. Available in bConnect 26R1 and later.",
+        description: "[26R1] Clean up managed software files on the master DIP: deletes the files simulate_msw_cleanup lists. Returns whether the cleanup was successful and its result. bMS answers 423 while another cleanup runs. Available in bConnect 26R1 and later.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
         name: "list_download_jobs",
-        description: "[26R1] List all download jobs configured and queued in the baramundi Management Suite. Returns a list of download jobs with their status, progress, target packages, and associated distribution details. Available in bConnect 26R1 and later.",
+        description: "[26R1] List the download jobs, paged: for each, its GUID, name, interval, last execution, last update, state, state message, URL and local path. Available in bConnect 26R1 and later.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
         name: "get_download_job",
-        description: "[26R1] Get the details of a specific download job identified by its GUID in baramundi Management Suite. Returns job name, status, progress, target package details, and download configuration. Available in bConnect 26R1 and later.",
+        description: "[26R1] Get one download job by its GUID: name, interval, last execution, last update, state, state message, URL and local path. Available in bConnect 26R1 and later.",
         inputSchema: {
           type: "object",
           properties: {
@@ -507,7 +511,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "start_microservice": {
           await sm.startMicroservice(args!.id as string);
-          return { content: [{ type: "text", text: "Microservice started successfully." }] };
+          return { content: [{ type: "text", text: "Start requested: bMS accepted the request (\"Microservice starting.\"). Check the state with get_microservice." }] };
         }
 
         case "stop_microservice": {
@@ -517,7 +521,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "restart_microservice": {
           await sm.restartMicroservice(args!.id as string);
-          return { content: [{ type: "text", text: "Microservice restarted successfully." }] };
+          return { content: [{ type: "text", text: "Restart requested: bMS accepted the request (\"Microservice restarting.\"). Check the state with get_microservice." }] };
         }
 
         case "list_cloud_connectors": {
@@ -541,7 +545,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_security_group": {
-          const result = await sm.createSecurityGroup(args!.groupData as never);
+          const result = await sm.createSecurityGroup(pickArguments(args!, ["name", "profiles"]) as never);
           return toolJsonResult(result);
         }
 
@@ -566,7 +570,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "create_security_profile": {
-          const result = await sm.createSecurityProfile(args!.profileData as never);
+          const result = await sm.createSecurityProfile(pickArguments(args!, ["name", "comment", "displayAdministratorIdentities", "displayEndpointUserIdentities"]) as never);
           return toolJsonResult(result);
         }
 
@@ -618,7 +622,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
         case "msw_cleanup": {
           const result = await sm.mswCleanup();
-          return toolJsonResult(result, { lead: "MSW cleanup executed:" });
+          // bMS answers 200 for a failed cleanup too; wasSuccessful says which (#327).
+          const succeeded = (result as { wasSuccessful?: unknown } | undefined)?.wasSuccessful === true;
+          return toolJsonResult(result, { lead: succeeded ? "MSW cleanup succeeded:" : "MSW cleanup did not succeed (wasSuccessful is not true):" });
         }
 
         case "list_download_jobs": {

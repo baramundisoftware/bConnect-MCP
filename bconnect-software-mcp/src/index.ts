@@ -102,7 +102,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "list_installed_software_by_dynamic_group",
-        description: "List all installed Windows software on endpoints within a specific Universal Dynamic Group identified by its GUID. Returns a paged list of installed applications across all group members with software name, vendor, version, and endpoint association details.",
+        description: "List the installed Windows software on the endpoints of a universal dynamic group (not a classic dynamic group), identified by its GUID. Returns a paged list of installed applications across the group's members with software name, vendor, version and endpoint.",
         inputSchema: {
           type: "object",
           properties: {

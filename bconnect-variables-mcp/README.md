@@ -56,7 +56,7 @@ been checked against a real bMS yet.
 | `get_variable_definition` | Get details of a specific variable definition by GUID |
 | `create_variable_definition` | Create a new variable definition |
 | `update_variable_definition` | Update a variable definition via JSON Patch |
-| `delete_variable_definition` | Delete a variable definition by GUID |
+| `delete_variable_definition` | Delete a variable definition by GUID (409 while it is in use) |
 | `list_variable_instances` | List all variable instances across all objects |
 | `get_variable_instance` | Get details of a specific variable instance by GUID |
 | `list_variable_instances_by_endpoint` | List variable instances assigned to a specific endpoint |
