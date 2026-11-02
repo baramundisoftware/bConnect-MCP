@@ -51,6 +51,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that never reads the real `BCONNECT_*` settings and keeps certificate checks on; a guard refuses copies.
   This found a compliance test that had skipped on 26R1 since its fixture changed; it now runs.
 
+- **Guards: unique tool names; the docs guard finds the guides itself** (#338). A new guard lists every
+  tool of every server in both releases and fails on a name two servers share. The docs guard reads the
+  tracked `docs/*.md` and root documents from git instead of a hand-written list; CHANGELOG.md and
+  CODE_OF_CONDUCT.md are left out with their reasons.
+
 ### Fixed
 - **Tool descriptions and results that misstated bMS** (#327). `start_microservice` and
   `restart_microservice` report that bMS accepted the request (it answers "Microservice starting." /
