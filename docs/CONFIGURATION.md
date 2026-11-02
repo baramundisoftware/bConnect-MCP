@@ -22,7 +22,7 @@ where a setting behaves differently for that server.
 URL or credential, a non-ASCII password, a CA file it can't read, and an invalid
 `BCONNECT_RELEASE`, `BCONNECT_TIMEOUT_MS`, `BCONNECT_MAX_RETRIES`, `BCONNECT_AUDIT_LEVEL` or
 `BCONNECT_PRETTY_JSON`. The gateway stops at startup on the same base URL and credential problems,
-an invalid `BCONNECT_RELEASE`, `BCONNECT_PRETTY_JSON` or `MCP_GATEWAY_MAX_BODY`, or a `*_FILE` it
+an invalid `BCONNECT_RELEASE`, `BCONNECT_PRETTY_JSON`, `MCP_GATEWAY_MAX_BODY` or `MCP_GATEWAY_TRUST_PROXY`, or a `*_FILE` it
 can't read; for the others, every tool call reports the problem. The switches (`ALLOW_*`, `MCP_ALLOW_NO_AUTH`, `BCONNECT_RATE_LIMIT_ENABLED`,
 `BCONNECT_SKIP_CONNECTIVITY_CHECK`, …) take effect only when set to exactly `true`; other numbers
 and levels that aren't checked fall back to their default.
@@ -335,6 +335,23 @@ JSON-RPC error. A whole number of bytes, optionally followed by `b`, `kb` or `mb
 `10mib`, `1.5mb`) stops the gateway at startup with one line. Bodies must be plain JSON: a request with a `Content-Encoding` other than
 `identity` (gzip, deflate, br) gets HTTP 415 and is not decompressed. MCP clients don't compress
 requests; the servers' own HTTP mode behaves the same.
+
+### `MCP_GATEWAY_TRUST_PROXY`
+
+**Default:** off. Behind a reverse proxy every request reaches the gateway from the proxy's
+address, so all callers share one [rate limit](#mcp_gateway_rate_limit_enabled) and the access log
+shows only the proxy. Name the proxy here, and the gateway takes the client address from the
+`X-Forwarded-For` header that proxy adds, for the rate limit and the access log:
+
+- a number of proxy hops from `1` to `10`: `1` for one proxy directly in front;
+- the proxy's addresses or ranges, comma-separated: `10.0.0.5`, `10.0.0.0/8`, `fd00::/8`.
+
+`false` or no value leaves it off. Any other value, `true` included, stops the gateway at startup
+with one line: trusting every hop would let any client name any address and get a fresh rate-limit
+bucket. Set it only when a proxy is actually in front and it matches that proxy: with a hop count
+too high, or an address that isn't the proxy, a client can set `X-Forwarded-For` itself and choose
+the address the gateway sees. The proxy must replace or append to `X-Forwarded-For`, never pass on
+a client's value unchecked. Limit each user at the proxy too: the gateway sees addresses, not users.
 
 ### `LOG_LEVEL`
 

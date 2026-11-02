@@ -72,6 +72,8 @@ services:
       MCP_GATEWAY_RATE_LIMIT_MAX: ${MCP_GATEWAY_RATE_LIMIT_MAX:-300}
       MCP_GATEWAY_RATE_LIMIT_WINDOW_MS: ${MCP_GATEWAY_RATE_LIMIT_WINDOW_MS:-60000}
       MCP_GATEWAY_MAX_BODY: ${MCP_GATEWAY_MAX_BODY:-1mb}
+      # Behind a proxy: whose X-Forwarded-For to trust (#331); off by default.
+      MCP_GATEWAY_TRUST_PROXY: ${MCP_GATEWAY_TRUST_PROXY:-}
       # Logging (#98).
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_FORMAT: ${LOG_FORMAT:-text}

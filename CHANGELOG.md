@@ -62,6 +62,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `.env.example` names `ALLOW_WRITE_OPERATIONS=false` (and `ALLOW_SECRET_READ=false` in
   defensecontrol) and drops the outdated #160 comment; a guard keeps them consistent.
 
+- **Gateway: `MCP_GATEWAY_TRUST_PROXY`** (#331). Behind a reverse proxy, the gateway can take the client
+  address from the proxy's `X-Forwarded-For`, so the rate limit counts per client and the access log
+  shows the client. Off by default (unchanged behaviour); accepts a hop count from 1 to 10 or the
+  proxy's addresses or ranges. `true` and any other value stop the gateway at startup with one line.
+  The gateway logs at startup where it takes the client address from.
+
 ### Fixed
 - **Tool descriptions and results that misstated bMS** (#327). `start_microservice` and
   `restart_microservice` report that bMS accepted the request (it answers "Microservice starting." /

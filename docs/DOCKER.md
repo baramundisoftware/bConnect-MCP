@@ -116,9 +116,10 @@ supplies whatever credential/session it requires.
 
 > Per-IP rate limiting is enforced in the gateway itself as a coarse backstop
 > (`MCP_GATEWAY_RATE_LIMIT_*`). Behind a proxy, the gateway sees every request as coming
-> from the proxy's address (it doesn't read `X-Forwarded-For`), so all callers share one
-> limit and the access log shows the proxy's address. Do per-caller limiting and logging
-> at your proxy.
+> from the proxy's address, so all callers share one limit and the access log shows the
+> proxy's address, unless [`MCP_GATEWAY_TRUST_PROXY`](CONFIGURATION.md#mcp_gateway_trust_proxy)
+> names that proxy: then both use the client address from its `X-Forwarded-For`. Do
+> per-user limiting at your proxy either way.
 
 ### Resource limits
 
@@ -169,8 +170,8 @@ Where the image or the compose file sets something other than the code's default
   gateway makes no connectivity check; the setting only skips its release detection at startup.
 
 > The gateway writes a structured **access log** (method, path, status, duration, and the
-> client address — behind a proxy that is the proxy's address; real identity lives at the
-> proxy) for every request. Set `LOG_FORMAT=json` for machine-ingestible logs.
+> client address — behind a proxy that is the proxy's address unless
+> `MCP_GATEWAY_TRUST_PROXY` is set; real identity lives at the proxy) for every request. Set `LOG_FORMAT=json` for machine-ingestible logs.
 
 ---
 
