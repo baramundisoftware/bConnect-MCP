@@ -170,6 +170,16 @@ was resolved by the dependency updates listed under [Unreleased] in [CHANGELOG.m
 
 ## Published Advisories
 
+### GHSA-rwqx-4v63-m7j9 — Gateway decompressed unauthenticated Brotli request bodies (CVE-2026-111497) — **Fixed in 26.1.11**
+
+**Affected:** the gateway image up to 26.1.10 (Node.js 22.23.1), and the servers' HTTP mode on an unpatched Node.js. **Severity:** high. **Fixed:** [v26.1.11](https://github.com/baramundisoftware/bConnect-MCP/releases/tag/v26.1.11), 2026-10-30.
+
+Up to 26.1.10 the gateway decompressed Brotli, gzip and deflate request bodies before the rate limiter, and its Node.js runtime carried the Brotli decoder flaw CVE-2026-111497. Since 26.1.11 the image runs Node.js 22.23.4, request bodies must be plain JSON (a compressed body gets HTTP 415 unread), every package requires Node.js `^22.23.4 || ^24.22.1 || >=26.12.1`, and the runtime dependencies have no known advisories.
+
+**Action:** update to 26.1.11 (`ghcr.io/baramundisoftware/bconnect-mcp-gateway:26.1.11`, or run from source on Node.js 22.23.4 / 24.22.1 or later). Until then, let the reverse proxy reject requests with a `Content-Encoding` header. Details: [GHSA-rwqx-4v63-m7j9](https://github.com/baramundisoftware/bConnect-MCP/security/advisories/GHSA-rwqx-4v63-m7j9).
+
+The PHP vulnerabilities CVE-2026-109618 and CVE-2026-109619 (same day) do **not** affect this project: it contains no PHP runtime.
+
 ### MCP stdio command-injection family (CVE-2025-49596 and related, April 2026) — **Not affected**
 
 A class of architectural RCE vulnerabilities was disclosed against the Model Context Protocol stdio transport in April 2026. Reported variants include CVE-2025-49596 (MCP Inspector), CVE-2026-22252 (LibreChat), CVE-2026-30615 (Windsurf), CVE-2026-30616 (Bisheng), CVE-2026-30623 (GPT Researcher), CVE-2026-30624 (LiteLLM), CVE-2025-65720 (LangFlow), and others. The root cause is on the MCP **client/host** side: `StdioServerParameters` / `StdioClientTransport` accepts attacker-controllable `command` and `args` and forwards them to a subprocess spawn without an allowlist, enabling arbitrary code execution.
