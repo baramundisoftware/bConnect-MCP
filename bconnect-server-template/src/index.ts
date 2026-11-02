@@ -46,11 +46,10 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  ErrorCode,
-  McpError
+  ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, serverClients, runServer, selectedRelease } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, serverClients, runServer, selectedRelease, protocolError } from "@bconnect/mcp-core";
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { DomainRules } from "./utils/mcp-tool-validation-rules.js";
 
@@ -176,7 +175,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         // }
 
         default:
-          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+          throw protocolError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error) {
       // API errors, gate refusals and configuration errors are tool results the

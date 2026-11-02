@@ -10,7 +10,8 @@
  * before sending, and an update to an interval-free type removes the intervals
  * the previous type left behind.
  */
-import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
+import { protocolError } from "@bconnect/mcp-core";
 import type { JsonPatchOperation, Release } from "@bconnect/mcp-core";
 
 /** The window types the tools offer per release (bundled specs), the default first. */
@@ -47,16 +48,16 @@ export function checkIntervalRule(args: Record<string, unknown>, release: Releas
     return;
   }
   if (!WINDOW_TYPES[release].includes(type)) {
-    throw new McpError(ErrorCode.InvalidParams, release === "26R1" && type === "Unrestricted"
+    throw protocolError(ErrorCode.InvalidParams, release === "26R1" && type === "Unrestricted"
       ? "'Unrestricted' is deprecated in bMS 26R1 and not offered: use Anytime for a window without restriction."
       : `'${type}' isn't a maintenance window type of bMS ${release}: use ${WINDOW_TYPES[release].join(", ")}.`);
   }
   if (NO_INTERVALS_IN[release].includes(type)) {
     if (hasIntervals(args.intervals)) {
-      throw new McpError(ErrorCode.InvalidParams, `A maintenance window of type '${type}' takes no intervals; leave intervals out.`);
+      throw protocolError(ErrorCode.InvalidParams, `A maintenance window of type '${type}' takes no intervals; leave intervals out.`);
     }
   } else if (!hasIntervals(args.intervals)) {
-    throw new McpError(ErrorCode.InvalidParams, `A maintenance window of type '${type}' needs at least one interval; pass intervals with it.`);
+    throw protocolError(ErrorCode.InvalidParams, `A maintenance window of type '${type}' needs at least one interval; pass intervals with it.`);
   }
 }
 

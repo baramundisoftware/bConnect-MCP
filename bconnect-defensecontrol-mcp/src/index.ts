@@ -16,11 +16,10 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  ErrorCode,
-  McpError
+  ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -293,7 +292,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     // A renamed tool answers with its new name (#177).
     const renamedTo = RENAMED_TOOLS.get(name);
     if (renamedTo) {
-      throw new McpError(ErrorCode.MethodNotFound, `${name} was renamed to ${renamedTo}.`);
+      throw protocolError(ErrorCode.MethodNotFound, `${name} was renamed to ${renamedTo}.`);
     }
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
@@ -421,7 +420,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         default:
-          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+          throw protocolError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error) {
       // API errors, gate refusals and configuration errors are tool results the

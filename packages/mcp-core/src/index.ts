@@ -14,6 +14,7 @@ export * from "./api-errors.js";
 export * from "./model-text.js";
 export * from "./error-meanings.js";
 export * from "./tool-errors.js";
+export * from "./protocol-errors.js";
 export * from "./tool-results.js";
 export * from "./count-only.js";
 export * from "./lazy-client.js";

@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   command to remove it. Tool caches in it (`.vite`) don't count. The image and the release zip aren't
   affected.
 
+### Fixed
+- **Protocol errors show the "MCP error" prefix once** (#326). An undeclared or invalid argument, an
+  unknown tool or a tool the selected release doesn't have reached the client as
+  `MCP error -32602: MCP error -32602: …`. The servers now send the bare message and the client adds
+  the prefix; the text after it is unchanged. Every protocol error is built by `protocolError()` in
+  `@bconnect/mcp-core`, and a guard refuses a direct `new McpError(…)` in production code. bConnect
+  errors stay tool results with `isError`.
+
 ## [26.1.11] - 2026-10-30
 
 > **Security and maintenance release.** Node.js 22.23.4 / 24.22.1 or later (the Node.js security

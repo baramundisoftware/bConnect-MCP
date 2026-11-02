@@ -14,11 +14,10 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
-  ErrorCode,
-  McpError
+  ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, withVariantSelectors, withToolVariants, variantKey, refuseReplacedTool } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, withVariantSelectors, withToolVariants, variantKey, refuseReplacedTool, protocolError } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -71,7 +70,7 @@ function withoutQrImage(result: unknown): unknown {
 function changes(tool: string, args: Record<string, unknown>): JsonPatchOperation[] {
   const patch = updatePatch(tool, args);
   if (patch.length === 0) {
-    throw new McpError(ErrorCode.InvalidParams, `${tool} needs at least one field to change: ${updateFieldNames(tool).join(", ")}.`);
+    throw protocolError(ErrorCode.InvalidParams, `${tool} needs at least one field to change: ${updateFieldNames(tool).join(", ")}.`);
   }
   return patch;
 }
@@ -670,7 +669,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "get_endpoint[type=IndustrialEndpoint]": {
-          if (!args?.id) {throw new McpError(ErrorCode.InvalidParams, "id is required");}
+          if (!args?.id) {throw protocolError(ErrorCode.InvalidParams, "id is required");}
           const result = await bconnect.endpoints.getIndustrialEndpoint(args.id as string);
           return toolJsonResult(result);
         }
@@ -769,7 +768,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         default:
-          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
+          throw protocolError(ErrorCode.MethodNotFound, `Unknown tool: ${name}`);
       }
     } catch (error: unknown) {
       // API errors, gate refusals and configuration errors are tool results the
