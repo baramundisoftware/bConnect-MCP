@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **A stale `bconnect-mcp-gateway/node_modules` is refused** (#365). The gateway runs on the root
+  install; a folder left over from an older source build is loaded first and can hold Express 4. The
+  gateway's build and tests and the root `npm test` now stop with one line naming the folder and the
+  command to remove it. Tool caches in it (`.vite`) don't count. The image and the release zip aren't
+  affected.
+
 ## [26.1.11] - 2026-10-30
 
 > **Security and maintenance release.** Node.js 22.23.4 / 24.22.1 or later (the Node.js security

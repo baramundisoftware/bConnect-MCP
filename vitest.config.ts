@@ -38,6 +38,8 @@ export default defineConfig({
     // E2E tests in __tests__/e2e/ create their own MSW server instances
     // Integration tests should use setupFiles: ['./src/__tests__/setup/msw.ts']
     // setupFiles: ['./src/__tests__/setup/msw.ts'],  // Commented out to prevent conflicts with E2E tests
+    // A stale bconnect-mcp-gateway/node_modules stops the run before the first test (#365).
+    globalSetup: ['./__tests__/gateway-install.setup.ts'],
     // Set environment variables for tests (needed to disable HTTPS agent for MSW)
     env: {
       NODE_ENV: 'test',

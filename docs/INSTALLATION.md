@@ -111,6 +111,12 @@ npm run build
 cd ..
 ```
 
+The gateway must not have a `node_modules` folder of its own. One left over from an older source
+build (before 26.1.10, `npm install` in the gateway folder still worked) survives `npm ci` at the
+root and would load old packages first, such as Express 4. The gateway's build and tests and the
+root `npm test` stop with one line naming the folder; remove it
+(`rm -rf bconnect-mcp-gateway/node_modules`) and run again.
+
 #### Step 2 — Configure and start
 
 **Docker Compose (recommended):**
