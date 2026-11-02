@@ -114,6 +114,61 @@ describe("GET /health", () => {
     expect(body.servers).toContain("compliance");
     expect(body.servers).toContain("variables");
   });
+
+  it("answers HEAD as GET, without a body", async () => {
+    const res = await fetch(`${baseUrl}/health`, { method: "HEAD" });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("");
+  });
+
+  it.each(["POST", "PUT", "PATCH", "DELETE"])("answers %s with 405 and Allow: GET, HEAD (#330)", async (method) => {
+    const res = await fetch(`${baseUrl}/health`, { method, headers: { "Content-Type": "application/json" }, body: method === "DELETE" ? undefined : "{}" });
+    expect(res.status).toBe(405);
+    expect(res.headers.get("allow")).toBe("GET, HEAD");
+    expect(await res.json()).toEqual({ error: "Method Not Allowed. Use GET for /health." });
+  });
+});
+
+// ─── Rate limit before the body (#330) ───────────────────────────────────────
+
+describe("the rate limit refuses before the body is read (#330)", () => {
+  let baseUrl: string;
+  let close: () => void;
+
+  beforeAll(async () => {
+    vi.stubEnv("MCP_GATEWAY_RATE_LIMIT_MAX", "1");
+    vi.stubEnv("MCP_GATEWAY_MAX_BODY", "1kb");
+    ({ baseUrl, close } = await startApp());
+    // The one request the limit allows.
+    await fetch(`${baseUrl}/endpoints/mcp`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+  });
+  afterAll(() => {
+    close();
+    vi.unstubAllEnvs();
+  });
+
+  it("malformed JSON over the limit gets 429, not the parser's 400", async () => {
+    const res = await fetch(`${baseUrl}/endpoints/mcp`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{bad" });
+    expect(res.status).toBe(429);
+  });
+
+  it("a body over MCP_GATEWAY_MAX_BODY gets 429, not the parser's 413", async () => {
+    const res = await fetch(`${baseUrl}/endpoints/mcp`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "x".repeat(4096) });
+    expect(res.status).toBe(429);
+  });
+
+  it("answers 429 while the body is still unsent", async () => {
+    const { port } = new URL(baseUrl);
+    const status = await new Promise<number>((resolve, reject) => {
+      const req = http.request(
+        { host: "127.0.0.1", port, path: "/endpoints/mcp", method: "POST", headers: { "Content-Type": "application/json", "Content-Length": "512" } },
+        (res) => { resolve(res.statusCode ?? 0); res.resume(); req.destroy(); },
+      );
+      req.on("error", reject);
+      req.flushHeaders(); // headers only: the 512 bytes announced never come
+    });
+    expect(status).toBe(429);
+  });
 });
 
 // ─── POST /:domain/mcp — routing ─────────────────────────────────────────────

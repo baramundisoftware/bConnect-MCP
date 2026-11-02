@@ -2,7 +2,8 @@
  * bconnect-mcp-gateway — the entry point (gateway.ts)
  *
  * gateway.ts runs at import: it closes the write and secret gates, checks
- * BCONNECT_RELEASE, reads *_FILE secrets, detects the bMS release (#159),
+ * BCONNECT_RELEASE and MCP_GATEWAY_MAX_BODY, reads *_FILE secrets, refuses a
+ * missing or insecure service credential (#330), detects the bMS release (#159),
  * refuses a non-loopback bind without MCP_ALLOW_NO_AUTH=true, then listens. Each test imports it afresh with
  * createApp() replaced by a stub, so nothing listens; process.exit throws, so
  * a refused start stops the import where the real process would stop.
@@ -35,7 +36,7 @@ const READ = [
   "ALLOW_WRITE_OPERATIONS", "ALLOW_SECRET_READ", "BCONNECT_RELEASE", "BCONNECT_PRETTY_JSON",
   "BCONNECT_USERNAME", "BCONNECT_PASSWORD", "BCONNECT_API_KEY",
   "BCONNECT_USERNAME_FILE", "BCONNECT_PASSWORD_FILE", "BCONNECT_API_KEY_FILE",
-  "MCP_GATEWAY_PORT", "MCP_GATEWAY_BIND", "MCP_ALLOW_NO_AUTH", "MCP_GATEWAY_ALLOWED_HOSTS",
+  "MCP_GATEWAY_PORT", "MCP_GATEWAY_BIND", "MCP_ALLOW_NO_AUTH", "MCP_GATEWAY_ALLOWED_HOSTS", "MCP_GATEWAY_MAX_BODY",
   "LOG_LEVEL", "LOG_FORMAT", "BCONNECT_BASE_URL", "BCONNECT_SKIP_CONNECTIVITY_CHECK", "BCONNECT_ALLOW_INSECURE_HTTP",
 ];
 
@@ -61,6 +62,10 @@ afterEach(() => {
 });
 
 const start = () => import("../gateway.js");
+const withService = () => {
+  vi.stubEnv("BCONNECT_BASE_URL", "https://bms.gateway.test/bconnect");
+  vi.stubEnv("BCONNECT_API_KEY", "service-key");
+};
 // Log lines only: anything else on stderr (a Node warning) is not the gateway's.
 const logged = () => lines.filter((l) => l.startsWith("{")).map((l) => JSON.parse(l) as { level: string; msg: string } & Record<string, unknown>);
 
@@ -70,10 +75,6 @@ describe("gateway entry point: release detection (#159)", () => {
     bms.listen({ onUnhandledRequest: "error" });
   });
   afterEach(() => { bms.close(); });
-  const withService = () => {
-    vi.stubEnv("BCONNECT_BASE_URL", "https://bms.gateway.test/bconnect");
-    vi.stubEnv("BCONNECT_API_KEY", "service-key");
-  };
 
   it("detects the release with the service credential before it listens", async () => {
     withService();
@@ -124,7 +125,9 @@ describe("gateway entry point: release detection (#159)", () => {
     expect(logged().find((m) => m.level === "warn" && /could not detect the bMS release/.test(m.msg))?.msg).toMatch(/using 25R2 \(from BCONNECT_RELEASE\)/);
   });
 
-  it("starts with a warning when there is no service credential to read it with", async () => {
+  it("starts with a warning when bMS can't be reached (no restart loop, #330)", async () => {
+    withService();
+    managementServer = () => HttpResponse.error();
     await start();
     expect(listen).toHaveBeenCalledOnce();
     expect(logged().some((m) => m.level === "warn" && /could not detect the bMS release/.test(m.msg))).toBe(true);
@@ -139,7 +142,78 @@ describe("gateway entry point: release detection (#159)", () => {
   });
 });
 
+describe("gateway entry point: refuses to start without a usable service credential (#330)", () => {
+  beforeEach(() => {
+    managementServer = () => { throw new Error("must not be called"); };
+    bms.listen({ onUnhandledRequest: "error" });
+  });
+  afterEach(() => { bms.close(); });
+
+  /** The start stops with exit 1 before listening or calling bMS, with one error line. */
+  async function refused(): Promise<string> {
+    await expect(start()).rejects.toThrow(Exit);
+    expect(process.exit).toHaveBeenCalledWith(1);
+    expect(listen).not.toHaveBeenCalled();
+    const errors = logged().filter((m) => m.level === "error");
+    expect(errors).toHaveLength(1);
+    expect(errors[0].msg).not.toContain("\n");
+    return errors[0].msg;
+  }
+
+  it("without BCONNECT_BASE_URL", async () => {
+    vi.stubEnv("BCONNECT_API_KEY", "service-key");
+    expect(await refused()).toMatch(/^BCONNECT_BASE_URL isn't set/);
+  });
+
+  it.each([
+    ["nothing", {}],
+    ["a username only", { BCONNECT_USERNAME: "svc" }],
+    ["a password only", { BCONNECT_PASSWORD: "secret" }],
+  ])("with %s as the credential", async (_name, credential: Record<string, string>) => {
+    vi.stubEnv("BCONNECT_BASE_URL", "https://bms.gateway.test/bconnect");
+    for (const [name, value] of Object.entries(credential)) {vi.stubEnv(name, value);}
+    expect(await refused()).toBe("Either BCONNECT_API_KEY or both BCONNECT_USERNAME and BCONNECT_PASSWORD are required");
+  });
+
+  it("with an http:// base URL that isn't loopback", async () => {
+    withService();
+    vi.stubEnv("BCONNECT_BASE_URL", "http://bms.gateway.test/bconnect");
+    expect(await refused()).toMatch(/uses http:\/\/ for bms\.gateway\.test, which would send the bConnect credentials unencrypted/);
+  });
+
+  it("with a base URL that isn't a URL", async () => {
+    withService();
+    vi.stubEnv("BCONNECT_BASE_URL", "bms.gateway.test");
+    expect(await refused()).toMatch(/^BCONNECT_BASE_URL must be an https:\/\/ URL/);
+  });
+
+  it("starts with a credential from *_FILE secrets", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "gateway-secret-"));
+    onTestFinished(() => rmSync(dir, { recursive: true, force: true }));
+    writeFileSync(join(dir, "key"), "service-key\n");
+    vi.stubEnv("BCONNECT_BASE_URL", "https://bms.gateway.test/bconnect");
+    vi.stubEnv("BCONNECT_API_KEY_FILE", join(dir, "key"));
+    vi.stubEnv("BCONNECT_SKIP_CONNECTIVITY_CHECK", "true");
+    await start();
+    expect(listen).toHaveBeenCalledOnce();
+  });
+
+  it.each(["1m", "10mib", "1.5mb", "-1kb", "1 gb", "lots", "0", "1023", "101mb"])("with MCP_GATEWAY_MAX_BODY=%s", async (value) => {
+    withService();
+    vi.stubEnv("MCP_GATEWAY_MAX_BODY", value);
+    expect(await refused()).toBe(
+      `MCP_GATEWAY_MAX_BODY=${JSON.stringify(value)} isn't valid. ` +
+        "Use a whole number of bytes, kb or mb (for example 512kb or 2mb), from 1kb to 100mb.",
+    );
+  });
+});
+
 describe("gateway entry point", () => {
+  beforeEach(() => {
+    withService();
+    vi.stubEnv("BCONNECT_SKIP_CONNECTIVITY_CHECK", "true");
+  });
+
   it("listens on 127.0.0.1:3001 by default and says so", async () => {
     await start();
     expect(listen).toHaveBeenCalledOnce();
@@ -214,7 +288,7 @@ describe("gateway entry point", () => {
   });
 
   it("stops with exit 1 when a *_FILE secret can't be read, without its contents or path in the message", async () => {
-    vi.stubEnv("BCONNECT_API_KEY_FILE", join(tmpdir(), "gateway-no-such-secret"));
+    vi.stubEnv("BCONNECT_PASSWORD_FILE", join(tmpdir(), "gateway-no-such-secret"));
     await expect(start()).rejects.toThrow(Exit);
     expect(listen).not.toHaveBeenCalled();
     expect(logged().find((m) => m.level === "error")?.msg).toBe("cannot read a *_FILE secret referenced in the environment");

@@ -24,6 +24,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gateway's build and tests and the root `npm test` now stop with one line naming the folder and the
   command to remove it. Tool caches in it (`.vite`) don't count. The image and the release zip aren't
   affected.
+- **Gateway: stricter startup and request limits** (#330). The gateway no longer starts without
+  `BCONNECT_BASE_URL` or a credential, or with an `http://` address other than loopback; it stops with
+  one line, as a server does (an unreachable bMS stays a warning). `MCP_GATEWAY_MAX_BODY` takes bytes,
+  `b`, `kb` or `mb` from `1kb` to `100mb`; a value such as `1m` or `10mib`, which was read as 1 or 10
+  bytes, now stops the gateway with one line, and an empty value means `1mb` instead of no limit. The
+  rate limit applies before the body is read. `GET /health` has a limit of its own instead of none,
+  and other methods on `/health` get 405. The limiter tracks at most 10,000 client addresses and
+  forgets idle ones.
 
 ### Fixed
 - **Protocol errors show the "MCP error" prefix once** (#326). An undeclared or invalid argument, an
