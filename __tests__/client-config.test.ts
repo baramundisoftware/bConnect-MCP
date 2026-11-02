@@ -204,8 +204,8 @@ describe('clientConfigFromEnv', () => {
       expect(clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: level }).auditLog?.level).toBe(level);
     });
 
-    it('defaults to none', () => {
-      expect(clientConfigFromEnv(BASIC).auditLog?.level).toBe('none');
+    it('defaults to security (#333)', () => {
+      expect(clientConfigFromEnv(BASIC).auditLog?.level).toBe('security');
     });
 
     it.each([['ALL', 'all'], [' write ', 'write'], ['Security', 'security'], ['\tNONE\n', 'none']] as const)(
@@ -213,8 +213,8 @@ describe('clientConfigFromEnv', () => {
         expect(clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: value }).auditLog?.level).toBe(level);
       });
 
-    it.each(['', '   '])('treats %j like unset: none', (value) => {
-      expect(clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: value }).auditLog?.level).toBe('none');
+    it.each(['', '   '])('treats %j like unset: security', (value) => {
+      expect(clientConfigFromEnv({ ...BASIC, BCONNECT_AUDIT_LEVEL: value }).auditLog?.level).toBe('security');
     });
 
     it.each(['writes', 'verbose', 'yes', '0', 'all write'])('refuses unknown value %j, naming it and the valid levels', (value) => {
@@ -308,7 +308,7 @@ describe('clientConfigFromEnv', () => {
       expect(config.baseUrl).toBe(BASE.BCONNECT_BASE_URL);
       expect(config.apiKey).toBeUndefined();
       expect(config.rejectUnauthorized).toBe(true);
-      expect(config.auditLog?.level).toBe('none');
+      expect(config.auditLog?.level).toBe('security');
       expect(config.rateLimit).toBeUndefined();
     });
 

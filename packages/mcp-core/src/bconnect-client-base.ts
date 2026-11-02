@@ -132,7 +132,7 @@ export interface BConnectConfig {
 
   // Audit Logging Configuration
   auditLog?: {
-    level?: AuditLevel;       // Audit level: 'all', 'write', 'security', 'none' (default: 'none')
+    level?: AuditLevel;       // Audit level: 'all', 'write', 'security', 'none' (unset: none; from the environment, unset BCONNECT_AUDIT_LEVEL is 'security')
     includeParameters?: boolean; // Include request parameters in audit log (default: false)
     logHandler?: (entry: AuditLogEntry) => void; // Custom log handler (default: one line per entry on stderr)
   };

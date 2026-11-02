@@ -85,13 +85,15 @@ const AUDIT_LEVELS: readonly AuditLevel[] = ["none", "security", "write", "all"]
 
 /**
  * BCONNECT_AUDIT_LEVEL, ignoring case and surrounding spaces; unset or empty is
- * "none". Any other value stops the server: a typo must not switch auditing off.
+ * "security" (#333): security-relevant calls and refused requests are recorded
+ * unless "none" is set. Any other value stops the server: a typo must not
+ * switch auditing off.
  */
 function auditLevelOf(value: string | undefined): AuditLevel {
   const raw = value ?? "";
   const normalised = raw.trim().toLowerCase();
   if (normalised === "") {
-    return "none";
+    return "security";
   }
   const level = AUDIT_LEVELS.find((candidate) => candidate === normalised);
   if (!level) {

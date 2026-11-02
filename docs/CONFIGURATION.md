@@ -191,10 +191,11 @@ context (measured on list results). `true` or `false`, in any case.
 
 ### `BCONNECT_AUDIT_LEVEL`
 
-**Default:** `none`. `none`, `security`, `write` or `all`, in any case. Levels are cumulative:
+**Default:** `security`. `none`, `security`, `write` or `all`, in any case. Levels are cumulative:
 `security` records security-relevant calls (credentials, API keys, rights, security groups and
 profiles, enrollments, restarts) and refused requests, `write` adds every write, `all` records
-every request. Entries go to stderr. What each level records: [AUDIT.md](AUDIT.md).
+every request. Entries go to stderr. With `ALLOW_WRITE_OPERATIONS=true`, `write` is recommended;
+`none` switches auditing off. What each level records: [AUDIT.md](AUDIT.md).
 
 ### `BCONNECT_RATE_LIMIT_ENABLED`
 

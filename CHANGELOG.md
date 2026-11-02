@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **Audit level `security` by default** (#333). Unset or empty `BCONNECT_AUDIT_LEVEL` now means
+  `security` (was `none`) in every server and the gateway: every call to a security-relevant route and
+  every refused request writes one line on **stderr**, without parameters; stdout (JSON-RPC) is
+  unchanged. Expect more stderr lines, for example at startup of servermanagement, whose connection
+  check reads SecurityGroups. `none` switches auditing off as before. The `.env` examples and
+  `docker-compose.gateway.yml` set `security`; with `ALLOW_WRITE_OPERATIONS=true`, `write` is
+  recommended ([AUDIT.md](docs/AUDIT.md)).
 - **A stale `bconnect-mcp-gateway/node_modules` is refused** (#365). The gateway runs on the root
   install; a folder left over from an older source build is loaded first and can hold Express 4. The
   gateway's build and tests and the root `npm test` now stop with one line naming the folder and the
