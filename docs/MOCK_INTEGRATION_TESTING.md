@@ -33,7 +33,7 @@ inside the container, so map it to 13433:
 ```bash
 docker run -d --name bconnect-mock -p 127.0.0.1:13433:3433 \
   -e BCONNECT_BMS_VERSION=26r1 -e RATE_LIMIT_ENABLED=false \
-  ghcr.io/baramundisoftware/bconnect-mock:0.8.1
+  ghcr.io/baramundisoftware/bconnect-mock:0.9.1
 
 npm run build                                        # once: the tier uses the built core
 node scripts/mock-tier.mjs 26r1                      # every server, as CI runs it
