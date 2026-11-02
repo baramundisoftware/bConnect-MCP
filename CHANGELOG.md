@@ -68,6 +68,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   proxy's addresses or ranges. `true` and any other value stop the gateway at startup with one line.
   The gateway logs at startup where it takes the client address from.
 
+- **Generated API types match the specifications** (#335). `scripts/generate-api-types.mjs` writes every
+  server's `src/generated` file from `openapi-specs/<release>/` (26R1; the Industrial endpoint routes from
+  25R2), and a guard fails on a stale or unlisted file. The files were stale or mixed, and assets' was
+  hand-written; 18 copies nothing imported are gone. `scripts/download-openapi-specs.mjs` replaces the
+  shell script: it writes `openapi-specs/<release>/`, covers every module, verifies TLS, takes the
+  credentials from the environment as headers, and exits 1 on any failure. The test-only request
+  override in endpoints and jobs and an unused LAPS method in defensecontrol are removed.
+
 ### Fixed
 - **Tool descriptions and results that misstated bMS** (#327). `start_microservice` and
   `restart_microservice` report that bMS accepted the request (it answers "Microservice starting." /

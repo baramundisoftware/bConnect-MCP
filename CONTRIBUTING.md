@@ -55,7 +55,8 @@ for each release of this project. One release line supports both bMS 2026 R1 and
 1. Copy `bconnect-server-template/` to `bconnect-{domain}-mcp/` and replace `DOMAIN`.
 2. Add the server to the `workspaces` list in the root `package.json` (each server is listed
    by name).
-3. Generate the request/response types from the OpenAPI spec into `src/generated/`.
+3. Add the server's type file to `TYPE_FILES` in `scripts/generate-api-types.mjs` and run
+   `node scripts/generate-api-types.mjs`; it writes `src/generated/{domain}-types.ts`.
 4. Implement the module class in `src/modules/{domain}.ts` and register the tools in
    `src/index.ts` (steps at the top of the template's `src/index.ts`).
 5. Bind each tool to its API operation in `src/operations.ts`; the spec-conformance guard
@@ -99,7 +100,11 @@ server's README lists every tool; tests compare both with the servers' real tool
 ## Type Safety
 
 - All request/response types must come from `src/generated/{domain}-types.ts`
-- Types are generated from the OpenAPI spec via `openapi-typescript`
+- Types are generated from `openapi-specs/26R1/` (routes only 25R2 has: a second file from
+  `openapi-specs/25R2/`) by `node scripts/generate-api-types.mjs`; a test fails when a file
+  differs from what it generates. To update the specifications from a bMS, run
+  `node scripts/download-openapi-specs.mjs <25R2|26R1>` (credentials from the environment, as
+  for the servers), then regenerate.
 - Never write types manually that can be generated
 - Avoid `any`. The few existing uses carry an `eslint-disable` comment with the reason.
 - No `as never` or `as unknown as T` casts in server or core source: they switch off the

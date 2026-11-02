@@ -1,18 +1,19 @@
 import type { AxiosInstance } from 'axios';
-import type {
-  Asset,
-  AssetPagedList,
-  AssetStockFolder,
-  AssetStockFolderForCreation,
-  AssetStockFolderPagedList,
-  AssetType,
-  AssetTypeFolder,
-  AssetTypeFolderForCreation,
-  AssetTypeFolderPagedList,
-  AssetTypeForCreation,
-  AssetTypePagedList,
-  JsonPatchOperation,
-} from '../generated/assets-types.js';
+import type { JsonPatchOperation } from '@bconnect/mcp-core';
+import type { components } from '../generated/assets-types.js';
+
+type Schemas = components['schemas'];
+type Asset = Schemas['Asset'];
+type AssetPagedList = Schemas['AssetPagedList'];
+type AssetStockFolder = Schemas['AssetStockFolder'];
+type AssetStockFolderForCreation = Schemas['AssetStockFolderForCreation'];
+type AssetStockFolderPagedList = Schemas['AssetStockFolderPagedList'];
+type AssetType = Schemas['AssetType'];
+type AssetTypeFolder = Schemas['AssetTypeFolder'];
+type AssetTypeFolderForCreation = Schemas['AssetTypeFolderForCreation'];
+type AssetTypeFolderPagedList = Schemas['AssetTypeFolderPagedList'];
+type AssetTypeForCreation = Schemas['AssetTypeForCreation'];
+type AssetTypePagedList = Schemas['AssetTypePagedList'];
 
 export interface GetAssetsParams {
   OrderBy?: string;

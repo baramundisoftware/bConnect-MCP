@@ -50,13 +50,6 @@ export class DefenseControlModule {
     return response.data;
   }
 
-  async triggerLocalAdminAccountsUpdate(id: string): Promise<boolean> {
-    const response = await this.httpClient.post(
-      `${this.basePath}/LocalAdministrativeAccounts/WindowsEndpoints/${id}/TriggerUpdateOnClient`
-    );
-    return response.data;
-  }
-
   // ============================================================================
   // LOCAL ADMIN ACCOUNTS WRITE OPERATIONS - Phase 3
   // ============================================================================
