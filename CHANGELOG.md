@@ -51,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that never reads the real `BCONNECT_*` settings and keeps certificate checks on; a guard refuses copies.
   This found a compliance test that had skipped on 26R1 since its fixture changed; it now runs.
 
+- **Guards: unique tool names; the docs guard finds the guides itself** (#338). A new guard lists every
+  tool of every server in both releases and fails on a name two servers share. The docs guard reads the
+  tracked `docs/*.md` and root documents from git instead of a hand-written list; CHANGELOG.md and
+  CODE_OF_CONDUCT.md are left out with their reasons.
 - **Docs: what the key may see, what leaves the network, keeping the audit** (#340).
   CONFIGURATION.md and SECURITY.md describe the rights of the configured account (with a recommended
   security profile for the MCP key) and the data flow: requests only to `BCONNECT_BASE_URL`, no
