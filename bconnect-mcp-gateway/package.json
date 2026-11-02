@@ -6,9 +6,11 @@
   "type": "module",
   "main": "build/gateway.js",
   "scripts": {
+    "prebuild": "node check-install.mjs",
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node --import ./build/preload.js build/gateway.js",
+    "pretest": "node check-install.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
