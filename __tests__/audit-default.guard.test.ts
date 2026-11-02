@@ -8,7 +8,8 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT } from './lib/exerciser.js';
 
-const read = (file: string): string => readFileSync(join(ROOT, file), 'utf8');
+/** The file with \n line ends: a Windows checkout has \r\n. */
+const read = (file: string): string => readFileSync(join(ROOT, file), 'utf8').replace(/\r\n/g, '\n');
 
 /** The root and gateway examples, one per server, and the template's. */
 const EXAMPLES = [
