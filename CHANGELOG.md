@@ -35,6 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Gateway: `/health` answers only `{"status":"ok"}`** (#329). **Breaking** for monitoring that read
   `servers` or `count`: the unauthenticated health check no longer lists the domains the gateway
   serves. The status code is unchanged, so the compose healthcheck and checks on 200 keep working.
+  A POST to an unknown domain (`/<name>/mcp`) answers 404 with `{"error": "Unknown MCP domain '<name>'"}`
+  only; the `available` list of domains is gone from that answer too.
   `MCP_ALLOW_NO_AUTH` keeps its name and behaviour: without it, the gateway and a server's HTTP mode
   refuse a non-loopback bind, as before; [CONFIGURATION.md](docs/CONFIGURATION.md#mcp_allow_no_auth)
   now states that `true` means an authenticating proxy is in front.
