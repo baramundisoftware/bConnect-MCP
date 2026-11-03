@@ -38,6 +38,9 @@ npm ci --omit=dev
 #    (see Claude Configuration below)
 ```
 
+From 26.1.12 on, each release also has `bconnect-mcp-suite-<version>.cdx.json`, a CycloneDX SBOM of
+the packages step 2 installs, for your vulnerability management (Dependency-Track, Trivy, Grype, …).
+
 The download doesn't include the gateway; for that, use the container (Option B) or a source
 build (Option C).
 

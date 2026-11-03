@@ -56,6 +56,7 @@ command -v zip  >/dev/null || die "zip not found"
 [ -n "${VERSION}" ] || die "empty version"
 
 ARCHIVE="bconnect-mcp-suite-${VERSION}.zip"
+SBOM="bconnect-mcp-suite-${VERSION}.cdx.json"
 PKG="release-package"
 
 # --- build shared core + all servers --------------------------------------
@@ -77,7 +78,7 @@ fi
 
 # --- assemble the archive (mirrors release.yml) ---------------------------
 log "Assembling ${ARCHIVE}"
-rm -rf "${PKG}" "${ARCHIVE}" "${ARCHIVE}.sha256"
+rm -rf "${PKG}" "${ARCHIVE}" "${ARCHIVE}.sha256" "${SBOM}"
 mkdir -p "${PKG}"
 
 # Root workspace files — `npm ci` at the extracted root wires @bconnect/mcp-core.
@@ -111,6 +112,19 @@ done
 sha256sum "${ARCHIVE}" > "${ARCHIVE}.sha256"
 log "Built ${ARCHIVE} ($(du -h "${ARCHIVE}" | cut -f1)) + .sha256"
 
+# --- SBOM of what the archive installs (#348) ------------------------------
+# CycloneDX from the lockfile, production dependencies only: what
+# `npm ci --omit=dev` installs from the archive. cyclonedx-npm rather than
+# `npm sbom`, which leaves out packages that are also a dev dependency
+# somewhere (ajv, cross-spawn, … under the MCP SDK). --no-install: the pinned
+# devDependency, never a download. Not in the .sha256 file: `sha256sum -c`
+# would then fail for anyone who downloads only the zip.
+npx --no-install @cyclonedx/cyclonedx-npm --omit dev --package-lock-only \
+  --spec-version 1.6 --mc-type application --output-reproducible \
+  --output-file "${SBOM}" \
+  || die "SBOM generation failed (is @cyclonedx/cyclonedx-npm installed? run without --skip-build)"
+log "Built ${SBOM} ($(node -p "require('./${SBOM}').components.length") components)"
+
 # --- release notes from CHANGELOG -----------------------------------------
 NOTES="$(mktemp)"
 awk "/^## \[${VERSION}\]/{f=1;next} /^## \[/{if(f)exit} f{print}" CHANGELOG.md > "${NOTES}"
@@ -131,6 +145,6 @@ gh release create "${TAG}" \
   --notes-file "${NOTES}" \
   --prerelease \
   --target "$(git rev-parse HEAD)" \
-  "${ARCHIVE}" "${ARCHIVE}.sha256"
+  "${ARCHIVE}" "${ARCHIVE}.sha256" "${SBOM}"
 rm -f "${NOTES}"
-log "Done — Release ${TAG} published with ${ARCHIVE}."
+log "Done — Release ${TAG} published with ${ARCHIVE} and ${SBOM}."
