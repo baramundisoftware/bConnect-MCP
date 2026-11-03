@@ -27,6 +27,22 @@ docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
 # or pin a version: …/bconnect-mcp-gateway:26.1.11
 ```
 
+Each published version is signed by this repository's release workflow. With the
+[GitHub CLI](https://cli.github.com/) you can check where an image was built (from 26.1.9 on)
+and get its SBOM, a CycloneDX list of the packages in the image (from 26.1.12 on), for your
+vulnerability management (Dependency-Track, Trivy, Grype, …):
+
+```bash
+# Build provenance: fails unless the image was built by this repository's workflow
+gh attestation verify oci://ghcr.io/baramundisoftware/bconnect-mcp-gateway:<version> \
+  --repo baramundisoftware/bConnect-MCP
+
+# SBOM: verified the same way, then written to a file
+gh attestation verify oci://ghcr.io/baramundisoftware/bconnect-mcp-gateway:<version> \
+  --repo baramundisoftware/bConnect-MCP --predicate-type https://cyclonedx.org/bom \
+  --format json --jq '.[0].verificationResult.statement.predicate' > gateway-<version>.cdx.json
+```
+
 To build it yourself instead, the build context must be the repo **root** — the gateway
 bundles the shared `@bconnect/mcp-core` and all 13 servers:
 

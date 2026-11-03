@@ -12,6 +12,7 @@
  *    the jobs, never at the top.
  * 4. The tag must equal the root and gateway package.json version.
  * 5. Image name and tags match `scripts/publish-image.sh`, the hand-run fallback.
+ * 6. An SBOM from a syft binary pinned by version and SHA-256 is attested (#348).
  */
 import { describe, expect, it } from 'vitest';
 import { readdirSync, readFileSync } from 'node:fs';
@@ -80,11 +81,13 @@ describe('image.yml — publishing (#130)', () => {
     const login = build.filter((s) => /docker login/.test(s.run ?? ''));
     expect(login.length).toBeGreaterThan(0);
     for (const s of login) {expect(s.if).toBe("env.PUBLISH == 'true'");}
-    const upload = build.find((s) => s.uses?.startsWith('actions/upload-artifact@'));
-    expect(upload?.if).toBe("env.PUBLISH == 'true'");
+    const uploads = build.filter((s) => s.uses?.startsWith('actions/upload-artifact@'));
+    expect(uploads.length).toBeGreaterThan(0);
+    for (const s of uploads) {expect(s.if).toMatch(/^env\.PUBLISH == 'true'( && |$)/);}
     const buildStep = build.find((s) => /docker buildx build/.test(s.run ?? ''));
-    // The only push is the by-digest output chosen inside the PUBLISH branch.
-    expect(buildStep?.run).toMatch(/if \[ "\$PUBLISH" = "true" \]; then\s+output="type=image,[^"]*push=true"\s+else\s+output="type=cacheonly"/);
+    // The only push is the by-digest output chosen inside the PUBLISH branch;
+    // otherwise the image goes into the runner's Docker for the SBOM step (#348).
+    expect(buildStep?.run).toMatch(/if \[ "\$PUBLISH" = "true" \]; then\s+output="type=image,[^"]*push=true"\s+else\s+(#[^\n]*\n\s+)?output="type=docker,name=[^",]+"/);
     expect(buildStep?.run).not.toMatch(/--push\b/);
   });
 
@@ -122,5 +125,29 @@ describe('image.yml — publishing (#130)', () => {
     const attest = workflow.jobs.publish?.steps?.find((s) => s.uses?.startsWith('actions/attest-build-provenance@'));
     expect(attest).toBeDefined();
     expect(workflow.jobs.publish?.permissions).toMatchObject({ 'id-token': 'write', attestations: 'write' });
+  });
+
+  it('scans the image with a syft binary pinned by version and SHA-256, in the job without a signing token (#348)', () => {
+    const sbom = workflow.jobs.build?.steps?.find((s) => s.name === 'SBOM') as (Step & { env?: Record<string, unknown> }) | undefined;
+    expect(sbom?.env?.SYFT_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(sbom?.env?.SYFT_SHA256).toMatch(/^[0-9a-f]{64}$/);
+    // The checksum is checked before the archive is unpacked or run.
+    const run = sbom?.run ?? '';
+    expect(run).toMatch(/echo "\$SYFT_SHA256  [^"]+" \| sha256sum -c -/);
+    expect(run.indexOf('sha256sum -c')).toBeLessThan(run.indexOf('tar -xzf'));
+    expect(workflow.jobs.build?.permissions).not.toHaveProperty('id-token');
+    // A PR build scans too, so a broken SBOM step shows up before the tag.
+    expect(sbom?.if).not.toMatch(/PUBLISH/);
+  });
+
+  it('attests the SBOM for the published index (#348)', () => {
+    const attest = workflow.jobs.publish?.steps?.find((s) => s.uses?.startsWith('actions/attest@')) as
+      | (Step & { with?: Record<string, unknown> })
+      | undefined;
+    expect(attest?.with).toMatchObject({
+      'subject-digest': '${{ steps.tag.outputs.digest }}',
+      'push-to-registry': true,
+    });
+    expect(attest?.with?.['sbom-path']).toBeTruthy();
   });
 });
