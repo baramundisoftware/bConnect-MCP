@@ -11,7 +11,7 @@ team. At the end:
 
 [Pomerium](https://www.pomerium.com/docs/capabilities/mcp) does the sign-in; the gateway
 itself still has no authentication of its own
-([ADR-0003](adr/0003-gateway-auth-redesign.md)). Pomerium Core is free and open source
+(ADR-0003). Pomerium Core is free and open source
 (Apache-2.0).
 
 > **Status.** Tested on 2026-11-03 with Pomerium v0.33.6, the gateway from `main` and
