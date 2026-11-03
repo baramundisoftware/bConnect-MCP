@@ -170,9 +170,10 @@ export function createApp(): express.Application {
     res.status(405).json({ error: "Method Not Allowed. Session management not supported in stateless mode." });
   });
 
-  // Health endpoint
+  // Health endpoint: unauthenticated, so it says only that the gateway is up, nothing about
+  // which domains it serves (#329).
   app.get("/health", (_req: Request, res: Response) => {
-    res.json({ status: "ok", servers: domains, count: domains.length });
+    res.json({ status: "ok" });
   });
   app.all("/health", (_req: Request, res: Response) => {
     res.setHeader("Allow", "GET, HEAD");

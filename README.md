@@ -223,7 +223,7 @@ docker run -d --name bconnect-mcp-gateway \
   ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
 
 curl http://localhost:3001/health
-# → {"status":"ok","servers":[…],"count":13}
+# → {"status":"ok"}
 ```
 
 Clients then connect to `http://localhost:3001/<server>/mcp`, e.g. `/endpoints/mcp`.

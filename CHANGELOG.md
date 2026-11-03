@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rate limit applies before the body is read. `GET /health` has a limit of its own instead of none,
   and other methods on `/health` get 405. The limiter tracks at most 10,000 client addresses and
   forgets idle ones.
+- **Gateway: `/health` answers only `{"status":"ok"}`** (#329). **Breaking** for monitoring that read
+  `servers` or `count`: the unauthenticated health check no longer lists the domains the gateway
+  serves. The status code is unchanged, so the compose healthcheck and checks on 200 keep working.
+  `MCP_ALLOW_NO_AUTH` keeps its name and behaviour: without it, the gateway and a server's HTTP mode
+  refuse a non-loopback bind, as before; [CONFIGURATION.md](docs/CONFIGURATION.md#mcp_allow_no_auth)
+  now states that `true` means an authenticating proxy is in front.
 
 - **Typed arguments for three create tools** (#327). **Breaking:** `create_security_group`,
   `create_security_profile` and `create_os_folder` no longer take one object (`groupData`, `profileData`,
