@@ -10,8 +10,8 @@
  */
 import { type ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 
-export function protocolError(code: ErrorCode, message: string): McpError {
-  const error = new McpError(code, message);
+export function protocolError(code: ErrorCode, message: string, data?: unknown): McpError {
+  const error = new McpError(code, message, data);
   error.message = message;
   return error;
 }
