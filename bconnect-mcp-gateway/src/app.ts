@@ -117,10 +117,9 @@ export function createApp(): express.Application {
     const domain = req.params.domain;
     const factory = typeof domain === "string" ? getServerFactory(domain) : undefined;
     if (!factory) {
-      res.status(404).json({
-        error: `Unknown MCP domain '${String(domain)}'`,
-        available: domains,
-      });
+      // No list of the domains: an unauthenticated caller learns no more here than
+      // from /health (#329). The domains are in the docs and the startup log.
+      res.status(404).json({ error: `Unknown MCP domain '${String(domain)}'` });
       return;
     }
 

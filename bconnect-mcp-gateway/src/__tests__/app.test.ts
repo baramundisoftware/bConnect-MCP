@@ -181,15 +181,13 @@ describe("POST /:domain/mcp — routing", () => {
     expect(res.status).toBe(404);
   });
 
-  it("404 body lists available domains", async () => {
+  it("404 body names the unknown domain and lists no domains (#329)", async () => {
     const res = await fetch(`${baseUrl}/nonexistent/mcp`, {
       method: "POST",
       headers: MCP_HEADERS,
       body: JSON.stringify(MCP_INITIALIZE),
     });
-    const body = await res.json() as { available: string[] };
-    expect(Array.isArray(body.available)).toBe(true);
-    expect(body.available).toContain("endpoints");
+    expect(await res.json()).toEqual({ error: "Unknown MCP domain 'nonexistent'" });
   });
 
   it("returns a valid MCP JSON-RPC response for a known domain", async () => {
