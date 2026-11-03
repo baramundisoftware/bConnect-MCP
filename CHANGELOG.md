@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **SBOM for the release download** (#348). Each release gets `bconnect-mcp-suite-<version>.cdx.json`
+  next to the zip: a CycloneDX 1.6 SBOM of the production dependencies, the packages
+  `npm ci --omit=dev` installs from the archive. `scripts/release.sh` generates it from the lockfile
+  with `@cyclonedx/cyclonedx-npm`, already a dev dependency. The `.sha256` file still covers the zip only.
+
 ### Changed
 - **Audit level `security` by default** (#333). Unset or empty `BCONNECT_AUDIT_LEVEL` now means
   `security` (was `none`) in every server and the gateway: every call to a security-relevant route and
