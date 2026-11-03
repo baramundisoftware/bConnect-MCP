@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with `@cyclonedx/cyclonedx-npm`, already a dev dependency. The `.sha256` file still covers the zip only.
 
 ### Changed
+- **Gateway image without development dependencies** (#388). The image carried vitest, eslint,
+  typescript and the other build and test tools of the repository; the build now removes them once
+  everything is compiled. The image shrinks from about 340 MB to about 200 MB, and a scan of the image
+  no longer reports advisories in packages the gateway never loads. The gateway itself is unchanged.
 - **Audit level `security` by default** (#333). Unset or empty `BCONNECT_AUDIT_LEVEL` now means
   `security` (was `none`) in every server and the gateway: every call to a security-relevant route and
   every refused request writes one line on **stderr**, without parameters; stdout (JSON-RPC) is
