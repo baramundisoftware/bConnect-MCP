@@ -100,19 +100,9 @@ describe("GET /health", () => {
     expect(body.status).toBe("ok");
   });
 
-  it("returns count: 13", async () => {
+  it("names no domains and no count (#329)", async () => {
     const res = await fetch(`${baseUrl}/health`);
-    const body = await res.json() as Record<string, unknown>;
-    expect(body.count).toBe(13);
-  });
-
-  it("lists all 13 domain names", async () => {
-    const res = await fetch(`${baseUrl}/health`);
-    const body = await res.json() as { servers: string[] };
-    expect(body.servers).toHaveLength(13);
-    expect(body.servers).toContain("endpoints");
-    expect(body.servers).toContain("compliance");
-    expect(body.servers).toContain("variables");
+    expect(await res.json()).toEqual({ status: "ok" });
   });
 
   it("answers HEAD as GET, without a body", async () => {

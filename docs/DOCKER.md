@@ -46,7 +46,7 @@ docker compose -f docker-compose.gateway.yml --env-file .env.gateway up -d
 
 # Verify
 curl http://localhost:3001/health
-# → {"status":"ok","servers":[…],"count":13}
+# → {"status":"ok"}
 ```
 
 The compose file **builds the image from your checkout** (the first start takes a few

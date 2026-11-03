@@ -272,7 +272,7 @@ effective reasoning budget for actual work.
 | `405 Method Not Allowed` | GET request sent instead of POST, or the MCP Client Tool node set to **Server Sent Events** | Use POST in the HTTP Request node; choose **HTTP Streamable** in the MCP Client Tool node |
 | `406 Not Acceptable` | HTTP Request node without the `Accept` header | Add `Accept: application/json, text/event-stream` |
 | `Write operation '…' is disabled` | Writes are off through the gateway | See the note in Step 2 |
-| Gateway not reachable | Network or firewall issue | Verify `curl http://mcp-gateway:3001/health` returns `{"status":"ok","servers":[…],"count":13}` |
+| Gateway not reachable | Network or firewall issue | Verify `curl http://mcp-gateway:3001/health` returns `{"status":"ok"}` |
 | Gateway refuses to start | Non-loopback bind without `MCP_ALLOW_NO_AUTH=true` | Bind loopback, or set `MCP_ALLOW_NO_AUTH=true` once a proxy is in front |
 | Tool call fails with credential error | bConnect rejects the service credential | Verify the `BCONNECT_API_KEY` (or `BCONNECT_USERNAME`/`BCONNECT_PASSWORD`) in `.env.gateway` is valid in baramundi Management Center → Server Management → API Keys |
 

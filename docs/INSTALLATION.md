@@ -141,7 +141,7 @@ node --import ./build/preload.js build/gateway.js
 Verify the gateway is running:
 ```bash
 curl http://localhost:3001/health
-# → {"status":"ok","servers":[...],"count":13}
+# → {"status":"ok"}
 ```
 
 #### Gateway settings

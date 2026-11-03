@@ -279,9 +279,11 @@ listed here (comma-separated, ports ignored); others get 403. The gateway has
 
 ### `MCP_ALLOW_NO_AUTH`
 
-**Default:** off. `true` allows binding a server's HTTP mode, or the gateway, to an address other
-than loopback, without authentication. It asserts that an authenticating proxy is in front; not
-recommended otherwise.
+**Default:** off. `true` means: an authenticating reverse proxy is in front. Only then does a
+server's HTTP mode, or the gateway, start on an address other than loopback; without it, both refuse
+and say why. Neither has authentication of its own, so the supported setups are loopback only, or
+behind an authenticating proxy that is the only way to reach them. Don't set it to expose the
+gateway without a proxy.
 
 ---
 
