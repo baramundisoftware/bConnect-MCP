@@ -177,7 +177,7 @@ jobs:
         release: ["26r1", "25r2"]
     env:
       # The one place the mock version is pinned; raising it is this line.
-      BCONNECT_MOCK_IMAGE: ghcr.io/baramundisoftware/bconnect-mock:0.9.1
+      BCONNECT_MOCK_IMAGE: ghcr.io/baramundisoftware/bconnect-mock:0.10.0
       BCONNECT_MOCK_URL: http://127.0.0.1:13433
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
