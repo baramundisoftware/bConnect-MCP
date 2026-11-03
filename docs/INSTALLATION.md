@@ -473,6 +473,10 @@ claude mcp add --transport http bconnect-assets    https://mcp-gateway.company.c
 
 Add `--header "Authorization: Bearer …"` if your proxy expects a token.
 
+One entry for several domains instead: set
+[`MCP_GATEWAY_COMBINED`](CONFIGURATION.md#mcp_gateway_combined) (`all` or a list of domains) and
+add `https://mcp-gateway.company.com/mcp`. See [CLIENTS.md](CLIENTS.md#through-the-http-gateway).
+
 **Claude Desktop:** `claude_desktop_config.json` starts local (stdio) servers. To reach the
 gateway from there, run a local stdio-to-HTTP bridge as the `command`, or use the servers
 directly over stdio as shown above.

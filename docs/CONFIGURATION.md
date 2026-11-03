@@ -22,7 +22,7 @@ where a setting behaves differently for that server.
 URL or credential, a non-ASCII password, a CA file it can't read, and an invalid
 `BCONNECT_RELEASE`, `BCONNECT_TIMEOUT_MS`, `BCONNECT_MAX_RETRIES`, `BCONNECT_AUDIT_LEVEL` or
 `BCONNECT_PRETTY_JSON`. The gateway stops at startup on the same base URL and credential problems,
-an invalid `BCONNECT_RELEASE`, `BCONNECT_PRETTY_JSON`, `MCP_GATEWAY_MAX_BODY` or `MCP_GATEWAY_TRUST_PROXY`, or a `*_FILE` it
+an invalid `BCONNECT_RELEASE`, `BCONNECT_PRETTY_JSON`, `MCP_GATEWAY_MAX_BODY`, `MCP_GATEWAY_TRUST_PROXY` or `MCP_GATEWAY_COMBINED`, or a `*_FILE` it
 can't read; for the others, every tool call reports the problem. The switches (`ALLOW_*`, `MCP_ALLOW_NO_AUTH`, `BCONNECT_RATE_LIMIT_ENABLED`,
 `BCONNECT_SKIP_CONNECTIVITY_CHECK`, …) take effect only when set to exactly `true`; other numbers
 and levels that aren't checked fall back to their default.
@@ -354,6 +354,33 @@ bucket. Set it only when a proxy is actually in front and it matches that proxy:
 too high, or an address that isn't the proxy, a client can set `X-Forwarded-For` itself and choose
 the address the gateway sees. The proxy must replace or append to `X-Forwarded-For`, never pass on
 a client's value unchecked. Limit each user at the proxy too: the gateway sees addresses, not users.
+
+### `MCP_GATEWAY_COMBINED`
+
+**Default:** off. One more endpoint, `POST /mcp`, that offers the tools of several domains as one
+MCP server, for clients and proxies (LiteLLM and the like) that want one server entry instead of one
+per domain. The per-domain endpoints (`/<domain>/mcp`) stay as they are.
+
+- `all`: every domain;
+- domain names separated by commas, for example `assets,endpoints,compliance` (any case; spaces
+  ignored).
+
+Empty or unset leaves it off: `/mcp` then answers 404, like any path the gateway doesn't serve.
+`all` together with names, a list that names no domain, or a name that isn't a domain stops the
+gateway at startup with one line naming the accepted values.
+
+Tool names are those of the domains, with no domain prefix (`list_assets`, `get_vulnerability`, …);
+they are unique across the domains. At startup the gateway lists the tools of the chosen domains for
+the detected bMS release and stops if two of them offer the same name; the startup log says whether
+the endpoint is on, which domains it offers and how many tools. The write and secret gates stay
+closed as on every gateway endpoint, so `/mcp` lists only read tools; a call is answered exactly as
+on the domain's own endpoint, refusals included. The host check, rate limit, body limit and access
+log apply to `/mcp` as to the other endpoints; `GET` and `DELETE /mcp` get 405.
+
+**Behind a proxy:** whoever may reach `/mcp` gets every domain it includes. If your proxy allows
+some users only some `/<domain>/mcp` paths, name only those domains here, or don't let those users
+reach `/mcp`. Check how your proxy's path rules treat `/mcp`: a glob such as `/*/mcp` needs a
+segment before `mcp` and doesn't match it, a regular expression such as `.*/mcp$` does.
 
 ### `LOG_LEVEL`
 

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Gateway: one endpoint for several domains, `POST /mcp`** (#131). Off by default;
+  `MCP_GATEWAY_COMBINED=all` or a list of domains (`assets,endpoints,compliance`) turns it on. It
+  offers the tools of those domains as one MCP server, for proxies such as LiteLLM and clients that
+  want one server entry instead of 13; the per-domain endpoints stay as they are. Tool names are the
+  domains' own, with no prefix: at startup the gateway checks that no two chosen domains share one,
+  and logs whether the endpoint is on, its domains and its tool count (130 read tools with `all` on
+  26R1). Calls are answered exactly as on the domain's own endpoint, refusals included; the write and
+  secret gates, host check, rate limit, body limit and access log apply as on every endpoint. An
+  invalid value stops the gateway at startup. Whoever may reach `/mcp` gets every domain it includes:
+  see [DOCKER.md](docs/DOCKER.md#tls-and-authentication-operator-responsibility) for proxy setups.
+  The combining code is in `@bconnect/mcp-core` (`createCombinedServer`, `combinedTools`).
+
 ### Changed
 - **Audit level `security` by default** (#333). Unset or empty `BCONNECT_AUDIT_LEVEL` now means
   `security` (was `none`) in every server and the gateway: every call to a security-relevant route and

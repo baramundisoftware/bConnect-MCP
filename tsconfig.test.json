@@ -13,7 +13,9 @@
   "include": [
     "__tests__/**/*.ts",
     "bconnect-*-mcp/src/**/__tests__/**/*.ts",
-    "bconnect-server-template/src/**/__tests__/**/*.ts"
+    "bconnect-server-template/src/**/__tests__/**/*.ts",
+    // The gateway builds its other tests itself; this one imports root files outside its src.
+    "bconnect-mcp-gateway/src/__tests__/mock-integration/**/*.ts"
   ],
   "exclude": ["**/node_modules", "**/build"]
 }

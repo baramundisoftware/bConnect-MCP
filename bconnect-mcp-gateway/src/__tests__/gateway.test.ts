@@ -20,7 +20,17 @@ const listen = vi.fn((_port: number, _bind: string, onListening: () => void) => 
 
 // A real .env in the checkout must not reach these tests; the call itself is checked below.
 const loadEnv = vi.fn();
-vi.mock("@bconnect/mcp-core", async (importOriginal) => ({ ...(await importOriginal<object>()), loadEnvOnce: loadEnv }));
+// combinedTools as in core, unless a test makes it refuse (two domains sharing a tool name).
+let combinedToolsRefusal: Error | undefined;
+vi.mock("@bconnect/mcp-core", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@bconnect/mcp-core")>();
+  return {
+    ...actual,
+    loadEnvOnce: loadEnv,
+    combinedTools: (...args: Parameters<typeof actual.combinedTools>) =>
+      combinedToolsRefusal ? Promise.reject(combinedToolsRefusal) : actual.combinedTools(...args),
+  };
+});
 
 vi.mock("../app.js", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../app.js")>();
@@ -36,7 +46,7 @@ const READ = [
   "ALLOW_WRITE_OPERATIONS", "ALLOW_SECRET_READ", "BCONNECT_RELEASE", "BCONNECT_PRETTY_JSON",
   "BCONNECT_USERNAME", "BCONNECT_PASSWORD", "BCONNECT_API_KEY",
   "BCONNECT_USERNAME_FILE", "BCONNECT_PASSWORD_FILE", "BCONNECT_API_KEY_FILE",
-  "MCP_GATEWAY_PORT", "MCP_GATEWAY_BIND", "MCP_ALLOW_NO_AUTH", "MCP_GATEWAY_ALLOWED_HOSTS", "MCP_GATEWAY_MAX_BODY", "MCP_GATEWAY_TRUST_PROXY",
+  "MCP_GATEWAY_PORT", "MCP_GATEWAY_BIND", "MCP_ALLOW_NO_AUTH", "MCP_GATEWAY_ALLOWED_HOSTS", "MCP_GATEWAY_MAX_BODY", "MCP_GATEWAY_TRUST_PROXY", "MCP_GATEWAY_COMBINED",
   "LOG_LEVEL", "LOG_FORMAT", "BCONNECT_BASE_URL", "BCONNECT_SKIP_CONNECTIVITY_CHECK", "BCONNECT_ALLOW_INSECURE_HTTP",
 ];
 
@@ -48,6 +58,7 @@ let lines: string[];
 
 beforeEach(() => {
   vi.resetModules();
+  combinedToolsRefusal = undefined;
   listen.mockClear();
   loadEnv.mockClear();
   for (const name of READ) {vi.stubEnv(name, undefined);}
@@ -204,6 +215,16 @@ describe("gateway entry point: refuses to start without a usable service credent
     expect((await refused()).startsWith(`MCP_GATEWAY_TRUST_PROXY=${JSON.stringify(value)} isn't valid. `)).toBe(true);
   });
 
+  it.each([
+    [",", "it names no domain"],
+    ["all,assets", "all stands alone"],
+    ["assets,nope", '"nope" is not a domain'],
+  ])("with MCP_GATEWAY_COMBINED=%s (#131)", async (value, reason) => {
+    withService();
+    vi.stubEnv("MCP_GATEWAY_COMBINED", value);
+    expect((await refused()).startsWith(`MCP_GATEWAY_COMBINED=${JSON.stringify(value)} isn't valid: ${reason}. Use all, or domain names`)).toBe(true);
+  });
+
   it.each(["1m", "10mib", "1.5mb", "-1kb", "1 gb", "lots", "0", "1023", "101mb"])("with MCP_GATEWAY_MAX_BODY=%s", async (value) => {
     withService();
     vi.stubEnv("MCP_GATEWAY_MAX_BODY", value);
@@ -327,5 +348,40 @@ describe("gateway entry point", () => {
     vi.stubEnv("MCP_ALLOW_NO_AUTH", "true");
     await start();
     expect(listen.mock.calls[0].slice(0, 2)).toEqual([3001, "0.0.0.0"]);
+  });
+
+  it("says the combined endpoint is off when MCP_GATEWAY_COMBINED is unset (#131)", async () => {
+    await start();
+    expect(logged().find((m) => m.msg.startsWith("combined endpoint"))).toMatchObject({
+      level: "info", msg: "combined endpoint off (MCP_GATEWAY_COMBINED unset)", path: "/mcp",
+    });
+  });
+
+  it("with MCP_GATEWAY_COMBINED=all it checks the tool names and says which domains /mcp offers (#131)", async () => {
+    vi.stubEnv("MCP_GATEWAY_COMBINED", "all");
+    vi.stubEnv("BCONNECT_RELEASE", "26R1");
+    await start();
+    expect(listen).toHaveBeenCalledOnce();
+    const { domains } = await import("../app.js");
+    const line = logged().find((m) => m.msg.startsWith("combined endpoint"));
+    expect(line).toMatchObject({ level: "info", msg: "combined endpoint on (MCP_GATEWAY_COMBINED)", path: "/mcp", domains: domains.join(",") });
+    expect(line?.tools).toBeGreaterThan(50);
+  });
+
+  it("with a list it names only the chosen domains (#131)", async () => {
+    vi.stubEnv("MCP_GATEWAY_COMBINED", "groups,compliance");
+    await start();
+    expect(logged().find((m) => m.msg.startsWith("combined endpoint"))).toMatchObject({ domains: "compliance,groups" });
+  });
+
+  it("stops with exit 1 before listening when two chosen domains share a tool name (#131)", async () => {
+    vi.stubEnv("MCP_GATEWAY_COMBINED", "all");
+    combinedToolsRefusal = new Error("tool 'x' is offered by both 'a' and 'b'; the combined endpoint needs unique tool names");
+    await expect(start()).rejects.toThrow(Exit);
+    expect(process.exit).toHaveBeenCalledWith(1);
+    expect(listen).not.toHaveBeenCalled();
+    expect(logged().find((m) => m.level === "error")?.msg).toBe(
+      "MCP_GATEWAY_COMBINED: tool 'x' is offered by both 'a' and 'b'; the combined endpoint needs unique tool names",
+    );
   });
 });

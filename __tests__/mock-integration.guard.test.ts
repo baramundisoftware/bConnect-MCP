@@ -15,28 +15,31 @@ import { join } from 'node:path';
 import { ROOT, SERVERS } from './lib/exerciser.js';
 import { mockAvailable, mockClientConfig } from './lib/mock-integration.js';
 
-const SHARED = "from '../../../../__tests__/lib/mock-integration.js'";
+/** The shared helper, imported by path (either quote style: the gateway's code uses double quotes). */
+const SHARED = /from (['"])\.\.\/\.\.\/\.\.\/\.\.\/__tests__\/lib\/mock-integration\.js\1/;
+/** The 13 servers and the gateway, whose combined endpoint has mock tests too (#131). */
+const PACKAGES = [...SERVERS, 'bconnect-mcp-gateway'];
 const dirOf = (server: string) => join(ROOT, server, 'src', '__tests__', 'mock-integration');
 const testsOf = (server: string) => readdirSync(dirOf(server)).filter((f) => f.endsWith('.mock.test.ts'));
 const read = (server: string, file: string) => readFileSync(join(dirOf(server), file), 'utf8').replace(/\r\n/g, '\n');
 
 describe('mock-integration tests: one helper module', () => {
-  it.each(SERVERS)('%s has mock tests and no helper module of its own', (server) => {
+  it.each(PACKAGES)('%s has mock tests and no helper module of its own', (server) => {
     const files = readdirSync(dirOf(server));
     expect(testsOf(server).length).toBeGreaterThan(0);
     expect(files.filter((f) => !f.endsWith('.mock.test.ts'))).toEqual([]);
   });
 
-  it.each(SERVERS)('%s imports the shared helper, reads no real BCONNECT_* setting and keeps certificate checks on', (server) => {
+  it.each(PACKAGES)('%s imports the shared helper, reads no real BCONNECT_* setting and keeps certificate checks on', (server) => {
     for (const file of testsOf(server)) {
       const source = read(server, file);
-      expect(source, file).toContain(SHARED);
+      expect(source, file).toMatch(SHARED);
       expect(source.match(/process\.env\.BCONNECT_(?!RELEASE\b)\w+/g) ?? [], file).toEqual([]);
       expect(source, file).not.toMatch(/rejectUnauthorized:\s*false/);
     }
   });
 
-  it.each(SERVERS)('%s skips a test without the mock instead of returning early', (server) => {
+  it.each(PACKAGES)('%s skips a test without the mock instead of returning early', (server) => {
     for (const file of testsOf(server)) {
       const source = read(server, file);
       expect(source, file).toMatch(/available = await mockAvailable\('[a-z]+'\);/);

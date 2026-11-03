@@ -13,7 +13,8 @@
  * - Runs `npm run test:mock` in each server that lists a tool in that
  *   release. On 25R2, compliance and universaldynamicgroups list none (their
  *   APIs are 26R1 only); __tests__/mock-tier.guard.test.ts checks this list
- *   against the generated release tables.
+ *   against the generated release tables. Then in the gateway, on both
+ *   releases: its combined endpoint against the mock (#131).
  * - Runs the tests with MOCK_REQUIRED=true: a mock that isn't reachable fails
  *   them instead of skipping them (#336).
  * - Fails when a server's tests fail, and when fewer tests passed than the
@@ -34,6 +35,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+/** The gateway's folder: its mock tests run after the servers', on every release. */
+export const GATEWAY = "bconnect-mcp-gateway";
 
 /** Servers none of whose APIs exist in 25R2. */
 const ONLY_26R1 = ["bconnect-compliance-mcp", "bconnect-universaldynamicgroups-mcp"];
@@ -82,6 +86,11 @@ export function serversFor(release) {
     .filter((name) => name.startsWith("bconnect-") && name.endsWith("-mcp"))
     .sort();
   return release === "25r2" ? servers.filter((name) => !ONLY_26R1.includes(name)) : servers;
+}
+
+/** Every folder the tier runs `test:mock` in for `release`: the servers, then the gateway. */
+export function tierPackages(release) {
+  return [...serversFor(release), GATEWAY];
 }
 
 /** The counts of vitest's summary line ("Tests  1 failed | 6 passed | 1 skipped (8)"), or undefined without one. */
@@ -142,9 +151,9 @@ export async function checkHealth(baseUrl, release, waitMs) {
 async function main() {
   const release = (process.argv[2] ?? "").toLowerCase();
   const baseUrl = process.env.BCONNECT_MOCK_URL ?? "http://127.0.0.1:13433";
-  const servers = serversFor(release);
+  const servers = tierPackages(release);
   await checkHealth(baseUrl, release, Number(process.env.MOCK_TIER_WAIT_MS ?? 30000));
-  console.log(`mock tier: bMS ${release}, mock at ${baseUrl}, ${servers.length} servers`);
+  console.log(`mock tier: bMS ${release}, mock at ${baseUrl}, ${servers.length - 1} servers and the gateway`);
 
   const failed = [];
   for (const server of servers) {
@@ -158,7 +167,7 @@ async function main() {
     }
   }
 
-  console.log(`\nmock tier (${release}): ${servers.length - failed.length} of ${servers.length} servers passed`);
+  console.log(`\nmock tier (${release}): ${servers.length - failed.length} of ${servers.length} passed (servers and gateway)`);
   if (failed.length > 0) {
     console.error(failed.map((line) => `  FAILED ${line}`).join("\n"));
     process.exitCode = 1;
