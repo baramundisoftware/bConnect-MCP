@@ -2,7 +2,8 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    exclude: ["**/node_modules/**", "**/build/**"],
+    // The mock-integration tier runs on its own: `npm run test:mock` (vitest.mock.config.ts).
+    exclude: ["**/node_modules/**", "**/build/**", "**/mock-integration/**"],
     env: {
       NODE_ENV: "test",
       VITEST: "true",

@@ -130,6 +130,13 @@ The proxy in front of the gateway must:
 Clients then connect to `https://<host>/<domain>/mcp` through the proxy, which
 supplies whatever credential/session it requires.
 
+With [`MCP_GATEWAY_COMBINED`](CONFIGURATION.md#mcp_gateway_combined) set, the gateway also
+serves `https://<host>/mcp`: one endpoint with the tools of the domains it names, for clients
+and proxies that want one server entry. Whoever the proxy lets reach `/mcp` gets every one of
+those domains. If some users may use only some `/<domain>/mcp` paths, name only those domains,
+or don't let those users reach `/mcp`; and check that your proxy's path rules treat `/mcp` the
+way you intend.
+
 > Per-IP rate limiting is enforced in the gateway itself as a coarse backstop
 > (`MCP_GATEWAY_RATE_LIMIT_*`). Behind a proxy, the gateway sees every request as coming
 > from the proxy's address, so all callers share one limit and the access log shows the

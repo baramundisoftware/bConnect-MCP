@@ -74,6 +74,8 @@ services:
       MCP_GATEWAY_MAX_BODY: ${MCP_GATEWAY_MAX_BODY:-1mb}
       # Behind a proxy: whose X-Forwarded-For to trust (#331); off by default.
       MCP_GATEWAY_TRUST_PROXY: ${MCP_GATEWAY_TRUST_PROXY:-}
+      # One endpoint POST /mcp for the tools of several domains (#131); off by default.
+      MCP_GATEWAY_COMBINED: ${MCP_GATEWAY_COMBINED:-}
       # Logging (#98).
       LOG_LEVEL: ${LOG_LEVEL:-info}
       LOG_FORMAT: ${LOG_FORMAT:-text}

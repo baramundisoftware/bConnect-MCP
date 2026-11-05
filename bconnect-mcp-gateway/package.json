@@ -12,6 +12,7 @@
     "start": "node --import ./build/preload.js build/gateway.js",
     "pretest": "node check-install.mjs",
     "test": "vitest run",
+    "test:mock": "vitest run -c vitest.mock.config.ts",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage"
   },

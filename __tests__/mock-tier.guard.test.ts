@@ -15,7 +15,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import yaml from 'js-yaml';
 import { ROOT, SERVERS } from './lib/exerciser.js';
-import { checkHealth, EXPECTED_SKIPS, serversFor, TEST_ARGS, testCommand, testCounts, testEnv, verdict } from '../scripts/mock-tier.mjs';
+import { checkHealth, EXPECTED_SKIPS, GATEWAY, serversFor, tierPackages, TEST_ARGS, testCommand, testCounts, testEnv, verdict } from '../scripts/mock-tier.mjs';
 
 const ci = readFileSync(join(ROOT, '.github', 'workflows', 'ci.yml'), 'utf8');
 
@@ -85,6 +85,12 @@ describe('scripts/mock-tier.mjs — which servers run', () => {
     expect(serversFor('26r1')).toHaveLength(13);
     expect(SERVERS.filter((s) => !serversFor('25r2').includes(s)))
       .toEqual(['bconnect-compliance-mcp', 'bconnect-universaldynamicgroups-mcp']);
+  });
+
+  it.each(['26r1', '25r2'])('%s: the gateway runs last, after the servers (#131)', (release) => {
+    expect(tierPackages(release)).toEqual([...serversFor(release), GATEWAY]);
+    const pkg = JSON.parse(readFileSync(join(ROOT, GATEWAY, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
+    expect(pkg.scripts['test:mock']).toBe('vitest run -c vitest.mock.config.ts');
   });
 
   it('refuses a release it does not know', () => {

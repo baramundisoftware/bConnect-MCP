@@ -247,6 +247,20 @@ Domains: `activedirectory`, `assets`, `compliance`, `defensecontrol`, `endpoints
 `jobs`, `operatingsystems`, `servermanagement`, `software`, `universaldynamicgroups`,
 `updatemanagement`, `variables`.
 
+**One entry for several domains:** with
+[`MCP_GATEWAY_COMBINED`](CONFIGURATION.md#mcp_gateway_combined) set (off by default), the gateway
+also serves `/mcp`, one MCP server with the tools of the domains it names, under their usual
+names. Useful for a proxy such as LiteLLM, or a client where one server entry is easier to manage
+than 13:
+
+```bash
+claude mcp add --transport http bconnect https://mcp-gateway.company.com/mcp
+```
+
+It lists every tool of those domains at once (130 read tools with `all` on 26R1), which costs
+context in clients that load every tool; name only the domains you need, or use the per-domain
+entries.
+
 ### HTTP-only clients
 
 These have no way to start a local process, so the gateway is their only route:

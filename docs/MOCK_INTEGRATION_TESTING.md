@@ -33,7 +33,7 @@ inside the container, so map it to 13433:
 ```bash
 docker run -d --name bconnect-mock -p 127.0.0.1:13433:3433 \
   -e BCONNECT_BMS_VERSION=26r1 -e RATE_LIMIT_ENABLED=false \
-  ghcr.io/baramundisoftware/bconnect-mock:0.10.0
+  ghcr.io/baramundisoftware/bconnect-mock:0.12.0
 
 npm run build                                        # once: the tier uses the built core
 node scripts/mock-tier.mjs 26r1                      # every server, as CI runs it
@@ -50,7 +50,8 @@ exist there.
 ## In CI
 
 The `mock` job in `.github/workflows/ci.yml` runs `scripts/mock-tier.mjs` on
-every pull request and on `main`, once per release (26r1: 13 servers, 25r2: 11),
+every pull request and on `main`, once per release (26r1: 13 servers, 25r2: 11, then the
+gateway on both),
 against the mock image pinned in the job's `env` (to move to a newer mock, change
 that one line). The job log names the image digest.
 It isn't a required check.
@@ -97,7 +98,17 @@ bconnect-<domain>-mcp/
     <domain>.mock.test.ts                            # 2–5 tests
 ```
 
-`vitest.mock.config.ts` is identical across servers. Each server's
+`vitest.mock.config.ts` is identical across servers.
+
+**The gateway** (#131) has one mock test, `bconnect-mcp-gateway/src/__tests__/mock-integration/combined.mock.test.ts`,
+run by `npm run test:mock` in `bconnect-mcp-gateway` and by `scripts/mock-tier.mjs` after the
+servers, on both releases. It starts the gateway app in-process (the CI job builds the servers,
+not the gateway) with the mock as its bMS and `MCP_GATEWAY_COMBINED` on, and runs the checks of
+`scripts/check-combined.mjs`: `/mcp` lists exactly the tools of the domain endpoints, and one list
+tool per domain answers the same on `/mcp` as on its own endpoint. The same script checks a gateway
+against a real bMS before a release ([LIVE_BMS_TESTING.md](LIVE_BMS_TESTING.md#the-gateways-combined-endpoint)).
+The gateway's build leaves this test out, since it imports files outside the gateway;
+`npm run typecheck:tests` checks it. Each server's
 `BConnectClient` (`src/bconnect-client.ts`) is a thin wrapper over the shared
 `BConnectClientBase` in `@bconnect/mcp-core`, so this tier exercises the real
 production client path per server against the mock.
