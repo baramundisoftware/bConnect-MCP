@@ -9,7 +9,7 @@
 
 import express, { Request, Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { allowedHosts, hostCheck, jsonRpcRequestErrors } from "@bconnect/mcp-core";
+import { allowedHosts, createCombinedServer, hostCheck, jsonRpcRequestErrors, type CombinedPart } from "@bconnect/mcp-core";
 
 import { createServer as createActivedirectoryServer } from "bconnect-activedirectory-mcp";
 import { createServer as createAssetsServer } from "bconnect-assets-mcp";
@@ -30,6 +30,7 @@ import { maxBodyBytes } from "./body-limit.js";
 import { trustProxySetting } from "./trust-proxy.js";
 import { createLogger, type Logger } from "./logger.js";
 import { createAccessLogMiddleware } from "./access-log.js";
+import { COMBINED_INFO, COMBINED_PATH, combinedDomains } from "./combined.js";
 
 // ─── Server factory registry ──────────────────────────────────────────────────
  
@@ -58,6 +59,33 @@ export const domains = Object.keys(serverFactories);
  */
 export function getServerFactory(domain: string): Function | undefined {
   return Object.hasOwn(serverFactories, domain) ? serverFactories[domain] : undefined;
+}
+
+/** What the request handler needs of a server: connect it to the transport, close it after. */
+interface McpServerHandle {
+  connect: (transport: StreamableHTTPServerTransport) => Promise<void>;
+  close: () => Promise<void>;
+}
+interface McpServerHandleResult { server: McpServerHandle }
+type McpServerFactory = () => McpServerHandleResult;
+
+/**
+ * Fresh, unconnected servers of the given domains, for the combined server (#131).
+ * Each comes from the domain's factory without a credential, as for its own endpoint.
+ */
+export function combinedParts(chosen: readonly string[]): CombinedPart[] {
+  return chosen.map((domain) => {
+    const factory = getServerFactory(domain);
+    if (!factory) {
+      throw new Error(`Unknown MCP domain '${domain}'`);
+    }
+    return { domain, server: (factory(undefined) as Pick<CombinedPart, "server">).server };
+  });
+}
+
+/** The combined server for the chosen domains: one per request, as for a domain endpoint. */
+export function createCombinedGatewayServer(chosen: readonly string[]): McpServerHandleResult {
+  return createCombinedServer(combinedParts(chosen), COMBINED_INFO);
 }
 
 /**
@@ -110,23 +138,13 @@ export function createApp(): express.Application {
   // unread, never decompressed, so the limit holds for what is actually parsed.
   app.use(express.json({ limit: maxBodyBytes(), inflate: false }));
 
-  // MCP Streamable HTTP handler — stateless, one server+transport per request
-  app.post("/:domain/mcp", async (req: Request, res: Response) => {
-    // Express 5 types a route parameter as string | string[] (a wildcard captures several
-    // segments); `:domain` is one segment, and anything else is no known domain.
-    const domain = req.params.domain;
-    const factory = typeof domain === "string" ? getServerFactory(domain) : undefined;
-    if (!factory) {
-      // No list of the domains: an unauthenticated caller learns no more here than
-      // from /health (#329). The domains are in the docs and the startup log.
-      res.status(404).json({ error: `Unknown MCP domain '${String(domain)}'` });
-      return;
-    }
-
+  // MCP Streamable HTTP handler — stateless, one server+transport per request.
+  // `label` names the endpoint in the error log: the domain, or "combined".
+  const serveMcp = async (req: Request, res: Response, factory: McpServerFactory, label: string): Promise<void> => {
     // Express 5 forwards a rejected promise from an async handler to the error
     // handler; the handler still catches its own errors so that only this request
     // fails, with an answer of its own, and cleanup always runs (REQ-GW-002).
-    let server: { connect: (t: unknown) => Promise<void>; close: () => Promise<void> } | undefined;
+    let server: McpServerHandle | undefined;
     let transport: StreamableHTTPServerTransport | undefined;
     // close() returns a promise; a rejection during cleanup must not become an
     // unhandled rejection either.
@@ -137,7 +155,7 @@ export function createApp(): express.Application {
     try {
       // No per-request credential: each server falls back to the BCONNECT_*
       // service credential (single-credential mode). bMS RBAC governs it.
-      ({ server } = factory(undefined) as { server: NonNullable<typeof server> });
+      ({ server } = factory());
       transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
 
       res.on("close", release);
@@ -146,7 +164,7 @@ export function createApp(): express.Application {
       await transport.handleRequest(req, res, req.body);
     } catch (error) {
       logger.error("MCP request failed", {
-        domain: req.params.domain,
+        domain: label,
         error: error instanceof Error ? error.message : String(error),
       });
       if (!res.headersSent) {
@@ -158,6 +176,33 @@ export function createApp(): express.Application {
       }
       release();
     }
+  };
+
+  // The combined endpoint (#131): only when MCP_GATEWAY_COMBINED names domains. Off, /mcp
+  // is a path like any other the gateway doesn't serve (404 below).
+  const combined = combinedDomains(process.env.MCP_GATEWAY_COMBINED, domains);
+  if (combined) {
+    app.post(COMBINED_PATH, (req: Request, res: Response) => serveMcp(req, res, () => createCombinedGatewayServer(combined), "combined"));
+    app.get(COMBINED_PATH, (_req: Request, res: Response) => {
+      res.status(405).json({ error: "Method Not Allowed. Use POST for MCP requests." });
+    });
+    app.delete(COMBINED_PATH, (_req: Request, res: Response) => {
+      res.status(405).json({ error: "Method Not Allowed. Session management not supported in stateless mode." });
+    });
+  }
+
+  app.post("/:domain/mcp", async (req: Request, res: Response) => {
+    // Express 5 types a route parameter as string | string[] (a wildcard captures several
+    // segments); `:domain` is one segment, and anything else is no known domain.
+    const domain = req.params.domain;
+    const factory = typeof domain === "string" ? getServerFactory(domain) : undefined;
+    if (!factory) {
+      // No list of the domains: an unauthenticated caller learns no more here than
+      // from /health (#329). The domains are in the docs and the startup log.
+      res.status(404).json({ error: `Unknown MCP domain '${String(domain)}'` });
+      return;
+    }
+    await serveMcp(req, res, () => factory(undefined) as McpServerHandleResult, String(domain));
   });
 
   // Method-not-allowed guards (MCP spec compliance)

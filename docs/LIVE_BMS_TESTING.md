@@ -187,6 +187,29 @@ release notes. A release with no test installation is listed as "not verified li
 A failing run blocks the release unless the decision to ship anyway is written down
 there, with the reason.
 
+### The gateway's combined endpoint
+
+The tier tests the servers, not the gateway. Before a release, check the gateway's combined
+endpoint `/mcp` (#131) against the same bMS with `scripts/check-combined.mjs`, the check the mock
+tier runs against bConnect-Mock. It only reads: it lists the tools and calls one list tool per
+domain, with `countOnly` where the tool offers it.
+
+1. Build the gateway, in Git Bash from the repo root: `cd bconnect-mcp-gateway && npm run build`.
+2. Start it with the bMS of `.env.local` and the combined endpoint on. Give the password in a file
+   rather than on the command line (the gateway reads `BCONNECT_PASSWORD_FILE`):
+
+   ```bash
+   BCONNECT_BASE_URL='https://bms-host:443/bconnect' BCONNECT_USERNAME='DOMAIN\readonly-user' \
+   BCONNECT_PASSWORD_FILE='C:/Users/me/bms-password.txt' BCONNECT_CA_CERT_PATH='C:/Users/me/bms-ca.pem' \
+   MCP_GATEWAY_COMBINED=all npm start
+   ```
+
+   The startup log names the detected release and says `combined endpoint on` with the domains
+   and the tool count.
+3. In a second Git Bash, from the repo root: `node scripts/check-combined.mjs http://127.0.0.1:3001`.
+   Every line must start with `ok` or `info`; the last line says `all checks passed`. Put the
+   output into the release PR next to `reports/live-bms-summary.md`.
+
 The tier only reads. Write tools are verified by hand on a test bMS; the ones that
 were are listed in `packages/mcp-core/src/unverified-writes.ts`
 (`LIVE_VERIFIED_WRITE_TOOLS`), and every other write tool says in its description

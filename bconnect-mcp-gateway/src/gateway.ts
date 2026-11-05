@@ -24,11 +24,15 @@
  *   MCP_GATEWAY_MAX_BODY — request body limit (see body-limit.ts); checked at startup.
  *   MCP_GATEWAY_TRUST_PROXY — the proxy whose X-Forwarded-For to trust (see trust-proxy.ts);
  *                         checked at startup.
+ *   MCP_GATEWAY_COMBINED — the combined endpoint POST /mcp (see combined.ts): unset
+ *                         is off; `all` or a list of domains turns it on. Checked at startup,
+ *                         with the tool names of the chosen domains (no name twice).
  *   ALLOW_WRITE_OPERATIONS / ALLOW_SECRET_READ — ignored: kept off (see gates.ts).
  */
 
-import { BConnectClientBase, checkReleaseSetting, clientConfigFromEnv, detectRelease, loadEnvOnce, prettyJsonSetting } from "@bconnect/mcp-core";
-import { createApp, domains, gatewayAllowedHosts } from "./app.js";
+import { BConnectClientBase, checkReleaseSetting, clientConfigFromEnv, combinedTools, detectRelease, loadEnvOnce, prettyJsonSetting } from "@bconnect/mcp-core";
+import { combinedParts, createApp, domains, gatewayAllowedHosts } from "./app.js";
+import { COMBINED_INFO, COMBINED_PATH, combinedDomains } from "./combined.js";
 import { maxBodyBytes } from "./body-limit.js";
 import { trustProxySetting } from "./trust-proxy.js";
 import { closeGates } from "./gates.js";
@@ -59,6 +63,7 @@ try {
   prettyJsonSetting(process.env.BCONNECT_PRETTY_JSON);
   maxBodyBytes();
   trustProxySetting();
+  combinedDomains(process.env.MCP_GATEWAY_COMBINED, domains);
 } catch (err) {
   log.error((err as Error).message);
   process.exit(1);
@@ -109,9 +114,28 @@ await detectRelease(
   { info: (line) => log.info(line), warn: (line) => log.warn(line) },
 );
 
+// The combined endpoint (#131): the tools of the chosen domains, listed once with the
+// detected release, must have unique names; the endpoint routes calls by name.
+const combined = combinedDomains(process.env.MCP_GATEWAY_COMBINED, domains);
+let combinedToolCount = 0;
+if (combined) {
+  try {
+    const tools = await combinedTools(combinedParts(combined), COMBINED_INFO);
+    combinedToolCount = Object.values(tools).reduce((sum, names) => sum + names.length, 0);
+  } catch (err) {
+    log.error(`MCP_GATEWAY_COMBINED: ${(err as Error).message}`);
+    process.exit(1);
+  }
+}
+
 app.listen(port, bind, () => {
   log.info("listening", { url: `http://${bind}:${port}`, servers: domains.length });
   log.info("domains", { domains: domains.join(",") });
+  if (combined) {
+    log.info("combined endpoint on (MCP_GATEWAY_COMBINED)", { path: COMBINED_PATH, domains: combined.join(","), tools: combinedToolCount });
+  } else {
+    log.info("combined endpoint off (MCP_GATEWAY_COMBINED unset)", { path: COMBINED_PATH });
+  }
   const hosts = gatewayAllowedHosts((entry) => {
     log.warn("MCP_GATEWAY_ALLOWED_HOSTS entry ignored: not a host name or address", { entry: JSON.stringify(entry) });
   });
