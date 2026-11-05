@@ -114,6 +114,11 @@ The proxy in front of the gateway must:
 Clients then connect to `https://<host>/<domain>/mcp` through the proxy, which
 supplies whatever credential/session it requires.
 
+A proxy for MCP clients must speak the MCP sign-in (a 401 pointing to a discovery
+document, then bearer tokens): cookie-only single sign-on proxies such as oauth2-proxy
+lock MCP clients out. Step by step with Pomerium and Entra ID:
+[GATEWAY_POMERIUM_ENTRA_ID.md](GATEWAY_POMERIUM_ENTRA_ID.md).
+
 > Per-IP rate limiting is enforced in the gateway itself as a coarse backstop
 > (`MCP_GATEWAY_RATE_LIMIT_*`). Behind a proxy, the gateway sees every request as coming
 > from the proxy's address, so all callers share one limit and the access log shows the
