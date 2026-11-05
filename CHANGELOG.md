@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   next to the zip: a CycloneDX 1.6 SBOM of the production dependencies, the packages
   `npm ci --omit=dev` installs from the archive. `scripts/release.sh` generates it from the lockfile
   with `@cyclonedx/cyclonedx-npm`, already a dev dependency. The `.sha256` file still covers the zip only.
+- **SBOM attestation for the gateway image** (#348). Each published image gets a signed CycloneDX
+  SBOM next to its build provenance: the packages in the image, including the base image's. Check
+  and download it with `gh attestation verify … --predicate-type https://cyclonedx.org/bom`
+  ([DOCKER.md](docs/DOCKER.md#get-the-image)). The image workflow generates it with a pinned `syft`
+  binary on every build, pull requests included, and fails when development tools show up in the
+  image again (#388).
 - **Gateway: one endpoint for several domains, `POST /mcp`** (#131). Off by default;
   `MCP_GATEWAY_COMBINED=all` or a list of domains (`assets,endpoints,compliance`) turns it on. It
   offers the tools of those domains as one MCP server, for proxies such as LiteLLM and clients that

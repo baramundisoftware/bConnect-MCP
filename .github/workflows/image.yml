@@ -3,9 +3,17 @@
 # ── What it does ────────────────────────────────────────────────────────────
 # A tag `vX.Y.Z` builds the gateway image for linux/amd64 and linux/arm64 and
 # publishes it to GHCR as `:X.Y.Z`, `:X.Y` and `:latest`, with a build
-# provenance attestation. A pull request that touches the image (Dockerfile,
-# gateway, core, servers, this file) builds both platforms and pushes nothing,
-# so a broken image shows up before the tag, not after it.
+# provenance attestation and an SBOM attestation (CycloneDX). A pull request
+# that touches the image (Dockerfile, gateway, core, servers, this file) builds
+# both platforms, loads them into the runner's Docker and pushes nothing, so a
+# broken image or SBOM step shows up before the tag, not after it.
+#
+# ── SBOM (#348) ─────────────────────────────────────────────────────────────
+# syft, a release binary pinned by version and SHA-256 (no third-party action,
+# see below), scans the amd64 image in the build job, which holds no signing
+# token. The publish job attests that SBOM for the multi-platform index: both
+# platforms carry the same JS dependency tree on the same base image. The scan
+# fails when development tools show up in the image again (#388).
 #
 # This replaces the hand-run `scripts/publish-image.sh` for releases; the
 # script stays as the fallback when Actions is unavailable. Same image name,
@@ -118,7 +126,8 @@ jobs:
           if [ "$PUBLISH" = "true" ]; then
             output="type=image,name=$IMAGE,push-by-digest=true,name-canonical=true,push=true"
           else
-            output="type=cacheonly"
+            # Into the runner's Docker only, for the SBOM step.
+            output="type=docker,name=bconnect-mcp-gateway:ci"
           fi
           docker buildx build \
             --file bconnect-mcp-gateway/Dockerfile \
@@ -139,6 +148,49 @@ jobs:
             mkdir -p digests
             touch "digests/${digest#sha256:}"
           fi
+
+      - name: SBOM
+        if: matrix.platform == 'linux/amd64'
+        shell: bash
+        env:
+          SYFT_VERSION: 1.55.0
+          SYFT_SHA256: bb65249542db5fedeeb4d3f9b018b75e7264dbfbbb10486f044581a92f90490d
+          SYFT_CHECK_FOR_APP_UPDATE: "false"
+        run: |
+          tool=$(mktemp -d)
+          curl -sSfL -o "$tool/syft.tar.gz" \
+            "https://github.com/anchore/syft/releases/download/v${SYFT_VERSION}/syft_${SYFT_VERSION}_linux_amd64.tar.gz"
+          echo "$SYFT_SHA256  $tool/syft.tar.gz" | sha256sum -c -
+          tar -xzf "$tool/syft.tar.gz" -C "$tool" syft
+          if [ "$PUBLISH" = "true" ]; then
+            source="registry:$IMAGE@$(jq -r '."containerimage.digest"' metadata.json)"
+          else
+            source="docker:bconnect-mcp-gateway:ci"
+          fi
+          "$tool/syft" scan "$source" --quiet --output cyclonedx-json=sbom.cdx.json
+          names=$(jq -r '.components[].name' sbom.cdx.json)
+          for runtime in express @modelcontextprotocol/sdk axios; do
+            if ! grep -qx "$runtime" <<<"$names"; then
+              echo "::error::The SBOM lists no $runtime: the scan found no npm packages in the image."
+              exit 1
+            fi
+          done
+          # No match is the good case: `|| true`, or pipefail ends the step here.
+          dev=$({ grep -xE 'vitest|eslint|typescript|msw|openapi-typescript|@cyclonedx/cyclonedx-npm' || true; } <<<"$names" | sort -u | paste -sd, -)
+          if [ -n "$dev" ]; then
+            echo "::error::Development tools in the image: $dev. The Dockerfile prunes them after the build (#388)."
+            exit 1
+          fi
+          echo "SBOM: $(jq '.components | length' sbom.cdx.json) components"
+
+      - name: Keep the SBOM for the publish job
+        if: env.PUBLISH == 'true' && matrix.platform == 'linux/amd64'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Keep the digest for the publish job
         if: env.PUBLISH == 'true'
@@ -204,4 +256,17 @@ jobs:
         with:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.tag.outputs.digest }}
+          push-to-registry: true
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: sbom
+          path: sbom
+
+      - name: Attest SBOM
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.tag.outputs.digest }}
+          sbom-path: sbom/sbom.cdx.json
           push-to-registry: true
