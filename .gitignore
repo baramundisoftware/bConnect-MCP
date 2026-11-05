@@ -71,10 +71,11 @@ scripts/generate-checksums.sh
 build-tests/pkg-output.test.sh
 build-tests/quality-gate.sh
 
-# Generated SBOM (CycloneDX) — produced by `npm run sbom`, attached to releases
+# Generated SBOMs (CycloneDX) — produced by `npm run sbom`, one per directory
 sbom.json
 
 # Release artifacts — produced by `npm run release` (scripts/release.sh)
 release-package/
 bconnect-mcp-suite-*.zip
 bconnect-mcp-suite-*.zip.sha256
+bconnect-mcp-suite-*.cdx.json

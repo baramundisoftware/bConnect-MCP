@@ -40,6 +40,13 @@ RUN npm run build \
 # up at /app/node_modules — the real, hoisted express/SDK plus the workspace
 # symlinks to core and the 13 servers.
 
+# Everything is compiled: drop the development dependencies (vitest, eslint,
+# typescript, …) so they don't ship in the image (#388). The servers list core
+# as a dependency and core lists express, the SDK and axios, so all the gateway
+# loads at runtime stays.
+WORKDIR /app
+RUN npm prune --omit=dev
+
 # ── Runtime stage ────────────────────────────────────────────────
 FROM node:22-alpine@sha256:fe4f6d74e20370acb04ad889077d14d0f64a9c8ea6a42bc60cddf1e844699914
 

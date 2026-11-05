@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **SBOM for the release download** (#348). Each release gets `bconnect-mcp-suite-<version>.cdx.json`
+  next to the zip: a CycloneDX 1.6 SBOM of the production dependencies, the packages
+  `npm ci --omit=dev` installs from the archive. `scripts/release.sh` generates it from the lockfile
+  with `@cyclonedx/cyclonedx-npm`, already a dev dependency. The `.sha256` file still covers the zip only.
 - **Gateway: one endpoint for several domains, `POST /mcp`** (#131). Off by default;
   `MCP_GATEWAY_COMBINED=all` or a list of domains (`assets,endpoints,compliance`) turns it on. It
   offers the tools of those domains as one MCP server, for proxies such as LiteLLM and clients that
@@ -21,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The combining code is in `@bconnect/mcp-core` (`createCombinedServer`, `combinedTools`).
 
 ### Changed
+- **Gateway image without development dependencies** (#388). The image carried vitest, eslint,
+  typescript and the other build and test tools of the repository; the build now removes them once
+  everything is compiled. The image shrinks from about 340 MB to about 200 MB, and a scan of the image
+  no longer reports advisories in packages the gateway never loads. The gateway itself is unchanged.
 - **Audit level `security` by default** (#333). Unset or empty `BCONNECT_AUDIT_LEVEL` now means
   `security` (was `none`) in every server and the gateway: every call to a security-relevant route and
   every refused request writes one line on **stderr**, without parameters; stdout (JSON-RPC) is
