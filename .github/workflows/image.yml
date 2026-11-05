@@ -175,7 +175,8 @@ jobs:
               exit 1
             fi
           done
-          dev=$(grep -xE 'vitest|eslint|typescript|msw|openapi-typescript|@cyclonedx/cyclonedx-npm' <<<"$names" | sort -u | paste -sd, -)
+          # No match is the good case: `|| true`, or pipefail ends the step here.
+          dev=$({ grep -xE 'vitest|eslint|typescript|msw|openapi-typescript|@cyclonedx/cyclonedx-npm' || true; } <<<"$names" | sort -u | paste -sd, -)
           if [ -n "$dev" ]; then
             echo "::error::Development tools in the image: $dev. The Dockerfile prunes them after the build (#388)."
             exit 1
