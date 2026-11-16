@@ -34,7 +34,7 @@
   "dependencies": {
     "@bconnect/mcp-core": "*",
     "@modelcontextprotocol/sdk": "^1.32.2",
-    "axios": "^1.21.0"
+    "axios": "^1.21.1"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
