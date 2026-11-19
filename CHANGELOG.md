@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.1.12] - 2026-11-19
+
+> **Gateway hardening, one combined endpoint, supply-chain checks.** The gateway can offer all domains
+> as one MCP server (`POST /mcp`, off by default), its image is about 200 MB without development tools
+> and ships with a signed SBOM, and the release download gets an SBOM. **Two breaking changes:**
+> `/health` answers only `{"status":"ok"}` (#329), and `create_security_group`,
+> `create_security_profile` and `create_os_folder` take typed fields instead of one object (#327).
+> The audit level is `security` by default (#333). See "Upgrading from 26.1.11" below.
+
 ### Added
 - **SBOM for the release download** (#348). Each release gets `bconnect-mcp-suite-<version>.cdx.json`
   next to the zip: a CycloneDX 1.6 SBOM of the production dependencies, the packages
@@ -46,6 +55,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   server checks at startup (one list route of its domain) no longer stops the server: bMS answered and
   accepted the credentials, so the server starts with one warning line naming the route, and its other
   tools work within the key's rights. 401 (credentials rejected), TLS and network errors still stop it.
+  Checked live on bMS 26R1 (26.1.161.0): there, a restricted account gets 200 with the objects
+  filtered by its rights (an empty list), not 403, on all 13 check routes; the startup check passes and
+  the tools return fewer or no entries without an error (#402).
 - **A stale `bconnect-mcp-gateway/node_modules` is refused** (#365). The gateway runs on the root
   install; a folder left over from an older source build is loaded first and can hold Express 4. The
   gateway's build and tests and the root `npm test` now stop with one line naming the folder and the
@@ -141,6 +153,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the prefix; the text after it is unchanged. Every protocol error is built by `protocolError()` in
   `@bconnect/mcp-core`, and a guard refuses a direct `new McpError(…)` in production code. bConnect
   errors stay tool results with `isError`.
+
+### Security
+- **Runtime dependencies without known advisories** (`npm audit --omit=dev`: 0, was 2 moderate):
+  hono 4.13.16 and @hono/node-server 2.1.6, which the MCP SDK brings (#403); axios 1.21.1 (#398).
+
+### Upgrading from 26.1.11
+- **Monitoring that reads `/health`:** the answer is now only `{"status":"ok"}` with the same status
+  code; `servers` and `count` are gone (#329). Checks on HTTP 200 keep working.
+- **Callers of `create_security_group`, `create_security_profile` or `create_os_folder`** (scripts,
+  saved prompts, workflows): pass the fields (`name`, `profiles`, …) instead of `groupData`,
+  `profileData` or `folderData`; a call with the old object is refused before anything is sent (#327).
+- **stderr gets audit lines by default** (#333): one line per call to a security-relevant route and per
+  refused request. Set `BCONNECT_AUDIT_LEVEL=none` for the old behaviour.
+- **Gateway settings that were silently accepted now stop it at startup** (#330, #331): a missing
+  `BCONNECT_BASE_URL` or credential, an `http://` address other than loopback, an
+  `MCP_GATEWAY_MAX_BODY` such as `1m` or `10mib` (use `1mb`), an invalid `MCP_GATEWAY_TRUST_PROXY` or
+  `MCP_GATEWAY_COMBINED`. The gateway names the setting in one line.
+- **Gateway from source:** a leftover `bconnect-mcp-gateway/node_modules` now stops the build and tests
+  with the command to remove it (#365).
+- **Gateway container:** pull `ghcr.io/baramundisoftware/bconnect-mcp-gateway:26.1.12` (or `latest`).
+- The combined endpoint `/mcp` is off unless `MCP_GATEWAY_COMBINED` is set; nothing changes without it.
+
+### Verified
+- CI on the release candidate: Linux and Windows × Node.js 22.23.4 and 24, coverage floors, mock tier
+  25R2 and 26R1.
+- Linux (Node.js 22.23.4): `npm run ci` passed (build, lint, test types, casts, tests, coverage floors,
+  mock tier 26R1 and 25R2 against bConnect-Mock 0.12.0); `npm audit --omit=dev` 0.
+- Live, bMS 26R1 (26.1.161.0) on Windows 11, Node.js 24.22.1, read-only tier (GET only; the account
+  was an administrator's): 13/13 servers started, TLS verified, read tools 72 ok, 2 expected answers,
+  0 failed; 4 not verified live (no MDM, no Entra ID on the test bMS). The first run failed 6 tools
+  whose answers took 30–54 s: the live tier's request guard cut answers off after 5 s (fixed in #404,
+  test code only; the servers waited, checked on the same bMS).
+- Gateway combined endpoint against that bMS: `scripts/check-combined.mjs` all checks passed
+  (130 tools on `/mcp`, 13 domains).
+- Specification download (#335) from that bMS: 12/12; the files match the repository except the
+  bMS address in `servers.url` (and one more line each in defensecontrol and software).
+- #334 on that bMS with a jobs-only account: 13/13 servers start, a wrong password still stops at
+  startup; bMS filters instead of answering 403 (#402).
+- 25R2: not verified live (no test installation).
 
 ## [26.1.11] - 2026-10-30
 
@@ -965,7 +1016,8 @@ providing 212 tools across endpoints, jobs, assets, software, compliance, and mo
 - Transport modes: stdio (local) and HTTP (network/Docker)
 - Unit tests and mock-integration tests across all servers
 
-[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.11...HEAD
+[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.12...HEAD
+[26.1.12]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.11...v26.1.12
 [26.1.11]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.10...v26.1.11
 [26.1.10]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.9...v26.1.10
 [26.1.9]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.7...v26.1.9
