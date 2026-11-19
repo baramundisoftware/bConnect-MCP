@@ -24,7 +24,7 @@ image (linux/amd64 + linux/arm64) — browse it on the
 
 ```bash
 docker pull ghcr.io/baramundisoftware/bconnect-mcp-gateway:latest
-# or pin a version: …/bconnect-mcp-gateway:26.1.11
+# or pin a version: …/bconnect-mcp-gateway:26.1.12
 ```
 
 Each published version is signed by this repository's release workflow. With the
