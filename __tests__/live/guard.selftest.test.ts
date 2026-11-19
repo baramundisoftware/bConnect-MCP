@@ -3,7 +3,7 @@
  * Requests go through axios, as the servers' do (including its redirect handling).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { createServer, request as namedRequest, type Server } from 'node:http';
+import { Agent, createServer, request as namedRequest, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import axios from 'axios';
 import { createGuard } from './lib/guard.mjs';
@@ -30,6 +30,10 @@ beforeAll(async () => {
     if (req.url === '/bconnect/redirect') {
       res.writeHead(302, { Location: '/bconnect/target' });
       res.end();
+      return;
+    }
+    if (req.url === '/bconnect/slow') {
+      setTimeout(() => { res.writeHead(200, { 'content-type': 'application/json' }); res.end('{"slow":true}'); }, 600);
       return;
     }
     if (req.url === '/bconnect/redirect-elsewhere') {
@@ -112,6 +116,24 @@ describe('live request guard', () => {
     expect(hits).toEqual(['GET /bconnect/redirect-elsewhere']);
     expect(otherHits).toEqual([]);
     expect(guard.refused.map((r) => r.reason)).toContain('redirect (307)');
+  });
+
+  // The shared core's agent closes idle sockets after 5 s (agent `timeout`). Through the
+  // guard, that limit must not cut off an answer that takes longer: the request's own
+  // timeout decides (v26.1.12 Windows run: bMS answers of 30-54 s failed after 5 s).
+  it('waits for an answer slower than the agent idle limit, within the request timeout', async () => {
+    const httpAgent = new Agent({ keepAlive: true, timeout: 200 });
+    try {
+      const res = await axios.get(`${origin}/bconnect/slow`, { httpAgent, timeout: 5_000 });
+      expect(res.data).toEqual({ slow: true });
+    } finally { httpAgent.destroy(); }
+  });
+
+  it('still fails a request that exceeds its own timeout', async () => {
+    const httpAgent = new Agent({ keepAlive: true, timeout: 5_000 });
+    try {
+      await expect(axios.get(`${origin}/bconnect/slow`, { httpAgent, timeout: 200 })).rejects.toThrow(/timeout of 200ms exceeded/);
+    } finally { httpAgent.destroy(); }
   });
 
   it('records a redirect and refuses to follow it', async () => {
