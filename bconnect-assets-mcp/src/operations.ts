@@ -13,7 +13,7 @@ export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   get_asset: ['GetAsset'],
   update_asset: ['UpdateAsset'],
   delete_asset: ['DeleteAsset'],
-  list_assets_in_asset_stock: ['GetAssetsAssetStock'],
+  list_asset_stock_assets: ['GetAssetsAssetStock'],
   list_assets_by_logical_group: ['GetAssetsByLogicalGroup'],
   list_assets_by_windows_endpoint: ['GetAssetsByWindowsEndpoint'],
   list_asset_stock_folders: ['GetAssetStockFolders'],

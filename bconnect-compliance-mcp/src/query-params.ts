@@ -21,7 +21,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_detected_rule_violations_for_endpoint: {
+    list_detected_rule_violations_by_endpoint: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointName or RuleName (e.g. RuleName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName or RuleName."},
       Page: PAGE_PROPERTY,
@@ -35,7 +35,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_detected_vulnerabilities_for_endpoint: {
+    list_detected_vulnerabilities_by_endpoint: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is CveId (e.g. CveId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable value is CveId."},
       Page: PAGE_PROPERTY,
@@ -65,7 +65,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_detected_rule_violations_for_endpoint: {
+    list_detected_rule_violations_by_endpoint: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointName or RuleName (e.g. RuleName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName or RuleName."},
       Page: PAGE_PROPERTY,
@@ -79,7 +79,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_detected_vulnerabilities_for_endpoint: {
+    list_detected_vulnerabilities_by_endpoint: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is CveId (e.g. CveId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable value is CveId."},
       Page: PAGE_PROPERTY,

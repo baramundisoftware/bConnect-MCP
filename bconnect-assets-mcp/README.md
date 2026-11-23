@@ -57,7 +57,7 @@ been checked against a real bMS yet.
 | `get_asset` | Get details of a specific asset by GUID |
 | `update_asset` | Update asset fields via JSON Patch |
 | `delete_asset` | Permanently delete an asset by GUID |
-| `list_assets_in_asset_stock` | List assets in the asset stock container |
+| `list_asset_stock_assets` | List assets in the asset stock container |
 | `list_assets_by_logical_group` | List assets assigned to a logical group's endpoints |
 | `list_assets_by_windows_endpoint` | List assets assigned to a specific Windows endpoint |
 | `list_asset_stock_folders` | List all asset stock folders |

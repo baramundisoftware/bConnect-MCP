@@ -16,9 +16,9 @@ import { createServer } from '../index.js';
 
 const EXPECTED_TOOLS = [
   'list_detected_rule_violations',
-  'list_detected_rule_violations_for_endpoint',
+  'list_detected_rule_violations_by_endpoint',
   'list_detected_vulnerabilities',
-  'list_detected_vulnerabilities_for_endpoint',
+  'list_detected_vulnerabilities_by_endpoint',
   'list_mobile_device_rules',
   'get_mobile_device_rule',
   'list_vulnerabilities',
@@ -90,36 +90,36 @@ describe('bconnect-compliance-mcp', () => {
 
   // Validator-migration regression tests (centralised validateOrThrow)
   describe('validator rejects bad arguments before reaching bConnect', () => {
-    it('list_detected_rule_violations_for_endpoint: missing endpointId', async () => {
+    it('list_detected_rule_violations_by_endpoint: missing endpointId', async () => {
       const { client } = await startServer();
       await expect(
-        client.callTool({ name: 'list_detected_rule_violations_for_endpoint', arguments: {} })
+        client.callTool({ name: 'list_detected_rule_violations_by_endpoint', arguments: {} })
       ).rejects.toThrow(/endpointId is required/i);
     });
 
-    it('list_detected_vulnerabilities_for_endpoint: endpointId not a GUID', async () => {
+    it('list_detected_vulnerabilities_by_endpoint: endpointId not a GUID', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({
-          name: 'list_detected_vulnerabilities_for_endpoint',
+          name: 'list_detected_vulnerabilities_by_endpoint',
           arguments: { endpointId: 'oops' }
         })
       ).rejects.toThrow(/guid/i);
     });
 
-    it('get_mobile_device_rule: missing ruleId', async () => {
+    it('get_mobile_device_rule: missing id', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({ name: 'get_mobile_device_rule', arguments: {} })
-      ).rejects.toThrow(/ruleId is required/i);
+      ).rejects.toThrow(/id is required/i);
     });
 
-    it('get_vulnerability: vulnerabilityId not a GUID', async () => {
+    it('get_vulnerability: id not a GUID', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({
           name: 'get_vulnerability',
-          arguments: { vulnerabilityId: 'not-a-guid' }
+          arguments: { id: 'not-a-guid' }
         })
       ).rejects.toThrow(/guid/i);
     });

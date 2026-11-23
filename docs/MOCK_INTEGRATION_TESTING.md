@@ -13,7 +13,7 @@ with `BCONNECT_MODULE_ROUTING=lenient`, ignore the domain segment and serve a fe
 routes that aren't in the specification. The tier covers only a few calls per
 server; `npm test` checks every route against the specification (the
 spec-conformance guard).
-The canonical example is `list_detected_vulnerabilities_for_endpoint`,
+The canonical example is `list_detected_vulnerabilities_by_endpoint`,
 which once called the wrong path (see the comment in
 `bconnect-compliance-mcp/src/__tests__/mock-integration/compliance.mock.test.ts`).
 

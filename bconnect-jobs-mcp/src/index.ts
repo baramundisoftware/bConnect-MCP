@@ -17,7 +17,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
-import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, protocolError } from "@bconnect/mcp-core";
+import { refuseReplacedTool, refuseRenamedArguments, validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, protocolError } from "@bconnect/mcp-core";
+import { REPLACED_TOOLS, RENAMED_ARGUMENTS } from "./replaced-tools.js";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -183,7 +184,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           }
         },
         {
-          name: "list_endpoint_job_instances",
+          name: "list_job_instances_by_endpoint",
           description: "List all job instances for a specific endpoint in baramundi. Returns all deployment runs (job executions) assigned to that endpoint with their status and timing. Use this to see all jobs running on a particular device.",
           inputSchema: {
             type: "object",
@@ -488,6 +489,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // countOnly (#165): count with one 1-row request instead of loading a page.
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
+    // A renamed tool or argument answers with its new name; it never runs (#342).
+    refuseReplacedTool(REPLACED_TOOLS, TOOL_RELEASES, name);
+    refuseRenamedArguments(RENAMED_ARGUMENTS, name, args);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
 
@@ -539,10 +543,10 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "list_endpoint_job_instances": {
+        case "list_job_instances_by_endpoint": {
           const result = await bconnect.jobs.getEndpointJobInstances(
             args!.endpointId as string,
-            pickArguments(args ?? {}, sends("list_endpoint_job_instances"))
+            pickArguments(args ?? {}, sends("list_job_instances_by_endpoint"))
           );
           return toolJsonResult(result);
         }

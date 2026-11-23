@@ -20,7 +20,7 @@ const INSTALLED_SOFTWARE_TOOLS = [
   'list_installed_windows_software',
   'list_installed_software_by_endpoint',
   'list_installed_software_by_logical_group',
-  'list_installed_software_by_dynamic_group',
+  'list_installed_software_by_universal_dynamic_group',
 ];
 
 const BUNDLE_TOOLS_26R1 = [
@@ -162,10 +162,10 @@ describe('bconnect-software-mcp (26R1 mode)', () => {
       ).rejects.toThrow(/endpointId is required/i);
     });
 
-    it('get_software_bundle: bundleId not a GUID', async () => {
+    it('get_software_bundle: id not a GUID', async () => {
       const { client } = await startServer('26R1');
       await expect(
-        client.callTool({ name: 'get_software_bundle', arguments: { bundleId: 'oops' } })
+        client.callTool({ name: 'get_software_bundle', arguments: { id: 'oops' } })
       ).rejects.toThrow(/guid/i);
     });
 

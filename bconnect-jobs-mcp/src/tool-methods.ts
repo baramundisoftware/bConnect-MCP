@@ -14,7 +14,7 @@ export const TOOL_METHODS: ToolMethodTable = {
   get_job_definition: ["GET"],
   list_job_instances: ["GET"],
   get_job_instance: ["GET"],
-  list_endpoint_job_instances: ["GET"],
+  list_job_instances_by_endpoint: ["GET"],
   list_job_instances_by_definition: ["GET"],
   list_job_instances_by_logical_group: ["GET"],
   list_job_definitions_by_folder: ["GET"],

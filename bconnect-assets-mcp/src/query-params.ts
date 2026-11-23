@@ -19,7 +19,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_assets_in_asset_stock: {
+    list_asset_stock_assets: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, InventoryNumber, Contact and CostCenter."},
       DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
@@ -97,7 +97,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_assets_in_asset_stock: {
+    list_asset_stock_assets: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, InventoryNumber, Contact and CostCenter."},
       DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
@@ -191,7 +191,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_assets_in_asset_stock: {
+    list_asset_stock_assets: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, InventoryNumber, Contact and CostCenter."},
       DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},

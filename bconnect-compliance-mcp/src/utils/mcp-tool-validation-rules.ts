@@ -43,7 +43,7 @@ export const ComplianceRules = {
 
   // GET /v2.0/Compliance/Rules/{ruleId}
   getMobileDeviceRule: (): ValidationRule[] => [
-    CommonRules.guid('ruleId')
+    CommonRules.guid('id')
   ],
 
   // GET /v2.0/Compliance/Vulnerabilities
@@ -51,6 +51,6 @@ export const ComplianceRules = {
 
   // GET /v2.0/Compliance/Vulnerabilities/{vulnerabilityId}
   getVulnerability: (): ValidationRule[] => [
-    CommonRules.guid('vulnerabilityId')
+    CommonRules.guid('id')
   ]
 };

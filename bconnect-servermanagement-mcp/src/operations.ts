@@ -40,7 +40,7 @@ export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   update_api_key: ['UpdateApiKey'],
   delete_api_key: ['DeleteApiKey'],
   simulate_msw_cleanup: ['SimulateMSWCleanup'],
-  msw_cleanup: ['MSWCleanup'],
+  run_msw_cleanup: ['MSWCleanup'],
   list_download_jobs: ['GetDownloadJobs'],
   get_download_job: ['GetDownloadJob'],
 };

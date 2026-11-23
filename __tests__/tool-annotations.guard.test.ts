@@ -68,7 +68,7 @@ describe('annotationProblems (known-bad fixtures)', () => {
     expect(annotationProblems('list_things', read, ['GET'])).toEqual([]);
     expect(annotationProblems('create_thing', write, ['POST'])).toEqual([]);
     expect(annotationProblems('delete_thing', del, ['DELETE'])).toEqual([]);
-    expect(annotationProblems('msw_cleanup', { ...del, title: 'MSW cleanup' }, ['POST'])).toEqual([]);
+    expect(annotationProblems('run_msw_cleanup', { ...del, title: 'MSW cleanup' }, ['POST'])).toEqual([]);
   });
 
   it('flags a read-only tool that sends a non-GET request', () => {
@@ -78,7 +78,7 @@ describe('annotationProblems (known-bad fixtures)', () => {
 
   it('flags a DELETE tool not marked destructive, and a listed destructive write marked harmless', () => {
     expect(annotationProblems('delete_thing', write, ['DELETE'])).toHaveLength(1);
-    expect(annotationProblems('msw_cleanup', write, ['POST'])).toHaveLength(1);
+    expect(annotationProblems('run_msw_cleanup', write, ['POST'])).toHaveLength(1);
   });
 
   it('flags a write marked destructive without a DELETE or a reason', () => {

@@ -108,7 +108,7 @@ describe('createCombinedServer: tools/list', () => {
 
 describe('createCombinedServer: tools/call', () => {
   it('sends a call to the domain that lists the tool and returns its result unchanged', async () => {
-    const args = { name: 'get_vulnerability', arguments: { vulnerabilityId: ID } };
+    const args = { name: 'get_vulnerability', arguments: { id: ID } };
     const own = await (await direct('compliance')).callTool(args);
     expect(own.isError).not.toBe(true);
     expect(await (await combined()).callTool(args)).toEqual(own);
@@ -128,14 +128,14 @@ describe('createCombinedServer: tools/call', () => {
   });
 
   it('a protocol error from the owning domain arrives with its code and message unchanged', async () => {
-    const args = { name: 'get_vulnerability', arguments: { vulnerabilityId: ID, notDeclared: 1 } };
+    const args = { name: 'get_vulnerability', arguments: { id: ID, notDeclared: 1 } };
     const own = await errorOf((await direct('compliance')).callTool(args));
     expect(own.code).toBe(ErrorCode.InvalidParams);
     expect(await errorOf((await combined()).callTool(args))).toEqual(own);
   });
 
   it('a tool of a domain left out is unknown', async () => {
-    const error = await errorOf((await combined(['groups'])).callTool({ name: 'get_vulnerability', arguments: { vulnerabilityId: ID } }));
+    const error = await errorOf((await combined(['groups'])).callTool({ name: 'get_vulnerability', arguments: { id: ID } }));
     expect(error).toEqual({ code: ErrorCode.MethodNotFound, message: 'MCP error -32601: Unknown tool: get_vulnerability' });
   });
 

@@ -60,7 +60,7 @@ export const SoftwareRules = {
   listSoftwareBundles: (): ValidationRule[] => paginationRules(),
 
   getSoftwareBundle: (): ValidationRule[] => [
-    CommonRules.guid('bundleId')
+    CommonRules.guid('id')
   ],
 
   createSoftwareBundle: (): ValidationRule[] => [
@@ -77,7 +77,7 @@ export const SoftwareRules = {
   ],
 
   deleteSoftwareBundle: (): ValidationRule[] => [
-    CommonRules.guid('bundleId')
+    CommonRules.guid('id')
   ],
 
   // ── Bundle Applications (26R1) ────────────────────────────────────

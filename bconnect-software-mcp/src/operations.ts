@@ -11,7 +11,7 @@ export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   list_installed_windows_software: ['GetInstalledWindowsSoftware'],
   list_installed_software_by_endpoint: ['GetInstalledWindowsSoftwareByEndpointId'],
   list_installed_software_by_logical_group: ['GetInstalledWindowsSoftwareByLogicalGroupId'],
-  list_installed_software_by_dynamic_group: ['GetInstalledWindowsSoftwareByUniversalDynamicGroupId'],
+  list_installed_software_by_universal_dynamic_group: ['GetInstalledWindowsSoftwareByUniversalDynamicGroupId'],
   list_software_bundles: ['GetSoftwareBundles'],
   get_software_bundle: ['GetBundle'],
   create_software_bundle: ['CreateBundle'],

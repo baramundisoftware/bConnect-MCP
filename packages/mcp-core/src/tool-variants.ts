@@ -44,6 +44,9 @@ export interface ReplacedTool {
 /** Per removed tool name: its replacement (src/replaced-tools.ts of a server). */
 export type ReplacedToolTable = Readonly<Record<string, ReplacedTool>>;
 
+/** Per tool: its renamed arguments, old name → new name (#342; src/replaced-tools.ts of a server). */
+export type RenamedArgumentTable = Readonly<Record<string, Readonly<Record<string, string>>>>;
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
@@ -297,9 +300,26 @@ export function refuseReplacedTool(replaced: ReplacedToolTable, releases: ToolRe
   const renamed = rename && Object.keys(rename).length > 0
     ? `, with ${Object.entries(rename).map(([from, to]) => `${to} (was ${from})`).join(" and ")}`
     : "";
-  let message = `${name} was replaced by ${tool}: call ${tool} ${howToCall(variantSelect(variant))}${renamed}.`;
+  const how = howToCall(variantSelect(variant));
+  let message = `${name} was replaced by ${tool}: call ${tool}${how ? ` ${how}` : ""}${renamed}.`;
   if (!inRelease(releases, variant, selectedRelease())) {
     message += ` That route is only available in bMS ${(releases[variant] ?? []).join(" or ")}; this server uses ${releaseDescription()}.`;
   }
   throw protocolError(ErrorCode.MethodNotFound, message);
+}
+
+/**
+ * An argument a tool no longer takes under that name is refused with the new name (InvalidParams),
+ * before the declared-arguments check would refuse it without saying what replaced it (#342):
+ * "get_vulnerability takes id instead of vulnerabilityId: call it with id." Nothing is sent.
+ */
+export function refuseRenamedArguments(renamed: RenamedArgumentTable, name: string, args: Record<string, unknown> | undefined): void {
+  if (!args || !Object.hasOwn(renamed, name)) {
+    return;
+  }
+  const used = Object.entries(renamed[name]).filter(([old]) => Object.hasOwn(args, old));
+  if (used.length > 0) {
+    const parts = used.map(([old, now]) => `${now} instead of ${old}`).join(" and ");
+    throw protocolError(ErrorCode.InvalidParams, `${name} takes ${parts}: call it with ${used.map(([, now]) => now).join(" and ")}.`);
+  }
 }

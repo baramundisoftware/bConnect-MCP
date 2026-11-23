@@ -12,7 +12,7 @@ export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   get_job_definition: ['GetJobDefinition'],
   list_job_instances: ['GetJobInstances'],
   get_job_instance: ['GetJobInstance'],
-  list_endpoint_job_instances: ['GetJobInstancesByEndpointId'],
+  list_job_instances_by_endpoint: ['GetJobInstancesByEndpointId'],
   list_job_instances_by_definition: ['GetJobInstancesByJobDefinitionId'],
   list_job_instances_by_logical_group: ['GetJobInstancesByLogicalGroupId'],
   list_job_definitions_by_folder: ['GetJobDefinitionsByFolderId'],

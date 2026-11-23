@@ -3,7 +3,7 @@
  *
  * Start and restart of a microservice are only accepted by bMS ("Microservice
  * starting." / "restarting.", no body), so the result says so and points to
- * get_microservice. msw_cleanup answers 200 for a failed cleanup too; the lead
+ * get_microservice. run_msw_cleanup answers 200 for a failed cleanup too; the lead
  * line follows wasSuccessful.
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -59,9 +59,9 @@ describe('microservice start and restart', () => {
   });
 });
 
-describe('msw_cleanup', () => {
+describe('run_msw_cleanup', () => {
   it('leads with success when wasSuccessful is true', async () => {
-    const r = await text('msw_cleanup');
+    const r = await text('run_msw_cleanup');
     expect(r.isError).toBe(false);
     expect(r.text.split('\n')[0]).toBe('MSW cleanup succeeded:');
     expect(r.text).toContain('"wasSuccessful":true');
@@ -72,7 +72,7 @@ describe('msw_cleanup', () => {
     ['missing', { result: 'unknown' }],
   ])('says it did not succeed when wasSuccessful is %s, with the result', async (_case, body) => {
     cleanup = () => HttpResponse.json(body);
-    const r = await text('msw_cleanup');
+    const r = await text('run_msw_cleanup');
     expect(r.text.split('\n')[0]).toBe('MSW cleanup did not succeed (wasSuccessful is not true):');
     expect(r.text).toContain(body.result);
     expect(r.text).not.toMatch(/executed|succeeded:/);

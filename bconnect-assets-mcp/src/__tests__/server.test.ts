@@ -20,7 +20,7 @@ const EXPECTED_TOOLS = [
   'get_asset',
   'update_asset',
   'delete_asset',
-  'list_assets_in_asset_stock',
+  'list_asset_stock_assets',
   'list_assets_by_logical_group',
   'list_assets_by_windows_endpoint',
   'list_asset_stock_folders',

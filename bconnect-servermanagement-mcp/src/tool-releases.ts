@@ -41,7 +41,7 @@ export const TOOL_RELEASES: ToolReleaseTable = {
   update_api_key: ["26R2"],
   delete_api_key: ["26R2"],
   simulate_msw_cleanup: ["26R1", "26R2"],
-  msw_cleanup: ["26R1", "26R2"],
+  run_msw_cleanup: ["26R1", "26R2"],
   list_download_jobs: ["26R1", "26R2"],
   get_download_job: ["26R1", "26R2"],
 };

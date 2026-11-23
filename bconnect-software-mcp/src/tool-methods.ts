@@ -13,7 +13,7 @@ export const TOOL_METHODS: ToolMethodTable = {
   list_installed_windows_software: ["GET"],
   list_installed_software_by_endpoint: ["GET"],
   list_installed_software_by_logical_group: ["GET"],
-  list_installed_software_by_dynamic_group: ["GET"],
+  list_installed_software_by_universal_dynamic_group: ["GET"],
   list_software_bundles: ["GET"],
   get_software_bundle: ["GET"],
   create_software_bundle: ["POST"],

@@ -18,7 +18,8 @@ import {
   ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, jsonPatchArgument, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { refuseReplacedTool, refuseRenamedArguments, validateOrThrow, toolErrorResult, lazyClient, jsonPatchArgument, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { REPLACED_TOOLS, RENAMED_ARGUMENTS } from "./replaced-tools.js";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -76,7 +77,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "restart_management_server",
   "cancel_scheduled_restart",
   "simulate_msw_cleanup",
-  "msw_cleanup",
+  "run_msw_cleanup",
   "create_api_key",
   "update_api_key",
   "delete_api_key",
@@ -348,7 +349,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
-        name: "msw_cleanup",
+        name: "run_msw_cleanup",
         description: "[26R1] Clean up managed software files on the master DIP: deletes the files simulate_msw_cleanup lists. Returns whether the cleanup was successful and its result. bMS answers 423 while another cleanup runs. Available in bConnect 26R1 and later.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
@@ -464,7 +465,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         validateOrThrow(args, ServerManagementRules.listApiKeys()); return;
       case "simulate_msw_cleanup":
         validateOrThrow(args, ServerManagementRules.simulateMswCleanup()); return;
-      case "msw_cleanup":
+      case "run_msw_cleanup":
         validateOrThrow(args, ServerManagementRules.mswCleanup()); return;
       case "list_download_jobs":
         validateOrThrow(args, ServerManagementRules.listDownloadJobs()); return;
@@ -486,6 +487,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
     // A tool the selected release lacks is refused by name first, before its arguments are
+    // A renamed tool or argument answers with its new name; it never runs (#342).
+    refuseReplacedTool(REPLACED_TOOLS, TOOL_RELEASES, name);
+    refuseRenamedArguments(RENAMED_ARGUMENTS, name, args);
     // checked against a schema the release doesn't list, and before anything is sent (#159).
     refuseUnavailableTool(TOOL_RELEASES, name);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
@@ -705,7 +709,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result, { lead: "MSW cleanup simulation completed:" });
         }
 
-        case "msw_cleanup": {
+        case "run_msw_cleanup": {
           const result = await sm.mswCleanup();
           // bMS answers 200 for a failed cleanup too; wasSuccessful says which (#327).
           const succeeded = (result as { wasSuccessful?: unknown } | undefined)?.wasSuccessful === true;

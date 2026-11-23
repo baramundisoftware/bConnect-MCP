@@ -80,6 +80,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `serialNumber`, which no example declares as patchable.
   - Android and iOS updates stay "Not yet verified against a live bMS". A test compares the offered
     fields of every route and release with the specs' PATCH examples.
+- **Tool names follow one convention; one rename batch** (#342, **breaking**). The convention
+  (`<verb>_<object>[_by_<parent>]`; the ID of the tool's own object is `id`) is in
+  [docs/TOOL_NAMING.md](docs/TOOL_NAMING.md), and a guard checks every tool against it. An old
+  name or argument doesn't run: it answers with its replacement (`MethodNotFound` for a tool,
+  `InvalidParams` for an argument), so a client finds out at once.
+
+  | Before | Now |
+  |---|---|
+  | `list_installed_software_by_dynamic_group` | `list_installed_software_by_universal_dynamic_group` |
+  | `list_endpoint_job_instances` | `list_job_instances_by_endpoint` |
+  | `list_detected_vulnerabilities_for_endpoint` | `list_detected_vulnerabilities_by_endpoint` |
+  | `list_detected_rule_violations_for_endpoint` | `list_detected_rule_violations_by_endpoint` |
+  | `msw_cleanup` | `run_msw_cleanup` |
+  | `patch_local_admin_user_credentials` | `update_local_admin_credentials` |
+  | `list_assets_in_asset_stock` | `list_asset_stock_assets` |
+  | `get_vulnerability(vulnerabilityId)` | `get_vulnerability(id)` |
+  | `get_mobile_device_rule(ruleId)` | `get_mobile_device_rule(id)` |
+  | `get_defender_threat(threatId)` | `get_defender_threat(id)` |
+  | `get_bitlocker_windows_endpoint(endpointId)` | `get_bitlocker_windows_endpoint(id)` |
+  | `get_defender_windows_endpoint(endpointId)` | `get_defender_windows_endpoint(id)` |
+  | `get_software_bundle(bundleId)`, `delete_software_bundle(bundleId)` | `…(id)` |
+  | `get_os_windows_endpoint(endpointId)`, `update_os_windows_endpoint(endpointId)` | `…(id)` |
 
 ### Security
 - **26R2 API keys** (#280, #357): creating an API key answers with its secret, so that route is

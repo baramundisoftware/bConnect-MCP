@@ -11,9 +11,9 @@ import type { ToolReleaseTable } from "@bconnect/mcp-core";
 
 export const TOOL_RELEASES: ToolReleaseTable = {
   list_detected_rule_violations: ["26R1", "26R2"],
-  list_detected_rule_violations_for_endpoint: ["26R1", "26R2"],
+  list_detected_rule_violations_by_endpoint: ["26R1", "26R2"],
   list_detected_vulnerabilities: ["26R1", "26R2"],
-  list_detected_vulnerabilities_for_endpoint: ["26R1", "26R2"],
+  list_detected_vulnerabilities_by_endpoint: ["26R1", "26R2"],
   list_mobile_device_rules: ["26R1", "26R2"],
   get_mobile_device_rule: ["26R1", "26R2"],
   list_vulnerabilities: ["26R1", "26R2"],

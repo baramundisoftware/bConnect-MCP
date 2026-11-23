@@ -15,7 +15,7 @@ export const TOOL_RELEASES: ToolReleaseTable = {
   get_asset: ["25R2", "26R1", "26R2"],
   update_asset: ["25R2", "26R1", "26R2"],
   delete_asset: ["25R2", "26R1", "26R2"],
-  list_assets_in_asset_stock: ["25R2", "26R1", "26R2"],
+  list_asset_stock_assets: ["25R2", "26R1", "26R2"],
   list_assets_by_logical_group: ["25R2", "26R1", "26R2"],
   list_assets_by_windows_endpoint: ["25R2", "26R1", "26R2"],
   list_asset_stock_folders: ["25R2", "26R1", "26R2"],

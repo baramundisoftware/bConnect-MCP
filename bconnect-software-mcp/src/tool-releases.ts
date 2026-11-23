@@ -13,7 +13,7 @@ export const TOOL_RELEASES: ToolReleaseTable = {
   list_installed_windows_software: ["25R2", "26R1", "26R2"],
   list_installed_software_by_endpoint: ["25R2", "26R1", "26R2"],
   list_installed_software_by_logical_group: ["25R2", "26R1", "26R2"],
-  list_installed_software_by_dynamic_group: ["25R2", "26R1", "26R2"],
+  list_installed_software_by_universal_dynamic_group: ["25R2", "26R1", "26R2"],
   list_software_bundles: ["26R1", "26R2"],
   get_software_bundle: ["26R1", "26R2"],
   create_software_bundle: ["26R1", "26R2"],

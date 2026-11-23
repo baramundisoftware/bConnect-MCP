@@ -44,7 +44,7 @@ export const OperatingSystemsRules = {
 
   // GET /v2.0/OS/WindowsEndpoints/{endpointId}
   getOsWindowsEndpoint: (): ValidationRule[] => [
-    CommonRules.guid('endpointId')
+    CommonRules.guid('id')
   ],
 
   // POST /v2.0/OS/Folders
@@ -67,7 +67,7 @@ export const OperatingSystemsRules = {
 
   // PATCH /v2.0/OS/WindowsEndpoints/{endpointId}
   updateOsWindowsEndpoint: (): ValidationRule[] => [
-    CommonRules.guid('endpointId'),
+    CommonRules.guid('id'),
     patchOperationsRule
   ]
 };

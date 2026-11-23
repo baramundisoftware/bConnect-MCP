@@ -45,7 +45,7 @@ async function call(name: string): Promise<{ text: string; isError: boolean }> {
 
 const TOOLS = [
   {
-    tool: 'list_detected_vulnerabilities_for_endpoint',
+    tool: 'list_detected_vulnerabilities_by_endpoint',
     findings: `/compliance/v2.0/WindowsEndpoints/${ENDPOINT_ID}/DetectedVulnerabilities`,
     check: `/endpoints/v2.0/WindowsEndpoints/${ENDPOINT_ID}`,
     findingsMeaning: 'does not exist or there are no detected vulnerabilities for this endpoint',
@@ -53,7 +53,7 @@ const TOOLS = [
     missing: /^No Windows endpoint with this id exists, or it is not visible to the configured user\./,
   },
   {
-    tool: 'list_detected_rule_violations_for_endpoint',
+    tool: 'list_detected_rule_violations_by_endpoint',
     findings: `/compliance/v2.0/Endpoints/${ENDPOINT_ID}/DetectedRuleViolations`,
     check: `/endpoints/v2.0/Endpoints/${ENDPOINT_ID}`,
     findingsMeaning: 'does not exist or contains no rule violation',

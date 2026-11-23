@@ -21,7 +21,7 @@
   },
   "bconnect-operatingsystems-mcp/src/index.ts": {
     "no-restricted-syntax": {
-      "count": 2
+      "count": 1
     }
   },
   "bconnect-software-mcp/src/index.ts": {

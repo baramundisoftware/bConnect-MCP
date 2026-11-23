@@ -17,7 +17,8 @@ import {
   ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { refuseReplacedTool, refuseRenamedArguments, validateOrThrow, toolErrorResult, lazyClient, BConnectApiError, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { REPLACED_TOOLS, RENAMED_ARGUMENTS } from "./replaced-tools.js";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -107,7 +108,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           }
         },
         {
-          name: "list_detected_rule_violations_for_endpoint",
+          name: "list_detected_rule_violations_by_endpoint",
           description: "List all detected compliance rule violations for a specific Android, iOS, or macOS endpoint identified by its GUID. Returns a paged list of violations including rule names, violation states, and detection timestamps for the specified endpoint.",
           inputSchema: {
             type: "object",
@@ -129,7 +130,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           }
         },
         {
-          name: "list_detected_vulnerabilities_for_endpoint",
+          name: "list_detected_vulnerabilities_by_endpoint",
           description: "List all detected CVE vulnerabilities for a specific Windows endpoint identified by its GUID. Returns a paged list of vulnerabilities including CVE identifiers, detection timestamps, and ignored status for that specific managed Windows endpoint.",
           inputSchema: {
             type: "object",
@@ -156,9 +157,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           inputSchema: {
             type: "object",
             properties: {
-              ruleId: { type: "string", description: "GUID of the mobile device compliance rule to retrieve." }
+              id: { type: "string", description: "GUID of the mobile device compliance rule to retrieve." }
             },
-            required: ["ruleId"]
+            required: ["id"]
           }
         },
 
@@ -178,9 +179,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           inputSchema: {
             type: "object",
             properties: {
-              vulnerabilityId: { type: "string", description: "GUID of the CVE vulnerability to retrieve from the baramundi library." }
+              id: { type: "string", description: "GUID of the CVE vulnerability to retrieve from the baramundi library." }
             },
-            required: ["vulnerabilityId"]
+            required: ["id"]
           }
         },
 
@@ -197,13 +198,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       case "list_detected_rule_violations":
         validateOrThrow(args, ComplianceRules.listDetectedRuleViolations());
         return;
-      case "list_detected_rule_violations_for_endpoint":
+      case "list_detected_rule_violations_by_endpoint":
         validateOrThrow(args, ComplianceRules.listDetectedRuleViolationsForEndpoint());
         return;
       case "list_detected_vulnerabilities":
         validateOrThrow(args, ComplianceRules.listDetectedVulnerabilities());
         return;
-      case "list_detected_vulnerabilities_for_endpoint":
+      case "list_detected_vulnerabilities_by_endpoint":
         validateOrThrow(args, ComplianceRules.listDetectedVulnerabilitiesForEndpoint());
         return;
       case "list_mobile_device_rules":
@@ -226,6 +227,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
     // A tool the selected release lacks is refused by name first, before its arguments are
+    // A renamed tool or argument answers with its new name; it never runs (#342).
+    refuseReplacedTool(REPLACED_TOOLS, TOOL_RELEASES, name);
+    refuseRenamedArguments(RENAMED_ARGUMENTS, name, args);
     // checked against a schema the release doesn't list, and before anything is sent (#159).
     refuseUnavailableTool(TOOL_RELEASES, name);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
@@ -254,11 +258,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "list_detected_rule_violations_for_endpoint": {
+        case "list_detected_rule_violations_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
           // `return await`, so a rethrown error reaches the catch below.
           return await findingsForEndpoint(
-            () => compliance.getDetectedRuleViolationsForEndpoint(endpointId as string, pickArguments(params, sends("list_detected_rule_violations_for_endpoint"))),
+            () => compliance.getDetectedRuleViolationsForEndpoint(endpointId as string, pickArguments(params, sends("list_detected_rule_violations_by_endpoint"))),
             () => compliance.checkEndpointExists("Endpoints", endpointId as string),
             "No endpoint with this id exists.",
           );
@@ -270,11 +274,11 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "list_detected_vulnerabilities_for_endpoint": {
+        case "list_detected_vulnerabilities_by_endpoint": {
           const { endpointId, ...params } = args as Record<string, unknown>;
           // `return await`, so a rethrown error reaches the catch below.
           return await findingsForEndpoint(
-            () => compliance.getDetectedVulnerabilitiesByEndpoint(endpointId as string, pickArguments(params, sends("list_detected_vulnerabilities_for_endpoint"))),
+            () => compliance.getDetectedVulnerabilitiesByEndpoint(endpointId as string, pickArguments(params, sends("list_detected_vulnerabilities_by_endpoint"))),
             () => compliance.checkEndpointExists("WindowsEndpoints", endpointId as string),
             "No Windows endpoint with this id exists, or it is not visible to the configured user.",
           );
@@ -287,7 +291,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "get_mobile_device_rule": {
-          const result = await compliance.getMobileDeviceRule(args!.ruleId as string);
+          const result = await compliance.getMobileDeviceRule(args!.id as string);
           return toolJsonResult(result);
         }
 
@@ -298,7 +302,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "get_vulnerability": {
-          const result = await compliance.getVulnerability(args!.vulnerabilityId as string);
+          const result = await compliance.getVulnerability(args!.id as string);
           return toolJsonResult(result);
         }
 

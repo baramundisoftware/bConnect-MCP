@@ -9,9 +9,9 @@
  */
 export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   list_detected_rule_violations: ['GetDetectedRuleViolations'],
-  list_detected_rule_violations_for_endpoint: ['GetDetectedRuleViolationsForEndpoint'],
+  list_detected_rule_violations_by_endpoint: ['GetDetectedRuleViolationsForEndpoint'],
   list_detected_vulnerabilities: ['GetAllDetectedVulnerabilities'],
-  list_detected_vulnerabilities_for_endpoint: ['GetDetectedVulnerabilitiesByEndpoint'],
+  list_detected_vulnerabilities_by_endpoint: ['GetDetectedVulnerabilitiesByEndpoint'],
   list_mobile_device_rules: ['GetAllMobileDeviceRules'],
   get_mobile_device_rule: ['GetMobileDeviceRule'],
   list_vulnerabilities: ['GetAllVulnerabilities'],

@@ -13,7 +13,7 @@ export const TOOL_RELEASES: ToolReleaseTable = {
   list_bitlocker_windows_endpoints: ["25R2", "26R1", "26R2"],
   get_bitlocker_windows_endpoint: ["25R2", "26R1", "26R2"],
   get_local_admin_accounts: ["25R2", "26R1", "26R2"],
-  patch_local_admin_user_credentials: ["25R2", "26R1", "26R2"],
+  update_local_admin_credentials: ["25R2", "26R1", "26R2"],
   refresh_local_admin_account_expiry: ["25R2", "26R1", "26R2"],
   list_defender_threats: ["25R2", "26R1", "26R2"],
   get_defender_threat: ["25R2", "26R1", "26R2"],

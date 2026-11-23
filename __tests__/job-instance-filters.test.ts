@@ -41,7 +41,7 @@ afterAll(async () => { await client.close(); msw.close(); process.env = saved; }
 describe.each([
   ['list_job_instances', {}, '/jobs/v2.0/JobInstances'],
   ['list_job_instances_by_logical_group', { logicalGroupId: G }, `/jobs/v2.0/LogicalGroups/${G}/JobInstances`],
-  ['list_endpoint_job_instances', { endpointId: G }, `/jobs/v2.0/Endpoints/${G}/JobInstances`],
+  ['list_job_instances_by_endpoint', { endpointId: G }, `/jobs/v2.0/Endpoints/${G}/JobInstances`],
 ])('%s', (name, path, route) => {
   it('sends LastAction unchanged', async () => {
     const r = await client.callTool({ name, arguments: { ...path, LastAction: FILTER } });

@@ -100,10 +100,10 @@ describe('bconnect-operatingsystems-mcp', () => {
       ).rejects.toThrow(/id is required/i);
     });
 
-    it('get_os_windows_endpoint: endpointId not a GUID', async () => {
+    it('get_os_windows_endpoint: id not a GUID', async () => {
       const { client } = await startServer();
       await expect(
-        client.callTool({ name: 'get_os_windows_endpoint', arguments: { endpointId: 'oops' } })
+        client.callTool({ name: 'get_os_windows_endpoint', arguments: { id: 'oops' } })
       ).rejects.toThrow(/guid/i);
     });
 

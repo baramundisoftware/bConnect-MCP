@@ -3,7 +3,7 @@
  * See docs/MOCK_INTEGRATION_TESTING.md.
  *
  * This is the domain that exposed P29.2: a wrong URL for
- * `list_detected_vulnerabilities_for_endpoint`. That bug class is
+ * `list_detected_vulnerabilities_by_endpoint`. That bug class is
  * exactly what this tier is here to catch.
  */
 
@@ -85,7 +85,7 @@ describe('Compliance — unknown rule id', () => {
 });
 
 describe('Compliance — 404 on findings per endpoint (REQ-XC-005 AC 4, #166)', () => {
-  it.for(['list_detected_vulnerabilities_for_endpoint', 'list_detected_rule_violations_for_endpoint'])(
+  it.for(['list_detected_vulnerabilities_by_endpoint', 'list_detected_rule_violations_by_endpoint'])(
     '%s: a nonexistent endpoint is reported as not existing', async (tool, ctx) => {
       if (!available) {ctx.skip();}
       const { text, isError } = await callTool(tool, { endpointId: NONEXISTENT_GUID });
@@ -94,7 +94,7 @@ describe('Compliance — 404 on findings per endpoint (REQ-XC-005 AC 4, #166)', 
       expect(text).not.toMatch(/no findings/i);
     });
 
-  it('list_detected_rule_violations_for_endpoint: an existing endpoint without findings gives an empty result with a note', async (ctx) => {
+  it('list_detected_rule_violations_by_endpoint: an existing endpoint without findings gives an empty result with a note', async (ctx) => {
     if (!available) {ctx.skip();}
     // The mock answers 404 for endpoints without rule violations, as the spec documents.
     const { body: endpoints } = await rawGet('/endpoints/v2.0/Endpoints', { PageSize: 50 });
@@ -108,7 +108,7 @@ describe('Compliance — 404 on findings per endpoint (REQ-XC-005 AC 4, #166)', 
       }
     }
     if (!candidate) {throw new Error('the mock has no endpoint without rule violations');}
-    const { text, isError } = await callTool('list_detected_rule_violations_for_endpoint', { endpointId: candidate.id });
+    const { text, isError } = await callTool('list_detected_rule_violations_by_endpoint', { endpointId: candidate.id });
     expect(isError).toBe(false);
     const result = JSON.parse(text) as { data: unknown[]; note: string };
     expect(result.data).toEqual([]);

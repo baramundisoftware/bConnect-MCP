@@ -1,7 +1,7 @@
 /**
  * LAPS and job-folder tools say what their operation does (#177, REQ-XC-003 AC 4).
  *
- * - patch_local_admin_user_credentials can only set the requested expiration
+ * - update_local_admin_credentials can only set the requested expiration
  *   date, so it takes that one field and builds the JSON Patch itself.
  * - trigger_update_on_client is renamed refresh_local_admin_account_expiry; the
  *   old name answers with the new one. Its timeout is 0–60 seconds.
@@ -53,9 +53,9 @@ async function call(name: string, args: Record<string, unknown>, server = 'defen
 }
 const tool = async (name: string, server = 'defensecontrol') => (await clients[server].listTools()).tools.find((t) => t.name === name);
 
-describe('patch_local_admin_user_credentials', () => {
+describe('update_local_admin_credentials', () => {
   it('sets the requested expiration date with the JSON Patch the spec shows', async () => {
-    const r = await call('patch_local_admin_user_credentials', { endpointId: ID, requestedExpirationDate: DATE });
+    const r = await call('update_local_admin_credentials', { endpointId: ID, requestedExpirationDate: DATE });
     expect(r.isError, r.text).toBe(false);
     expect(sent.map((s) => ({ method: s.method, path: s.path, contentType: s.contentType, body: JSON.parse(s.body) }))).toEqual([{
       method: 'PATCH', path: `/defensecontrol/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/${ID}`,
@@ -65,7 +65,7 @@ describe('patch_local_admin_user_credentials', () => {
   });
 
   it('takes the date, not a raw patch', async () => {
-    const t = await tool('patch_local_admin_user_credentials');
+    const t = await tool('update_local_admin_credentials');
     const props = t?.inputSchema.properties as Record<string, { format?: string }>;
     expect(Object.keys(props)).not.toContain('patchOperations');
     expect(props.requestedExpirationDate.format).toBe('date-time');
@@ -73,14 +73,14 @@ describe('patch_local_admin_user_credentials', () => {
   });
 
   it('refuses a value that is not a date-time, before any request', async () => {
-    const r = await call('patch_local_admin_user_credentials', { endpointId: ID, requestedExpirationDate: 'tomorrow' });
+    const r = await call('update_local_admin_credentials', { endpointId: ID, requestedExpirationDate: 'tomorrow' });
     expect(r.isError).toBe(true);
     expect(r.text).toMatch(/requestedExpirationDate must be/);
     expect(sent).toEqual([]);
   });
 
   it('says only the expiration date can change and a past date rotates the credentials', async () => {
-    const d = (await tool('patch_local_admin_user_credentials'))?.description ?? '';
+    const d = (await tool('update_local_admin_credentials'))?.description ?? '';
     expect(d).toMatch(/only/i);
     expect(d).toMatch(/requested expiration date/i);
     expect(d).toMatch(/past.*new credentials/i);
