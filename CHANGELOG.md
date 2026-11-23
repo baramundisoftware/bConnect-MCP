@@ -136,6 +136,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   behind `ALLOW_SECRET_READ` like the BitLocker and LAPS secrets; all API key routes are audited as
   security routes (default audit level). `create_api_key` needs `ALLOW_SECRET_READ` and
   `ALLOW_WRITE_OPERATIONS`; the secret is in the tool result only, never in a log.
+- **Reading the API keys needs `ALLOW_SECRET_READ` (breaking).** `list_api_keys` (26R1, 26R2) and
+  `get_api_key` (26R2) return no secret, but every key with its security profiles: who can reach
+  bMS with which rights. They now sit behind the same gate as the key secrets; without it they are
+  refused with the reason and send nothing. In the gateway, where the gate stays off, they are
+  always refused. The live tier skips them, as it keeps the gate closed.
 
 ## [26.1.12] - 2026-11-19
 

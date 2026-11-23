@@ -252,7 +252,7 @@ describe(`live bMS (${RELEASE}): read tools`, () => {
       for (const tool of conn.tools) {
         const needsId = (tool.inputSchema.required ?? []).length > 0;
         if ((pass === 'lists') === needsId) {continue;}
-        const ops = readOperations(RELEASE, server, tables.get(server)!, tool.name);
+        const ops = readOperations(RELEASE, server, tables.get(server)!, tool.name, tool.description);
         if (typeof ops === 'string') { runs.push({ server, tool: tool.name, outcome: 'skipped', detail: ops }); continue; }
         const args = argumentsFor(tool, ops[0]);
         if (typeof args === 'string') { runs.push({ server, tool: tool.name, outcome: 'skipped', detail: args, route: routeKey(ops[0]) }); continue; }

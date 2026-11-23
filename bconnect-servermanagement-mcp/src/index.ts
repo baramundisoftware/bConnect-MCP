@@ -35,7 +35,17 @@ import { checkApiKeyArguments, createApiKeyBody, createApiKeyRules, createApiKey
  * key's secret. They need ALLOW_SECRET_READ as well as ALLOW_WRITE_OPERATIONS; the shared
  * client refuses the route on its own too (SECRET_ROUTES).
  */
-const SECRET_READ_TOOLS = new Set<string>(["create_api_key"]);
+/**
+ * Tools behind ALLOW_SECRET_READ (REQ-SRV-017), with why. create_api_key returns the new
+ * key's secret. The two reads return no secret, but the keys with their security profiles:
+ * who can reach bMS with which rights, which belongs behind the same gate as the keys.
+ */
+const SECRET_READ_REASONS: Readonly<Record<string, string>> = {
+  create_api_key: "it returns a live credential (the new API key's secret)",
+  list_api_keys: "it lists the API keys with their security profiles (who can reach bMS with which rights)",
+  get_api_key: "it reads an API key with its security profiles (who can reach bMS with which rights)",
+};
+const SECRET_READ_TOOLS = new Set<string>(Object.keys(SECRET_READ_REASONS));
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
@@ -340,7 +350,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     tools.push(
       {
         name: "list_api_keys",
-        description: "[26R1] List the API keys: for each, its name, expiration date, comment, whether it is active and available via the gateway, and its assigned security profiles. Available in bConnect 26R1 and later.",
+        description: "[26R1] List the API keys: for each, its name, expiration date, comment, whether it is active and available via the gateway, and its assigned security profiles. Never returns a key's secret. Needs ALLOW_SECRET_READ=true. Available in bConnect 26R1 and later.",
         inputSchema: { type: "object", properties: {}, required: [] }
       },
       {
@@ -372,7 +382,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       // ── API key management (26R2, #357; listed per TOOL_RELEASES) ──────────
       {
         name: "get_api_key",
-        description: "[26R2] Get one API key by its GUID: name, expiration date, comment, whether it is active and available via the gateway, and its security profiles. Never returns the key's secret. Available in bConnect 26R2 and later.",
+        description: "[26R2] Get one API key by its GUID: name, expiration date, comment, whether it is active and available via the gateway, and its security profiles. Never returns the key's secret. Needs ALLOW_SECRET_READ=true. Available in bConnect 26R2 and later.",
         inputSchema: { type: "object", properties: { id: { type: "string", description: "GUID of the API key." } }, required: ["id"] }
       },
       {
@@ -514,7 +524,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       return {
         content: [{
           type: "text" as const,
-          text: `Secret-returning operation '${name}' is disabled because it returns a live credential (the new API key's secret). ` +
+          text: (name === "create_api_key"
+            ? `Secret-returning operation '${name}' is disabled because ${SECRET_READ_REASONS[name]}. `
+            : `Operation '${name}' is disabled because ${SECRET_READ_REASONS[name]}. `) +
             `This MCP server was started without ALLOW_SECRET_READ. An operator must set ALLOW_SECRET_READ=true in the server's ` +
             `environment (the MCP host's 'env' block for this server, or the container/service environment) and restart the server; ` +
             `a running process doesn't pick up the change, and the model cannot set it. ` +
