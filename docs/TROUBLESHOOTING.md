@@ -93,7 +93,7 @@ failed or disconnected; the reason is in the client's MCP log.
 | `BCONNECT_TIMEOUT_MS="…" isn't valid. Use a whole number from 1000 to 600000.` (same for `BCONNECT_MAX_RETRIES`, 0 to 5) | Not a whole number, or out of range | Fix the value |
 | `BCONNECT_AUDIT_LEVEL "…" isn't valid. Use one of: none, security, write, all.` | Misspelt audit level | Fix the value; the server refuses to run with auditing in an unknown state |
 | `BCONNECT_PRETTY_JSON "…" isn't valid. Use true or false, or leave it unset for compact JSON.` | A value other than `true`/`false` (e.g. `yes`, `1`) | Fix the value, or remove the line for compact results |
-| `BCONNECT_RELEASE "…" isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R2.` | A release other than `26R2`/`26R1`/`25R2` (also `26r1` or an empty value) | Fix the value, or remove the line for 26R1 |
+| `BCONNECT_RELEASE "…" isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R2.` | A release other than `26R2`/`26R1`/`25R2` (also `26r1` or an empty value) | Fix the value, or remove the line for 26R2 |
 | `BCONNECT_CA_CERT_PATH can't be read: <path> (<code>)` or `… points to an empty file` | CA file missing, unreadable or empty | Fix the path or the file |
 | `<server>: cannot reach bConnect API at <url> (<cause>). Check BCONNECT_BASE_URL, credentials, and network.` | The startup call failed. The cause in brackets: 401, TLS, timeout, unreachable | See [Authentication Errors](#authentication-errors), [TLS Certificate Errors](#tls-certificate-errors) or [Network & Connection Errors](#network--connection-errors) |
 | `<server>: needs bMS <release>; this server uses <release in use>. None of its APIs exist in that release.` | A server whose APIs the bMS release doesn't have (compliance, universaldynamicgroups on 25R2) | Use it with a 26R1 bMS, or remove it from your config; see [Wrong bMS Release](#wrong-bms-release) |
@@ -181,7 +181,10 @@ A tool call answers `bConnect answered HTTP 401 (Unauthorized) to …` followed 
 
 **Symptom:** a list tool succeeds but returns no entries (or far fewer than the Management Center
 shows), for example `list_endpoints` → `"totalItems": 0`. There's no error, and the server's
-startup line still says `API connectivity verified`.
+startup line still says `API connectivity verified`. A list called without a filter that comes back
+empty ends with the hint "No entries. bMS also returns an empty list when the account has no rights
+on these objects: …"; a filtered list (search, filter or parent ID) doesn't, as an empty answer is
+expected there.
 
 **Cause:** the account has no rights on those objects. bMS doesn't answer such a list with 403: it
 answers 200 and leaves out what the account may not see. Seen on bMS 26R1 (26.1.161, 2026-11-19): a
