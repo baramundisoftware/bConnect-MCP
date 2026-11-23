@@ -177,7 +177,7 @@ A fix in the core applies to all 13 servers at once; a server holds only what is
 | --- | --- | --- |
 | Domain server (×13) | Declares its tools (name, description, input schema, operation), maps arguments to bConnect calls, applies domain rules (e.g. maintenance-window intervals) | `bconnect-<domain>-mcp/src/` |
 | `@bconnect/mcp-core` | Everything shared: HTTP client, config, startup, gates, validation, results, errors, release selection, audit, the combined server and its domain-list parser (`domainList`, used by the command and `MCP_GATEWAY_COMBINED`) | `packages/mcp-core/src/` |
-| `bconnect-mcp` command | `bconnect-mcp <domain>`, `<domain>,<domain>` or `all`: one or several domains as one stdio (or HTTP) server, with the same startup as a domain server; package `@baramundi/bconnect-mcp`, still private | `packages/bconnect-mcp/` |
+| `bconnect-mcp` command | `bconnect-mcp <domain>`, `<domain>,<domain>` or `all`: one or several domains as one stdio (or HTTP) server, with the same startup as a domain server; package `@baramundi/bconnect-mcp`, still private. Its tarball carries one bundle (`dist/cli.js`, rolldown) with core and the servers inside; only the third-party packages are npm dependencies | `packages/bconnect-mcp/` |
 | Gateway | Hosts all servers in one Express process over Streamable HTTP; health check, limits, `*_FILE` secrets, closed gates | `bconnect-mcp-gateway/src/` |
 | Server template | Starting point for a new domain server | `bconnect-server-template/` |
 | Specs + generators | Per-release OpenAPI specs; scripts that generate types, query tables and error meanings | `openapi-specs/`, `scripts/` |
@@ -368,6 +368,7 @@ Audit goes to stderr, never to stdout, which carries JSON-RPC in stdio mode. `BC
 | Mock tier (`scripts/mock-tier.mjs`) | Every tool through the real MCP servers against bConnect-Mock, for each release (25R2, 26R1, 26R2), profile `standard-readwrite` | CI, every PR |
 | Live tier (`vitest.live.config.ts`) | Read-only calls and selected writes against a real bMS | By hand, against a test bMS |
 | Combined check (`scripts/check-combined.mjs`) | The gateway's combined endpoint | With the live run |
+| Package check (`scripts/check-package.mjs`) | The npm package: tarball contents and dependencies; installed into an empty folder, the command starts for one domain, several and `all` | CI on Linux and Windows, Node 22 and 24, every PR |
 
 Type-defeating casts are blocked by `scripts/check-new-casts.sh`; CodeQL scans `main` (REQ-QA-008). See [MOCK_INTEGRATION_TESTING.md](MOCK_INTEGRATION_TESTING.md) and [LIVE_BMS_TESTING.md](LIVE_BMS_TESTING.md).
 
