@@ -156,8 +156,8 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
   },
   "26R2": {
     list_variable_definitions: {
-      Name: {"type":"string","description":"Filters results by exactly matching name."},
-      Category: {"type":"string","description":"Filters results by exactly matching category."},
+      Name: {"type":"string","maxLength":255,"description":"Filters results by exactly matching name."},
+      Category: {"type":"string","maxLength":255,"description":"Filters results by exactly matching category."},
       Scope: {"type":"string","enum":["ADObject","AndroidEndpoint","Endpoint","Deprecated_IndustrialEndpoint","IosEndpoint","LogicalGroup","NetworkEndpoint","WindowsApplication","WindowsJobDefinition","LinuxEndpoint"],"description":"Filters results by exactly matching scope."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Category, Type, DefaultValue and Comment (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, Category, DefaultValue and Comment."},
@@ -166,8 +166,8 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
     list_variable_instances: {
-      Name: {"type":"string","description":"Filters results by exactly matching name."},
-      Category: {"type":"string","description":"Filters results by exactly matching category."},
+      Name: {"type":"string","maxLength":255,"description":"Filters results by exactly matching name."},
+      Category: {"type":"string","maxLength":255,"description":"Filters results by exactly matching category."},
       Scope: {"type":"string","enum":["ADObject","AndroidEndpoint","Endpoint","Deprecated_IndustrialEndpoint","IosEndpoint","LogicalGroup","NetworkEndpoint","WindowsApplication","WindowsJobDefinition","LinuxEndpoint"],"description":"Filters results by exactly matching scope."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Category, OwnerName and Value (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, Category, OwnerName and Value."},
@@ -176,8 +176,8 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
     list_variable_instances_by_endpoint: {
-      Name: {"type":"string","description":"Filters results by exactly matching name."},
-      Category: {"type":"string","description":"Filters results by exactly matching category."},
+      Name: {"type":"string","maxLength":255,"description":"Filters results by exactly matching name."},
+      Category: {"type":"string","maxLength":255,"description":"Filters results by exactly matching category."},
       Scope: {"type":"string","enum":["ADObject","AndroidEndpoint","Endpoint","Deprecated_IndustrialEndpoint","IosEndpoint","LogicalGroup","NetworkEndpoint","WindowsApplication","WindowsJobDefinition","LinuxEndpoint"],"description":"Filters results by exactly matching scope."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Category, OwnerName and Value (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, Category, OwnerName and Value."},
@@ -186,8 +186,8 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
     list_variable_instances_by_logical_group: {
-      Name: {"type":"string","description":"Filters results by exactly matching name."},
-      Category: {"type":"string","description":"Filters results by exactly matching category."},
+      Name: {"type":"string","maxLength":255,"description":"Filters results by exactly matching name."},
+      Category: {"type":"string","maxLength":255,"description":"Filters results by exactly matching category."},
       Scope: {"type":"string","enum":["ADObject","AndroidEndpoint","Endpoint","Deprecated_IndustrialEndpoint","IosEndpoint","LogicalGroup","NetworkEndpoint","WindowsApplication","WindowsJobDefinition","LinuxEndpoint"],"description":"Filters results by exactly matching scope."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Category, OwnerName and Value (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, Category, OwnerName and Value."},
@@ -196,8 +196,8 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
     list_variable_instances_by_ad_object: {
-      Name: {"type":"string","description":"Filters results by exactly matching name."},
-      Category: {"type":"string","description":"Filters results by exactly matching category."},
+      Name: {"type":"string","maxLength":255,"description":"Filters results by exactly matching name."},
+      Category: {"type":"string","maxLength":255,"description":"Filters results by exactly matching category."},
       Scope: {"type":"string","enum":["ADObject","AndroidEndpoint","Endpoint","Deprecated_IndustrialEndpoint","IosEndpoint","LogicalGroup","NetworkEndpoint","WindowsApplication","WindowsJobDefinition","LinuxEndpoint"],"description":"Filters results by exactly matching scope."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Category, OwnerName and Value (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, Category, OwnerName and Value."},
@@ -206,8 +206,8 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
     list_variable_instances_by_job_definition: {
-      Name: {"type":"string","description":"Filters results by exactly matching name."},
-      Category: {"type":"string","description":"Filters results by exactly matching category."},
+      Name: {"type":"string","maxLength":255,"description":"Filters results by exactly matching name."},
+      Category: {"type":"string","maxLength":255,"description":"Filters results by exactly matching category."},
       Scope: {"type":"string","enum":["ADObject","AndroidEndpoint","Endpoint","Deprecated_IndustrialEndpoint","IosEndpoint","LogicalGroup","NetworkEndpoint","WindowsApplication","WindowsJobDefinition","LinuxEndpoint"],"description":"Filters results by exactly matching scope."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Category, OwnerName and Value (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, Category, OwnerName and Value."},
@@ -216,8 +216,8 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
     list_variable_instances_by_application: {
-      Name: {"type":"string","description":"Filters results by exactly matching name."},
-      Category: {"type":"string","description":"Filters results by exactly matching category."},
+      Name: {"type":"string","maxLength":255,"description":"Filters results by exactly matching name."},
+      Category: {"type":"string","maxLength":255,"description":"Filters results by exactly matching category."},
       Scope: {"type":"string","enum":["ADObject","AndroidEndpoint","Endpoint","Deprecated_IndustrialEndpoint","IosEndpoint","LogicalGroup","NetworkEndpoint","WindowsApplication","WindowsJobDefinition","LinuxEndpoint"],"description":"Filters results by exactly matching scope."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Category, OwnerName and Value (e.g. Name asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, Category, OwnerName and Value."},

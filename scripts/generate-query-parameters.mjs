@@ -114,6 +114,8 @@ function property(param, route, spec) {
   } else {
     out.type = schema.type === "number" ? "integer" : (schema.type ?? "string");
   }
+  // The spec's length limit (#358): the core refuses a longer value before any request.
+  if (Number.isInteger(schema.maxLength) && out.type === "string") {out.maxLength = schema.maxLength;}
   out.description = clean(param.description) || FALLBACK[param.name] || `Filters results by ${param.name}.`;
   return JSON.stringify(out);
 }
@@ -265,16 +267,28 @@ function difference(base, other) {
 function mergedRow(keys, rows) {
   const out = new Map();
   const texts = new Map();
+  const limits = new Map();
   for (const key of keys) {
     for (const [name, value] of rows.get(key) ?? []) {
       if (name === "countOnly") {continue;}
-      if (!out.has(name)) {out.set(name, value); texts.set(name, new Map());}
-      if (value.startsWith("{") && value !== out.get(name)) {
-        const text = JSON.parse(value).description;
+      if (!out.has(name)) {out.set(name, value); texts.set(name, new Map()); limits.set(name, new Set());}
+      if (!value.startsWith("{")) {continue;}
+      const parsed = JSON.parse(value);
+      limits.get(name).add(parsed.maxLength);
+      if (parsed.description !== JSON.parse(out.get(name)).description) {
         const others = texts.get(name);
-        others.set(text, [...(others.get(text) ?? []), variantOf(key).select]);
+        others.set(parsed.description, [...(others.get(parsed.description) ?? []), variantOf(key).select]);
       }
     }
+  }
+  // A length limit (#358) only where every variant that offers the parameter declares the same
+  // one: a merged tool must not refuse a value one of its routes accepts.
+  for (const [name, seen] of limits) {
+    if (seen.size === 0) {continue;}
+    const first = JSON.parse(out.get(name));
+    const [only] = seen;
+    if (seen.size === 1 && only !== undefined) {first.maxLength = only;} else {delete first.maxLength;}
+    out.set(name, JSON.stringify(first));
   }
   for (const [name, others] of texts) {
     if (others.size === 0) {continue;}

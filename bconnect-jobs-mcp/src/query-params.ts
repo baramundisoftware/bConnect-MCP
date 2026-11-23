@@ -280,7 +280,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
   },
   "26R2": {
     list_job_definitions: {
-      Name: {"type":"string","description":"Filters results by exactly matching name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters results by exactly matching name."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or DisplayName (e. g. DisplayName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, DisplayName, Category, Description and Comment."},
       Page: PAGE_PROPERTY,
@@ -289,7 +289,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     },
     list_job_instances: {
       EndpointType: {"type":"string","enum":["WindowsEndpoint","AndroidEndpoint","IOSEndpoint","MacEndpoint","NetworkEndpoint","Deprecated_IndustrialEndpoint","LinuxEndpoint"],"description":"Filters result set by type of endpoint the job instance is executed on."},
-      LastAction: {"type":"string","description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
+      LastAction: {"type":"string","maxLength":256,"description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription."},
       Page: PAGE_PROPERTY,
@@ -297,7 +297,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
     list_job_instances_by_endpoint: {
-      LastAction: {"type":"string","description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
+      LastAction: {"type":"string","maxLength":256,"description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription."},
       Page: PAGE_PROPERTY,
@@ -306,7 +306,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     },
     list_job_instances_by_definition: {
       EndpointType: {"type":"string","enum":["WindowsEndpoint","AndroidEndpoint","IOSEndpoint","MacEndpoint","NetworkEndpoint","Deprecated_IndustrialEndpoint","LinuxEndpoint"],"description":"Filters result set by type of endpoint the job instance is executed on."},
-      LastAction: {"type":"string","description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
+      LastAction: {"type":"string","maxLength":256,"description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription."},
       Page: PAGE_PROPERTY,
@@ -315,7 +315,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     },
     list_job_instances_by_logical_group: {
       JobDefinitionId: {"type":"string","description":"Filters result set by the id of the job definition."},
-      LastAction: {"type":"string","description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
+      LastAction: {"type":"string","maxLength":256,"description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription."},
       Page: PAGE_PROPERTY,
@@ -324,7 +324,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
     list_job_definitions_by_folder: {
-      Name: {"type":"string","description":"Filters results by exactly matching name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters results by exactly matching name."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or DisplayName (e. g. DisplayName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, DisplayName, Category, Description and Comment."},
       Page: PAGE_PROPERTY,
@@ -342,7 +342,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_job_folders: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
-      Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
@@ -350,7 +350,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_job_subfolders: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
-      Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubfolders: {"type":"boolean","description":"If true, items in sub-folders are also returned (default false)."},
@@ -386,7 +386,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     },
     list_job_instances_by_static_group: {
       JobDefinitionId: {"type":"string","description":"Filters result set by the id of the job definition."},
-      LastAction: {"type":"string","description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
+      LastAction: {"type":"string","maxLength":256,"description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription."},
       Page: PAGE_PROPERTY,
@@ -395,7 +395,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     },
     list_job_instances_by_dynamic_group: {
       JobDefinitionId: {"type":"string","description":"Filters result set by the id of the job definition."},
-      LastAction: {"type":"string","description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
+      LastAction: {"type":"string","maxLength":256,"description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription."},
       Page: PAGE_PROPERTY,
@@ -404,7 +404,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     },
     list_job_instances_by_universal_dynamic_group: {
       JobDefinitionId: {"type":"string","description":"Filters result set by the id of the job definition."},
-      LastAction: {"type":"string","description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
+      LastAction: {"type":"string","maxLength":256,"description":"Filters on lastAction. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are JobDefinitionDisplayName, JobDefinitionName, EndpointName, Start or LastAction (e. g. EndpointName asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are JobDefinitionDisplayName, JobDefinitionName, EndpointName or StateDescription."},
       Page: PAGE_PROPERTY,

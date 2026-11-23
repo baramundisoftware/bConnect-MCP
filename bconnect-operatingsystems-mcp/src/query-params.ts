@@ -66,7 +66,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_os_folders: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
-      Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
@@ -74,7 +74,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_os_folders_by_folder: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
-      Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubfolders: {"type":"boolean","description":"If true, items in sub-folders are also returned (default false)."},

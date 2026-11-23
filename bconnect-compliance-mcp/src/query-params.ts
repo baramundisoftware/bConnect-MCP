@@ -95,7 +95,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     },
     list_vulnerabilities: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are CveId or CvssScore (e.g. CveId asc)."},
-      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are CveId, AffectedProducts or AffectedOperatingSystems."},
+      SearchQuery: {"type":"string","maxLength":2000,"description":"Filters results by matching the given value against searchable properties. Searchable values are CveId, AffectedProducts or AffectedOperatingSystems."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
