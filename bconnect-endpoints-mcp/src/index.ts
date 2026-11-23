@@ -32,7 +32,20 @@ const typeProperty = (description: string): Record<string, unknown> => ({ type: 
 /** Path arguments of each merged tool's routes. */
 const PATH_ARGUMENTS: Readonly<Record<string, readonly string[]>> = {
   get_endpoint: ["id"], delete_endpoint: ["id"], update_endpoint: ["id"], start_enrollment: ["id"],
-  list_endpoints_by_logical_group: ["logicalGroupId"],
+  list_endpoints_by_logical_group: ["logicalGroupId"], trigger_intune_remote_action: ["id"],
+};
+
+/**
+ * Intune remote actions (26R2, #356): per action, the route's operation suffix and the body
+ * fields it takes (the spec's request bodies; the other actions send none).
+ */
+const INTUNE_ACTIONS: Readonly<Record<string, { operation: string; body: readonly string[] }>> = {
+  "trigger_intune_remote_action[action=Sync]": { operation: "Sync", body: [] },
+  "trigger_intune_remote_action[action=Reboot]": { operation: "Reboot", body: [] },
+  "trigger_intune_remote_action[action=Retire]": { operation: "Retire", body: [] },
+  "trigger_intune_remote_action[action=AutopilotReset]": { operation: "WindowsAutopilotReset", body: [] },
+  "trigger_intune_remote_action[action=FreshStart]": { operation: "FreshRestart", body: ["keepUserData"] },
+  "trigger_intune_remote_action[action=Wipe]": { operation: "Wipe", body: ["keepUserData", "keepEnrollmentData"] },
 };
 
 /** create_android_endpoint's profile types per release (specs): 26R2 adds the AMAPI ones (Android Enterprise preview). */
@@ -60,7 +73,7 @@ function androidProfileTypeProperty(release: Release): { type: "string"; descrip
 function routeArguments(key: string): string[] {
   const tool = key.slice(0, key.indexOf("["));
   const query = findQueryEntry(QUERY_PARAMETERS, selectedRelease(), key) ?? {};
-  const body = tool === "update_endpoint" ? updateFieldNames(key) : tool === "start_enrollment" ? createFieldNames(key) : [];
+  const body = tool === "update_endpoint" ? updateFieldNames(key) : tool === "start_enrollment" ? createFieldNames(key) : [...(INTUNE_ACTIONS[key]?.body ?? [])];
   return [...(PATH_ARGUMENTS[tool] ?? []), ...Object.keys(query), ...body];
 }
 
@@ -124,6 +137,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "create_ios_endpoint",
   "create_windows_endpoint",
   "trigger_intune_installation",
+  "trigger_intune_remote_action",
   "create_linux_endpoint",
   "create_mac_endpoint",
   "create_logical_group",
@@ -267,6 +281,20 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             required: ["id"]
           }
         },
+        {
+          name: "trigger_intune_remote_action",
+          description: "[26R2] Trigger an Intune remote action on an Intune-managed Windows endpoint. action: Sync (sync the device with Intune), Reboot (restart it), and four that CAN'T BE UNDONE: Retire (removes company data and Intune management), AutopilotReset (resets the device to its Autopilot state, removing user files, apps and settings), FreshStart (reinstalls Windows and removes apps; keepUserData keeps the user's files) and Wipe (factory reset; keepUserData and keepEnrollmentData keep those). Confirm the device and the action with the user before an irreversible one. Returns whether bMS accepted the action. WARNING: Retire, AutopilotReset, FreshStart and Wipe remove data or management from the device. Available in bConnect 26R2 and later.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "Windows endpoint ID (GUID)" },
+              action: { type: "string", description: "The Intune remote action." },
+              keepUserData: { type: "boolean", description: "Keep the user's data (default false)." },
+              keepEnrollmentData: { type: "boolean", description: "Keep the enrollment data, so the device stays enrolled (default false)." },
+            },
+            required: ["id", "action"]
+          }
+        },
         // Linux CRUD
         {
           name: "create_linux_endpoint",
@@ -337,7 +365,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         { name: "list_unmanaged_endpoints", description: "[26R1] List all unmanaged endpoints detected by baramundi. Returns the devices that are not yet enrolled into management; the route takes no paging or filter arguments. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: {} } },
         { name: "get_unmanaged_endpoint", description: "[26R1] Get details of a specific unmanaged endpoint by its GUID. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
         { name: "delete_unmanaged_endpoint", description: "[26R1] Delete an unmanaged endpoint record. WARNING: Permanently removes the unmanaged device record. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { id: { type: "string", description: "Unmanaged endpoint ID (GUID)" } }, required: ["id"] } },
-        { name: "get_entra_id_data", description: "[26R1] Get the Entra ID (formerly Azure AD) data bMS stores for a device, looked up by its Entra ID device ID (not the bMS endpoint ID). The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { deviceId: { type: "string", description: "Entra ID device ID (GUID), not the bMS endpoint ID" } }, required: ["deviceId"] } },
+        { name: "get_entra_id_data", description: "[26R1] Get the Entra ID (formerly Azure AD) data bMS stores for a device, looked up by its Entra ID device ID (deviceId) or, on bMS 26R2, by its bMS endpoint ID (endpointId): give exactly one. The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { deviceId: { type: "string", description: "Entra ID device ID (GUID), not the bMS endpoint ID" }, endpointId: { type: "string", description: "bMS endpoint ID (GUID), instead of deviceId" } } } },
         { name: "link_entra_id_data", description: "[26R1] Link a baramundi endpoint to its Entra ID device, tenant and user. WARNING: Creates or replaces the Entra ID association of the endpoint. The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "bMS endpoint ID (GUID)" }, entraIdDeviceId: { type: "string", description: "Entra ID device ID (GUID)" }, entraIdTenantId: { type: "string", description: "Entra ID tenant ID (GUID)" }, entraIdUserId: { type: "string", description: "Entra ID user ID (GUID)" } }, required: ["endpointId", "entraIdDeviceId", "entraIdTenantId", "entraIdUserId"] } },
         { name: "unlink_entra_id_data", description: "[26R1] Remove the Entra ID association of a baramundi endpoint. WARNING: Removes the Entra association. The API marks this as a temporary method; it applies to mobile devices (Android, iOS) whose Entra ID registration bMS tracks. Available in bConnect 26R1 and later.", inputSchema: { type: "object", properties: { endpointId: { type: "string", description: "bMS endpoint ID (GUID)" } }, required: ["endpointId"] } },
       );
@@ -576,6 +604,23 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result, { lead: `Windows endpoint ${args!.id} enrollment started:` });
         }
 
+        case "trigger_intune_remote_action[action=Sync]":
+        case "trigger_intune_remote_action[action=Reboot]":
+        case "trigger_intune_remote_action[action=Retire]":
+        case "trigger_intune_remote_action[action=AutopilotReset]":
+        case "trigger_intune_remote_action[action=FreshStart]":
+        case "trigger_intune_remote_action[action=Wipe]": {
+          const { operation, body } = INTUNE_ACTIONS[route];
+          const result = await bconnect.endpoints.triggerIntuneRemoteAction(args!.id as string, operation, body.length > 0 ? pickArguments(args!, body) : undefined);
+          const action = String(args!.action);
+          const text = result === true
+            ? `Intune remote action ${action} triggered for endpoint ${args!.id}.`
+            : result === false
+              ? `Intune remote action ${action} was not triggered for endpoint ${args!.id} (bMS answered false).`
+              : `Intune remote action ${action} for endpoint ${args!.id}: result unknown (bMS answered ${JSON.stringify(result)}).`;
+          return { content: [{ type: "text", text }] };
+        }
+
         case "trigger_intune_installation": {
           const result = await bconnect.endpoints.triggerInstallationViaIntune(args!.id as string);
           const text = result === true
@@ -761,8 +806,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return { content: [{ type: "text", text: `Unmanaged endpoint ${args!.id} deleted successfully` }] };
         }
 
-        case "get_entra_id_data": {
+        case "get_entra_id_data[deviceId=*,endpointId=]": {
           const result = await bconnect.endpoints.getEntraIdData(args!.deviceId as string);
+          return toolJsonResult(result);
+        }
+
+        case "get_entra_id_data[deviceId=,endpointId=*]": {
+          const result = await bconnect.endpoints.getEntraIdDataByEndpointId(args!.endpointId as string);
           return toolJsonResult(result);
         }
 

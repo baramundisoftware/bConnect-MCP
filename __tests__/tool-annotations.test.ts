@@ -40,7 +40,7 @@ describe('toolEffect', () => {
 
 describe('DESTRUCTIVE_WRITE_TOOLS', () => {
   it('gives every entry a reason', () => {
-    expect(DESTRUCTIVE_WRITE_TOOLS.size).toBe(10);
+    expect(DESTRUCTIVE_WRITE_TOOLS.size).toBe(11);
     for (const [tool, reason] of DESTRUCTIVE_WRITE_TOOLS) {
       expect(reason.length, tool).toBeGreaterThan(20);
     }

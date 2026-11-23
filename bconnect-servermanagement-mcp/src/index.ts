@@ -27,6 +27,14 @@ import { TOOL_METHODS } from "./tool-methods.js";
 const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, selectedRelease(), tool);
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { ServerManagementRules } from "./utils/mcp-tool-validation-rules.js";
+import { checkApiKeyArguments, createApiKeyBody, createApiKeyRules, createApiKeySchema, updateApiKeyPatch, updateApiKeyRules, updateApiKeySchema } from "./api-key-fields.js";
+
+/**
+ * Tools whose answer carries a live credential (REQ-SRV-017): create_api_key returns the new
+ * key's secret. They need ALLOW_SECRET_READ as well as ALLOW_WRITE_OPERATIONS; the shared
+ * client refuses the route on its own too (SECRET_ROUTES).
+ */
+const SECRET_READ_TOOLS = new Set<string>(["create_api_key"]);
 
 // ─── Factory exported for testing ───────────────────────────────────────────
 
@@ -69,10 +77,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   "cancel_scheduled_restart",
   "simulate_msw_cleanup",
   "msw_cleanup",
+  "create_api_key",
+  "update_api_key",
+  "delete_api_key",
   ]);
 
   const toolCatalog = declaredArgumentsOnly(withQueryProperties(QUERY_PARAMETERS, () => selectedRelease(), withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
-    const tools = [
+    const tools: Array<{ name: string; description: string; inputSchema: Record<string, unknown> }> = [
 
       // ── Server Information ────────────────────────────────────────────────
       {
@@ -356,6 +367,27 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           },
           required: ["id"]
         }
+      },
+      // ── API key management (26R2, #357; listed per TOOL_RELEASES) ──────────
+      {
+        name: "get_api_key",
+        description: "[26R2] Get one API key by its GUID: name, expiration date, comment, whether it is active and available via the gateway, and its security profiles. Never returns the key's secret. Available in bConnect 26R2 and later.",
+        inputSchema: { type: "object", properties: { id: { type: "string", description: "GUID of the API key." } }, required: ["id"] }
+      },
+      {
+        name: "create_api_key",
+        description: "[26R2] Create an API key for bConnect. The key gets the rights of its security profiles, so creating one hands out access to bMS: confirm the name, profiles and expiration date with the user first. Returns the new key including its secret (apiKeySecret) in clear text: bMS shows it only this once, so tell the user to store it in a safe place now. Needs ALLOW_SECRET_READ=true as well as ALLOW_WRITE_OPERATIONS=true. WARNING: Creates a new credential. Available in bConnect 26R2 and later.",
+        inputSchema: createApiKeySchema
+      },
+      {
+        name: "update_api_key",
+        description: "[26R2] Change an API key: name, expirationDate, comment, isActive, isAvailableViaGateway or securityProfiles (at least one; securityProfiles replaces the whole list and changes what the key may do). Sends a JSON Patch with only the given fields and returns the key as bMS answers it, without its secret. WARNING: Modifies an existing credential's access. Available in bConnect 26R2 and later.",
+        inputSchema: updateApiKeySchema
+      },
+      {
+        name: "delete_api_key",
+        description: "[26R2] Delete (revoke) an API key by its GUID. Anything that uses the key loses access at once. WARNING: Permanently removes the key; it can't be restored. Available in bConnect 26R2 and later.",
+        inputSchema: { type: "object", properties: { id: { type: "string", description: "GUID of the API key to delete." } }, required: ["id"] }
       }
     );
 
@@ -438,6 +470,14 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         validateOrThrow(args, ServerManagementRules.listDownloadJobs()); return;
       case "get_download_job":
         validateOrThrow(args, ServerManagementRules.getDownloadJob()); return;
+      // 26R2-only (#357)
+      case "get_api_key":
+      case "delete_api_key":
+        validateOrThrow(args, ServerManagementRules.apiKeyById()); return;
+      case "create_api_key":
+        validateOrThrow(args, createApiKeyRules()); checkApiKeyArguments("create_api_key", args); return;
+      case "update_api_key":
+        validateOrThrow(args, updateApiKeyRules()); checkApiKeyArguments("update_api_key", args); return;
       // Unknown tool names are not validated here; dispatch handles MethodNotFound.
     }
   }
@@ -460,6 +500,21 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         content: [{
           type: "text" as const,
           text: `Write operation '${name}' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.`
+        }],
+        isError: true
+      };
+    }
+
+    // 3. Secret gate (REQ-SRV-017): independent of the write gate.
+    if (SECRET_READ_TOOLS.has(name) && process.env.ALLOW_SECRET_READ !== "true") {
+      return {
+        content: [{
+          type: "text" as const,
+          text: `Secret-returning operation '${name}' is disabled because it returns a live credential (the new API key's secret). ` +
+            `This MCP server was started without ALLOW_SECRET_READ. An operator must set ALLOW_SECRET_READ=true in the server's ` +
+            `environment (the MCP host's 'env' block for this server, or the container/service environment) and restart the server; ` +
+            `a running process doesn't pick up the change, and the model cannot set it. ` +
+            `This gate is independent of ALLOW_WRITE_OPERATIONS: opening writes alone doesn't enable it.`
         }],
         isError: true
       };
@@ -621,6 +676,28 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "list_api_keys": {
           const result = await sm.getApiKeys();
           return toolJsonResult(result);
+        }
+
+        // ── API key management (26R2, #357) ────────────────────────────────
+
+        case "get_api_key": {
+          const result = await sm.getApiKey(args!.id as string);
+          return toolJsonResult(result);
+        }
+
+        case "create_api_key": {
+          const result = await sm.createApiKey(createApiKeyBody(args ?? {}));
+          return toolJsonResult(result, { lead: "API key created. apiKeySecret is shown only this once: store it in a safe place now." });
+        }
+
+        case "update_api_key": {
+          const result = await sm.updateApiKey(args!.id as string, updateApiKeyPatch(args ?? {}));
+          return toolJsonResult(result, { lead: `API key ${args!.id} updated:` });
+        }
+
+        case "delete_api_key": {
+          await sm.deleteApiKey(args!.id as string);
+          return { content: [{ type: "text", text: `API key ${args!.id} deleted: it can no longer be used.` }] };
         }
 
         case "simulate_msw_cleanup": {

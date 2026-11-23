@@ -212,13 +212,15 @@ applications, not installer packages.
 
 ### `ALLOW_SECRET_READ`
 
-**Default:** off. `true` lets the defensecontrol tools return live credentials:
+**Default:** off. `true` lets the tools that return live credentials run: in defensecontrol
 `get_bitlocker_secrets` and `update_bitlocker_pin` (BitLocker recovery keys and startup PIN),
-`get_local_admin_accounts` and `patch_local_admin_user_credentials` (cleartext LAPS password). Off,
-those secrets can't land in a model's context or transcript by accident. It is independent of
-`ALLOW_WRITE_OPERATIONS`: the two write tools need both. Every server reads it (the shared client
-checks it), but only defensecontrol has tools that use it. Set it only on a server where retrieving
-these secrets is an intended, authorized use.
+`get_local_admin_accounts` and `patch_local_admin_user_credentials` (cleartext LAPS password); in
+servermanagement `create_api_key` (bMS 26R2: the new API key's secret). Off, those secrets can't
+land in a model's context or transcript by accident. It is independent of
+`ALLOW_WRITE_OPERATIONS`: the write tools among them (the two defensecontrol ones and
+`create_api_key`) need both. Every server reads it (the shared client checks it), but only
+defensecontrol and servermanagement have tools that use it. Set it only on a server where
+retrieving these secrets, or handing out new API keys, is an intended, authorized use.
 
 ---
 

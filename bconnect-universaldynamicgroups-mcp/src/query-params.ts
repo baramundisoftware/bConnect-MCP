@@ -100,5 +100,26 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       includeSubFolders: {"type":"boolean","description":"If true, items in sub-folders are also returned (default false)."},
       countOnly: COUNT_ONLY_PROPERTY,
     },
+    list_thresholds: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and sort direction. Multiple properties are separated by comma. Possible values are DynamicGroupName, SecurityProfileName, Severity, Value, Type, and IsActive (e. g. DynamicGroupName asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are DynamicGroupName, SecurityProfileName and Comment."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    "list_thresholds[dynamicGroupId=]": {
+      OrderBy: {"type":"string","description":"Sorts results by property name and sort direction. Multiple properties are separated by comma. Possible values are DynamicGroupName, SecurityProfileName, Severity, Value, Type, and IsActive (e. g. DynamicGroupName asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are DynamicGroupName, SecurityProfileName and Comment."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    "list_thresholds[dynamicGroupId=*]": {
+      OrderBy: {"type":"string","description":"Sorts results by property name and sort direction. Multiple properties are separated by comma. Possible values are DynamicGroupName, SecurityProfileName, Severity, Value, Type, and IsActive (e. g. DynamicGroupName asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are DynamicGroupName, SecurityProfileName and Comment."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
   },
 };

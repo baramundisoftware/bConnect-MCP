@@ -40,11 +40,19 @@ request enum gains values. Most other changes add `maxLength` to existing parame
   there and are refused by name (see [25R2 → 26R1](#25r2--26r1)).
 - **`list_cloud_connectors`** isn't listed on 26R2; called by name, it's refused naming the release.
 - **`create_android_endpoint`** offers the three AMAPI profile types on 26R2 only.
-- **The 17 new operations** have no tools yet; each has its own issue (#353 to #357). The
-  spec-conformance baseline lists them with those issues.
+- **`get_entra_id_data`** takes `endpointId` instead of `deviceId` on 26R2 (#353).
+- **Thresholds:** `list_thresholds` (all, or one group's with `dynamicGroupId`) and
+  `get_threshold` (#354); `create_threshold`, `update_threshold`, `delete_threshold` behind
+  `ALLOW_WRITE_OPERATIONS` (#355).
+- **API keys:** `get_api_key`; `create_api_key` (also needs `ALLOW_SECRET_READ`), `update_api_key`,
+  `delete_api_key` behind `ALLOW_WRITE_OPERATIONS` (#357).
+- **Intune remote actions:** `trigger_intune_remote_action` with `action` Sync, Reboot, Retire,
+  AutopilotReset, FreshStart or Wipe, behind `ALLOW_WRITE_OPERATIONS` (#356).
+- Every new 26R2 operation now has a tool; the spec-conformance baseline keeps only the
+  `start_enrollment` `maxLength` entries (#358).
 - **`maxLength`** isn't checked by the tools yet; bMS refuses an over-long value itself (#358).
-- **Security:** creating an API key answers with its secret, so that route is behind
-  `ALLOW_SECRET_READ`, and all API key routes are audited as security routes
+- **Security:** creating an API key answers with its secret, so that route (and `create_api_key`)
+  is behind `ALLOW_SECRET_READ`, and all API key routes are audited as security routes
   ([AUDIT.md](AUDIT.md)).
 - Answers pass through unchanged, so the renamed `ADObjectType` values and the changed endpoint
   fields reach the client as bMS sends them.

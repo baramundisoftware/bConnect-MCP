@@ -225,6 +225,29 @@ export class ServerManagementModule {
     return response.data;
   }
 
+  /** GET /ApiKeys/{id} (26R2, #357) */
+  async getApiKey(id: string): Promise<unknown> {
+    const response = await this.httpClient.get(`${this.basePath}/ApiKeys/${id}`);
+    return response.data;
+  }
+
+  /** POST /ApiKeys (26R2, #357): answers with the new key, including its secret (apiKeySecret, shown only once). */
+  async createApiKey(body: Record<string, unknown>): Promise<unknown> {
+    const response = await this.httpClient.post(`${this.basePath}/ApiKeys`, body);
+    return response.data;
+  }
+
+  /** PATCH /ApiKeys/{id} (JSON Patch, 26R2, #357) */
+  async updateApiKey(id: string, patch: JsonPatchOperation[]): Promise<unknown> {
+    const response = await this.httpClient.patch(`${this.basePath}/ApiKeys/${id}`, patch);
+    return response.data;
+  }
+
+  /** DELETE /ApiKeys/{id} (26R2, #357): 204, no content. */
+  async deleteApiKey(id: string): Promise<void> {
+    await this.httpClient.delete(`${this.basePath}/ApiKeys/${id}`);
+  }
+
   /** Simulate MSW cleanup on a DIP server (26R1 only) */
   async simulateMSWCleanup(): Promise<unknown> {
     const response = await this.httpClient.post(`${this.basePath}/Dips/SimulateMSWCleanup`);

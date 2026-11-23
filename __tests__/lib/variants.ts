@@ -1,7 +1,8 @@
 /**
  * Variant keys of merged tools (REQ-SRV-029, ADR-0015): `list_endpoints[type=WindowsEndpoint]`
  * is the route list_endpoints calls with type "WindowsEndpoint"; `list_endpoints[type=]` the one
- * without a type. Parsed here on their own, so the guards don't trust the core's parser.
+ * without a type; `list_thresholds[dynamicGroupId=*]` the one with a dynamicGroupId (any value).
+ * Parsed here on their own, so the guards don't trust the core's parser.
  */
 export interface Variant {
   /** The tool name (the key itself for a tool without variants). */
@@ -23,13 +24,19 @@ export function variantOf(key: string): Variant {
 
 /** `type "WindowsEndpoint"`, `without type`, `kind "Static" and member "Red"`, `kind "Static" without member`: as the servers say it. */
 export function describeVariant(select: Record<string, string | null>): string {
-  const parts = Object.entries(select).map(([name, value]) => (value === null ? `without ${name}` : `${name} "${value}"`));
-  return parts.map((part, i) => (i === 0 ? part : `${part.startsWith('without ') ? ' ' : ' and '}${part}`)).join('');
+  const parts = Object.entries(select).map(([name, value]) => (value === null ? `without ${name}` : value === GIVEN ? `with ${name}` : `${name} "${value}"`));
+  return parts.map((part, i) => (i === 0 ? part : `${/^with(out)? /.test(part) ? ' ' : ' and '}${part}`)).join('');
 }
 
-/** The arguments that call a variant: its selectors with a value. */
+/** A selector value meaning "the argument is given", whatever its value (an ID, #354). */
+export const GIVEN = '*';
+
+/** A GUID for a GIVEN selector: the guards' placeholder ID (exerciser's ID). */
+const GIVEN_ID = '00000000-0000-4000-8000-000000000001';
+
+/** The arguments that call a variant: its selectors with a value (a GIVEN one with a GUID). */
 export function selectorArguments(key: string): Record<string, string> {
-  return Object.fromEntries(Object.entries(variantOf(key).select).filter(([, v]) => v !== null)) as Record<string, string>;
+  return Object.fromEntries(Object.entries(variantOf(key).select).filter(([, v]) => v !== null).map(([n, v]) => [n, v === GIVEN ? GIVEN_ID : v])) as Record<string, string>;
 }
 
 /**
@@ -41,6 +48,10 @@ export function selectorArguments(key: string): Record<string, string> {
 export function partNames(part: string, select: Record<string, string | null>): boolean {
   if (part === describeVariant(select)) {return true;}
   if (part.includes(' and ')) {return false;}
+  if (part.startsWith('with ')) {
+    const name = part.slice('with '.length);
+    return !name.includes(' ') && name in select && select[name] === GIVEN;
+  }
   if (part.startsWith('without ')) {
     const name = part.slice('without '.length);
     return !name.includes(' ') && name in select && select[name] === null;

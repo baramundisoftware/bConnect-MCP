@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Managed endpoints — Windows, Linux, macOS, Android, iOS, network, and industrial devices  
-**Tools:** 32 (25 on bMS 25R2)
+**Tools:** 32 (33 on bMS 26R2; 25 on bMS 25R2)
 
 ---
 
@@ -73,6 +73,7 @@ type doesn't have is refused before anything is sent.
 | `create_network_endpoint` | Create a new network endpoint |
 | `create_industrial_endpoint` | **(25R2)** Create a new industrial endpoint (PLC, SCADA) |
 | `trigger_intune_installation` | Trigger the baramundi Agent installation via Intune (Windows) |
+| `trigger_intune_remote_action` | **(26R2)** Trigger an Intune remote action on a Windows endpoint: `action` Sync, Reboot, or the irreversible Retire, AutopilotReset, FreshStart (`keepUserData`) and Wipe (`keepUserData`, `keepEnrollmentData`) |
 | `list_logical_groups` | List logical groups |
 | `get_logical_group` | Get details of a specific logical group |
 | `create_logical_group` | Create a new logical group |
@@ -89,7 +90,7 @@ type doesn't have is refused before anything is sent.
 | `list_unmanaged_endpoints` | **(26R1)** List all unmanaged detected endpoints |
 | `get_unmanaged_endpoint` | **(26R1)** Get details of an unmanaged endpoint |
 | `delete_unmanaged_endpoint` | **(26R1)** Delete an unmanaged endpoint record |
-| `get_entra_id_data` | **(26R1)** Get Microsoft Entra ID data by its Entra ID device ID (not the bMS endpoint ID) |
+| `get_entra_id_data` | **(26R1)** Get Microsoft Entra ID data by its Entra ID device ID (`deviceId`) or, on bMS 26R2, by the bMS endpoint ID (`endpointId`): exactly one of the two |
 | `link_entra_id_data` | **(26R1)** Link an EntraID device to a baramundi endpoint |
 | `unlink_entra_id_data` | **(26R1)** Unlink EntraID data from an endpoint |
 
@@ -98,7 +99,9 @@ The per-type tools of earlier versions (`list_windows_endpoints`, `get_mac_endpo
 `list_group_endpoints` are gone; calling one returns the tool and argument that replace it. The
 full mapping is in the [CHANGELOG](../CHANGELOG.md).
 
-> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later.
+> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later. Tools marked **(26R2)** need 2026 R2; on 26R1 they aren't listed and are refused by name.
+>
+> **`trigger_intune_remote_action` can't be undone for four of its actions.** Retire, AutopilotReset, FreshStart and Wipe remove data or management from the device. The tool is behind `ALLOW_WRITE_OPERATIONS` like every write tool, has no gate of its own, and is annotated destructive; its description tells the model to confirm the device and the action with the user first.
 > Tools marked **(25R2)** exist only in bMS 2025 R2: 2026 R1 removed the industrial-endpoint API and 2026 R2 doesn't have it either (so does the `IndustrialEndpoint` type). Updating a maintenance window needs 26R1: 25R2 updates with `PUT`, and its API specification describes that request in two contradicting ways, so the update tools aren't offered on 25R2 until a 25R2 bMS confirms it (declared in `src/unsupported-operations.ts`). Creating one works in both releases with that release's window types: 25R2 `Unrestricted` (the default, no intervals), `Everyday`, `WorkdayWeekend`, `IndividualWeekday`; 26R1 `Anytime` (the default) and `Never` (both without intervals) instead of `Unrestricted`, plus the same three. A type the release doesn't have is refused before anything is sent.
 
 ---

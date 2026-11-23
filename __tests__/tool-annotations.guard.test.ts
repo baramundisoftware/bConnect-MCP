@@ -105,7 +105,8 @@ describe('DESTRUCTIVE_WRITE_TOOLS', () => {
     for (const server of SERVERS) {
       const { TOOL_OPERATIONS } = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
       for (const [tool, ids] of Object.entries<readonly string[]>(TOOL_OPERATIONS)) {
-        if (methodsOf(domainOf(server), ids).some((m) => m !== 'GET')) {writes.add(tool);}
+        // A merged tool's key is its variant (`tool[action=X]`): the destructive list names the tool.
+        if (methodsOf(domainOf(server), ids).some((m) => m !== 'GET')) {writes.add(variantOf(tool).tool);}
       }
     }
     expect([...DESTRUCTIVE_WRITE_TOOLS.keys()].filter((t) => !writes.has(t))).toEqual([]);

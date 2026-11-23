@@ -15,7 +15,7 @@ import { http, HttpResponse, type JsonBodyType } from 'msw';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { Release } from './spec.js';
-import { routeTakes, selectorArguments, variantOf } from './variants.js';
+import { GIVEN, routeTakes, selectorArguments, variantOf } from './variants.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const BASE_URL = 'https://bms.guard.test/bconnect';
@@ -41,11 +41,16 @@ export function sample(name: string, schema: JsonSchema): unknown {
   switch (schema.type) {
     case 'string':
       if (schema.format === 'date-time') {return '2026-01-01T00:00:00Z';}
+      if (schema.format === 'date') {return '2026-01-01';}
+      if (schema.format === 'guid' || schema.format === 'uuid') {return ID;}
       return /id$/i.test(name) ? ID : 'x';
     case 'integer':
     case 'number': return 1;
     case 'boolean': return false;
-    case 'array': return /patch|operations/i.test(name) ? [{ op: 'replace', path: '/name', value: 'x' }] : [];
+    case 'array':
+      if (/patch|operations/i.test(name)) {return [{ op: 'replace', path: '/name', value: 'x' }];}
+      // An array that needs items (minItems) gets that many samples of its item schema.
+      return Array.from({ length: Number(schema.minItems ?? 0) }, () => sample(name, schema.items ?? {}));
     case 'object':
       // A declared structure gets a sample per property; an untyped object a placeholder.
       if (schema.properties) {
@@ -224,9 +229,11 @@ export async function callsOf(server: string, tools: ConnectedServer['tools'], r
     }
     for (const key of keys.filter((k) => (TOOL_RELEASES[k] ?? []).includes(release))) {
       const { select } = variantOf(key);
+      // A selector with value * is an argument of its route (an ID, given whatever its value): kept and required.
+      const given = Object.keys(select).filter((name) => select[name] === GIVEN);
       const properties = Object.fromEntries(Object.entries<JsonSchema>(tool.inputSchema.properties ?? {})
-        .filter(([name, schema]) => !(name in select) && routeTakes(schema?.description, select)));
-      const required = (tool.inputSchema.required ?? []).filter((name: string) => name in properties);
+        .filter(([name, schema]) => given.includes(name) || (!(name in select) && routeTakes(schema?.description, select))));
+      const required = [...new Set([...(tool.inputSchema.required ?? []), ...given])].filter((name: string) => name in properties);
       out.push({ key, name: tool.name, inputSchema: { ...tool.inputSchema, properties, required }, select: selectorArguments(key) });
     }
   }

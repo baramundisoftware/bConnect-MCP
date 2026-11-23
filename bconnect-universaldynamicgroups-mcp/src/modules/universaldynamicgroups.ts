@@ -1,4 +1,5 @@
 import type { AxiosInstance } from 'axios';
+import type { JsonPatchOperation } from '@bconnect/mcp-core';
 import type { components, operations } from '../generated/universaldynamicgroups-types.js';
 
 // Type aliases
@@ -60,6 +61,43 @@ export class UniversalDynamicGroupsModule {
       `${this.basePath}/UniversalDynamicGroupsFolder/${id}`
     );
     return response.data;
+  }
+
+  // ── Thresholds (26R2, #354): not in the generated 26R1 types, so typed by their use ──
+
+  /** GET /Thresholds: every threshold (paged). */
+  async getThresholds(params: Record<string, unknown> = {}): Promise<unknown> {
+    const response = await this.httpClient.get(`${this.basePath}/Thresholds`, { params });
+    return response.data;
+  }
+
+  /** GET /UniversalDynamicGroups/{dynamicGroupId}/Thresholds: one group's thresholds (paged). */
+  async getThresholdsForGroup(dynamicGroupId: string, params: Record<string, unknown> = {}): Promise<unknown> {
+    const response = await this.httpClient.get(`${this.basePath}/UniversalDynamicGroups/${dynamicGroupId}/Thresholds`, { params });
+    return response.data;
+  }
+
+  /** GET /Thresholds/{id}. */
+  async getThreshold(id: string): Promise<unknown> {
+    const response = await this.httpClient.get(`${this.basePath}/Thresholds/${id}`);
+    return response.data;
+  }
+
+  /** POST /Thresholds (26R2, #355): answers with the created threshold. */
+  async createThreshold(body: Record<string, unknown>): Promise<unknown> {
+    const response = await this.httpClient.post(`${this.basePath}/Thresholds`, body);
+    return response.data;
+  }
+
+  /** PATCH /Thresholds/{id} (JSON Patch, 26R2, #355): answers with the changed threshold. */
+  async updateThreshold(id: string, patch: JsonPatchOperation[]): Promise<unknown> {
+    const response = await this.httpClient.patch(`${this.basePath}/Thresholds/${id}`, patch);
+    return response.data;
+  }
+
+  /** DELETE /Thresholds/{id} (26R2, #355): 204, no content. */
+  async deleteThreshold(id: string): Promise<void> {
+    await this.httpClient.delete(`${this.basePath}/Thresholds/${id}`);
   }
 
   async getFoldersByFolder(

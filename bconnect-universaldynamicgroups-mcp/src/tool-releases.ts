@@ -16,4 +16,11 @@ export const TOOL_RELEASES: ToolReleaseTable = {
   list_udg_folders: ["26R1", "26R2"],
   get_udg_folder: ["26R1", "26R2"],
   list_udg_folders_by_folder: ["26R1", "26R2"],
+  list_thresholds: ["26R2"],
+  "list_thresholds[dynamicGroupId=]": ["26R2"],
+  "list_thresholds[dynamicGroupId=*]": ["26R2"],
+  get_threshold: ["26R2"],
+  create_threshold: ["26R2"],
+  update_threshold: ["26R2"],
+  delete_threshold: ["26R2"],
 };

@@ -26,7 +26,7 @@ import { ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, requiredArg
  * since #174 one tool per endpoint operation: 26R1 −29 (15 reads), 25R2 −33 (17 reads); and per groups
  * operation: 26R1 30 → 2, 25R2 33 → 2 (all reads)); 26R2 is 26R1 without list_cloud_connectors (−1, a read).
  */
-const COUNTS = { '26R2': { on: 210, off: 129 }, '26R1': { on: 211, off: 130 }, '25R2': { on: 166, off: 100 } } as const;
+const COUNTS = { '26R2': { on: 220, off: 132 }, '26R1': { on: 211, off: 130 }, '25R2': { on: 166, off: 100 } } as const;
 
 /** Read tools per server on 26R1 (listed with writes off); the 4 servers without write tools are absent. */
 const READS_26R1: Record<string, number> = {
@@ -147,10 +147,13 @@ describe.each(RELEASES)('bMS %s', (release) => {
 
   it('servers without write tools list the same tools either way', () => {
     const readOnly = seen.filter((s) => Object.values(s.effect).every((e) => e === 'read'));
-    // These four have no write tools at all (they don't wrap their list); on 25R2 software lists none either.
+    // These have no write tools at all; on 25R2 software lists none either. Universal dynamic
+    // groups has write tools on 26R2 only (thresholds, #355).
     expect(readOnly.map((s) => s.server)).toEqual(expect.arrayContaining([
-      'bconnect-activedirectory-mcp', 'bconnect-compliance-mcp', 'bconnect-groups-mcp', 'bconnect-universaldynamicgroups-mcp',
+      'bconnect-activedirectory-mcp', 'bconnect-compliance-mcp', 'bconnect-groups-mcp',
+      ...(release === '26R2' ? [] : ['bconnect-universaldynamicgroups-mcp']),
     ]));
+    if (release === '26R2') {expect(readOnly.map((s) => s.server)).not.toContain('bconnect-universaldynamicgroups-mcp');}
     for (const s of readOnly) {expect(JSON.stringify(s.off), s.server).toBe(JSON.stringify(s.on));}
   });
 

@@ -22,11 +22,13 @@ import { ROOT, SERVERS, connect, createRecorder, guardEnv, requiredArguments, ty
 import { describeVariant, selectorArguments, variantOf } from './lib/variants.js';
 
 /**
- * Tools a release lacks, all servers (bundled specs): on 25R2 the 36 hidden by hand before #159 plus 10
- * (compliance 8, maintenance-window updates 2); on 26R1 8 (industrial endpoints); on 26R2 those 8 and
- * list_cloud_connectors (its operation is gone).
+ * Tools and routes a release lacks, all servers (bundled specs): on 25R2 the 36 hidden by hand before #159
+ * plus 10 (compliance 8, maintenance-window updates 2), and the 26R2 ones below that aren't in 26R1 either; on
+ * 26R1 8 (industrial endpoints) and the 26R2 ones: get_entra_id_data by endpoint ID (#353), list_thresholds'
+ * two routes and get_threshold (#354), create/update/delete_threshold (#355), the 4 API key tools (#357) and the 6 routes of trigger_intune_remote_action (#356); on 26R2 the 8 industrial ones and list_cloud_connectors (its
+ * operation is gone).
  */
-const HIDDEN = { '25R2': 46, '26R1': 8, '26R2': 9 } as const;
+const HIDDEN = { '25R2': 63, '26R1': 25, '26R2': 9 } as const;
 const METHOD_NOT_FOUND = -32601;
 const INVALID_PARAMS = -32602;
 const isVariant = (key: string): boolean => variantOf(key).tool !== key;
@@ -155,7 +157,8 @@ describe('tools per release from the spec', () => {
     expect(seen.flatMap((s) => s.refused).length).toBe(HIDDEN['25R2'] + HIDDEN['26R1'] + HIDDEN['26R2']);
     // A tool is refused by name (MethodNotFound); a variant by its argument (InvalidParams), e.g.
     // "list_endpoints with type "IndustrialEndpoint" is only available in bMS 25R2; …".
-    const named = (tool: string) => (isVariant(tool) ? `${variantOf(tool).tool} with ${describeVariant(variantOf(tool).select)}` : tool);
+    const label = (tool: string) => describeVariant(variantOf(tool).select);
+    const named = (tool: string) => (isVariant(tool) ? `${variantOf(tool).tool} ${/^with(out)? /.test(label(tool)) ? '' : 'with '}${label(tool)}` : tool);
     const wrong = seen.flatMap((s) => s.refused.filter((r) => r.code !== (isVariant(r.tool) ? INVALID_PARAMS : METHOD_NOT_FOUND) || r.sent !== 0
       || !r.text.includes(`${named(r.tool)} is only available in bMS ${s.expected[r.tool].join(' or ')}; this server uses ${r.release} (from BCONNECT_RELEASE).`))
       .map((r) => `${s.server} ${r.release} ${r.tool}: ${r.code} sent ${r.sent} ${r.text.slice(0, 140)}`));

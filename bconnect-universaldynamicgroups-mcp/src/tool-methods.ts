@@ -16,4 +16,9 @@ export const TOOL_METHODS: ToolMethodTable = {
   list_udg_folders: ["GET"],
   get_udg_folder: ["GET"],
   list_udg_folders_by_folder: ["GET"],
+  list_thresholds: ["GET"],
+  get_threshold: ["GET"],
+  create_threshold: ["POST"],
+  update_threshold: ["PATCH"],
+  delete_threshold: ["DELETE"],
 };
