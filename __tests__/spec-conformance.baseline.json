@@ -8,9 +8,5 @@
   "coverage 26R2 endpoints - IntuneRemoteActionRetire": 356,
   "coverage 26R2 endpoints - IntuneRemoteActionSync": 356,
   "coverage 26R2 endpoints - IntuneRemoteActionWindowsAutopilotReset": 356,
-  "coverage 26R2 endpoints - IntuneRemoteActionWipe": 356,
-  "coverage 26R2 servermanagement - CreateApiKey": 357,
-  "coverage 26R2 servermanagement - DeleteApiKey": 357,
-  "coverage 26R2 servermanagement - GetApiKey": 357,
-  "coverage 26R2 servermanagement - UpdateApiKey": 357
+  "coverage 26R2 endpoints - IntuneRemoteActionWipe": 356
 }

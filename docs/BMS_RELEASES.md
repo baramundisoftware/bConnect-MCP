@@ -44,11 +44,13 @@ request enum gains values. Most other changes add `maxLength` to existing parame
 - **Thresholds:** `list_thresholds` (all, or one group's with `dynamicGroupId`) and
   `get_threshold` (#354); `create_threshold`, `update_threshold`, `delete_threshold` behind
   `ALLOW_WRITE_OPERATIONS` (#355).
-- **The other 10 new operations** have no tools yet; each has its own issue (#356, #357). The
+- **API keys:** `get_api_key`; `create_api_key` (also needs `ALLOW_SECRET_READ`), `update_api_key`,
+  `delete_api_key` behind `ALLOW_WRITE_OPERATIONS` (#357).
+- **The other 6 new operations** (Intune remote actions) have no tools yet (#356). The
   spec-conformance baseline lists them with those issues.
 - **`maxLength`** isn't checked by the tools yet; bMS refuses an over-long value itself (#358).
-- **Security:** creating an API key answers with its secret, so that route is behind
-  `ALLOW_SECRET_READ`, and all API key routes are audited as security routes
+- **Security:** creating an API key answers with its secret, so that route (and `create_api_key`)
+  is behind `ALLOW_SECRET_READ`, and all API key routes are audited as security routes
   ([AUDIT.md](AUDIT.md)).
 - Answers pass through unchanged, so the renamed `ADObjectType` values and the changed endpoint
   fields reach the client as bMS sends them.

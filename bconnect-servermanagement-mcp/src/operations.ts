@@ -34,6 +34,11 @@ export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   restart_management_server: ['RestartBaramundiManagementServer'],
   cancel_scheduled_restart: ['CancelScheduledRestartBaramundiManagementServer'],
   list_api_keys: ['GetApiKeys'],
+  // API key management (26R2, #357)
+  get_api_key: ['GetApiKey'],
+  create_api_key: ['CreateApiKey'],
+  update_api_key: ['UpdateApiKey'],
+  delete_api_key: ['DeleteApiKey'],
   simulate_msw_cleanup: ['SimulateMSWCleanup'],
   msw_cleanup: ['MSWCleanup'],
   list_download_jobs: ['GetDownloadJobs'],

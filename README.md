@@ -136,7 +136,7 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 | `bconnect-endpoints-mcp` | 32 | 32 | 25 | Windows/Linux/Mac/Android/iOS/network/industrial endpoints (one tool per operation, type as argument), logical groups, maintenance windows |
 | `bconnect-groups-mcp` | 2 | 2 | 2 | Members of logical/static/dynamic/universal dynamic groups and endpoints of an AD user (group kind and member type as arguments) |
 | `bconnect-jobs-mcp` | 34 | 34 | 34 | Job definitions, instances, folders, kiosk releases |
-| `bconnect-servermanagement-mcp` | 29 | 30 | 25 | Management server, microservices, security groups, API keys |
+| `bconnect-servermanagement-mcp` | 33 | 30 | 25 | Management server, microservices, security groups, API keys |
 | `bconnect-assets-mcp` | 26 | 26 | 24 | Asset inventory, asset types, stock folders |
 | `bconnect-software-mcp` | 19 | 19 | 4 | Installed software inventory, software bundles |
 | `bconnect-activedirectory-mcp` | 16 | 16 | 16 | AD groups, users, objects, organizational units |
@@ -146,7 +146,7 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 | `bconnect-compliance-mcp` | 8 | 8 | — | Compliance violations, CVE vulnerabilities (needs 26R1) |
 | `bconnect-universaldynamicgroups-mcp` | 11 | 6 | — | Universal Dynamic Group definitions (needs 26R1), thresholds (26R2) |
 | `bconnect-updatemanagement-mcp` | 3 | 3 | 3 | Windows Update management |
-| **Total** | **215** | **211** | **166** | |
+| **Total** | **219** | **211** | **166** | |
 
 — means the server needs 26R1 and lists no tools on 25R2. Each release lists only the tools whose API routes it has: 26R1 and 26R2 have no industrial-endpoint tools, 25R2 no 26R1-only tools, 26R1 no 26R2-only tools, and 26R2 no `list_cloud_connectors` (its API is gone).
 
@@ -291,7 +291,7 @@ For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING
 - **Use `BCONNECT_CA_CERT_PATH`** for self-signed certificates instead of disabling TLS
 - **Audit logging** (`BCONNECT_AUDIT_LEVEL`, default `security`; `write` or `all` record more, `none` switches it off) writes to stderr; `security` records every call to a security-relevant route: credentials, API keys, object rights, security groups and profiles ([docs/AUDIT.md](docs/AUDIT.md))
 - **Write tools are off** unless `ALLOW_WRITE_OPERATIONS=true`, and off in the gateway. While they are off, the tool list leaves them out and a call by name is refused. A write tool whose description ends with "Not yet verified against a live bMS." hasn't been checked against a real bMS yet. Try writes on a test system first
-- **Secret reads** (BitLocker keys/PIN, LAPS passwords) are off unless `ALLOW_SECRET_READ=true`, and off in the gateway
+- **Secret reads** (BitLocker keys/PIN, LAPS passwords, a new API key's secret) are off unless `ALLOW_SECRET_READ=true`, and off in the gateway
 - **Tool hints for clients**: every tool declares MCP annotations: a readable `title`, `readOnlyHint: true` on tools that only read (they carry no `destructiveHint`), and on every other tool `readOnlyHint: false` plus `destructiveHint` (true for tools that delete or whose effect can't be undone, such as running a job or replacing a BitLocker PIN). A client can use them to run reads without asking and to ask before destructive calls. They are derived from the API operations each tool calls and are hints only: the write and secret gates above are unchanged and still decide what runs
 - **Rate limiting** (`BCONNECT_RATE_LIMIT_ENABLED=true`) caps the requests each server sends to the bConnect API, across all its tool calls
 

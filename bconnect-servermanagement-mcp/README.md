@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Server management — management server info, microservices, security groups/profiles, object permissions, and infrastructure components  
-**Tools:** 30 (29 on bMS 26R2; 25 on bMS 25R2)
+**Tools:** 30 (33 on bMS 26R2; 25 on bMS 25R2)
 
 ---
 
@@ -82,9 +82,15 @@ been checked against a real bMS yet.
 | `msw_cleanup` | **(26R1)** Clean up managed software files on the master DIP; reports `wasSuccessful` |
 | `list_download_jobs` | **(26R1)** List all download jobs |
 | `get_download_job` | **(26R1)** Get details of a specific download job |
+| `get_api_key` | **(26R2)** Get one API key by GUID (never its secret) |
+| `create_api_key` | **(26R2)** Create an API key (`name`; optional `expirationDate`, `comment`, `isActive`, `isAvailableViaGateway`, `securityProfiles`); returns its secret once. Needs `ALLOW_SECRET_READ` as well as `ALLOW_WRITE_OPERATIONS` |
+| `update_api_key` | **(26R2)** Change an API key's name, expiration date, comment, active/gateway flags or security profiles (JSON Patch with only the given fields) |
+| `delete_api_key` | **(26R2)** Delete (revoke) an API key |
 
 > Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later.
-> The tool marked **(up to 26R1)** is gone in 2026 R2: its API was removed, so the server doesn't list it there.
+> The tool marked **(up to 26R1)** is gone in 2026 R2: its API was removed, so the server doesn't list it there. Tools marked **(26R2)** need 2026 R2; on 26R1 they aren't listed and are refused by name.
+>
+> **API keys hand out access.** A key gets the rights of its security profiles: `create_api_key` and `update_api_key` can give a caller as much access to bMS as those profiles allow. Every API key call is recorded at the default audit level `security` ([AUDIT.md](../docs/AUDIT.md)). The new key's secret is in the tool result only (never in logs), and bMS shows it only once.
 
 ---
 
@@ -104,7 +110,7 @@ The variables this server reads (a test checks the list). Each is described, wit
 | [`BCONNECT_ALLOW_INSECURE_HTTP`](../docs/CONFIGURATION.md#bconnect_allow_insecure_http) |  |
 | [`BCONNECT_RELEASE`](../docs/CONFIGURATION.md#bconnect_release) | On 25R2 the tools marked **(26R1)** aren't listed; on 26R2 `list_cloud_connectors` isn't (bMS 26R2 removed its API). |
 | [`ALLOW_WRITE_OPERATIONS`](../docs/CONFIGURATION.md#allow_write_operations) |  |
-| [`ALLOW_SECRET_READ`](../docs/CONFIGURATION.md#allow_secret_read) | Gates creating an API key (26R2: the answer carries its secret); no tool does that yet (#357). |
+| [`ALLOW_SECRET_READ`](../docs/CONFIGURATION.md#allow_secret_read) | Gates `create_api_key` (26R2: the answer carries the new key's secret), together with `ALLOW_WRITE_OPERATIONS`. |
 | [`BCONNECT_AUDIT_LEVEL`](../docs/CONFIGURATION.md#bconnect_audit_level) |  |
 | [`BCONNECT_PRETTY_JSON`](../docs/CONFIGURATION.md#bconnect_pretty_json) |  |
 | [`BCONNECT_RATE_LIMIT_ENABLED`](../docs/CONFIGURATION.md#bconnect_rate_limit_enabled) |  |

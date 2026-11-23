@@ -25,10 +25,10 @@ import { describeVariant, selectorArguments, variantOf } from './lib/variants.js
  * Tools and routes a release lacks, all servers (bundled specs): on 25R2 the 36 hidden by hand before #159
  * plus 10 (compliance 8, maintenance-window updates 2), and the 26R2 ones below that aren't in 26R1 either; on
  * 26R1 8 (industrial endpoints) and the 26R2 ones: get_entra_id_data by endpoint ID (#353), list_thresholds'
- * two routes and get_threshold (#354), create/update/delete_threshold (#355); on 26R2 the 8 industrial ones and list_cloud_connectors (its
+ * two routes and get_threshold (#354), create/update/delete_threshold (#355), the 4 API key tools (#357); on 26R2 the 8 industrial ones and list_cloud_connectors (its
  * operation is gone).
  */
-const HIDDEN = { '25R2': 53, '26R1': 15, '26R2': 9 } as const;
+const HIDDEN = { '25R2': 57, '26R1': 19, '26R2': 9 } as const;
 const METHOD_NOT_FOUND = -32601;
 const INVALID_PARAMS = -32602;
 const isVariant = (key: string): boolean => variantOf(key).tool !== key;

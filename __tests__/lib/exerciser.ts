@@ -41,11 +41,16 @@ export function sample(name: string, schema: JsonSchema): unknown {
   switch (schema.type) {
     case 'string':
       if (schema.format === 'date-time') {return '2026-01-01T00:00:00Z';}
+      if (schema.format === 'date') {return '2026-01-01';}
+      if (schema.format === 'guid' || schema.format === 'uuid') {return ID;}
       return /id$/i.test(name) ? ID : 'x';
     case 'integer':
     case 'number': return 1;
     case 'boolean': return false;
-    case 'array': return /patch|operations/i.test(name) ? [{ op: 'replace', path: '/name', value: 'x' }] : [];
+    case 'array':
+      if (/patch|operations/i.test(name)) {return [{ op: 'replace', path: '/name', value: 'x' }];}
+      // An array that needs items (minItems) gets that many samples of its item schema.
+      return Array.from({ length: Number(schema.minItems ?? 0) }, () => sample(name, schema.items ?? {}));
     case 'object':
       // A declared structure gets a sample per property; an untyped object a placeholder.
       if (schema.properties) {

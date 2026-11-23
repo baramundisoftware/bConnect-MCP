@@ -31,13 +31,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `severity`, `isActive`, `comment`: the group and the security profile can't be changed) and
   `delete_threshold`. The first write tools of the universaldynamicgroups server; not yet verified
   against a live bMS.
+- **API key management** (#357, bMS 26R2): `get_api_key` (read; never the secret), and behind
+  `ALLOW_WRITE_OPERATIONS` `create_api_key` (also needs `ALLOW_SECRET_READ`: it returns the new
+  key's secret, which bMS shows only once), `update_api_key` (a JSON Patch with only the given
+  fields among name, expiration date, comment, active, gateway and security profiles) and
+  `delete_api_key`. A key gets the rights of its security profiles: the descriptions say so.
 - **READMEs give the 26R2 tool counts** (#354): the root table has a 26R2 column, server READMEs
   mark 26R2-only tools **(26R2)**, and the README guard checks all three releases.
 
 ### Security
-- **26R2 API keys** (#280): creating an API key answers with its secret, so that route is behind
-  `ALLOW_SECRET_READ` like the BitLocker and LAPS secrets; all API key routes are audited as security
-  routes. No tool calls them yet (#357).
+- **26R2 API keys** (#280, #357): creating an API key answers with its secret, so that route is
+  behind `ALLOW_SECRET_READ` like the BitLocker and LAPS secrets; all API key routes are audited as
+  security routes (default audit level). `create_api_key` needs `ALLOW_SECRET_READ` and
+  `ALLOW_WRITE_OPERATIONS`; the secret is in the tool result only, never in a log.
 
 ## [26.1.12] - 2026-11-19
 

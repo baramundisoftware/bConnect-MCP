@@ -25,7 +25,7 @@ export const SECRET_ROUTES: readonly SecretRoute[] = Object.freeze([
   // LAPS local administrator username + password (25R2, 26R1)
   { method: "GET", domain: "defensecontrol", path: "/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/{id}" },
   { method: "PATCH", domain: "defensecontrol", path: "/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/{id}" },
-  // A new API key: the answer carries apiKeySecret (26R2; no tool calls it yet, #357)
+  // A new API key: the answer carries apiKeySecret (26R2: create_api_key, #357)
   { method: "POST", domain: "servermanagement", path: "/v2.0/ApiKeys" },
 ]);
 
@@ -148,7 +148,7 @@ export function assertSecretRouteAllowed(
   }
   throw new SecretRouteBlockedError(
     `Refusing ${String(method).toUpperCase()} ${pathOf(url)}: the response contains live credentials ` +
-    `(BitLocker recovery keys / PIN or a LAPS password). An operator must set ALLOW_SECRET_READ=true ` +
+    `(BitLocker recovery keys / PIN, a LAPS password or a new API key's secret). An operator must set ALLOW_SECRET_READ=true ` +
     `in the MCP server's environment and restart it; the model cannot set it.`,
   );
 }

@@ -46,8 +46,9 @@ describe('.env.example files', () => {
     expect(example(dir)).not.toMatch(/#160|doesn't apply across calls yet/);
   });
 
-  it('the checks see what they check: some servers write, one reads secrets', () => {
+  it('the checks see what they check: some servers write, two read secrets', () => {
     expect(SERVERS.filter(hasWrites).length).toBeGreaterThan(5);
-    expect(SERVERS.filter(hasSecretReads)).toEqual(['bconnect-defensecontrol-mcp']);
+    // servermanagement: create_api_key returns the new key's secret (26R2, #357).
+    expect(SERVERS.filter(hasSecretReads)).toEqual(['bconnect-defensecontrol-mcp', 'bconnect-servermanagement-mcp']);
   });
 });
