@@ -43,6 +43,7 @@ bash scripts/check-new-casts.sh >/dev/null 2>&1; check $? "scripts/check-new-cas
 
 section "Tests (every server, the gateway and the suite-wide guards)"
 npx vitest run >/dev/null 2>&1; check $? "npx vitest run"
+node scripts/check-package.mjs >/dev/null 2>&1; check $? "node scripts/check-package.mjs"
 
 section "Coverage floors"
 npm run test:coverage >/dev/null 2>&1; check $? "npm run test:coverage"

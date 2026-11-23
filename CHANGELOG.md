@@ -77,6 +77,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   start; with `all`, such a domain lists none. The workspace `packages/bconnect-mcp` is still
   private: publishing as `@baramundi/bconnect-mcp` follows in the next steps. The gateway's
   `MCP_GATEWAY_COMBINED` and the command's argument share one parser in mcp-core (`domainList`).
+  The package is built for npm (step 2): `dist/cli.js` bundles core and the 13 servers
+  (rolldown), so its only dependencies are the SDK, axios, axios-retry, dotenv and express; the
+  tarball holds that file, a README, the licence and `package.json`. CI packs it on every run,
+  installs it into an empty folder and starts the installed command on Linux and Windows, Node 22
+  and 24 (`scripts/check-package.mjs`).
 
 ### Changed
 - **The default release is 26R2** (was 26R1), now that 26R2 passed the live run (bMS 26.2.147.11,

@@ -10,6 +10,8 @@
  * - In the shipped packages (core, servers, template, gateway) the runtime
  *   dependencies are exactly what the non-test sources import: nothing unused is
  *   shipped, and nothing works only because npm hoisted another package's copy.
+ *   The npm package bconnect-mcp bundles core and the servers, so its runtime
+ *   dependencies are what those import as well (BUNDLES).
  * - One Express major, 5, declared as it runs (REQ-DEP-002, #69): the root lockfile
  *   holds one express and one @types/express; the gateway, which isn't a workspace
  *   member and runs on the root install, has no lockfile of its own, and every
@@ -40,7 +42,7 @@ const MANIFEST_DIRS = [
 ].sort();
 
 /** Code generators and packaging tools: never runtime dependencies. */
-const BUILD_TOOLS = ['openapi-typescript', '@cyclonedx/cyclonedx-npm', 'typescript'];
+const BUILD_TOOLS = ['openapi-typescript', '@cyclonedx/cyclonedx-npm', 'typescript', 'rolldown'];
 
 describe.each(MANIFEST_DIRS)('%s/package.json', (dir) => {
   const manifest = read(dir);
@@ -94,10 +96,27 @@ function sourceImports(dir: string): Set<string> {
   return found;
 }
 
+/**
+ * Packages that bundle other workspaces (#297): their runtime dependencies are what the bundled
+ * sources import too, less the bundled workspaces themselves, which travel inside the bundle.
+ */
+const BUNDLES: Record<string, string[]> = {
+  'packages/bconnect-mcp': ['packages/mcp-core', ...readdirSync(ROOT).filter((d) => /^bconnect-.+-mcp$/.test(d) && d !== 'bconnect-mcp-gateway')],
+};
+const isWorkspaceName = (name: string) => name.startsWith('@bconnect/') || /^bconnect-.+-mcp$/.test(name);
+
+/** What a package's runtime needs from npm: its sources' imports, and for a bundle those of what it bundles. */
+function runtimeImports(dir: string): string[] {
+  // MANIFEST_DIRS joins with the platform separator: packages\\bconnect-mcp on Windows.
+  const bundled = BUNDLES[dir.replace(/\\/g, '/')];
+  if (!bundled) {return [...sourceImports(dir)];}
+  return [...new Set([dir, ...bundled].flatMap((d) => [...sourceImports(d)]))].filter((name) => !isWorkspaceName(name));
+}
+
 describe.each(MANIFEST_DIRS.filter((dir) => dir !== '.'))('%s runtime dependencies', (dir) => {
   it('are exactly what its sources import (none unused, none undeclared)', () => {
     const declared = Object.keys(read(dir).dependencies ?? {}).sort();
-    const imported = [...sourceImports(dir)].sort();
+    const imported = runtimeImports(dir).sort();
     expect({ unused: declared.filter((n) => !imported.includes(n)), undeclared: imported.filter((n) => !declared.includes(n)) })
       .toEqual({ unused: [], undeclared: [] });
   });
