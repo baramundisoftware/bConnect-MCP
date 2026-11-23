@@ -58,6 +58,14 @@ export const TOOL_VARIANTS: ToolVariantTable = {
     "list_endpoints_by_logical_group[type=]": {"type": null},
     "list_endpoints_by_logical_group[type=WindowsEndpoint]": {"type": "WindowsEndpoint"},
   },
+  trigger_intune_remote_action: {
+    "trigger_intune_remote_action[action=Sync]": {"action": "Sync"},
+    "trigger_intune_remote_action[action=Reboot]": {"action": "Reboot"},
+    "trigger_intune_remote_action[action=Retire]": {"action": "Retire"},
+    "trigger_intune_remote_action[action=AutopilotReset]": {"action": "AutopilotReset"},
+    "trigger_intune_remote_action[action=FreshStart]": {"action": "FreshStart"},
+    "trigger_intune_remote_action[action=Wipe]": {"action": "Wipe"},
+  },
   get_entra_id_data: {
     "get_entra_id_data[deviceId=*,endpointId=]": {"deviceId": "*", "endpointId": null},
     "get_entra_id_data[deviceId=,endpointId=*]": {"deviceId": null, "endpointId": "*"},

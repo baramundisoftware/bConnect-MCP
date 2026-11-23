@@ -34,6 +34,7 @@ export const DESTRUCTIVE_WRITE_TOOLS: ReadonlyMap<string, string> = new Map<stri
   ["assign_job_to_static_group", "Runs a job definition on every endpoint of the group; a job can uninstall software, run any script or reinstall the OS."],
   ["assign_job_to_dynamic_group", "Runs a job definition on every endpoint of the group; a job can uninstall software, run any script or reinstall the OS."],
   ["assign_job_to_universal_dynamic_group", "Runs a job definition on every endpoint of the group; a job can uninstall software, run any script or reinstall the OS."],
+  ["trigger_intune_remote_action", "Retire, Autopilot Reset, Fresh Start and Wipe remove data or management from the device (26R2, #356); none can be undone."],
 ]);
 
 /**

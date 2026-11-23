@@ -133,7 +133,7 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 
 | Server | Tools on 26R2 | Tools on 26R1 | Tools on 25R2 | What It Does |
 |--------|------|------|------|--------------|
-| `bconnect-endpoints-mcp` | 32 | 32 | 25 | Windows/Linux/Mac/Android/iOS/network/industrial endpoints (one tool per operation, type as argument), logical groups, maintenance windows |
+| `bconnect-endpoints-mcp` | 33 | 32 | 25 | Windows/Linux/Mac/Android/iOS/network/industrial endpoints (one tool per operation, type as argument), logical groups, maintenance windows |
 | `bconnect-groups-mcp` | 2 | 2 | 2 | Members of logical/static/dynamic/universal dynamic groups and endpoints of an AD user (group kind and member type as arguments) |
 | `bconnect-jobs-mcp` | 34 | 34 | 34 | Job definitions, instances, folders, kiosk releases |
 | `bconnect-servermanagement-mcp` | 33 | 30 | 25 | Management server, microservices, security groups, API keys |
@@ -146,7 +146,7 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 | `bconnect-compliance-mcp` | 8 | 8 | — | Compliance violations, CVE vulnerabilities (needs 26R1) |
 | `bconnect-universaldynamicgroups-mcp` | 11 | 6 | — | Universal Dynamic Group definitions (needs 26R1), thresholds (26R2) |
 | `bconnect-updatemanagement-mcp` | 3 | 3 | 3 | Windows Update management |
-| **Total** | **219** | **211** | **166** | |
+| **Total** | **220** | **211** | **166** | |
 
 — means the server needs 26R1 and lists no tools on 25R2. Each release lists only the tools whose API routes it has: 26R1 and 26R2 have no industrial-endpoint tools, 25R2 no 26R1-only tools, 26R1 no 26R2-only tools, and 26R2 no `list_cloud_connectors` (its API is gone).
 

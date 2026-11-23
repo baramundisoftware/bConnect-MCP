@@ -36,6 +36,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   key's secret, which bMS shows only once), `update_api_key` (a JSON Patch with only the given
   fields among name, expiration date, comment, active, gateway and security profiles) and
   `delete_api_key`. A key gets the rights of its security profiles: the descriptions say so.
+- **Intune remote actions on Windows endpoints** (#356, bMS 26R2): `trigger_intune_remote_action`
+  with `action` Sync, Reboot, Retire, AutopilotReset, FreshStart (`keepUserData`) or Wipe
+  (`keepUserData`, `keepEnrollmentData`), one tool instead of six. Behind `ALLOW_WRITE_OPERATIONS`
+  only, as decided; annotated destructive, and the description names the four actions that can't
+  be undone. Logged as a write (`BCONNECT_AUDIT_LEVEL=write` or `all`), not as a security route.
 - **READMEs give the 26R2 tool counts** (#354): the root table has a 26R2 column, server READMEs
   mark 26R2-only tools **(26R2)**, and the README guard checks all three releases.
 

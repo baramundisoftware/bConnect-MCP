@@ -22,6 +22,7 @@ export const TOOL_METHODS: ToolMethodTable = {
   create_ios_endpoint: ["POST"],
   create_windows_endpoint: ["POST"],
   trigger_intune_installation: ["POST"],
+  trigger_intune_remote_action: ["POST"],
   create_linux_endpoint: ["POST"],
   create_mac_endpoint: ["POST"],
   create_logical_group: ["POST"],

@@ -46,8 +46,10 @@ request enum gains values. Most other changes add `maxLength` to existing parame
   `ALLOW_WRITE_OPERATIONS` (#355).
 - **API keys:** `get_api_key`; `create_api_key` (also needs `ALLOW_SECRET_READ`), `update_api_key`,
   `delete_api_key` behind `ALLOW_WRITE_OPERATIONS` (#357).
-- **The other 6 new operations** (Intune remote actions) have no tools yet (#356). The
-  spec-conformance baseline lists them with those issues.
+- **Intune remote actions:** `trigger_intune_remote_action` with `action` Sync, Reboot, Retire,
+  AutopilotReset, FreshStart or Wipe, behind `ALLOW_WRITE_OPERATIONS` (#356).
+- Every new 26R2 operation now has a tool; the spec-conformance baseline keeps only the
+  `start_enrollment` `maxLength` entries (#358).
 - **`maxLength`** isn't checked by the tools yet; bMS refuses an over-long value itself (#358).
 - **Security:** creating an API key answers with its secret, so that route (and `create_api_key`)
   is behind `ALLOW_SECRET_READ`, and all API key routes are audited as security routes

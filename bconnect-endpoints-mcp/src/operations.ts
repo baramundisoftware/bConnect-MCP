@@ -57,6 +57,13 @@ export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   create_ios_endpoint: ['CreateIOSEndpoint'],
   create_windows_endpoint: ['CreateWindowsEndpoint'],
   trigger_intune_installation: ['TriggerInstallationViaIntune'],
+  // Intune remote actions on a Windows endpoint (26R2, #356): one tool, the action as argument.
+  'trigger_intune_remote_action[action=Sync]': ['IntuneRemoteActionSync'],
+  'trigger_intune_remote_action[action=Reboot]': ['IntuneRemoteActionReboot'],
+  'trigger_intune_remote_action[action=Retire]': ['IntuneRemoteActionRetire'],
+  'trigger_intune_remote_action[action=AutopilotReset]': ['IntuneRemoteActionWindowsAutopilotReset'],
+  'trigger_intune_remote_action[action=FreshStart]': ['IntuneRemoteActionFreshRestart'],
+  'trigger_intune_remote_action[action=Wipe]': ['IntuneRemoteActionWipe'],
   create_linux_endpoint: ['CreateLinuxEndpoint'],
   create_mac_endpoint: ['CreateMacEndpoint'],
   create_logical_group: ['CreateLogicalGroup'],

@@ -429,6 +429,16 @@ export class EndpointsModule {
   /**
    * Trigger installation and enrollment via Intune for a Windows endpoint
    */
+  /**
+   * Trigger an Intune remote action on a Windows endpoint (26R2, #356): POST
+   * /WindowsEndpoints/{id}/IntuneRemoteAction<operation>, with the action's options
+   * as body for FreshRestart and Wipe. bMS answers true or false.
+   */
+  async triggerIntuneRemoteAction(id: string, operation: string, body?: Record<string, unknown>): Promise<unknown> {
+    const response = await this.client.post(`${this.basePath}/WindowsEndpoints/${id}/IntuneRemoteAction${operation}`, body);
+    return response.data;
+  }
+
   async triggerInstallationViaIntune(id: string): Promise<unknown> {
     const response = await this.client.post(
       `${this.basePath}/WindowsEndpoints/${id}/TriggerInstallationViaIntune`
