@@ -56,6 +56,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and CI now start the mock with `BCONNECT_PROFILE=standard-readwrite` (the read-only default
   answers every write with 403), and `scripts/mock-tier.mjs` refuses a mock in another profile.
   On 26R1 and 25R2 those tests skip, and the tier expects exactly those skips.
+- **Architecture documentation** ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)): the arc42 view of
+  the suite: context, building blocks, how a tool is implemented, runtime and deployment views,
+  security gates and the other crosscutting concepts, quality scenarios, risks and a glossary.
 - **Troubleshooting: an empty list can mean missing rights** (#402). bMS filters lists by the
   account's rights instead of answering 403, so a restricted account gets an empty result without
   an error, and the startup check still says "verified". `docs/TROUBLESHOOTING.md` describes the
