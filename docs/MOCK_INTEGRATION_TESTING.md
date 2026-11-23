@@ -27,12 +27,14 @@ its rate limit off: under the limit, `/health` can answer 429 and the tests act
 as if the mock weren't there. Start it for the bMS release to test, `26r2`, `26r1` or
 `25r2` (`BCONNECT_BMS_VERSION`; the mock's default is 25R2). On 25R2,
 compliance and universaldynamicgroups have no API at all and aren't run, and the
-software tests skip Bundles, which exist from 26R1 on. The mock listens on 3433
+software tests skip Bundles, which exist from 26R1 on. The tests of the 26R2 tools
+(`*-26r2.mock.test.ts` in endpoints, servermanagement and universaldynamicgroups) skip on
+26R1 and 25R2; the tier expects exactly those skips. The mock listens on 3433
 inside the container, so map it to 13433:
 
 ```bash
 docker run -d --name bconnect-mock -p 127.0.0.1:13433:3433 \
-  -e BCONNECT_BMS_VERSION=26r1 -e RATE_LIMIT_ENABLED=false \
+  -e BCONNECT_BMS_VERSION=26r1 -e BCONNECT_PROFILE=standard-readwrite -e RATE_LIMIT_ENABLED=false \
   ghcr.io/baramundisoftware/bconnect-mock:0.12.0
 
 npm run build                                        # once: the tier uses the built core
@@ -41,7 +43,8 @@ cd bconnect-<domain>-mcp && npm run test:mock        # or one server's tier
 ```
 
 `scripts/mock-tier.mjs <26r2|26r1|25r2>` checks that the mock answers `/health` for
-that release and runs each applicable server's tier with `MOCK_REQUIRED=true`. It
+that release in the read-write profile (`BCONNECT_PROFILE=standard-readwrite`: the 26R2
+tool tests create, change and delete through the MCP servers, and reset the mock after) and runs each applicable server's tier with `MOCK_REQUIRED=true`. It
 fails when a server's tests fail, and when fewer tests passed than the server
 declares for the release: vitest's summary line must show every test passed,
 except the software Bundles tests on 25R2, which skip because that API doesn't
@@ -169,7 +172,7 @@ production client path per server against the mock.
 
 The tests don't hardcode IDs; they take them from a list call. If you need one,
 do the same, or look it up in the mock's fixtures: `fixtures/<profile>/` in the
-bConnect-Mock repository (default profile `standard-readonly`). With
+bConnect-Mock repository (the tier runs `standard-readwrite`; the mock's default is `standard-readonly`). With
 `BCONNECT_BMS_VERSION=26r1`, 26R1-only data such as compliance rules, bundles and
 universal dynamic groups comes from `fixtures/standard-26r1/`.
 

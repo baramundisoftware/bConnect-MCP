@@ -189,7 +189,7 @@ jobs:
       - name: Start bConnect-Mock
         run: |
           docker run -d --name bconnect-mock -p 127.0.0.1:13433:3433 \
-            -e BCONNECT_BMS_VERSION=${{ matrix.release }} -e RATE_LIMIT_ENABLED=false \
+            -e BCONNECT_BMS_VERSION=${{ matrix.release }} -e BCONNECT_PROFILE=standard-readwrite -e RATE_LIMIT_ENABLED=false \
             "$BCONNECT_MOCK_IMAGE"
           echo "bConnect-Mock: $(docker image inspect "$BCONNECT_MOCK_IMAGE" --format '{{index .RepoDigests 0}}'), bMS ${{ matrix.release }}"
       - run: npm ci
