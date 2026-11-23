@@ -2,16 +2,19 @@
  * Fields the endpoint update tools offer, per tool (#171).
  *
  * Each entry comes from the PATCH request example of the tool's route in the
- * bundled specs (26R1; industrial from 25R2, the only release with that route),
- * with the type from the route's GET schema. `path` is the patch path exactly as
- * the example spells it: Mac uses PascalCase, the maintenance window type is
- * lower case. Nested paths (clientAgentLink/…, customState/…, sshConfiguration/…,
- * snmpConfiguration) aren't offered yet.
+ * bundled specs, with the type from the route's GET schema. `path` is the patch
+ * path exactly as the example spells it: Mac, Android and iOS use PascalCase, the
+ * maintenance window type is lower case. A nested path (clientAgentLink/…,
+ * customState/…, sshConfiguration/Port, snmpConfiguration/…) is one flat argument
+ * (#328). A field only some releases' examples have names them in `releases`
+ * (network SNMP: 25R2 patches the community, 26R1 and 26R2 the whole object).
+ * __tests__/update-fields-spec.test.ts checks every route of every release
+ * against its example.
  *
  * One table drives the input schema, the validation rules and the JSON Patch,
  * so they can't drift apart.
  */
-import { CommonRules, patchFromArguments, type JsonPatchOperation, type Release, type ValidationRule } from "@bconnect/mcp-core";
+import { CommonRules, patchFromArguments, selectedRelease, type JsonPatchOperation, type Release, type ValidationRule } from "@bconnect/mcp-core";
 import { WINDOW_TYPES } from "./maintenance-window.js";
 
 export interface Field {
@@ -22,6 +25,8 @@ export interface Field {
   enum?: readonly string[];
   items?: Record<string, unknown>;
   properties?: Record<string, unknown>;
+  /** The releases whose PATCH example has this field; absent: every release that has the route. */
+  releases?: readonly Release[];
 }
 
 export const text = (path: string, description: string): Field => ({ path, description });
@@ -61,10 +66,36 @@ const maintenanceWindowFields25R2: Record<string, Field> = {
 export const maintenanceWindowFieldsOf = (release: Release): Record<string, Field> =>
   (release === "25R2" ? maintenanceWindowFields25R2 : maintenanceWindowFields);
 
+const SSH_PORT: Field = { path: "/sshConfiguration/Port", type: "integer", description: "SSH port" };
+const SNMP_VERSIONS = ["V1", "V2c", "V3"] as const;
+const SNMP_AUTHENTICATIONS = ["None", "MD5", "SHA", "SHA256", "SHA384", "SHA512"] as const;
+const SNMP_ENCRYPTIONS = ["None", "DES", "AES", "TDES", "AES192", "AES256"] as const;
+const SNMP_COMMUNITY = "SNMP community (v1, v2c)";
+/** The SnmpConfiguration of the 26R1/26R2 network PATCH example (its GET schema, plus the two passwords the example sends). */
+const SNMP_CONFIGURATION: Record<string, unknown> = {
+  version: { type: "string", enum: [...SNMP_VERSIONS] },
+  community: { type: "string" },
+  username: { type: "string" },
+  authentication: { type: "string", enum: [...SNMP_AUTHENTICATIONS] },
+  authenticationPassword: { type: "string" },
+  encryption: { type: "string", enum: [...SNMP_ENCRYPTIONS] },
+  encryptionPassword: { type: "string" },
+  contextName: { type: "string" },
+  contextEngineId: { type: "string" },
+};
+/** Android and iOS: the fields of their PATCH examples (every release), spelt as they are (PascalCase, like Mac). */
+const MOBILE: Record<string, Field> = {
+  displayName: text("/DisplayName", "Display name"),
+  logicalGroupId: guid("/LogicalGroupId", "Logical group to move the endpoint to (GUID)"),
+  comment: text("/Comment", "Comment"),
+  category: text("/Category", "Category"),
+  owner: choice("/Owner", "Owner", ["Company", "Private"]),
+  registeredUser: text("/RegisteredUser", "Registered user"),
+};
+
 /**
  * Per update tool, and per endpoint type of update_endpoint (its variant key,
- * REQ-SRV-029): the fields it offers. Android and iOS send the same paths, in
- * the same order, as their former tools did.
+ * REQ-SRV-029): the fields it offers, in the order of the PATCH example.
  */
 export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
   "update_endpoint[type=WindowsEndpoint]": {
@@ -85,6 +116,10 @@ export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
     isDeactivated: flag("/isDeactivated", "Deactivate (true) or reactivate (false) the endpoint"),
     entraIdDeviceId: text("/EntraIdDeviceId", "Entra ID device ID"),
     coManagement: choice("/CoManagement", "Co-management with Intune", ["None", "Intune"]),
+    clientAgentExtendedInternetMode: flag("/clientAgentLink/ExtendedInternetMode", "Agent connection: extended internet mode on or off"),
+    clientAgentNetworkMode: choice("/clientAgentLink/NetworkMode", "Agent connection: network mode", ["LAN", "Internet", "Dynamic"]),
+    customStateType: { path: "/customState/Type", type: "integer", description: "Custom state: its type (a number)" },
+    customStateText: text("/customState/Text", "Custom state: its text"),
   },
   "update_endpoint[type=LinuxEndpoint]": {
     displayName: text("/displayName", "Display name"),
@@ -93,6 +128,7 @@ export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
     hostName: text("/hostName", "Host name"),
     primaryIP: text("/primaryIP", "Primary IP address"),
     primaryMAC: text("/primaryMAC", "Primary MAC address"),
+    sshPort: SSH_PORT,
     managementMode: choice("/managementMode", "How the endpoint is managed", ["SSH", "ManagementAgent"]),
   },
   "update_endpoint[type=MacEndpoint]": {
@@ -110,17 +146,8 @@ export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
     dip: text("/dip", "Distribution point (DIP)"),
     defaultDomain: text("/defaultDomain", "Default domain"),
   },
-  "update_endpoint[type=AndroidEndpoint]": {
-    displayName: text("/displayName", "Display name"),
-    logicalGroupId: guid("/logicalGroupId", "Logical group to move the endpoint to (GUID)"),
-    comment: text("/comment", "Comment"),
-    serialNumber: text("/serialNumber", "Serial number"),
-  },
-  "update_endpoint[type=IOSEndpoint]": {
-    displayName: text("/displayName", "Display name"),
-    logicalGroupId: guid("/logicalGroupId", "Logical group to move the endpoint to (GUID)"),
-    comment: text("/comment", "Comment"),
-  },
+  "update_endpoint[type=AndroidEndpoint]": MOBILE,
+  "update_endpoint[type=IOSEndpoint]": MOBILE,
   "update_endpoint[type=NetworkEndpoint]": {
     displayName: text("/displayName", "Display name"),
     comment: text("/comment", "Comment"),
@@ -129,6 +156,10 @@ export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
     primaryMAC: text("/primaryMAC", "Primary MAC address"),
     registeredUser: text("/registeredUser", "Registered user"),
     webInterfaceUrl: text("/webInterfaceUrl", "URL of the device's web interface"),
+    sshPort: SSH_PORT,
+    snmpConfiguration: { path: "/snmpConfiguration", type: "object", properties: SNMP_CONFIGURATION, releases: ["26R1", "26R2"],
+      description: "SNMP settings, replaced as a whole: give every value the device needs (e.g. {\"version\":\"V2c\",\"community\":\"public\"}; for V3 username, authentication, authenticationPassword, encryption, encryptionPassword)." },
+    snmpCommunity: { ...text("/snmpConfiguration/community", SNMP_COMMUNITY), releases: ["25R2"] },
   },
   "update_endpoint[type=IndustrialEndpoint]": {
     displayName: text("/displayName", "Display name"),
@@ -139,18 +170,29 @@ export const UPDATE_FIELDS: Record<string, Record<string, Field>> = {
     primaryIP: text("/primaryIP", "Primary IP address"),
     primaryMAC: text("/primaryMAC", "Primary MAC address"),
     webInterfaceUrl: text("/webInterfaceUrl", "URL of the device's web interface"),
+    snmpVersion: choice("/snmpConfiguration/Version", "SNMP version", SNMP_VERSIONS),
+    snmpUsername: text("/snmpConfiguration/Username", "SNMP v3 user name"),
+    snmpAuthentication: choice("/snmpConfiguration/Authentication", "SNMP v3 authentication protocol", SNMP_AUTHENTICATIONS),
+    snmpAuthenticationPassword: text("/snmpConfiguration/AuthenticationPassword", "SNMP v3 authentication password"),
+    snmpEncryption: choice("/snmpConfiguration/Encryption", "SNMP v3 encryption protocol", SNMP_ENCRYPTIONS),
+    snmpEncryptionPassword: text("/snmpConfiguration/EncryptionPassword", "SNMP v3 encryption password"),
+    snmpCommunity: { ...text("/snmpConfiguration/Community", SNMP_COMMUNITY), releases: ["25R2"] },
+    snmpContextName: text("/snmpConfiguration/ContextName", "SNMP v3 context name"),
+    snmpContextEngineId: text("/snmpConfiguration/ContextEngineId", "SNMP v3 context engine ID"),
   },
   update_maintenance_window_for_endpoint: maintenanceWindowFields,
   update_maintenance_window_for_logical_group: maintenanceWindowFields,
 };
 
-const fieldsOf = (tool: string): Record<string, Field> => {
+/** The fields `tool` offers in `release` (default: the selected release, read per call). */
+export const updateFieldsFor = (tool: string, release: Release = selectedRelease()): Record<string, Field> => {
   const fields = UPDATE_FIELDS[tool];
   if (!fields) {
     throw new Error(`No update fields for ${tool}`);
   }
-  return fields;
+  return Object.fromEntries(Object.entries(fields).filter(([, f]) => !f.releases || f.releases.includes(release)));
 };
+const fieldsOf = (tool: string): Record<string, Field> => updateFieldsFor(tool);
 
 export interface UpdateInputSchema {
   type: "object";
@@ -164,6 +206,7 @@ const fieldProperty = (field: Field): Record<string, unknown> => ({
   description: field.description,
   ...(field.enum && { enum: [...field.enum] }),
   ...(field.items && { items: field.items }),
+  ...(field.properties && { properties: field.properties }),
 });
 
 /** The input schema: `id` plus every field, at least one of them given. */

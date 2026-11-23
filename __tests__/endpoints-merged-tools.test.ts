@@ -82,7 +82,26 @@ describe('AC 1: every replaced tool\'s request is sent unchanged by its replacem
    */
   const emptyUpdate = (entry: Entry) => /^update_(android|ios)_endpoint$/.test(entry.tool) && entry.requests[0]?.body === '[]';
 
-  it.each(FIXTURE.map((e) => [e.release, e.tool, e.call, e] as const))('%s %s (%s arguments)', async (release, tool, _call, entry) => {
+  // #328: Android and iOS updates send the paths their PATCH examples spell (PascalCase, like Mac)
+  // and no serialNumber (no example declares it): the recorded old request, corrected so.
+  const MOBILE_PATHS: Record<string, string> = { '/displayName': '/DisplayName', '/logicalGroupId': '/LogicalGroupId', '/comment': '/Comment' };
+  const correctedBy328 = (entry: Entry): boolean => /^update_(android|ios)_endpoint$/.test(entry.tool) && entry.requests[0]?.body !== '[]';
+  const corrected = (entry: Entry): Entry => {
+    if (!correctedBy328(entry)) {return entry;}
+    const { serialNumber: _dropped, ...args } = entry.args as Record<string, unknown>;
+    const requests = entry.requests.map((r) => ({ ...r, body: JSON.stringify((JSON.parse(r.body) as Array<{ path: string }>)
+      .filter((op) => op.path !== '/serialNumber').map((op) => ({ ...op, path: MOBILE_PATHS[op.path] ?? op.path }))) }));
+    return { ...entry, args, requests };
+  };
+
+  it('the #328 correction covers only the 4 Android/iOS calls with fields (not vacuous, not wider)', () => {
+    expect(FIXTURE.filter(correctedBy328).map((e) => `${e.release} ${e.tool} ${e.call}`).sort()).toEqual([
+      '25R2 update_android_endpoint all', '25R2 update_ios_endpoint all',
+      '26R1 update_android_endpoint all', '26R1 update_ios_endpoint all',
+    ]);
+  });
+
+  it.each(FIXTURE.map((e) => [e.release, e.tool, e.call, corrected(e)] as const))('%s %s (%s arguments)', async (release, tool, _call, entry) => {
     const { tool: next, select, rename = {}, defaults = {} } = replacement(tool);
     const args = { ...defaults, ...Object.fromEntries(Object.entries(entry.args).map(([k, v]) => [rename[k] ?? k, v])), ...select };
     const conn = use(release);
