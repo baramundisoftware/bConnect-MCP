@@ -44,8 +44,18 @@ const ONLY_26R1 = ["bconnect-compliance-mcp", "bconnect-universaldynamicgroups-m
 
 const RELEASES = ["26r2", "26r1", "25r2"];
 
-/** Tests skipped on purpose: their API doesn't exist in that release (software bundles: 26R1 on). */
-export const EXPECTED_SKIPS = { "25r2": { "bconnect-software-mcp": 3 }, "26r1": {}, "26r2": {} };
+/**
+ * Tests skipped on purpose: their API doesn't exist in that release (software bundles: 26R1 on;
+ * the 26R2 tools' tests, which call the tools through the MCP server: #353 to #357).
+ */
+export const EXPECTED_SKIPS = {
+  "25r2": { "bconnect-software-mcp": 3, "bconnect-endpoints-mcp": 8, "bconnect-servermanagement-mcp": 3 },
+  "26r1": { "bconnect-endpoints-mcp": 8, "bconnect-servermanagement-mcp": 3, "bconnect-universaldynamicgroups-mcp": 5 },
+  "26r2": {},
+};
+
+/** The mock profile the tier needs: read-write, so the tests can exercise write tools. */
+export const MOCK_PROFILE = "standard-readwrite";
 
 /** Settings the test client would prefer over the mock: never passed to the tests. */
 const NOT_PASSED = ["BCONNECT_BASE_URL", "BCONNECT_USERNAME", "BCONNECT_PASSWORD", "BCONNECT_API_KEY"];
@@ -130,11 +140,14 @@ export async function checkHealth(baseUrl, release, waitMs) {
       const res = await fetch(`${baseUrl}/health`, { signal: AbortSignal.timeout(2000) });
       const body = res.ok ? await res.json() : undefined;
       const version = String(body?.bmsVersion ?? "").toLowerCase();
-      if (version === release) {
-        return;
+      if (res.ok && version !== release) {
+        throw new WrongMock(`the mock at ${baseUrl} serves bMS ${version || "(none)"}, not ${release}`);
+      }
+      if (res.ok && body?.profile !== MOCK_PROFILE) {
+        throw new WrongMock(`the mock at ${baseUrl} runs profile ${body?.profile || "(none)"}, not ${MOCK_PROFILE}: start it with BCONNECT_PROFILE=${MOCK_PROFILE}`);
       }
       if (res.ok) {
-        throw new WrongMock(`the mock at ${baseUrl} serves bMS ${version || "(none)"}, not ${release}`);
+        return;
       }
       last = `HTTP ${res.status}`;
     } catch (error) {

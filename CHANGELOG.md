@@ -43,6 +43,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   be undone. Logged as a write (`BCONNECT_AUDIT_LEVEL=write` or `all`), not as a security route.
 - **READMEs give the 26R2 tool counts** (#354): the root table has a 26R2 column, server READMEs
   mark 26R2-only tools **(26R2)**, and the README guard checks all three releases.
+- **The mock tier exercises the 26R2 tools** (follow-up to #407): new mock tests in endpoints,
+  servermanagement and universaldynamicgroups call `get_entra_id_data` (by endpoint ID),
+  `trigger_intune_remote_action`, the threshold tools and the API key tools through the MCP
+  servers against bConnect-Mock 26r2, including create → read → change → delete cycles. The tier
+  and CI now start the mock with `BCONNECT_PROFILE=standard-readwrite` (the read-only default
+  answers every write with 403), and `scripts/mock-tier.mjs` refuses a mock in another profile.
+  On 26R1 and 25R2 those tests skip, and the tier expects exactly those skips.
 
 ### Security
 - **26R2 API keys** (#280, #357): creating an API key answers with its secret, so that route is

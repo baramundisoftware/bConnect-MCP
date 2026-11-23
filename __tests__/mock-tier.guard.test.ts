@@ -128,8 +128,12 @@ describe('scripts/mock-tier.mjs — verdict per server', () => {
       .toEqual({ passed: 6, failed: 1, skipped: 1, total: 8 });
   });
 
-  it('expects skips only where a release lacks the API: software bundles on 25R2', () => {
-    expect(EXPECTED_SKIPS).toEqual({ '25r2': { 'bconnect-software-mcp': 3 }, '26r1': {}, '26r2': {} });
+  it('expects skips only where a release lacks the API: software bundles on 25R2, the 26R2 tools before 26R2', () => {
+    expect(EXPECTED_SKIPS).toEqual({
+      '25r2': { 'bconnect-software-mcp': 3, 'bconnect-endpoints-mcp': 8, 'bconnect-servermanagement-mcp': 3 },
+      '26r1': { 'bconnect-endpoints-mcp': 8, 'bconnect-servermanagement-mcp': 3, 'bconnect-universaldynamicgroups-mcp': 5 },
+      '26r2': {},
+    });
   });
 });
 
@@ -163,8 +167,8 @@ describe('scripts/mock-tier.mjs — the mock must answer first', () => {
     return { url: `http://127.0.0.1:${port}`, close: () => new Promise<void>((resolve) => server.close(() => resolve())) };
   }
 
-  it('accepts a mock serving the expected release', async () => {
-    const mockServer = await serve(JSON.stringify({ status: 'ok', bmsVersion: '25r2' }));
+  it('accepts a mock serving the expected release in the read-write profile', async () => {
+    const mockServer = await serve(JSON.stringify({ status: 'ok', bmsVersion: '25r2', profile: 'standard-readwrite' }));
     try {
       await expect(checkHealth(mockServer.url, '25r2', 2000)).resolves.toBeUndefined();
     } finally {
@@ -172,8 +176,17 @@ describe('scripts/mock-tier.mjs — the mock must answer first', () => {
     }
   });
 
+  it('refuses a mock in a read-only profile, saying how to start it: its write tests would fail', async () => {
+    const mockServer = await serve(JSON.stringify({ status: 'ok', bmsVersion: '26r2', profile: 'standard-readonly' }));
+    try {
+      await expect(checkHealth(mockServer.url, '26r2', 2000)).rejects.toThrow(/standard-readonly, not standard-readwrite: start it with BCONNECT_PROFILE=standard-readwrite/);
+    } finally {
+      await mockServer.close();
+    }
+  });
+
   it('refuses a mock serving another release', async () => {
-    const mockServer = await serve(JSON.stringify({ status: 'ok', bmsVersion: '26r1' }));
+    const mockServer = await serve(JSON.stringify({ status: 'ok', bmsVersion: '26r1', profile: 'standard-readwrite' }));
     try {
       await expect(checkHealth(mockServer.url, '25r2', 2000)).rejects.toThrow(/26r1/);
     } finally {

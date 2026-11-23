@@ -59,7 +59,7 @@ else
     docker rm -f "$name" >/dev/null 2>&1
     # Docker picks a free port on 127.0.0.1: a fixed one may be taken by another mock.
     if docker run -d --rm --name "$name" -p "127.0.0.1::3433" \
-        -e BCONNECT_BMS_VERSION="$release" -e RATE_LIMIT_ENABLED=false "$image" >/dev/null 2>&1; then
+        -e BCONNECT_BMS_VERSION="$release" -e BCONNECT_PROFILE=standard-readwrite -e RATE_LIMIT_ENABLED=false "$image" >/dev/null 2>&1; then
       address=$(docker port "$name" 3433/tcp | head -1)
       BCONNECT_MOCK_URL="http://$address" node scripts/mock-tier.mjs "$release" >/dev/null 2>&1
       check $? "node scripts/mock-tier.mjs $release ($image)"
