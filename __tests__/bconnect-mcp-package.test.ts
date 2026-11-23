@@ -11,6 +11,7 @@
  *   `initialize`, a wrong argument exits 1 with nothing on stdout.
  */
 import { spawn, spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
@@ -58,6 +59,17 @@ describe('main', () => {
     expect(lines[0]).toMatch(new RegExp(`^${NAME}: expects one argument, the domains`));
     expect(lines.slice(1)).toEqual([USAGE]);
     expect(codes).toEqual([1]);
+  });
+});
+
+describe('the npm manifest', () => {
+  const manifest = (dir: string) => JSON.parse(readFileSync(join(ROOT, dir, 'package.json'), 'utf8')) as { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
+
+  // That its dependencies are exactly the third-party packages core and the servers import:
+  // __tests__/dependency-manifests.guard.test.ts (BUNDLES).
+  it('keeps core and the servers as devDependencies: the bundle carries them', () => {
+    const dev = Object.keys(manifest('packages/bconnect-mcp').devDependencies ?? {});
+    expect(dev).toEqual(expect.arrayContaining(['@bconnect/mcp-core', ...SERVERS]));
   });
 });
 

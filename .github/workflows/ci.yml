@@ -1,8 +1,8 @@
 # Continuous integration.
 #
 # Four jobs:
-# - `gate` (required): build, lint, cast check and the root test suite, on Linux
-#   and Windows. The Windows leg catches line-ending and path defects a Linux
+# - `gate` (required): build, lint, cast check, the root test suite and the npm
+#   package check, on Linux and Windows. The Windows leg catches line-ending and path defects a Linux
 #   runner can't see (a CRLF checkout once failed the suite with a clean tree).
 # - `coverage`: the root suite with coverage floors per workspace (not required).
 # - `mock`: the mock-integration tier against a pinned bConnect-Mock, once per
@@ -118,6 +118,12 @@ jobs:
       # The root run covers every per-server suite AND the suite-wide guards.
       - name: Test
         run: npx vitest run
+
+      # The npm package (#297): pack it, install the tarball into an empty folder and
+      # start the installed command for one domain, several and `all` (on each OS and
+      # Node version of the matrix). See the script's header.
+      - name: Check the npm package
+        run: node scripts/check-package.mjs
 
   coverage:
     name: coverage floors
