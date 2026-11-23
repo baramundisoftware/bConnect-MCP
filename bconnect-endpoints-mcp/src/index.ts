@@ -17,7 +17,7 @@ import {
   ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, withVariantSelectors, withToolVariants, variantKey, refuseReplacedTool, protocolError } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, type JsonPatchOperation, pickArguments, declaredArgumentsOnly, queryParameters, findQueryEntry, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, withVariantSelectors, withToolVariants, variantKey, refuseReplacedTool, protocolError, type Release } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -35,15 +35,31 @@ const PATH_ARGUMENTS: Readonly<Record<string, readonly string[]>> = {
   list_endpoints_by_logical_group: ["logicalGroupId"],
 };
 
+/** create_android_endpoint's profile types per release (specs): 26R2 adds the AMAPI ones (Android Enterprise preview). */
+const ANDROID_PROFILE_TYPES: Readonly<Record<Release, readonly string[]>> = {
+  "26R2": ["None", "DeviceOwner", "WorkProfile", "DedicatedDevice", "DeviceOwnerAMAPI", "WorkProfileAMAPI", "DeviceOwnerWorkProfileAMAPI"],
+  "26R1": ["None", "DeviceOwner", "WorkProfile", "DedicatedDevice"],
+  "25R2": ["None", "DeviceOwner", "WorkProfile", "DedicatedDevice"],
+};
+
+function androidProfileTypeProperty(release: Release): { type: "string"; description: string; enum: string[] } {
+  const values = [...ANDROID_PROFILE_TYPES[release]];
+  const amapi = values.some((value) => value.endsWith("AMAPI")) ? " The …AMAPI types are devices managed through AMAPI (Android Enterprise preview), the others through the EMM API." : "";
+  return {
+    type: "string",
+    description: `Android enterprise profile type: ${values.map((value) => `'${value}'`).join(", ")} (optional).${amapi}`,
+    enum: values,
+  };
+}
+
 /**
  * The arguments a route of a merged tool takes besides `type` (REQ-SRV-029): its path
- * arguments, its query parameters (selected release, else the other one's, as listed) and
+ * arguments, its query parameters (selected release, else the newest other one's) and
  * its body fields. The core refuses any other tool argument for that route.
  */
 function routeArguments(key: string): string[] {
   const tool = key.slice(0, key.indexOf("["));
-  const release = selectedRelease();
-  const query = QUERY_PARAMETERS[release]?.[key] ?? QUERY_PARAMETERS[release === "25R2" ? "26R1" : "25R2"]?.[key] ?? {};
+  const query = findQueryEntry(QUERY_PARAMETERS, selectedRelease(), key) ?? {};
   const body = tool === "update_endpoint" ? updateFieldNames(key) : tool === "start_enrollment" ? createFieldNames(key) : [];
   return [...(PATH_ARGUMENTS[tool] ?? []), ...Object.keys(query), ...body];
 }
@@ -211,11 +227,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
                 type: "string",
                 description: "Serial number of the Android device (optional)"
               },
-              androidEnterpriseProfileType: {
-                type: "string",
-                description: "Android enterprise profile type: 'None', 'DeviceOwner', 'WorkProfile', or 'DedicatedDevice' (optional)",
-                enum: ["None", "DeviceOwner", "WorkProfile", "DedicatedDevice"]
-              },
+              androidEnterpriseProfileType: androidProfileTypeProperty(selectedRelease()),
               registeredUser: {
                 type: "string",
                 description: "Registered user of the endpoint (optional)"

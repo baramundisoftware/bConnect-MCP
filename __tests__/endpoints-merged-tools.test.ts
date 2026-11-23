@@ -53,7 +53,7 @@ const saved = { ...process.env };
 const conns: Partial<Record<Release, ConnectedServer>> = {};
 beforeAll(async () => {
   recorder.listen();
-  for (const release of ['25R2', '26R1'] as const) {
+  for (const release of ['25R2', '26R1', '26R2'] as const) {
     Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
     conns[release] = await connect('bconnect-endpoints-mcp');
   }
@@ -107,7 +107,7 @@ describe('AC 1: every replaced tool\'s request is sent unchanged by its replacem
 });
 
 describe('AC 2: a removed name answers with its replacement', () => {
-  const cases = (['25R2', '26R1'] as const).flatMap((release) => [true, false].flatMap((writes) => REMOVED.map((tool) => [release, writes, tool] as const)));
+  const cases = (['25R2', '26R1', '26R2'] as const).flatMap((release) => [true, false].flatMap((writes) => REMOVED.map((tool) => [release, writes, tool] as const)));
 
   it.each(cases)('%s writes=%s %s', async (release, writes, tool) => {
     const conn = use(release, writes);
@@ -118,11 +118,11 @@ describe('AC 2: a removed name answers with its replacement', () => {
     const how = select.type ? `with type "${select.type}"` : 'without type';
     expect(r.text).toContain(`${tool} was replaced by ${next}: call ${next} ${how}`);
     if (rename) {expect(r.text).toContain('with SearchQuery (was query) and PageSize (was pageSize)');}
-    if (release === '26R1' && select.type === 'IndustrialEndpoint') {expect(r.text).toContain('That route is only available in bMS 25R2; this server uses 26R1');}
+    if (release !== '25R2' && select.type === 'IndustrialEndpoint') {expect(r.text).toContain(`That route is only available in bMS 25R2; this server uses ${release}`);}
     expect(recorder.take()).toEqual([]);
   });
 
-  it.each(['25R2', '26R1'] as const)('no removed name is listed on %s (no aliases)', async (release) => {
+  it.each(['25R2', '26R1', '26R2'] as const)('no removed name is listed on %s (no aliases)', async (release) => {
     const names = (await use(release).list()).map((t) => t.name);
     expect(names.filter((n) => REMOVED.includes(n))).toEqual([]);
     expect(names).toEqual(expect.arrayContaining(NEW_TOOLS));
@@ -140,6 +140,12 @@ describe('type values follow the selected release (from the spec)', () => {
     ['26R1', 'update_endpoint', ALL],
     ['26R1', 'start_enrollment', ['WindowsEndpoint', 'AndroidEndpoint', 'IOSEndpoint', 'MacEndpoint']],
     ['25R2', 'list_endpoints_by_logical_group', ['WindowsEndpoint']],
+    // 26R2 has no industrial-endpoint API either: the same types as 26R1.
+    ['26R2', 'list_endpoints', ALL],
+    ['26R2', 'get_endpoint', ALL],
+    ['26R2', 'delete_endpoint', ALL],
+    ['26R2', 'update_endpoint', ALL],
+    ['26R2', 'start_enrollment', ['WindowsEndpoint', 'AndroidEndpoint', 'IOSEndpoint', 'MacEndpoint']],
   ] as const)('%s %s offers %j', async (release, tool, values) => {
     const t = (await use(release).list()).find((x) => x.name === tool)!;
     expect([...t.inputSchema.properties.type.enum].sort()).toEqual([...values].sort());
@@ -153,8 +159,8 @@ describe('type values follow the selected release (from the spec)', () => {
     expect((t.inputSchema.required ?? []).includes('type')).toBe(required);
   });
 
-  it('IndustrialEndpoint on 26R1 is refused, naming 25R2, and sends nothing', async () => {
-    const conn = use('26R1');
+  it.each(['26R1', '26R2'] as const)('IndustrialEndpoint on %s is refused, naming 25R2, and sends nothing', async (release) => {
+    const conn = use(release);
     recorder.take();
     const r = await conn.call('list_endpoints', { type: 'IndustrialEndpoint' });
     expect(r.code).toBe(-32602);

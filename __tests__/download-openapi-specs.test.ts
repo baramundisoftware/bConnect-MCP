@@ -16,7 +16,7 @@ import { ROOT } from './lib/exerciser.js';
 import { SPECS, authHeaders, checkBaseUrl, download, specUrl } from '../scripts/download-openapi-specs.mjs';
 
 describe('which specifications', () => {
-  it.each(['25R2', '26R1'] as const)('%s: every module, under the file names the repository has', (release) => {
+  it.each(['25R2', '26R1', '26R2'] as const)('%s: every module, under the file names the repository has', (release) => {
     expect(Object.values(SPECS[release]).sort()).toEqual(readdirSync(join(ROOT, 'openapi-specs', release)).sort());
   });
 
@@ -104,6 +104,6 @@ describe('downloading', () => {
 
   it('refuses an unknown release', async () => {
     out = mkdtempSync(join(tmpdir(), 'specs-'));
-    await expect(download('26R2', { BCONNECT_BASE_URL: 'https://bms.example', BCONNECT_API_KEY: 'k' }, out)).rejects.toThrow(/unknown release "26R2"/);
+    await expect(download('26R3', { BCONNECT_BASE_URL: 'https://bms.example', BCONNECT_API_KEY: 'k' }, out)).rejects.toThrow(/unknown release "26R3"/);
   });
 });

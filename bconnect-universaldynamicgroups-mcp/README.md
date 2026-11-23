@@ -60,7 +60,7 @@ All tools require bMS 2026 R1.
 | `get_udg_folder` | **(26R1)** Get details of a specific UDG folder |
 | `list_udg_folders_by_folder` | **(26R1)** List sub-folders within a UDG folder |
 
-> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1.
+> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later.
 
 ---
 

@@ -2,10 +2,10 @@
  * Downloads the bConnect OpenAPI specifications of a bMS into openapi-specs/<release>/ (#335).
  *
  *   BCONNECT_BASE_URL=https://bms.example.com/bconnect BCONNECT_API_KEY=… \
- *     node scripts/download-openapi-specs.mjs <25R2|26R1>
+ *     node scripts/download-openapi-specs.mjs <25R2|26R1|26R2>
  *
  * - Every module of the release: 25R2 has 10, 26R1 adds compliance and
- *   universal dynamic groups. Each file keeps the name it has in the repository.
+ *   universal dynamic groups, 26R2 has the same 12. Each file keeps the name it has in the repository.
  * - Credentials come from the environment, as for the servers: BCONNECT_API_KEY,
  *   or BCONNECT_USERNAME and BCONNECT_PASSWORD. They go into request headers,
  *   never onto a command line.
@@ -27,6 +27,22 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+/** 26R1 added compliance and universal dynamic groups; 26R2 has the same modules and file names (#280). */
+const SPECS_26R1 = {
+  activedirectory: "bConnect_Activedirectory.json",
+  assets: "bConnect_Assets.json",
+  compliance: "bConnect_Compliance.json",
+  defensecontrol: "bConnect_Defensecontrol.json",
+  endpoints: "bConnect_Endpoints.json",
+  jobs: "bConnect_Jobs.json",
+  operatingsystems: "bConnect_Operatingsystems.json",
+  servermanagement: "bConnect_Servermanagement.json",
+  software: "bConnect_Software.json",
+  universaldynamicgroups: "bConnect_Universaldynamicgroups.json",
+  updatemanagement: "bConnect_Updatemanagement.json",
+  variables: "bConnect_Variables.json",
+};
+
 /** The module (URL segment) and file name of each specification, per release. */
 export const SPECS = {
   "25R2": {
@@ -41,20 +57,8 @@ export const SPECS = {
     updatemanagement: "bConnect_UpdateManagement.json",
     variables: "bConnect_Variables.json",
   },
-  "26R1": {
-    activedirectory: "bConnect_Activedirectory.json",
-    assets: "bConnect_Assets.json",
-    compliance: "bConnect_Compliance.json",
-    defensecontrol: "bConnect_Defensecontrol.json",
-    endpoints: "bConnect_Endpoints.json",
-    jobs: "bConnect_Jobs.json",
-    operatingsystems: "bConnect_Operatingsystems.json",
-    servermanagement: "bConnect_Servermanagement.json",
-    software: "bConnect_Software.json",
-    universaldynamicgroups: "bConnect_Universaldynamicgroups.json",
-    updatemanagement: "bConnect_Updatemanagement.json",
-    variables: "bConnect_Variables.json",
-  },
+  "26R1": SPECS_26R1,
+  "26R2": SPECS_26R1,
 };
 
 /** The URL of one specification on the bMS. */
@@ -120,7 +124,7 @@ export function get(url, headers, ca) {
 export async function download(release, env, out = join(ROOT, "openapi-specs", release)) {
   const specs = SPECS[release];
   if (!specs) {
-    throw new Error(`unknown release "${release}": use ${Object.keys(SPECS).join(" or ")}`);
+    throw new Error(`unknown release "${release}": use ${Object.keys(SPECS).join(", ")}`);
   }
   const baseUrl = checkBaseUrl(env.BCONNECT_BASE_URL);
   const headers = authHeaders(env);

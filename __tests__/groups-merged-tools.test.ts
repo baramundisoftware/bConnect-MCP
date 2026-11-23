@@ -61,7 +61,7 @@ const saved = { ...process.env };
 const conns: Partial<Record<Release, ConnectedServer>> = {};
 beforeAll(async () => {
   recorder.listen();
-  for (const release of ['25R2', '26R1'] as const) {
+  for (const release of ['25R2', '26R1', '26R2'] as const) {
     Object.assign(process.env, guardEnv(release, { writes: true, secretRead: true }));
     conns[release] = await connect('bconnect-groups-mcp');
   }
@@ -96,10 +96,12 @@ describe('AC 1: every replaced tool\'s request is sent unchanged by its replacem
     expect(recorder.take().map(normalized)).toEqual(entry.requests.map(normalized));
   });
 
-  it.each(['25R2', '26R1'] as const)('on %s, every other group kind × member type listed is refused as unsupported, naming the valid ones', async (release) => {
+  it.each(['25R2', '26R1', '26R2'] as const)('on %s, every other group kind × member type listed is refused as unsupported, naming the valid ones', async (release) => {
     const conn = use(release);
     const t = (await conn.list()).find((x) => x.name === 'list_group_members')!;
-    const supported = new Set(FIXTURE.filter((e) => e.release === release).map((e) => replacement(e.tool))
+    // The fixture records 25R2 and 26R1; 26R2 has 26R1's group routes (same specs, #280).
+    const fixtureRelease = release === '26R2' ? '26R1' : release;
+    const supported = new Set(FIXTURE.filter((e) => e.release === fixtureRelease).map((e) => replacement(e.tool))
       .filter((r) => r.tool === 'list_group_members').map((r) => `${r.select.groupKind}/${r.select.memberType ?? ''}`));
     let refused = 0;
     for (const groupKind of t.inputSchema.properties.groupKind.enum as string[]) {
@@ -119,7 +121,7 @@ describe('AC 1: every replaced tool\'s request is sent unchanged by its replacem
 });
 
 describe('AC 2: a removed name answers with its replacement', () => {
-  const cases = (['25R2', '26R1'] as const).flatMap((release) => [true, false].flatMap((writes) => REMOVED.map((tool) => [release, writes, tool] as const)));
+  const cases = (['25R2', '26R1', '26R2'] as const).flatMap((release) => [true, false].flatMap((writes) => REMOVED.map((tool) => [release, writes, tool] as const)));
 
   it.each(cases)('%s writes=%s %s', async (release, writes, tool) => {
     const conn = use(release, writes);
@@ -132,11 +134,11 @@ describe('AC 2: a removed name answers with its replacement', () => {
       : select.endpointType ? `with endpointType "${select.endpointType}"` : 'without endpointType';
     expect(r.text).toContain(`${tool} was replaced by ${next}: call ${next} ${how}`);
     for (const [from, to] of Object.entries(rename)) {expect(r.text).toContain(`with ${to} (was ${from})`);}
-    if (release === '26R1' && select.memberType === 'IndustrialEndpoint') {expect(r.text).toContain('That route is only available in bMS 25R2; this server uses 26R1');}
+    if (release !== '25R2' && select.memberType === 'IndustrialEndpoint') {expect(r.text).toContain(`That route is only available in bMS 25R2; this server uses ${release}`);}
     expect(recorder.take()).toEqual([]);
   });
 
-  it.each(['25R2', '26R1'] as const)('only the two new tools are listed on %s (no aliases)', async (release) => {
+  it.each(['25R2', '26R1', '26R2'] as const)('only the two new tools are listed on %s (no aliases)', async (release) => {
     expect((await use(release).list()).map((t) => t.name).sort()).toEqual(NEW_TOOLS);
   });
 });
@@ -150,6 +152,10 @@ describe('selector values follow the selected release (from the spec)', () => {
     ['26R1', 'list_group_members', 'memberType', [...ENDPOINT_TYPES, 'LogicalGroup']],
     ['25R2', 'list_ad_user_endpoints', 'endpointType', ENDPOINT_TYPES.filter((t) => t !== 'NetworkEndpoint')],
     ['26R1', 'list_ad_user_endpoints', 'endpointType', ENDPOINT_TYPES.filter((t) => t !== 'NetworkEndpoint')],
+    // 26R2 has no industrial-endpoint API either: the same values as 26R1.
+    ['26R2', 'list_group_members', 'groupKind', ['LogicalGroup', 'StaticGroup', 'DynamicGroup', 'UniversalDynamicGroup']],
+    ['26R2', 'list_group_members', 'memberType', [...ENDPOINT_TYPES, 'LogicalGroup']],
+    ['26R2', 'list_ad_user_endpoints', 'endpointType', ENDPOINT_TYPES.filter((t) => t !== 'NetworkEndpoint')],
   ] as const)('%s %s %s offers %j', async (release, tool, selector, values) => {
     const t = (await use(release).list()).find((x) => x.name === tool)!;
     expect([...t.inputSchema.properties[selector].enum].sort()).toEqual([...values].sort());
@@ -163,8 +169,8 @@ describe('selector values follow the selected release (from the spec)', () => {
     expect([...(t.inputSchema.required ?? [])].sort()).toEqual([...required].sort());
   });
 
-  it('IndustrialEndpoint on 26R1 is refused, naming 25R2, and sends nothing', async () => {
-    const conn = use('26R1');
+  it.each(['26R1', '26R2'] as const)('IndustrialEndpoint on %s is refused, naming 25R2, and sends nothing', async (release) => {
+    const conn = use(release);
     recorder.take();
     const r = await conn.call('list_group_members', { groupKind: 'StaticGroup', groupId: G, memberType: 'IndustrialEndpoint' });
     expect(r.code).toBe(-32602);

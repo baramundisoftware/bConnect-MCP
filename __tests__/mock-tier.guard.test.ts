@@ -47,7 +47,7 @@ describe('ci.yml — the mock job', () => {
   it('exists, on Linux, once per release', () => {
     expect(mock, 'ci.yml has no `mock` job').toBeDefined();
     expect(mock['runs-on']).toBe('ubuntu-latest');
-    expect(mock.strategy?.matrix?.release).toEqual(['26r1', '25r2']);
+    expect(mock.strategy?.matrix?.release).toEqual(['26r2', '26r1', '25r2']);
     expect(mock.name).toBe('mock tier (${{ matrix.release }})');
   });
 
@@ -77,17 +77,18 @@ describe('ci.yml — the mock job', () => {
 });
 
 describe('scripts/mock-tier.mjs — which servers run', () => {
-  it.each(['26R1', '25R2'])('on %s: exactly the servers that list a tool there', async (release) => {
+  it.each(['26R2', '26R1', '25R2'])('on %s: exactly the servers that list a tool there', async (release) => {
     expect(serversFor(release.toLowerCase())).toEqual(await withTools(release));
   });
 
-  it('26r1 runs all 13 servers; 25r2 leaves out compliance and universaldynamicgroups', () => {
+  it('26r2 and 26r1 run all 13 servers; 25r2 leaves out compliance and universaldynamicgroups', () => {
     expect(serversFor('26r1')).toHaveLength(13);
+    expect(serversFor('26r2')).toHaveLength(13);
     expect(SERVERS.filter((s) => !serversFor('25r2').includes(s)))
       .toEqual(['bconnect-compliance-mcp', 'bconnect-universaldynamicgroups-mcp']);
   });
 
-  it.each(['26r1', '25r2'])('%s: the gateway runs last, after the servers (#131)', (release) => {
+  it.each(['26r2', '26r1', '25r2'])('%s: the gateway runs last, after the servers (#131)', (release) => {
     expect(tierPackages(release)).toEqual([...serversFor(release), GATEWAY]);
     const pkg = JSON.parse(readFileSync(join(ROOT, GATEWAY, 'package.json'), 'utf8')) as { scripts: Record<string, string> };
     expect(pkg.scripts['test:mock']).toBe('vitest run -c vitest.mock.config.ts');
@@ -128,7 +129,7 @@ describe('scripts/mock-tier.mjs — verdict per server', () => {
   });
 
   it('expects skips only where a release lacks the API: software bundles on 25R2', () => {
-    expect(EXPECTED_SKIPS).toEqual({ '25r2': { 'bconnect-software-mcp': 3 }, '26r1': {} });
+    expect(EXPECTED_SKIPS).toEqual({ '25r2': { 'bconnect-software-mcp': 3 }, '26r1': {}, '26r2': {} });
   });
 });
 

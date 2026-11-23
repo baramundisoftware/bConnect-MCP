@@ -72,7 +72,7 @@ been checked against a real bMS yet.
 | `delete_bundle_folder` | **(26R1)** Delete a bundle folder by GUID |
 | `update_bundle_folder` | **(26R1)** Update a bundle folder via JSON Patch |
 
-> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1.
+> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later.
 
 ---
 

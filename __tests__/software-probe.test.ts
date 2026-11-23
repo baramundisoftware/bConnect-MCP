@@ -41,8 +41,8 @@ afterAll(() => {
 const client = () => new BConnectClient({ baseUrl: BASE, apiKey: 'k', timeout: 300 });
 
 describe('software startup check (#202)', () => {
-  it('probes /Bundles on 26R1 and starts although InstalledWindowsSoftware never answers', async () => {
-    process.env.BCONNECT_RELEASE = '26R1';
+  it.each(['26R1', '26R2'])('probes /Bundles on %s and starts although InstalledWindowsSoftware never answers', async (release) => {
+    process.env.BCONNECT_RELEASE = release;
     expect(await client().testConnection()).toBe(true);
     expect(sent).toEqual(['/bconnect/software/v2.0/Bundles']);
   });

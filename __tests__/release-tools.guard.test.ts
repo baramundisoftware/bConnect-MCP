@@ -21,8 +21,12 @@ import { RELEASES, loadOperations, type Release } from './lib/spec.js';
 import { ROOT, SERVERS, connect, createRecorder, guardEnv, requiredArguments, type JsonSchema } from './lib/exerciser.js';
 import { describeVariant, selectorArguments, variantOf } from './lib/variants.js';
 
-/** Tools a release lacks, all servers (bundled specs): on 25R2 the 36 hidden by hand before #159 plus 10 (compliance 8, maintenance-window updates 2); on 26R1 8 (industrial endpoints). */
-const HIDDEN = { '25R2': 46, '26R1': 8 } as const;
+/**
+ * Tools a release lacks, all servers (bundled specs): on 25R2 the 36 hidden by hand before #159 plus 10
+ * (compliance 8, maintenance-window updates 2); on 26R1 8 (industrial endpoints); on 26R2 those 8 and
+ * list_cloud_connectors (its operation is gone).
+ */
+const HIDDEN = { '25R2': 46, '26R1': 8, '26R2': 9 } as const;
 const METHOD_NOT_FOUND = -32601;
 const INVALID_PARAMS = -32602;
 const isVariant = (key: string): boolean => variantOf(key).tool !== key;
@@ -41,7 +45,9 @@ function availability(server: string, operations: Record<string, string[]>): Rec
   };
   const perKey: Record<string, Release[]> = Object.fromEntries(Object.entries(operations).map(([tool, ids]) => {
     const releases = RELEASES.filter((release) => ids.every((id) => {
-      const called = opsOf('26R1', id).length ? opsOf('26R1', id) : opsOf('25R2', id);
+      // The route of the newest release that has the operation.
+      const newest = [...RELEASES].reverse().find((r) => opsOf(r, id).length > 0);
+      const called = newest ? opsOf(newest, id) : [];
       return called.length > 0 && opsOf(release, id).some((o) => called.some((c) => c.domain === o.domain && c.method === o.method && c.path === o.path));
     }));
     return [tool, [...releases].sort()];
@@ -77,7 +83,7 @@ beforeAll(async () => {
     const { TOOL_OPERATIONS } = await import(pathToFileURL(join(ROOT, server, 'src', 'operations.ts')).href);
     const generated = await import(pathToFileURL(join(ROOT, server, 'src', 'tool-releases.ts')).href)
       .then((m: { TOOL_RELEASES?: Record<string, readonly string[]> }) => m.TOOL_RELEASES, () => undefined);
-    const entry: Seen = { server, expected: availability(server, TOOL_OPERATIONS), generated, listed: { '25R2': [], '26R1': [] }, operations: TOOL_OPERATIONS, refused: [] };
+    const entry: Seen = { server, expected: availability(server, TOOL_OPERATIONS), generated, listed: { '25R2': [], '26R1': [], '26R2': [] }, operations: TOOL_OPERATIONS, refused: [] };
     const schemas: Record<string, JsonSchema> = {};
     const conns = [];
     for (const release of RELEASES) {
@@ -123,15 +129,16 @@ describe('tools per release from the spec', () => {
   // Hand-picked cases, so a wrong rule in both the generator and availability() above can't pass;
   // spec-conformance.guard.test.ts checks the traffic of every listed tool independently.
   it.each([
-    ['bconnect-endpoints-mcp', 'update_maintenance_window_for_endpoint', ['26R1']], // PUT in 25R2, the tool sends PATCH
+    ['bconnect-endpoints-mcp', 'update_maintenance_window_for_endpoint', ['26R1', '26R2']], // PUT in 25R2, the tool sends PATCH
     ['bconnect-endpoints-mcp', 'list_endpoints[type=IndustrialEndpoint]', ['25R2']], // removed in 26R1
-    ['bconnect-endpoints-mcp', 'list_endpoints', ['25R2', '26R1']], // merged: in every release one of its variants is in
+    ['bconnect-endpoints-mcp', 'list_endpoints', ['25R2', '26R1', '26R2']], // merged: in every release one of its variants is in
     ['bconnect-groups-mcp', 'list_group_members[groupKind=StaticGroup,memberType=IndustrialEndpoint]', ['25R2']],
-    ['bconnect-groups-mcp', 'list_group_members', ['25R2', '26R1']],
-    ['bconnect-groups-mcp', 'list_ad_user_endpoints[endpointType=]', ['25R2', '26R1']],
-    ['bconnect-compliance-mcp', 'list_vulnerabilities', ['26R1']], // no 25R2 compliance spec
-    ['bconnect-universaldynamicgroups-mcp', 'list_udg_folders', ['26R1']], // GetFolders exists in other 25R2 domains only
-    ['bconnect-endpoints-mcp', 'list_endpoints[type=WindowsEndpoint]', ['25R2', '26R1']],
+    ['bconnect-groups-mcp', 'list_group_members', ['25R2', '26R1', '26R2']],
+    ['bconnect-groups-mcp', 'list_ad_user_endpoints[endpointType=]', ['25R2', '26R1', '26R2']],
+    ['bconnect-compliance-mcp', 'list_vulnerabilities', ['26R1', '26R2']], // no 25R2 compliance spec
+    ['bconnect-universaldynamicgroups-mcp', 'list_udg_folders', ['26R1', '26R2']], // GetFolders exists in other 25R2 domains only
+    ['bconnect-endpoints-mcp', 'list_endpoints[type=WindowsEndpoint]', ['25R2', '26R1', '26R2']],
+    ['bconnect-servermanagement-mcp', 'list_cloud_connectors', ['25R2', '26R1']], // GetCloudConnectors removed in 26R2
   ])('%s %s is available in %j', (server, tool, releases) => {
     expect(seen.find((s) => s.server === server)?.generated?.[tool]).toEqual(releases);
   });
@@ -145,7 +152,7 @@ describe('tools per release from the spec', () => {
   });
 
   it('a tool the release lacks is refused by name, naming the release in use, and sends nothing', () => {
-    expect(seen.flatMap((s) => s.refused).length).toBe(HIDDEN['25R2'] + HIDDEN['26R1']);
+    expect(seen.flatMap((s) => s.refused).length).toBe(HIDDEN['25R2'] + HIDDEN['26R1'] + HIDDEN['26R2']);
     // A tool is refused by name (MethodNotFound); a variant by its argument (InvalidParams), e.g.
     // "list_endpoints with type "IndustrialEndpoint" is only available in bMS 25R2; …".
     const named = (tool: string) => (isVariant(tool) ? `${variantOf(tool).tool} with ${describeVariant(variantOf(tool).select)}` : tool);

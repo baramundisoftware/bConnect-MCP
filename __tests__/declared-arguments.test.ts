@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
-import { declaredArgumentsOnly, queryParameters, withQueryProperties } from '../packages/mcp-core/src/tool-arguments.js';
+import { declaredArgumentsOnly, findQueryEntry, queryParameters, withQueryProperties } from '../packages/mcp-core/src/tool-arguments.js';
 
 const tools = declaredArgumentsOnly(async () => ({
   tools: [
@@ -112,5 +112,27 @@ describe('client-side options in the query table (#165)', () => {
   it('a call with countOnly on a tool that does not declare it is refused (REQ-SRV-022)', async () => {
     const catalog = declaredArgumentsOnly(withQueryProperties(table, () => '25R2', list));
     await expect(catalog.refuseUndeclared('list_things', { countOnly: true })).rejects.toThrow('Unknown argument for list_things: countOnly.');
+  });
+});
+
+describe('findQueryEntry: the selected release, else the newest other one (#280)', () => {
+  const table = {
+    '25R2': { only25: { Old: {} }, both: { Name25: {} } },
+    '26R1': { both: { Name26: {} } },
+    '26R2': {},
+  };
+
+  it('takes the newest other release that lists the tool when the selected one does not', () => {
+    expect(findQueryEntry(table, '26R2', 'both')).toEqual({ Name26: {} });
+    expect(findQueryEntry(table, '26R2', 'only25')).toEqual({ Old: {} });
+  });
+
+  it('takes the selected release first; unset is 26R1', () => {
+    expect(findQueryEntry(table, '25R2', 'both')).toEqual({ Name25: {} });
+    expect(findQueryEntry(table, undefined, 'both')).toEqual({ Name26: {} });
+  });
+
+  it('is undefined when no release lists the tool', () => {
+    expect(findQueryEntry(table, '26R2', 'missing')).toBeUndefined();
   });
 });

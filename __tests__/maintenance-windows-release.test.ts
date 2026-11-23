@@ -18,6 +18,7 @@ const INTERVALS = [{ maintenancePeriod: 'Everyday', start: { hour: 22, minute: 0
 const TYPES: Record<Release, string[]> = {
   '25R2': ['Unrestricted', 'Everyday', 'WorkdayWeekend', 'IndividualWeekday'],
   '26R1': ['Anytime', 'Never', 'Everyday', 'WorkdayWeekend', 'IndividualWeekday'],
+  '26R2': ['Anytime', 'Never', 'Everyday', 'WorkdayWeekend', 'IndividualWeekday'],
 };
 
 const recorder = createRecorder(() => ({ maintenanceWindowDefinitionType: 'Everyday' }));
@@ -25,7 +26,7 @@ const saved = { ...process.env };
 const conns: Partial<Record<Release, ConnectedServer>> = {};
 beforeAll(async () => {
   recorder.listen();
-  for (const release of ['25R2', '26R1'] as const) {
+  for (const release of ['25R2', '26R1', '26R2'] as const) {
     Object.assign(process.env, guardEnv(release, { writes: true, secretRead: false }));
     conns[release] = await connect('bconnect-endpoints-mcp');
   }
@@ -45,7 +46,7 @@ describe.each(['endpoint', 'logical_group'])('%s', (target) => {
   const create = `create_maintenance_window_for_${target}`;
   const update = `update_maintenance_window_for_${target}`;
 
-  it.each(['25R2', '26R1'] as const)('%s: create offers that release\'s window types, its default first', async (release) => {
+  it.each(['25R2', '26R1', '26R2'] as const)('%s: create offers that release\'s window types, its default first', async (release) => {
     const t = (await use(release).list()).find((x) => x.name === create)!;
     expect(t.inputSchema.properties.maintenanceWindowDefinitionType.enum).toEqual(TYPES[release]);
   });
@@ -91,13 +92,13 @@ describe.each(['endpoint', 'logical_group'])('%s', (target) => {
     ]);
   });
 
-  it('26R1: Unrestricted (deprecated there) is not offered and is refused, saying to use Anytime (Q2 a); Anytime goes through', async () => {
-    const conn = use('26R1');
+  it.each(['26R1', '26R2'] as const)('%s: Unrestricted (deprecated there) is not offered and is refused, saying to use Anytime (Q2 a); Anytime goes through', async (release) => {
+    const conn = use(release);
     recorder.take();
     for (const args of [{}, { intervals: INTERVALS }]) {
       const r = await conn.call(create, { id: ID, maintenanceWindowDefinitionType: 'Unrestricted', ...args });
       expect(r.isError).toBe(true);
-      expect(r.text).toContain("'Unrestricted' is deprecated in bMS 26R1 and not offered: use Anytime");
+      expect(r.text).toContain("'Unrestricted' is deprecated since bMS 26R1 and not offered: use Anytime");
     }
     expect(recorder.take()).toEqual([]);
     expect((await conn.call(create, { id: ID, maintenanceWindowDefinitionType: 'Anytime' })).isError).toBe(false);
@@ -109,13 +110,13 @@ describe.each(['endpoint', 'logical_group'])('%s', (target) => {
     expect((await conn.list()).map((t) => t.name)).not.toContain(update);
     recorder.take();
     const r = await conn.call(update, { id: ID, maintenanceWindowDefinitionType: 'Everyday', intervals: INTERVALS });
-    expect(r.text).toContain(`${update} is only available in bMS 26R1`);
+    expect(r.text).toContain(`${update} is only available in bMS 26R1 or 26R2`);
     expect(recorder.take()).toEqual([]);
   });
 
-  it('26R1: update keeps the 26R1 types and rule', async () => {
-    const t = (await use('26R1').list()).find((x) => x.name === update)!;
-    expect(t.inputSchema.properties.maintenanceWindowDefinitionType.enum).toEqual(TYPES['26R1']);
+  it.each(['26R1', '26R2'] as const)('%s: update keeps the 26R1 types and rule', async (release) => {
+    const t = (await use(release).list()).find((x) => x.name === update)!;
+    expect(t.inputSchema.properties.maintenanceWindowDefinitionType.enum).toEqual(TYPES[release]);
     expect(t.description).toContain('Anytime and Never take no intervals');
   });
 });

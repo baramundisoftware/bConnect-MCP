@@ -63,8 +63,9 @@ Derived from the bConnect API specifications:
   (server availability; a variable can hold a password);
 - every operation whose answer or request body carries a credential.
 
-A test checks this list against both specifications (25R2 and 26R1), and requires every other tag
-to be classified as not security-relevant with a reason, so a new operation or tag can't be missed.
+A test checks this list against the specifications of every release (25R2, 26R1 and 26R2), and
+requires every other tag to be classified as not security-relevant with a reason, so a new
+operation or tag can't be missed.
 
 <!-- security-routes:start -->
 | Method | Route | What it is |
@@ -82,6 +83,10 @@ to be classified as not security-relevant with a reason, so a new operation or t
 | `POST` | `/endpoints/v2.0/NetworkEndpoints` | create a network endpoint (body carries SNMP passwords) |
 | `POST` | `/endpoints/v2.0/IndustrialEndpoints` | create an industrial endpoint (body carries passwords; 25R2) |
 | `GET` | `/servermanagement/v2.0/ApiKeys` | list API keys (26R1) |
+| `POST` | `/servermanagement/v2.0/ApiKeys` | create an API key; the answer carries its secret (26R2) |
+| `GET` | `/servermanagement/v2.0/ApiKeys/{id}` | get one API key (26R2) |
+| `PATCH` | `/servermanagement/v2.0/ApiKeys/{id}` | change an API key (26R2) |
+| `DELETE` | `/servermanagement/v2.0/ApiKeys/{id}` | revoke an API key (26R2) |
 | `PATCH` | `/servermanagement/v2.0/Objects/{id}` | change an object's rights |
 | `GET` | `/servermanagement/v2.0/Objects/{id}/Rights` | read an object's rights |
 | `GET` | `/servermanagement/v2.0/SecurityGroups` | list security groups |

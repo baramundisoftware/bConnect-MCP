@@ -10,10 +10,10 @@
 import type { ToolReleaseTable } from "@bconnect/mcp-core";
 
 export const TOOL_RELEASES: ToolReleaseTable = {
-  list_universal_dynamic_groups: ["26R1"],
-  get_universal_dynamic_group: ["26R1"],
-  list_universal_dynamic_groups_by_folder: ["26R1"],
-  list_udg_folders: ["26R1"],
-  get_udg_folder: ["26R1"],
-  list_udg_folders_by_folder: ["26R1"],
+  list_universal_dynamic_groups: ["26R1", "26R2"],
+  get_universal_dynamic_group: ["26R1", "26R2"],
+  list_universal_dynamic_groups_by_folder: ["26R1", "26R2"],
+  list_udg_folders: ["26R1", "26R2"],
+  get_udg_folder: ["26R1", "26R2"],
+  list_udg_folders_by_folder: ["26R1", "26R2"],
 };

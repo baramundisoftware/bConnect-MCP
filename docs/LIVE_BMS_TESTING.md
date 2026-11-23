@@ -65,7 +65,7 @@ URL has no TLS at all: the servers refuse it for any host other than this machin
    BCONNECT_USERNAME=DOMAIN\readonly-user      # or BCONNECT_API_KEY=...
    BCONNECT_PASSWORD=...
    BCONNECT_CA_CERT_PATH=C:/Users/me/bms-ca.pem # forward slashes work on Windows
-   BCONNECT_RELEASE=26R1                        # the bMS release: 26R1 or 25R2
+   BCONNECT_RELEASE=26R1                        # the bMS release: 26R2, 26R1 or 25R2
 
    # What this bMS has; the API can't tell. yes | no (undeclared counts as no)
    BCONNECT_LIVE_MDM=no

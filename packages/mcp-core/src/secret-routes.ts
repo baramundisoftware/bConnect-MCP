@@ -25,6 +25,8 @@ export const SECRET_ROUTES: readonly SecretRoute[] = Object.freeze([
   // LAPS local administrator username + password (25R2, 26R1)
   { method: "GET", domain: "defensecontrol", path: "/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/{id}" },
   { method: "PATCH", domain: "defensecontrol", path: "/v2.0/LocalAdministrativeAccounts/WindowsEndpoints/{id}" },
+  // A new API key: the answer carries apiKeySecret (26R2; no tool calls it yet, #357)
+  { method: "POST", domain: "servermanagement", path: "/v2.0/ApiKeys" },
 ]);
 
 const escape = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

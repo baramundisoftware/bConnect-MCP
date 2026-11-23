@@ -124,13 +124,15 @@ Gateway only: a file whose content is the password, instead of `BCONNECT_PASSWOR
 
 ### `BCONNECT_RELEASE`
 
-**Default:** `26R1`. The fallback for the release of your bMS: `26R1` or `25R2`, spelt exactly so.
+**Default:** `26R1`. The fallback for the release of your bMS: `26R2`, `26R1` or `25R2`, spelt
+exactly so.
 Each server (and the gateway, with its service credential) reads the release from the bMS at
 startup (`version` of the management server; the account needs read access to server management)
 and uses this value only when it can't; a different value is overridden, with a warning. The
 release selects the tools and list filters for that release and the API documentation used to
 explain an error. On 25R2 the compliance and universaldynamicgroups servers stop at startup: their
-APIs need 26R1 (in the gateway they list no tools).
+APIs need 26R1 or later (in the gateway they list no tools). What differs between the releases:
+[BMS_RELEASES.md](BMS_RELEASES.md).
 
 ### `BCONNECT_TIMEOUT_MS`
 

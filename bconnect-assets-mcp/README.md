@@ -79,7 +79,7 @@ been checked against a real bMS yet.
 | `list_assets_by_org_unit` | **(26R1)** List assets for endpoints within an OU |
 | `list_assets_by_ad_object` | **(26R1)** List assets assigned to an AD object |
 
-> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1.
+> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later.
 
 ---
 

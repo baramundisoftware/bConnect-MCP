@@ -10,13 +10,13 @@
 import type { ToolReleaseTable } from "@bconnect/mcp-core";
 
 export const TOOL_RELEASES: ToolReleaseTable = {
-  list_os_folders: ["25R2", "26R1"],
-  get_os_folder: ["25R2", "26R1"],
-  list_os_folders_by_folder: ["25R2", "26R1"],
-  list_os_windows_endpoints: ["25R2", "26R1"],
-  get_os_windows_endpoint: ["25R2", "26R1"],
-  create_os_folder: ["25R2", "26R1"],
-  update_os_folder: ["25R2", "26R1"],
-  delete_os_folder: ["25R2", "26R1"],
-  update_os_windows_endpoint: ["25R2", "26R1"],
+  list_os_folders: ["25R2", "26R1", "26R2"],
+  get_os_folder: ["25R2", "26R1", "26R2"],
+  list_os_folders_by_folder: ["25R2", "26R1", "26R2"],
+  list_os_windows_endpoints: ["25R2", "26R1", "26R2"],
+  get_os_windows_endpoint: ["25R2", "26R1", "26R2"],
+  create_os_folder: ["25R2", "26R1", "26R2"],
+  update_os_folder: ["25R2", "26R1", "26R2"],
+  delete_os_folder: ["25R2", "26R1", "26R2"],
+  update_os_windows_endpoint: ["25R2", "26R1", "26R2"],
 };

@@ -10,7 +10,7 @@
 import type { ToolReleaseTable } from "@bconnect/mcp-core";
 
 export const TOOL_RELEASES: ToolReleaseTable = {
-  list_update_management_endpoints: ["25R2", "26R1"],
-  get_update_management_endpoint: ["25R2", "26R1"],
-  update_update_management_endpoint: ["25R2", "26R1"],
+  list_update_management_endpoints: ["25R2", "26R1", "26R2"],
+  get_update_management_endpoint: ["25R2", "26R1", "26R2"],
+  update_update_management_endpoint: ["25R2", "26R1", "26R2"],
 };

@@ -114,8 +114,8 @@ Each bConnect domain is a separate URL path on the gateway:
 | `variables` | `/variables/mcp` | Variable definitions and instances |
 | `defensecontrol` | `/defensecontrol/mcp` | BitLocker, Defender, local admins |
 | `operatingsystems` | `/operatingsystems/mcp` | OS deployment profiles |
-| `compliance` | `/compliance/mcp` | CVE vulnerabilities (26R1 only) |
-| `universaldynamicgroups` | `/universaldynamicgroups/mcp` | Universal Dynamic Groups (26R1 only) |
+| `compliance` | `/compliance/mcp` | CVE vulnerabilities (26R1 and later) |
+| `universaldynamicgroups` | `/universaldynamicgroups/mcp` | Universal Dynamic Groups (26R1 and later) |
 | `updatemanagement` | `/updatemanagement/mcp` | Windows Update management |
 
 To use multiple domains in one workflow, add one MCP Client Tool node per domain,

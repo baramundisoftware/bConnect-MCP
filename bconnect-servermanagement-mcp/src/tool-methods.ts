@@ -3,7 +3,7 @@
  * src/operations.ts — do not edit. Regenerate after a spec or operations.ts
  * change; __tests__/query-params.guard.test.ts fails when this table drifts.
  *
- * Per tool: the HTTP methods of the operations it calls, in either bMS release.
+ * Per tool: the HTTP methods of the operations it calls, in any bMS release.
  * The tool's MCP annotations (read-only, destructive) are derived from these
  * (REQ-SRV-024).
  */

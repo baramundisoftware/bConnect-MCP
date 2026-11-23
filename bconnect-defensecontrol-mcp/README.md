@@ -70,7 +70,7 @@ been checked against a real bMS yet.
 | `list_defender_windows_endpoints` | List all endpoints with Defender status |
 | `get_defender_windows_endpoint` | Get Defender status for a specific endpoint |
 
-> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1.
+> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later.
 
 ---
 

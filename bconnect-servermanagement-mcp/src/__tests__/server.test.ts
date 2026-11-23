@@ -89,11 +89,11 @@ describe('bconnect-servermanagement-mcp', () => {
   });
 
   // An empty value never gets this far: the startup check refuses it (client-config.ts checkRelease).
-  it('builds the 25R2 list for an empty BCONNECT_RELEASE, the value the startup check refuses', async () => {
+  it('builds the default 26R1 list for an empty BCONNECT_RELEASE, the value the startup check refuses', async () => {
     vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('');
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(25);
+    expect(tools).toHaveLength(30);
   });
 
   it('registers all expected 25R2 tool names', async () => {
@@ -142,7 +142,7 @@ describe('bconnect-servermanagement-mcp', () => {
       // The refusal names the release in use when it is called, as a running server has it.
       process.env.BCONNECT_RELEASE = '25R2';
       await expect(client.callTool({ name: 'list_api_keys', arguments: {} })).rejects.toThrow(
-        'list_api_keys is only available in bMS 26R1; this server uses 25R2 (from BCONNECT_RELEASE).',
+        'list_api_keys is only available in bMS 26R1 or 26R2; this server uses 25R2 (from BCONNECT_RELEASE).',
       );
     } finally {
       delete process.env.BCONNECT_API_KEY;

@@ -28,7 +28,7 @@ import { ID, ROOT, SERVERS, callsOf, connect, createRecorder, domainOf, guardEnv
  * variants each count (REQ-SRV-029); search_endpoints and list_group_endpoints are gone (−2),
  * their routes stay reachable through list_endpoints and list_endpoints_by_logical_group.
  */
-const COUNTABLE = { '25R2': 103, '26R1': 117 } as const;
+const COUNTABLE = { '25R2': 103, '26R1': 117, '26R2': 117 } as const;
 const TOTAL = 4242;
 const INVALID_PARAMS = -32602;
 /** Arguments that page or sort; everything else the caller gives is a filter. */
@@ -48,10 +48,11 @@ function countableTools(server: string, release: (typeof RELEASES)[number], oper
     const own = all.filter((o) => o.domain === server.replace(/^bconnect-|-mcp$/g, ''));
     return own.length ? own : all;
   };
-  const other = release === '25R2' ? '26R1' : '25R2';
   return Object.entries(operations).filter(([, ids]) => {
     const selected = getsIn(release, ids);
-    const gets = selected.length ? selected : getsIn(other, ids);
+    // A route the release lacks: the newest other release's, as the core's table lookup falls back.
+    const other = [...RELEASES].reverse().find((r) => r !== release && getsIn(r, ids).length > 0);
+    const gets = selected.length || !other ? selected : getsIn(other, ids);
     const query = new Set(gets.flatMap((o) => o.queryParams));
     return query.has('Page') && query.has('PageSize') && gets.some((o) => {
       const content: Schema = o.spec.paths[o.path].get.responses?.['200']?.content ?? {};
@@ -165,7 +166,7 @@ describe.each(RELEASES)('bMS %s', (release) => {
 
   it('every server is covered and the domain segment is kept', () => {
     const servers = new Set(counted.map((c) => c.server));
-    // Compliance and universal dynamic groups are 26R1 only: on 25R2 those servers list no tool.
+    // Compliance and universal dynamic groups exist from 26R1 on: on 25R2 those servers list no tool.
     expect(servers.size).toBe(release === '25R2' ? SERVERS.length - 2 : SERVERS.length);
     const wrong = counted.filter((c) => c.count.sent.length === 1 && !c.count.sent[0].path.startsWith(`/${domainOf(c.server)}/`)).map((c) => `${c.server} ${c.tool} ${c.count.sent[0].path}`);
     expect(wrong).toEqual([]);

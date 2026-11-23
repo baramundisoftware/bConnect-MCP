@@ -38,7 +38,7 @@ function start(server: string, env: Record<string, string>) {
     timeout: 30_000,
   });
 }
-const NEEDS_26R1 = (server: string, uses: string) => `${server}: needs bMS 26R1; this server uses ${uses}. None of its APIs exist in that release.`;
+const NEEDS_26R1 = (server: string, uses: string) => `${server}: needs bMS 26R1 or 26R2; this server uses ${uses}. None of its APIs exist in that release.`;
 
 describe('which servers a release leaves without tools (from the generated tables)', () => {
   it('25R2: compliance and universaldynamicgroups', async () => {

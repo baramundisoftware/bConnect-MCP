@@ -103,9 +103,9 @@ describe('Groups — unknown LogicalGroup id', () => {
 
 describe('Groups — every route of the merged tools (REQ-SRV-029, #174)', () => {
   /** The release the mock serves, so the server lists and checks the same one. */
-  async function useMockRelease(): Promise<'25R2' | '26R1'> {
+  async function useMockRelease(): Promise<'25R2' | '26R1' | '26R2'> {
     const version = (await getMockHealth())?.bmsVersion?.toLowerCase();
-    const release = version === '25r2' ? '25R2' : '26R1';
+    const release = version === '25r2' ? '25R2' : version === '26r2' ? '26R2' : '26R1';
     process.env.BCONNECT_RELEASE = release;
     return release;
   }
@@ -122,8 +122,8 @@ describe('Groups — every route of the merged tools (REQ-SRV-029, #174)', () =>
   it('list_group_members answers for every group kind and member type of the release', async (ctx) => {
     if (!available) {ctx.skip();}
     const release = await useMockRelease();
-    // The mock has universal dynamic groups in its 26R1 data only.
-    const udg = release === '26R1' ? await firstId('/universaldynamicgroups/v2.0/UniversalDynamicGroups') : undefined;
+    // Universal dynamic groups exist from 26R1 on; the mock has none in its 25R2 data.
+    const udg = release !== '25R2' ? await firstId('/universaldynamicgroups/v2.0/UniversalDynamicGroups') : undefined;
     const ids: Record<string, string | undefined> = { LogicalGroup: logicalGroupId, StaticGroup: STATIC_GROUP_ID, DynamicGroup: DYNAMIC_GROUP_ID, UniversalDynamicGroup: udg };
     const all = routes('list_group_members', release);
     expect(all.length).toBe(release === '25R2' ? 27 : 24);

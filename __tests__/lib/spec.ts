@@ -8,6 +8,8 @@
  * STRING field whose name contains one of SECRET_KEYWORDS (case-insensitive).
  * Substring, because the API uses camelCase (`initialStartupPin`); string-only,
  * because status flags such as `isStartupPinEnabled` are booleans, not secrets.
+ * A string with format date or date-time is a point in time, not a secret
+ * (26R2 `UnmanagedEndpoint.tokenExpirationDate`).
  *
  * The answer is recomputed on every run (REQ-SRV-017, ADR-0004).
  *
@@ -19,7 +21,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const RELEASES = ['25R2', '26R1'] as const;
+export const RELEASES = ['25R2', '26R1', '26R2'] as const;
 export type Release = (typeof RELEASES)[number];
 
 export const SECRET_KEYWORDS = [
@@ -53,6 +55,8 @@ function isStringType(type: unknown): boolean {
   return type === 'string' || (Array.isArray(type) && type.includes('string'));
 }
 
+const isDate = (def: Schema): boolean => def.format === 'date' || def.format === 'date-time';
+
 /** Walk a response schema and return every credential-shaped string field. */
 function secretFieldsOf(schema: Schema | undefined, schemas: Record<string, Schema>): string[] {
   const hits = new Set<string>();
@@ -70,7 +74,7 @@ function secretFieldsOf(schema: Schema | undefined, schemas: Record<string, Sche
     if (sc.items) {walk(sc.items, owner);}
     for (const [field, def] of Object.entries<Schema>(sc.properties ?? {})) {
       const lower = field.toLowerCase();
-      if (isStringType(def.type) && SECRET_KEYWORDS.some((k) => lower.includes(k))) {
+      if (isStringType(def.type) && !isDate(def) && SECRET_KEYWORDS.some((k) => lower.includes(k))) {
         hits.add(`${owner}.${field}`);
       }
       walk(def, owner);

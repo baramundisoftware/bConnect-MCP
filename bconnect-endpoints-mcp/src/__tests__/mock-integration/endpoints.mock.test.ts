@@ -99,9 +99,9 @@ describe('Endpoints — unknown id', () => {
 
 describe('Endpoints — every read route of the merged tools (REQ-SRV-029, #174)', () => {
   /** The release the mock serves, so the server lists and checks the same one. */
-  async function useMockRelease(): Promise<'25R2' | '26R1'> {
+  async function useMockRelease(): Promise<'25R2' | '26R1' | '26R2'> {
     const version = (await getMockHealth())?.bmsVersion?.toLowerCase();
-    const release = version === '25r2' ? '25R2' : '26R1';
+    const release = version === '25r2' ? '25R2' : version === '26r2' ? '26R2' : '26R1';
     process.env.BCONNECT_RELEASE = release;
     return release;
   }

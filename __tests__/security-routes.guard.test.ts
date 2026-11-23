@@ -2,7 +2,7 @@
  * Security-relevant routes come from the specs, and every one is audited at
  * BCONNECT_AUDIT_LEVEL=security (REQ-XC-006 AC 3; #168 AC 1).
  *
- * The rule, derived here from both specs on its own: every operation tagged
+ * The rule, derived here from every release's specs on its own: every operation tagged
  * ApiKeys, LocalAdministrativeAccounts, Objects, SecurityGroups or
  * SecurityProfiles, plus every operation whose answer carries a credential
  * (the secret-route derivation, ADR-0004). SECURITY_ROUTES in the core must
@@ -25,7 +25,7 @@ import { RELEASES, type ApiOperation, type Release, type Schema, loadOperations,
 const SECURITY_TAGS = ['ApiKeys', 'LocalAdministrativeAccounts', 'Objects', 'SecurityGroups', 'SecurityProfiles'];
 /** Writes under these tags are security-relevant: availability of the server, values that can be passwords. */
 const SECURITY_WRITE_TAGS = ['ManagementServer', 'Microservices', 'VariableDefinitions', 'VariableInstances'];
-/** Every other tag of both specs, with the reason it isn't security-relevant. A new tag fails until it's classified. */
+/** Every other tag of the specs, with the reason it isn't security-relevant. A new tag fails until it's classified. */
 const NOT_SECURITY_TAGS: Record<string, string> = {
   ADGroups: 'directory data, read-only', ADObjects: 'directory data, read-only', ADUsers: 'directory data, read-only',
   OrgUnits: 'directory data, read-only',
@@ -46,7 +46,7 @@ const NOT_SECURITY_TAGS: Record<string, string> = {
   Bundles: 'software bundles',
   DetectedRuleViolations: 'findings, read-only', DetectedVulnerabilities: 'findings, read-only', Rules: 'read-only',
   Vulnerabilities: 'read-only', EntraId: 'device linking (temporary API); no credentials in either direction',
-  UnmanagedEndpoints: 'discovered devices', UniversalDynamicGroups: 'read-only', UniversalDynamicGroupsFolder: 'read-only',
+  UnmanagedEndpoints: 'discovered devices', Thresholds: 'universal dynamic group thresholds: evaluation settings, not access control', UniversalDynamicGroups: 'read-only', UniversalDynamicGroupsFolder: 'read-only',
 };
 /** Operations whose credential the field names don't reveal. */
 const CREDENTIAL_EXCEPTIONS: Record<string, string> = {
@@ -127,7 +127,7 @@ describe('security routes (self-check of the derivation)', () => {
   });
 });
 
-describe('tags of both specs', () => {
+describe('tags of every release', () => {
   it('are each classified as security-relevant or not (with a reason), so a new tag can\'t slip through', () => {
     const classified = new Set([...SECURITY_TAGS, ...SECURITY_WRITE_TAGS, ...Object.keys(NOT_SECURITY_TAGS)]);
     const all = new Set(RELEASES.flatMap((r) => loadOperations(r).flatMap(tagsOf)));
@@ -142,7 +142,7 @@ describe('tags of both specs', () => {
 });
 
 describe('SECURITY_ROUTES', () => {
-  it('lists exactly the security routes of both specs (no missing, no stale, no duplicates)', () => {
+  it('lists exactly the security routes of every release (no missing, no stale, no duplicates)', () => {
     const expected = [...new Set(RELEASES.flatMap((r) => fromSpecs(r).map(key)))].sort();
     const actual = table().map(key).sort();
     expect({ missing: expected.filter((k) => !actual.includes(k)), stale: actual.filter((k) => !expected.includes(k)) })
