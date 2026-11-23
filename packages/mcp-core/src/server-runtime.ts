@@ -126,6 +126,12 @@ export interface ServerEntry<C extends BConnectClientBase> {
   clients: ServerClients<C>;
   /** The server's generated src/tool-releases.ts: a release that lists none of its tools stops it at startup (REQ-SRV-030). */
   releases: ToolReleaseTable;
+  /**
+   * A last check after the release detection and the connectivity check, before the
+   * server serves: returns why it can't start, or undefined. The bconnect-mcp package
+   * checks here that its chosen domains have tools in the release (#297).
+   */
+  beforeServe?: () => Promise<string | undefined>;
 }
 
 /** Where the startup routine reads and writes; tests replace it. */
@@ -202,6 +208,11 @@ async function serve<C extends BConnectClientBase>(entry: ServerEntry<C>, io: St
     } else {
       io.error(`${name}: API connectivity verified.`);
     }
+  }
+
+  const refusal = await entry.beforeServe?.();
+  if (refusal !== undefined) {
+    return refusal;
   }
 
   if ((env.MCP_TRANSPORT ?? "stdio") === "http") {
