@@ -100,7 +100,7 @@ The run fails before any test when:
 - it sets `ALLOW_WRITE_OPERATIONS`, `ALLOW_SECRET_READ`, `BCONNECT_SKIP_CONNECTIVITY_CHECK`
   or `MCP_TRANSPORT`;
 - one of the refused shell variables from step 5 is set;
-- `BCONNECT_RELEASE` isn't `26R1` or `25R2`;
+- `BCONNECT_RELEASE` isn't `26R2`, `26R1` or `25R2` (the tier takes the release from the env file only, not from the bMS: set it to the bMS's release);
 - the bMS can't be reached (one GET of `/info` with the run's TLS settings).
 
 It also fails after the tests when no server started or no read tool was called.

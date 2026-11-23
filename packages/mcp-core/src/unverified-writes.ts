@@ -37,6 +37,9 @@ export const LIVE_VERIFIED_WRITE_TOOLS: ReadonlyMap<string, string> = new Map<st
   ["withdraw_kiosk_release", "2026-10-02, bMS 26.1.161 (26R1), test bMS, restricted account in a sandbox: test release withdrawn; an existing release untouched"],
   ["assign_job_to_logical_group", "2026-10-02, bMS 26.1.161 (26R1), test bMS, restricted account in a sandbox: instances created on all sub-group levels; on a busy bMS the answer can take longer than 30 s, and the outcome is then reported as unknown"],
   ["delete_job_instance", "2026-10-02, bMS 26.1.161 (26R1), test bMS, restricted account in a sandbox: test job instances deleted"],
+  ["create_api_key", "2026-11-23, bMS 26.2.147.11 (26R2), test bMS: inactive key expiring the next day created; apiKeySecret only in the create result; refused without ALLOW_SECRET_READ, nothing created"],
+  ["update_api_key", "2026-11-23, bMS 26.2.147.11 (26R2), test bMS: comment, isActive, isAvailableViaGateway changed (JSON Patch /Comment, /IsActive, /IsAvailableViaGateway with JSON booleans) and read back"],
+  ["delete_api_key", "2026-11-23, bMS 26.2.147.11 (26R2), test bMS: test key deleted; get_api_key then answers 404"],
 ]);
 
 /** A merged write tool's variants and their releases (REQ-SRV-029): live checks are recorded per variant key. */
