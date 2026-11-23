@@ -1,0 +1,31 @@
+{
+  "name": "@baramundi/bconnect-mcp",
+  "version": "26.1.12",
+  "private": true,
+  "description": "MCP servers for baramundi Management Suite (bMS) via the bConnect API: one or several domains as one stdio server",
+  "type": "module",
+  "main": "build/index.js",
+  "bin": { "bconnect-mcp": "build/cli.js" },
+  "scripts": { "build": "tsc" },
+  "keywords": ["mcp", "model-context-protocol", "baramundi", "bconnect", "endpoint-management", "uem"],
+  "license": "MIT",
+  "dependencies": {
+    "@bconnect/mcp-core": "*",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "bconnect-activedirectory-mcp": "*",
+    "bconnect-assets-mcp": "*",
+    "bconnect-compliance-mcp": "*",
+    "bconnect-defensecontrol-mcp": "*",
+    "bconnect-endpoints-mcp": "*",
+    "bconnect-groups-mcp": "*",
+    "bconnect-jobs-mcp": "*",
+    "bconnect-operatingsystems-mcp": "*",
+    "bconnect-servermanagement-mcp": "*",
+    "bconnect-software-mcp": "*",
+    "bconnect-universaldynamicgroups-mcp": "*",
+    "bconnect-updatemanagement-mcp": "*",
+    "bconnect-variables-mcp": "*"
+  },
+  "devDependencies": { "typescript": "^5.9.3" },
+  "engines": { "node": "^22.23.4 || ^24.22.1 || >=26.12.1" }
+}

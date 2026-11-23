@@ -20,6 +20,7 @@ import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { protocolError } from "./protocol-errors.js";
 import { offersQueryProperty, type QueryParameterTable } from "./tool-arguments.js";
 import { toolJsonResult, type ToolJsonResult } from "./tool-results.js";
+import { withEmptyListHint } from "./empty-list-hint.js";
 
 /** The part of a CallTool request the wrapper reads and rewrites. */
 export interface ToolCallRequest {
@@ -63,7 +64,9 @@ function totalItemsOf(page: Record<string, unknown> | undefined): number | undef
  * Wraps a server's CallTool handler with the `countOnly` option. A tool that
  * doesn't offer it in the selected release gets the request unchanged (the
  * declared-arguments check then refuses `countOnly`). The release is read on
- * every call, like the tool list reads it.
+ * every call, like the tool list reads it. Every server wraps its handler with
+ * this, so it also adds the empty-list hint (#402, empty-list-hint.ts), to a
+ * count of 0 as well as to an empty page.
  */
 export function withCountOnly<Rest extends unknown[], Result>(
   table: QueryParameterTable,
@@ -71,7 +74,7 @@ export function withCountOnly<Rest extends unknown[], Result>(
   handler: (request: ToolCallRequest, ...rest: Rest) => Promise<Result>,
   options: CountOnlyOptions = {},
 ): (request: ToolCallRequest, ...rest: Rest) => Promise<Result | ToolJsonResult> {
-  return async (request, ...rest) => {
+  return withEmptyListHint(async (request: ToolCallRequest, ...rest: Rest): Promise<Result | ToolJsonResult> => {
     const { name, arguments: args } = request.params;
     if (!args || !Object.hasOwn(args, "countOnly") || !offersQueryProperty(table, release(), name, "countOnly")) {
       return handler(request, ...rest);
@@ -97,5 +100,5 @@ export function withCountOnly<Rest extends unknown[], Result>(
       ...(typeof page?.note === "string" && { note: page.note }),
       ...(Object.keys(filters).length > 0 && { filters }),
     });
-  };
+  });
 }

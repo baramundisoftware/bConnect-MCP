@@ -63,6 +63,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   account's rights instead of answering 403, so a restricted account gets an empty result without
   an error, and the startup check still says "verified". `docs/TROUBLESHOOTING.md` describes the
   symptom, the cause (seen on 26R1) and how to check the account's security profile.
+- **An empty list says that missing rights can be the cause** (#402). When a `list_*` tool returns
+  no entries (or a count of 0) and the caller gave no filter and asked for the first page, the
+  result gets a second text after the JSON: "No entries. bMS also returns an empty list when the
+  account has no rights on these objects: …". The JSON stays as it was. No hint on a filtered list
+  (search, filter or parent ID), where an empty answer is expected, or where the tool already
+  explains the empty result.
+- **`bconnect-mcp` command: one or several domains as one server** (#297, step 1 of the npm
+  package). `bconnect-mcp endpoints` starts that domain's server; `bconnect-mcp endpoints,jobs`
+  starts several domains as one server, and `bconnect-mcp all` starts every domain. Settings come
+  from the environment, as for a domain server, with the same startup checks; stdio, or HTTP with
+  `MCP_TRANSPORT=http`. A domain named on its own that has no tools in the bMS release stops the
+  start; with `all`, such a domain lists none. The workspace `packages/bconnect-mcp` is still
+  private: publishing as `@baramundi/bconnect-mcp` follows in the next steps. The gateway's
+  `MCP_GATEWAY_COMBINED` and the command's argument share one parser in mcp-core (`domainList`).
 
 ### Changed
 - **The default release is 26R2** (was 26R1), now that 26R2 passed the live run (bMS 26.2.147.11,
