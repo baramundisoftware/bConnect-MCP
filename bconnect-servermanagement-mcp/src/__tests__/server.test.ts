@@ -3,7 +3,7 @@
  *
  * Verifies that:
  * 1. createServer() lists exactly 25 tools in 25R2 mode
- * 2. createServer() lists exactly 30 tools in 26R1 mode, the default when unset
+ * 2. createServer() lists exactly 30 tools in 26R1 mode, and 33 in 26R2 mode, the default when unset
  * 3. All expected tool names are registered
  * 4. 26R1-only tools only appear in 26R1 mode
  * 5. Unknown tool calls return MethodNotFound
@@ -80,20 +80,23 @@ describe('bconnect-servermanagement-mcp', () => {
     expect(tools).toHaveLength(30);
   });
 
-  it('defaults to 26R1 when BCONNECT_RELEASE is unset, like the other servers', async () => {
+  it('defaults to 26R2 when BCONNECT_RELEASE is unset, like the other servers', async () => {
     vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer();
     const names = (await client.listTools()).tools.map((t) => t.name);
-    expect(names).toHaveLength(30);
+    // 26R1's 30 without list_cloud_connectors (gone in 26R2), plus the 4 API key tools (#357).
+    expect(names).toHaveLength(33);
     for (const tool of EXPECTED_26R1_ONLY_TOOLS) {expect(names).toContain(tool);}
+    expect(names).toEqual(expect.arrayContaining(['get_api_key', 'create_api_key', 'update_api_key', 'delete_api_key']));
+    expect(names).not.toContain('list_cloud_connectors');
   });
 
   // An empty value never gets this far: the startup check refuses it (client-config.ts checkRelease).
-  it('builds the default 26R1 list for an empty BCONNECT_RELEASE, the value the startup check refuses', async () => {
+  it('builds the default 26R2 list for an empty BCONNECT_RELEASE, the value the startup check refuses', async () => {
     vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
     const { client } = await startServer('');
     const { tools } = await client.listTools();
-    expect(tools).toHaveLength(30);
+    expect(tools).toHaveLength(33);
   });
 
   it('registers all expected 25R2 tool names', async () => {

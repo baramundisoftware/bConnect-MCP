@@ -119,7 +119,7 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 
 ## What you need
 
-- A **baramundi Management Suite** (25R2 or 26R1) with the bConnect API enabled, its address
+- A **baramundi Management Suite** (25R2, 26R1 or 26R2) with the bConnect API enabled, its address
   (e.g. `https://bms.company.com:443/bconnect`) and an **API key** or a user with API access.
 - **Node.js 22.23.4 or later on 22, or 24.22.1 or later on 24** ([download](https://nodejs.org/)),
   the versions CI tests and the packages allow; these also trust the operating system's CA store. Not needed for the gateway container.
@@ -151,7 +151,7 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 — means the server needs 26R1 and lists no tools on 25R2. Each release lists only the tools whose API routes it has: 26R1 and 26R2 have no industrial-endpoint tools, 25R2 no 26R1-only tools, 26R1 no 26R2-only tools, and 26R2 no `list_cloud_connectors` (its API is gone).
 
 Each server reads the release from the bMS at startup and logs it (for example
-`bMS 26.1.161.0 → release 26R1`); `BCONNECT_RELEASE` is only the fallback. Compliance and universal
+`bMS 26.2.147.11 → release 26R2`); `BCONNECT_RELEASE` is only the fallback (default `26R2`). Compliance and universal
 dynamic groups don't exist in 2025 R2: don't configure those two servers for a 25R2 bMS. Started on
 one, they stop at once and say so (`needs bMS 26R1 or 26R2; this server uses 25R2 …`).
 

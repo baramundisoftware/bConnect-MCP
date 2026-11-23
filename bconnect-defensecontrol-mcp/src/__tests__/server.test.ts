@@ -72,9 +72,9 @@ describe('bconnect-defensecontrol-mcp', () => {
     }
   });
 
-  it('lists exactly 13 defensecontrol tools in the default (26R1) mode', async () => {
+  it('lists exactly 13 defensecontrol tools in the default (26R2) mode, as in 26R1', async () => {
     vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
-    // No BCONNECT_RELEASE set — default is now 26R1, so both BitLocker-secret tools register.
+    // No BCONNECT_RELEASE set — the default (26R2) has both BitLocker-secret tools, as 26R1 does.
     const { client } = await startServer();
     const { tools } = await client.listTools();
     expect(tools).toHaveLength(13);
@@ -196,7 +196,7 @@ describe('bconnect-defensecontrol-mcp', () => {
       expect(JSON.stringify(res.content)).toMatch(/ALLOW_SECRET_READ/);
     });
 
-    it('blocks get_bitlocker_secrets by default (26R1)', async () => {
+    it('blocks get_bitlocker_secrets by default (26R2)', async () => {
       process.env.BCONNECT_RELEASE = '26R1';
       const { client } = await startServer();
       const res = await client.callTool({

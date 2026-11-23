@@ -49,7 +49,7 @@ afterEach(() => { requests = []; TestClient.built = []; forgetDetectedRelease();
 
 const DETECT = 'GET /bconnect/servermanagement/v2.0/ManagementServer';
 /** A server's generated release table (src/tool-releases.ts) with tools in both releases. */
-const BOTH = { list_things: ['25R2', '26R1'] } as const;
+const BOTH = { list_things: ['25R2', '26R1', '26R2'] } as const;
 afterAll(() => msw.close());
 
 describe('serverClients: one client per server process (D1 = a)', () => {
@@ -295,7 +295,7 @@ describe('startServer: the bMS release is detected first (REQ-SRV-028, #159)', (
     const t = io(env);
     await startServer(entry(env), t.options);
     expect(requests).toEqual([]);
-    expect(t.lines).toContain('bconnect-runtime-mcp: release detection skipped (BCONNECT_SKIP_CONNECTIVITY_CHECK=true); using 26R1 (default)');
+    expect(t.lines).toContain('bconnect-runtime-mcp: release detection skipped (BCONNECT_SKIP_CONNECTIVITY_CHECK=true); using 26R2 (default)');
   });
 });
 
@@ -382,7 +382,7 @@ describe('startServer: a server whose APIs the release lacks says so (REQ-SRV-03
     version('25.2.0.0');
     const env = { ...ENV };
     const t = io(env);
-    await startServer(entry(env, { ...ONLY_26R1, list_items: ['25R2', '26R1'], 'list_items[type=Red]': ['25R2', '26R1'] }), t.options);
+    await startServer(entry(env, { ...ONLY_26R1, list_items: ['25R2', '26R1', '26R2'], 'list_items[type=Red]': ['25R2', '26R1', '26R2'] }), t.options);
     expect(requests).toEqual([DETECT, 'GET /bconnect/runtime/v2.0/Things']);
     expect(t.connectStdio).toHaveBeenCalledOnce();
   });

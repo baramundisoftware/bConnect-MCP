@@ -30,14 +30,14 @@ const VARIANTS: ToolVariantTable = {
   },
 };
 const RELEASES: ToolReleaseTable = {
-  list_things: ['25R2', '26R1'],
-  'list_things[type=]': ['25R2', '26R1'],
-  'list_things[type=Red]': ['25R2', '26R1'],
+  list_things: ['25R2', '26R1', '26R2'],
+  'list_things[type=]': ['25R2', '26R1', '26R2'],
+  'list_things[type=Red]': ['25R2', '26R1', '26R2'],
   'list_things[type=Blue]': ['25R2'],
-  list_members: ['25R2', '26R1'],
-  'list_members[kind=Static,member=]': ['25R2', '26R1'],
-  'list_members[kind=Static,member=Red]': ['25R2', '26R1'],
-  'list_members[kind=Dynamic,member=]': ['25R2', '26R1'],
+  list_members: ['25R2', '26R1', '26R2'],
+  'list_members[kind=Static,member=]': ['25R2', '26R1', '26R2'],
+  'list_members[kind=Static,member=Red]': ['25R2', '26R1', '26R2'],
+  'list_members[kind=Dynamic,member=]': ['25R2', '26R1', '26R2'],
 };
 /** The arguments each variant takes besides its selectors. */
 const ARGS: Record<string, string[]> = {
@@ -215,7 +215,7 @@ describe('withUnverifiedWriteMarker with variants', () => {
       'start_enrollment[type=AndroidEndpoint]': { type: 'AndroidEndpoint' },
     },
   };
-  const REL: ToolReleaseTable = Object.fromEntries(Object.values(VARIANT_WRITES).flatMap((v) => Object.keys(v)).map((k) => [k, ['25R2', '26R1']]));
+  const REL: ToolReleaseTable = Object.fromEntries(Object.values(VARIANT_WRITES).flatMap((v) => Object.keys(v)).map((k) => [k, ['25R2', '26R1', '26R2']]));
   const list = async () => ({ tools: ['update_endpoint', 'delete_endpoint', 'start_enrollment'].map((name) => ({ name, description: 'Does it.' })) });
 
   it('names the variants without a live check; none → no note; all → the usual note', async () => {
@@ -232,7 +232,7 @@ describe('withUnverifiedWriteMarker with variants', () => {
 
 describe('edge cases', () => {
   const REQUIRED: ToolVariantTable = { set_thing: { 'set_thing[type=Red]': { type: 'Red' }, 'set_thing[type=Blue]': { type: 'Blue' } } };
-  const REQUIRED_RELEASES: ToolReleaseTable = { 'set_thing[type=Red]': ['25R2', '26R1'], 'set_thing[type=Blue]': ['26R1'] };
+  const REQUIRED_RELEASES: ToolReleaseTable = { 'set_thing[type=Red]': ['25R2', '26R1', '26R2'], 'set_thing[type=Blue]': ['26R1', '26R2'] };
 
   it('a selector no variant leaves out is required: the refusal names the values of the release', async () => {
     process.env.BCONNECT_RELEASE = '25R2';
@@ -292,7 +292,7 @@ describe('a tool with two selectors names whole slices (REQ-SRV-029 part 2)', ()
   const KEYS = ['A/', 'A/Red', 'A/Blue', 'A/Child', 'B/', 'B/Red', 'B/Blue', 'D/', 'D/Red'];
   const key = (k: string) => `list_members[kind=${k.split('/')[0]},member=${k.split('/')[1]}]`;
   const TABLE: ToolVariantTable = { list_members: Object.fromEntries(KEYS.map((k) => [key(k), variantSelect(key(k))])) };
-  const REL: ToolReleaseTable = { list_members: ['25R2', '26R1'], ...Object.fromEntries(KEYS.map((k) => [key(k), ['25R2', '26R1']])) };
+  const REL: ToolReleaseTable = { list_members: ['25R2', '26R1', '26R2'], ...Object.fromEntries(KEYS.map((k) => [key(k), ['25R2', '26R1', '26R2']])) };
   const TAKES: Record<string, string[]> = {
     Sub: ['A/', 'A/Red', 'A/Blue', 'A/Child'],
     Host: ['A/', 'A/Red', 'B/', 'B/Red', 'D/', 'D/Red'],

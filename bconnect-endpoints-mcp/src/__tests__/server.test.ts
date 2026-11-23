@@ -67,7 +67,7 @@ const ENDPOINTS_TOOLS_25R2_ONLY = [
   'create_industrial_endpoint',
 ] as const;
 
-// The default is BCONNECT_RELEASE=26R1, so the full set includes the 26R1-only tools.
+// The default (26R2, unset BCONNECT_RELEASE) includes the 26R1-only tools and trigger_intune_remote_action.
 const ALL_EXPECTED_TOOLS: string[] = [...ENDPOINTS_TOOLS, ...ENDPOINTS_TOOLS_26R1_ONLY];
 
 // ── Tool names that must NOT appear in this server ─────────────────────────
@@ -220,7 +220,7 @@ async function getToolNames(): Promise<string[]> {
 
 // ── Test suite ─────────────────────────────────────────────────────────────
 
-// Keep the default (26R1) for most tests; the explicit-25R2 case restores it.
+// Keep the default (26R2) for most tests; the explicit-25R2 case restores it.
 afterEach(() => {
   delete process.env.BCONNECT_RELEASE;
 });
@@ -236,15 +236,16 @@ describe('bconnect-endpoints-mcp server — tool registration', () => {
       }
     });
 
-    it('returns all endpoints tools in default (26R1) mode, including 26R1-only', async () => {
+    it('returns all endpoints tools in default (26R2) mode, including the 26R1 and 26R2 ones', async () => {
       vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
       const toolNames = await getToolNames();
 
-      // Default is BCONNECT_RELEASE=26R1, so the 26R1-only tools (unmanaged, EntraID) are included.
-      expect(toolNames).toHaveLength(ALL_EXPECTED_TOOLS.length);
+      // Default is 26R2: the 26R1-only tools (unmanaged, EntraID) and trigger_intune_remote_action (26R2, #356).
+      expect(toolNames).toHaveLength(ALL_EXPECTED_TOOLS.length + 1);
       for (const tool of ENDPOINTS_TOOLS_26R1_ONLY) {
-        expect(toolNames, `26R1-only tool "${tool}" should appear in default (26R1) mode`).toContain(tool);
+        expect(toolNames, `26R1-only tool "${tool}" should appear in default (26R2) mode`).toContain(tool);
       }
+      expect(toolNames).toContain('trigger_intune_remote_action');
     });
 
     it('excludes 26R1-only tools and includes the 25R2-only ones when BCONNECT_RELEASE=25R2', async () => {

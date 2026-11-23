@@ -3,7 +3,7 @@
 The servers support bMS **25R2**, **26R1** and **26R2**. Each server reads the release from the bMS
 at startup and lists only the tools whose API routes exist in it; a tool another release has is
 refused by name ("… is only available in bMS …; this server uses …"). Without the detection,
-[`BCONNECT_RELEASE`](CONFIGURATION.md#bconnect_release) decides, default `26R1`.
+[`BCONNECT_RELEASE`](CONFIGURATION.md#bconnect_release) decides, default `26R2` (26R1 until 2026-11).
 
 The tables per release are generated from the bundled OpenAPI specifications
 (`openapi-specs/<release>/`), and the spec-conformance tests check every tool against each of

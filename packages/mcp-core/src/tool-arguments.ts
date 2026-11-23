@@ -6,7 +6,7 @@
  */
 import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { protocolError } from "./protocol-errors.js";
-import { RELEASES } from "./client-config.js";
+import { DEFAULT_RELEASE, RELEASES } from "./client-config.js";
 
 /**
  * One RFC 6902 operation. The generated spec types declare `value` as
@@ -134,11 +134,11 @@ export function declaredArgumentsOnly<Result extends { tools: object[] }>(
 export type QueryParameterTable = Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, object>>>>>>;
 
 /**
- * The table entry for the selected release (unset is 26R1), else the newest other release's
+ * The table entry for the selected release (unset is DEFAULT_RELEASE), else the newest other release's
  * that lists the tool; undefined when none does.
  */
 export function findQueryEntry(table: QueryParameterTable, release: string | undefined, tool: string): Readonly<Record<string, object>> | undefined {
-  const key = release ?? "26R1";
+  const key = release ?? DEFAULT_RELEASE;
   const own = table[key]?.[tool];
   if (own) {
     return own;
