@@ -69,6 +69,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   there, without `list_cloud_connectors` and with tools the 26R1 API doesn't have, which answer
   404. A detected release is unaffected. The `.env.example` files, the compose file and the docs
   say 26R2.
+- **`update_endpoint` offers every field its route's PATCH example declares** (#328), per
+  release, and nothing else:
+  - Windows: `clientAgentExtendedInternetMode`, `clientAgentNetworkMode`, `customStateType`,
+    `customStateText`. Linux and network: `sshPort` (`/sshConfiguration/Port`).
+  - Network SNMP: on 26R1 and 26R2 `snmpConfiguration`, replaced as a whole object; on 25R2
+    `snmpCommunity`. Industrial (25R2): the nine SNMP fields.
+  - Android and iOS: `category`, `owner`, `registeredUser`, and their paths are now spelt as the
+    examples spell them (PascalCase, like Mac). **Breaking:** Android no longer takes
+    `serialNumber`, which no example declares as patchable.
+  - Android and iOS updates stay "Not yet verified against a live bMS". A test compares the offered
+    fields of every route and release with the specs' PATCH examples.
 
 ### Security
 - **26R2 API keys** (#280, #357): creating an API key answers with its secret, so that route is

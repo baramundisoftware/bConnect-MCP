@@ -129,3 +129,75 @@ describe('typed values', () => {
     expect(p.isDeactivated.type).toBe('boolean');
   });
 });
+
+describe('nested and per-release fields (#328)', () => {
+  const at = (type: string) => `/endpoints/v2.0/${type}s/${ID}`;
+  const withRelease = async (release: string, run: () => Promise<void>) => {
+    process.env.BCONNECT_RELEASE = release;
+    try { await run(); } finally { process.env.BCONNECT_RELEASE = '26R1'; }
+  };
+
+  it('Windows: the agent connection and the custom state as nested paths, with their types', async () => {
+    const r = await call('update_endpoint', { type: 'WindowsEndpoint', id: ID, clientAgentExtendedInternetMode: true, clientAgentNetworkMode: 'Dynamic', customStateType: 2, customStateText: 'Rack 4' });
+    expect(r.isError, r.text).toBe(false);
+    expect(sent).toEqual([{ method: 'PATCH', path: at('WindowsEndpoint'), body: [
+      replace('/clientAgentLink/ExtendedInternetMode', true), replace('/clientAgentLink/NetworkMode', 'Dynamic'),
+      replace('/customState/Type', 2), replace('/customState/Text', 'Rack 4'),
+    ] }]);
+  });
+
+  it.each(['LinuxEndpoint', 'NetworkEndpoint'])('%s: sshPort is /sshConfiguration/Port, an integer', async (type) => {
+    expect((await call('update_endpoint', { type, id: ID, sshPort: 2222 })).isError).toBe(false);
+    expect(sent).toEqual([{ method: 'PATCH', path: at(type), body: [replace('/sshConfiguration/Port', 2222)] }]);
+  });
+
+  it('Network on 26R1/26R2: snmpConfiguration replaced as a whole object; no snmpCommunity', async () => {
+    const snmp = { version: 'V3', username: 'mon', authentication: 'SHA256', authenticationPassword: 'a', encryption: 'AES', encryptionPassword: 'e' };
+    for (const release of ['26R1', '26R2']) {
+      await withRelease(release, async () => {
+        sent = [];
+        expect((await call('update_endpoint', { type: 'NetworkEndpoint', id: ID, snmpConfiguration: snmp })).isError).toBe(false);
+        expect(sent).toEqual([{ method: 'PATCH', path: at('NetworkEndpoint'), body: [replace('/snmpConfiguration', snmp)] }]);
+        expect((await call('update_endpoint', { type: 'NetworkEndpoint', id: ID, snmpCommunity: 'public' })).text).toMatch(/snmpCommunity/);
+      });
+    }
+  });
+
+  it('Network on 25R2: only the community, as /snmpConfiguration/community', async () => {
+    await withRelease('25R2', async () => {
+      expect((await call('update_endpoint', { type: 'NetworkEndpoint', id: ID, snmpCommunity: 'public' })).isError).toBe(false);
+      expect(sent).toEqual([{ method: 'PATCH', path: at('NetworkEndpoint'), body: [replace('/snmpConfiguration/community', 'public')] }]);
+      sent = [];
+      expect((await call('update_endpoint', { type: 'NetworkEndpoint', id: ID, snmpConfiguration: { version: 'V1' } })).text).toMatch(/snmpConfiguration/);
+      expect(sent).toEqual([]);
+    });
+  });
+
+  it('Industrial (25R2): the SNMP fields as /snmpConfiguration/<Field>', async () => {
+    await withRelease('25R2', async () => {
+      expect((await call('update_endpoint', { type: 'IndustrialEndpoint', id: ID, snmpVersion: 'V2c', snmpCommunity: 'plant' })).isError).toBe(false);
+      expect(sent).toEqual([{ method: 'PATCH', path: at('IndustrialEndpoint'), body: [replace('/snmpConfiguration/Version', 'V2c'), replace('/snmpConfiguration/Community', 'plant')] }]);
+    });
+  });
+
+  it.each([['AndroidEndpoint', 'AndroidEndpoint'], ['IOSEndpoint', 'IosEndpoint']])('%s: the PATCH example fields in PascalCase; serialNumber refused', async (type, route) => {
+    expect((await call('update_endpoint', { type, id: ID, displayName: 'Phone', category: 'Field', owner: 'Company', registeredUser: 'DOMAIN\\anna' })).isError).toBe(false);
+    expect(sent).toEqual([{ method: 'PATCH', path: `/endpoints/v2.0/${route}s/${ID}`, body: [
+      replace('/DisplayName', 'Phone'), replace('/Category', 'Field'), replace('/Owner', 'Company'), replace('/RegisteredUser', 'DOMAIN\\anna'),
+    ] }]);
+    sent = [];
+    expect((await call('update_endpoint', { type, id: ID, serialNumber: 'X1' })).isError).toBe(true);
+    expect(sent).toEqual([]);
+  });
+
+  it('the listing offers snmpConfiguration with its properties on 26R1, snmpCommunity on 25R2', async () => {
+    const props = (await tool('update_endpoint')).inputSchema.properties as Record<string, { properties?: object; description?: string }>;
+    expect(Object.keys(props.snmpConfiguration?.properties ?? {})).toEqual(expect.arrayContaining(['version', 'community', 'authenticationPassword']));
+    expect(props.snmpCommunity).toBeUndefined();
+    await withRelease('25R2', async () => {
+      const p25 = (await tool('update_endpoint')).inputSchema.properties as Record<string, unknown>;
+      expect(p25.snmpCommunity).toBeDefined();
+      expect(p25.snmpConfiguration).toBeUndefined();
+    });
+  });
+});
