@@ -56,6 +56,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and CI now start the mock with `BCONNECT_PROFILE=standard-readwrite` (the read-only default
   answers every write with 403), and `scripts/mock-tier.mjs` refuses a mock in another profile.
   On 26R1 and 25R2 those tests skip, and the tier expects exactly those skips.
+- **Troubleshooting: an empty list can mean missing rights** (#402). bMS filters lists by the
+  account's rights instead of answering 403, so a restricted account gets an empty result without
+  an error, and the startup check still says "verified". `docs/TROUBLESHOOTING.md` describes the
+  symptom, the cause (seen on 26R1) and how to check the account's security profile.
 
 ### Changed
 - **The default release is 26R2** (was 26R1), now that 26R2 passed the live run (bMS 26.2.147.11,

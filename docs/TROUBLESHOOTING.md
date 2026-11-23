@@ -177,6 +177,28 @@ A tool call answers `bConnect answered HTTP 401 (Unauthorized) to …` followed 
 2. Verify API access is enabled for the account
 3. Use an administrator account for testing
 
+### A list is empty although bMS has the objects
+
+**Symptom:** a list tool succeeds but returns no entries (or far fewer than the Management Center
+shows), for example `list_endpoints` → `"totalItems": 0`. There's no error, and the server's
+startup line still says `API connectivity verified`.
+
+**Cause:** the account has no rights on those objects. bMS doesn't answer such a list with 403: it
+answers 200 and leaves out what the account may not see. Seen on bMS 26R1 (26.1.161, 2026-11-19): a
+user whose security profile had rights on jobs only got 0 endpoints, while the read-only account got
+20; all 13 startup checks answered 200 for that user. (Not checked on 26R2 yet.) The startup check
+only shows that bMS is reachable and accepted the credentials, not what the account may read.
+
+**How to check:**
+
+1. Open the same list in the Management Center with an administrator account and compare.
+2. Look at the security profile of the account the server uses (`BCONNECT_USERNAME`, or the user the
+   API key belongs to): which object types and groups it has rights on.
+3. Include the profiles the account gets through AD groups: rights can come from a group
+   membership rather than from the account itself.
+4. Give the account read rights on the objects (or use an account that has them), then call the tool
+   again.
+
 ---
 
 ## Network & Connection Errors
@@ -554,6 +576,7 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 - [ ] Port 443 is open (firewall)
 - [ ] bConnect service is running on the BMS server
 - [ ] GUIDs are in correct UUID format
+- [ ] An empty list isn't the account's missing rights: bMS filters lists by rights instead of answering 403 ([details](#a-list-is-empty-although-bms-has-the-objects))
 - [ ] 26R1-only servers not used with `BCONNECT_RELEASE=25R2`
 
 ---
