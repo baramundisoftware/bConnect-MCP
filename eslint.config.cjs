@@ -4,7 +4,7 @@ const tsparser = require('@typescript-eslint/parser');
 module.exports = [
   {
     // The servers, the core, the gateway and every test, root suite included (#337).
-    files: ['bconnect-*-mcp/src/**/*.ts', 'packages/mcp-core/src/**/*.ts', 'bconnect-mcp-gateway/src/**/*.ts', '__tests__/**/*.ts'],
+    files: ['bconnect-*-mcp/src/**/*.ts', 'packages/mcp-core/src/**/*.ts', 'packages/bconnect-mcp/src/**/*.ts', 'bconnect-mcp-gateway/src/**/*.ts', '__tests__/**/*.ts'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -52,7 +52,7 @@ module.exports = [
   // from one handler to another keeps the total, so CI also fails on any
   // added line with a cast (scripts/check-new-casts.sh). Tests may cast.
   {
-    files: ['bconnect-*-mcp/src/**/*.ts', 'bconnect-server-template/src/**/*.ts', 'packages/mcp-core/src/**/*.ts', 'bconnect-mcp-gateway/src/**/*.ts'],
+    files: ['bconnect-*-mcp/src/**/*.ts', 'bconnect-server-template/src/**/*.ts', 'packages/mcp-core/src/**/*.ts', 'packages/bconnect-mcp/src/**/*.ts', 'bconnect-mcp-gateway/src/**/*.ts'],
     ignores: ['**/__tests__/**'],
     // The template is a stub with placeholders, so only the cast rules apply to
     // it; its parser is set here because the block above doesn't cover it.

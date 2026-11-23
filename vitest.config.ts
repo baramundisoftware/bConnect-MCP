@@ -2,12 +2,13 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 // The shipped workspaces whose code coverage measures: the shared core, the 13
-// servers and the gateway. The template is not shipped. `bconnect-*-mcp`
+// servers, the gateway and the bconnect-mcp package. The template is not shipped. `bconnect-*-mcp`
 // matches the 13 servers only (the gateway ends in `-gateway`), so the gateway
 // and the core are named on their own. `__tests__/coverage-config.guard.test.ts`
 // fails when a workspace on disk is missing here or has no floor below.
 export const COVERAGE_INCLUDE = [
   'packages/mcp-core/src/**/*.ts',
+  'packages/bconnect-mcp/src/**/*.ts',
   'bconnect-*-mcp/src/**/*.ts',
   'bconnect-mcp-gateway/src/**/*.ts',
 ];
@@ -55,6 +56,7 @@ export default defineConfig({
         '**/__tests__/**',         // Tests themselves
         '**/generated/**',         // OpenAPI-generated types
         '**/*.d.ts',
+        'packages/bconnect-mcp/src/cli.ts', // Sets VITEST and calls main(); run as a child process by the package test
       ],
       // Floors, in %. Each workspace's is 2 points under what it achieved when
       // it was set (measured value in the comment). Raise a floor when coverage
@@ -65,6 +67,7 @@ export default defineConfig({
         branches: 85, // 87.67
         'packages/mcp-core/src/**': { lines: 91, branches: 85 }, // 93.69 / 87.57
         'bconnect-mcp-gateway/src/**': { lines: 97, branches: 91 }, // 99.19 / 93.75
+        'packages/bconnect-mcp/src/**': { lines: 95, branches: 77 }, // 97.73 / 79.41
         'bconnect-activedirectory-mcp/src/**': { lines: 98, branches: 81 }, // 100 / 83.10
         'bconnect-assets-mcp/src/**': { lines: 98, branches: 84 }, // 100 / 86.73
         'bconnect-compliance-mcp/src/**': { lines: 98, branches: 88 }, // 100 / 90.70
