@@ -108,7 +108,14 @@ function auditLevelOf(value: string | undefined): AuditLevel {
 export const RELEASES = ["26R2", "26R1", "25R2"] as const;
 
 /**
- * BCONNECT_RELEASE: unset means 26R1. The servers compare the value exactly, so
+ * The release used when it can't be detected from the bMS and BCONNECT_RELEASE is unset: the
+ * newest one checked against a live bMS (26R2 since 2026-11-23, bMS 26.2.147.11; was 26R1).
+ */
+// Written out in checkRelease's message too (docs/TROUBLESHOOTING.md quotes it; client-config.test.ts pins it).
+export const DEFAULT_RELEASE = "26R2";
+
+/**
+ * BCONNECT_RELEASE: unset means DEFAULT_RELEASE. The servers compare the value exactly, so
  * anything else, even `26r1` or an empty value, stops the server instead of
  * quietly picking a tool set.
  */
@@ -117,7 +124,7 @@ export function checkRelease(value: string | undefined): void {
     return;
   }
   const shown = JSON.stringify(value.length > 64 ? `${value.slice(0, 64)}…` : value);
-  throw new ClientConfigError(`BCONNECT_RELEASE ${shown} isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.`);
+  throw new ClientConfigError(`BCONNECT_RELEASE ${shown} isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R2.`);
 }
 
 /**

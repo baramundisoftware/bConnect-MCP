@@ -57,6 +57,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   answers every write with 403), and `scripts/mock-tier.mjs` refuses a mock in another profile.
   On 26R1 and 25R2 those tests skip, and the tier expects exactly those skips.
 
+### Changed
+- **The default release is 26R2** (was 26R1), now that 26R2 passed the live run (bMS 26.2.147.11,
+  #280). It applies only when the servers can't read the release from the bMS (most often: the
+  account has no read access to server management) and `BCONNECT_RELEASE` is unset. **On a 26R1
+  bMS in that situation, set `BCONNECT_RELEASE=26R1`**: otherwise the servers list 26R2's tools
+  there, without `list_cloud_connectors` and with tools the 26R1 API doesn't have, which answer
+  404. A detected release is unaffected. The `.env.example` files, the compose file and the docs
+  say 26R2.
+
 ### Security
 - **26R2 API keys** (#280, #357): creating an API key answers with its secret, so that route is
   behind `ALLOW_SECRET_READ` like the BitLocker and LAPS secrets; all API key routes are audited as

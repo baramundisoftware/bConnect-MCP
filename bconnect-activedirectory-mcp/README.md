@@ -113,5 +113,5 @@ that serves all 13 servers.
 
 Releases are numbered `26.1.x` and support **bMS 2026 R1 and 2025 R2**. The server reads the
 release from the bMS at startup (`version` of the management server; the account needs read access
-to server management) and logs it; `BCONNECT_RELEASE` is the fallback when it can't (default `26R1`). See [CHANGELOG.md](../CHANGELOG.md) for what each
+to server management) and logs it; `BCONNECT_RELEASE` is the fallback when it can't (default `26R2`). See [CHANGELOG.md](../CHANGELOG.md) for what each
 release changed.

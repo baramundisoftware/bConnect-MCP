@@ -15,7 +15,7 @@ import { parse } from 'dotenv';
 import { RELEASES, type Release } from '../../lib/spec.js';
 import { envReads } from '../../lib/env-reads.js';
 import { declared, type Declared } from './profile.js';
-import { basicAuthHeader } from '../../../packages/mcp-core/src/client-config.js';
+import { basicAuthHeader, DEFAULT_RELEASE } from '../../../packages/mcp-core/src/client-config.js';
 
 /** Proxy variables axios honors; a shell proxy must not reroute the run. */
 const PROXY_KEYS = ['HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'no_proxy'];
@@ -112,7 +112,7 @@ export function loadLiveConfig(args: { root: string; file: string; shell: NodeJS
   const env: Record<string, string> = {};
   for (const key of controlledKeys(root)) {env[key] = FORCED_EMPTY.includes(key) ? '' : values[key] ?? '';}
 
-  const release = RELEASES.find((r) => r === (env.BCONNECT_RELEASE || '26R1'));
+  const release = RELEASES.find((r) => r === (env.BCONNECT_RELEASE || DEFAULT_RELEASE));
   if (!release) {throw new LiveConfigError(`BCONNECT_RELEASE must be one of ${RELEASES.join(', ')}`);}
   env.BCONNECT_RELEASE = release;
 

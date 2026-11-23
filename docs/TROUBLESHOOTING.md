@@ -62,7 +62,7 @@ directory, so for them put the variables in the client configuration's `env` blo
 ```env
 BCONNECT_BASE_URL=https://your-bms-server:443/bconnect
 BCONNECT_API_KEY=your-api-key           # or BCONNECT_USERNAME + BCONNECT_PASSWORD
-BCONNECT_RELEASE=26R1                   # optional, default 26R1; 25R2 for a 25R2 bMS
+BCONNECT_RELEASE=26R2                   # optional, default 26R2; 26R1 or 25R2 for those bMS
 ```
 
 ### Test API Connection Directly
@@ -93,7 +93,7 @@ failed or disconnected; the reason is in the client's MCP log.
 | `BCONNECT_TIMEOUT_MS="…" isn't valid. Use a whole number from 1000 to 600000.` (same for `BCONNECT_MAX_RETRIES`, 0 to 5) | Not a whole number, or out of range | Fix the value |
 | `BCONNECT_AUDIT_LEVEL "…" isn't valid. Use one of: none, security, write, all.` | Misspelt audit level | Fix the value; the server refuses to run with auditing in an unknown state |
 | `BCONNECT_PRETTY_JSON "…" isn't valid. Use true or false, or leave it unset for compact JSON.` | A value other than `true`/`false` (e.g. `yes`, `1`) | Fix the value, or remove the line for compact results |
-| `BCONNECT_RELEASE "…" isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.` | A release other than `26R2`/`26R1`/`25R2` (also `26r1` or an empty value) | Fix the value, or remove the line for 26R1 |
+| `BCONNECT_RELEASE "…" isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R2.` | A release other than `26R2`/`26R1`/`25R2` (also `26r1` or an empty value) | Fix the value, or remove the line for 26R1 |
 | `BCONNECT_CA_CERT_PATH can't be read: <path> (<code>)` or `… points to an empty file` | CA file missing, unreadable or empty | Fix the path or the file |
 | `<server>: cannot reach bConnect API at <url> (<cause>). Check BCONNECT_BASE_URL, credentials, and network.` | The startup call failed. The cause in brackets: 401, TLS, timeout, unreachable | See [Authentication Errors](#authentication-errors), [TLS Certificate Errors](#tls-certificate-errors) or [Network & Connection Errors](#network--connection-errors) |
 | `<server>: needs bMS <release>; this server uses <release in use>. None of its APIs exist in that release.` | A server whose APIs the bMS release doesn't have (compliance, universaldynamicgroups on 25R2) | Use it with a 26R1 bMS, or remove it from your config; see [Wrong bMS Release](#wrong-bms-release) |
@@ -390,7 +390,7 @@ Each server reads the release from the bMS at startup and logs it, for example
 `bMS 26.1.161.0 → release 26R1`. A `BCONNECT_RELEASE` that differs is overridden:
 `bMS 25.2.0.0 → release 25R2; BCONNECT_RELEASE=26R1 is ignored`. When the version can't be read —
 most often because the account has no read access to server management — the server starts with
-`BCONNECT_RELEASE` (default `26R1`) and warns: `could not detect the bMS release (…); using …`.
+`BCONNECT_RELEASE` (default `26R2`) and warns: `could not detect the bMS release (…); using …`.
 Then set `BCONNECT_RELEASE` to the release of your bMS, or give the account that read access. Each
 release lists only the tools whose API routes it has (26R1 has no industrial-endpoint tools); a tool
 called by name on a release that lacks it answers
@@ -546,7 +546,7 @@ sudo tcpdump -i any host your-bms-server and port 443 -A
 - [ ] Variables set where the server reads them (client config `env` block, or `.env` in the working directory)
 - [ ] Credentials verified with curl; password ASCII only (or use an API key)
 - [ ] `BCONNECT_BASE_URL` is `https://…/bconnect`, with the port if bConnect doesn't use 443
-- [ ] `BCONNECT_RELEASE` matches your bMS version (default `26R1`; set `25R2` for a 25R2 bMS)
+- [ ] `BCONNECT_RELEASE` matches your bMS version (default `26R2`; set `26R1` or `25R2` for those)
 - [ ] bMS certificate trusted: Node.js ≥ 22.15 (OS store), `BCONNECT_CA_CERT_PATH` or `NODE_EXTRA_CA_CERTS`; verification not turned off
 - [ ] Claude MCP config lists the correct server(s) for the domain you need
 - [ ] Claude was restarted after config changes

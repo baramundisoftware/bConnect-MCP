@@ -193,7 +193,7 @@ BCONNECT_API_KEY=your-api-key
 # BCONNECT_USERNAME=your-username
 # BCONNECT_PASSWORD=your-password
 
-BCONNECT_RELEASE=26R1          # optional fallback: 26R1 (default) or 25R2; the server reads the release from the bMS
+BCONNECT_RELEASE=26R2          # optional fallback: 26R2 (default), 26R1 or 25R2; the server reads the release from the bMS
 ```
 
 The password must be **ASCII only** ([why](CONFIGURATION.md#bconnect_password)); an API key avoids

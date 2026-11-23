@@ -124,8 +124,10 @@ Gateway only: a file whose content is the password, instead of `BCONNECT_PASSWOR
 
 ### `BCONNECT_RELEASE`
 
-**Default:** `26R1`. The fallback for the release of your bMS: `26R2`, `26R1` or `25R2`, spelt
-exactly so.
+**Default:** `26R2` (until 2026-11: `26R1`). The fallback for the release of your bMS: `26R2`,
+`26R1` or `25R2`, spelt exactly so. On a 26R1 bMS whose release the servers can't detect, set
+`26R1`: the default would list 26R2's tools there (without `list_cloud_connectors`, with tools
+the 26R1 API doesn't have).
 Each server (and the gateway, with its service credential) reads the release from the bMS at
 startup (`version` of the management server; the account needs read access to server management)
 and uses this value only when it can't; a different value is overridden, with a warning. The

@@ -4,7 +4,7 @@
  * `detectRelease` reads `version` from GET /servermanagement/v2.0/ManagementServer
  * once per process and maps its first two parts to a release. `selectedRelease`
  * is the one answer every release-dependent decision uses: the detected
- * release, else BCONNECT_RELEASE, else 26R1. Detection never stops a server:
+ * release, else BCONNECT_RELEASE, else 26R2 (DEFAULT_RELEASE). Detection never stops a server:
  * anything it can't use falls back with a warning that says why.
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -47,8 +47,8 @@ describe('releaseFromVersion', () => {
     });
 });
 
-describe('selectedRelease without detection: the setting, else 26R1', () => {
-  it.each([[undefined, '26R1', '26R1 (default)'], ['26R1', '26R1', '26R1 (from BCONNECT_RELEASE)'], ['25R2', '25R2', '25R2 (from BCONNECT_RELEASE)'], ['26R2', '26R2', '26R2 (from BCONNECT_RELEASE)']])(
+describe('selectedRelease without detection: the setting, else 26R2', () => {
+  it.each([[undefined, '26R2', '26R2 (default)'], ['26R1', '26R1', '26R1 (from BCONNECT_RELEASE)'], ['25R2', '25R2', '25R2 (from BCONNECT_RELEASE)'], ['26R2', '26R2', '26R2 (from BCONNECT_RELEASE)']])(
     'BCONNECT_RELEASE=%s → %s', (setting, release, description) => {
       const env = { ...(setting && { BCONNECT_RELEASE: setting }) };
       expect(selectedRelease(env)).toBe(release);
@@ -107,7 +107,7 @@ describe('detectRelease', () => {
       ['a version that is not a string', versionAnswer(26), /no version/],
     ])('%s', async (_case, respond, reason) => {
       answer = respond;
-      for (const [env, release, source] of [[{ BCONNECT_RELEASE: '25R2' }, '25R2', 'from BCONNECT_RELEASE'], [{}, '26R1', 'default']] as const) {
+      for (const [env, release, source] of [[{ BCONNECT_RELEASE: '25R2' }, '25R2', 'from BCONNECT_RELEASE'], [{}, '26R2', 'default']] as const) {
         forgetDetectedRelease();
         const l = log();
         expect(await detectRelease(client(), l.sink, { ...env })).toBe(release);
@@ -131,7 +131,7 @@ describe('detectRelease', () => {
     answer = async () => { await delay('infinite'); return HttpResponse.json({}); };
     const l = log();
     await detectRelease(client(), l.sink, {});
-    expect(l.lines[0].line).toMatch(/didn't answer within 0\.2 s\); using 26R1 \(default\)$/);
+    expect(l.lines[0].line).toMatch(/didn't answer within 0\.2 s\); using 26R2 \(default\)$/);
     expect(l.lines[0].line).not.toMatch(/page size|BCONNECT_TIMEOUT_MS/);
   });
 
@@ -139,7 +139,7 @@ describe('detectRelease', () => {
     const message = `BCONNECT_BASE_URL is required. ${'Set it to the bConnect address, e.g. https://bms.example.com/bconnect. '.repeat(3)}`.trim();
     const l = log();
     await detectRelease(() => { throw new ClientConfigError(message); }, l.sink, {});
-    expect(l.lines[0].line).toBe(`could not detect the bMS release (${message}); using 26R1 (default)`);
+    expect(l.lines[0].line).toBe(`could not detect the bMS release (${message}); using 26R2 (default)`);
     expect(sent).toEqual([]);
   });
 

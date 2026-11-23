@@ -5,7 +5,7 @@
  * (GET /servermanagement/v2.0/ManagementServer) once per process. Every
  * release-dependent decision — query tables, countOnly, tool lists, refusals,
  * error texts, the software probe — asks `selectedRelease()`: the detected
- * release, else BCONNECT_RELEASE, else 26R1. Detection never stops a server;
+ * release, else BCONNECT_RELEASE, else DEFAULT_RELEASE (26R2). Detection never stops a server;
  * what it can't use falls back with a warning that says why. Nothing else
  * reads BCONNECT_RELEASE (release-source.guard.test.ts).
  */
@@ -13,7 +13,7 @@ import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { protocolError } from "./protocol-errors.js";
 import { BConnectApiError } from "./api-errors.js";
 import type { BConnectClientBase } from "./bconnect-client-base.js";
-import { checkRelease, ClientConfigError, RELEASES } from "./client-config.js";
+import { checkRelease, ClientConfigError, DEFAULT_RELEASE, RELEASES } from "./client-config.js";
 
 export type Release = (typeof RELEASES)[number];
 
@@ -57,11 +57,11 @@ export function releaseFromVersion(version: unknown): Release | undefined {
 const quoted = (value: string): string => JSON.stringify(value.length > 32 ? `${value.slice(0, 32)}…` : value);
 
 /**
- * BCONNECT_RELEASE: one of RELEASES as set; unset is 26R1. Only those values get
- * past the settings check, so the fallback to 26R1 is for unset only.
+ * BCONNECT_RELEASE: one of RELEASES as set; unset is DEFAULT_RELEASE. Only those values get
+ * past the settings check, so the fallback is for unset only.
  */
 const settingRelease = (env: NodeJS.ProcessEnv): Release =>
-  RELEASES.find((release) => release === env.BCONNECT_RELEASE) ?? "26R1";
+  RELEASES.find((release) => release === env.BCONNECT_RELEASE) ?? DEFAULT_RELEASE;
 
 /** The release every release-dependent decision uses; read on every call. */
 export function selectedRelease(env: NodeJS.ProcessEnv = process.env): Release {
@@ -127,7 +127,7 @@ const reasonOf = (error: unknown): string => {
 /**
  * Detects the release of the connected bMS once and logs it. A different
  * BCONNECT_RELEASE is overridden, with a warning. Unreadable, missing or
- * unknown versions keep the setting (or 26R1), with a warning. With
+ * unknown versions keep the setting (or DEFAULT_RELEASE), with a warning. With
  * BCONNECT_SKIP_CONNECTIVITY_CHECK=true nothing is sent. `client` may be a
  * factory (the gateway builds one from its service settings); if it throws,
  * that is a reason to fall back too.

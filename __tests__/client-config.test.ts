@@ -341,7 +341,7 @@ describe('BCONNECT_RELEASE', () => {
   it.each(['26r1', ' 26R1', '', '2026R1', '26R3', '26r2'])('refuses %j, naming it and the valid values', (value) => {
     const run = () => clientConfigFromEnv({ ...BASIC, BCONNECT_RELEASE: value });
     expect(run).toThrow(ClientConfigError);
-    expect(run).toThrow(`BCONNECT_RELEASE ${JSON.stringify(value)} isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.`);
+    expect(run).toThrow(`BCONNECT_RELEASE ${JSON.stringify(value)} isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R2.`);
   });
 });
 
