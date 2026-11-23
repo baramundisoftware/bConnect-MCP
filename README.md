@@ -339,7 +339,7 @@ bConnect-MCP/
 ├── bconnect-mcp-gateway/        optional HTTP gateway (multi-user / n8n); NOT a
 │                                workspace member — it bundles the core + all servers.
 ├── docs/                        installation, clients, Docker, n8n, troubleshooting,
-│                                audit, mock and live testing
+│                                audit, mock and live testing, architecture (arc42)
 └── scripts/                     local CI, image publish, release (see package.json)
 ```
 
