@@ -16,7 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (tools, list filters, error meanings) are generated from the bundled 26R2 specifications, and the
   unit, spec-conformance and mock tiers run for 25R2, 26R1 and 26R2. The 17 new 26R2 operations
   get their tools in #353 to #357. What differs per domain: [BMS_RELEASES.md](docs/BMS_RELEASES.md).
-  Not yet run against a live 26R2 bMS.
+  Run against a live bMS 26.2.147.11 on 2026-11-23: live tier 73 read tools ok and 0 failed, the
+  gateway's combined endpoint (132 tools) as its domains, and the 12 specifications downloaded
+  under the repository's file names, with the same operations.
 - **`get_entra_id_data` by bMS endpoint ID on 26R2** (#353): give `endpointId` instead of
   `deviceId` (exactly one of the two). On 26R1 the tool offers `deviceId` only, as before; a call
   without it is refused naming the route, as is `endpointId` (naming 26R2). `deviceId` is no
@@ -36,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   key's secret, which bMS shows only once), `update_api_key` (a JSON Patch with only the given
   fields among name, expiration date, comment, active, gateway and security profiles) and
   `delete_api_key`. A key gets the rights of its security profiles: the descriptions say so.
+  `create_api_key`, `update_api_key` and `delete_api_key` are verified against bMS 26.2.147.11
+  (2026-11-23): create → read → change → delete, the secret gate, the secret only in the create
+  result; bMS accepts the capitalised patch paths and JSON booleans. They no longer say "Not yet
+  verified against a live bMS".
 - **Intune remote actions on Windows endpoints** (#356, bMS 26R2): `trigger_intune_remote_action`
   with `action` Sync, Reboot, Retire, AutopilotReset, FreshStart (`keepUserData`) or Wipe
   (`keepUserData`, `keepEnrollmentData`), one tool instead of six. Behind `ALLOW_WRITE_OPERATIONS`

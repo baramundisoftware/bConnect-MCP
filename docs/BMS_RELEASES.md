@@ -11,6 +11,12 @@ them.
 
 ## 26R1 → 26R2
 
+**Checked live** on bMS 26.2.147.11 (2026-11-23): the 12 specifications are served under the
+repository's file names and with the same operations (only generated example values differ); the
+live tier read 73 tools without a failure, and the API key write tools passed create → change →
+delete. Not yet checked live: the threshold write tools (the test account had no modify rights) and
+`trigger_intune_remote_action` (no Intune-managed endpoint).
+
 Compared from the specifications of both releases: operations by method and path, parameters,
 request bodies, responses and component schemas. One operation is gone, 17 are new, and one
 request enum gains values. Most other changes add `maxLength` to existing parameters and fields.

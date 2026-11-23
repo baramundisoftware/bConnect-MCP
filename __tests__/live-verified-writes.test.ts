@@ -3,7 +3,7 @@
  * (REQ-XC-003 AC 5).
  *
  * Verified 2026-10-02 on a test bMS 26R1 (26.1.161) as a restricted account in
- * a sandbox. Each entry of LIVE_VERIFIED_WRITE_TOOLS names the release it was
+ * a sandbox (26R2: bMS 26.2.147.11, #357). Each entry of LIVE_VERIFIED_WRITE_TOOLS names the release it was
  * checked on; the guard in unverified-writes.guard.test.ts keeps every other
  * write tool marked.
  */
@@ -26,6 +26,15 @@ const VERIFIED: Record<string, string[]> = {
     'create_kiosk_release', 'withdraw_kiosk_release',
     'assign_job_to_logical_group', 'delete_job_instance',
   ],
+  // bMS 26R2 tools (#357), checked by live-check-26r2.sh.
+  servermanagement: ['create_api_key', 'update_api_key', 'delete_api_key'],
+};
+
+/** Per server: the release its tools were checked on, and how their entry names it. */
+const CHECKED: Record<string, { release: string; when: RegExp }> = {
+  endpoints: { release: '26R1', when: /2026-10-02, bMS 26\.1\.161 \(26R1\)/ },
+  jobs: { release: '26R1', when: /2026-10-02, bMS 26\.1\.161 \(26R1\)/ },
+  servermanagement: { release: '26R2', when: /2026-11-23, bMS 26\.2\.147\.11 \(26R2\)/ },
 };
 
 const tools: Record<string, Array<{ name: string; description?: string }>> = {};
@@ -36,6 +45,7 @@ beforeAll(async () => {
     BCONNECT_SKIP_CONNECTIVITY_CHECK: 'true', BCONNECT_RELEASE: '26R1', ALLOW_WRITE_OPERATIONS: 'true',
   });
   for (const server of Object.keys(VERIFIED)) {
+    process.env.BCONNECT_RELEASE = CHECKED[server].release;
     const { createServer } = await import(`../bconnect-${server}-mcp/src/index.ts`);
     const [a, b] = InMemoryTransport.createLinkedPair();
     const c = new Client({ name: 'live-verified', version: '0' });
@@ -48,7 +58,7 @@ afterAll(() => { process.env = saved; });
 
 describe.each(Object.entries(VERIFIED))('%s', (server, names) => {
   it.each(names)('%s is recorded with its release and drops the note', (name) => {
-    expect(LIVE_VERIFIED_WRITE_TOOLS.get(name) ?? '').toMatch(/2026-10-02, bMS 26\.1\.161 \(26R1\)/);
+    expect(LIVE_VERIFIED_WRITE_TOOLS.get(name) ?? '').toMatch(CHECKED[server].when);
     const { tool, select } = variantOf(name);
     const t = tools[server].find((x) => x.name === tool);
     expect(t, `${tool} not listed`).toBeDefined();
