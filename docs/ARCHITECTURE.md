@@ -11,7 +11,7 @@ bConnect-MCP lets AI assistants (Claude, GitHub Copilot, Cursor, n8n and other M
 - **Coverage:** 220 tools on bMS 26R2, 211 on 26R1 and 166 on 25R2, split across 13 domain servers (endpoints, jobs, software, assets, compliance and others). The target is 100 % of the V2.0 API.
 - **Release awareness:** each server detects the bMS release at startup and lists only the tools whose routes that release has.
 - **Safe by default:** writes and secret reads are off unless switched on; the HTTP gateway always keeps them off.
-- **Two ways to run:** local stdio processes per user, or one HTTP gateway (container) for teams and n8n.
+- **Ways to run:** local stdio processes per user (one per domain, or several domains as one server with the `bconnect-mcp` command), or one HTTP gateway (container) for teams and n8n.
 - **Persona:** a senior IT administrator who uses an AI assistant to query, configure and automate device management.
 
 Requirement IDs (REQ-SRV, REQ-SPLIT, REQ-GW, REQ-CI, REQ-QA, REQ-XC, REQ-DEP) refer to the project's internal requirements catalogue.
@@ -51,20 +51,20 @@ The bConnect REST API V2.0 is the only interface to the bMS. Its OpenAPI specs p
 | bConnect auth: API key or Basic (ASCII password only) | bConnect rejects non-ASCII passwords; each failed attempt counts toward the account lockout. |
 | bMS RBAC is not queryable per caller | A restricted user gets 200 with filtered or empty lists, not 403. The gateway uses one service credential. |
 | Container: `node:22-alpine` pinned by digest, non-root user, port 3001, linux/amd64 + arm64 | Published to GHCR with SBOM and provenance attestations. |
-| Not on the npm registry | Install from source, the release zip, or the container. |
+| Not on the npm registry yet | Install from source, the release zip, or the container. The package `@baramundi/bconnect-mcp` is prepared as a private workspace; publishing follows (#297). |
 
 ### 2.2 Organizational constraints
 
 - Technical Preview: no production guarantee; breaking changes go to [`CHANGELOG.md`](../CHANGELOG.md).
-- Small, reviewable PRs; design decisions are accepted in a design review (SDLC Gate 1) and recorded as ADRs.
+- Small, reviewable PRs; design decisions are accepted in a design review and recorded as ADRs.
 - CI on `main` is a required merge gate (REQ-CI-001): build, lint, test-type-check, cast guard, tests on Linux and Windows, coverage floors, mock tier for each release.
-- Live verification against a real bMS runs by hand on a Windows test VM (REQ-QA-004); a write tool without it is marked "Not yet verified against a live bMS."
+- Live verification against a real bMS runs by hand (REQ-QA-004); a write tool without it is marked "Not yet verified against a live bMS."
 - Releases follow the bMS naming (`26.1.x` for 26R1-era releases; `26.2.0` next).
 
 ### 2.3 Conventions
 
 - One tool per API operation; type arguments select route variants (ADR-0015).
-- Tool names are `snake_case` verbs (`list_`, `get_`, `create_`, `update_`, `delete_`, plus actions such as `start_job_instance`); see [TOOL_NAMING.md](TOOL_NAMING.md).
+- Tool names follow `<verb>_<object>[_by_<parent>]` (`list_job_instances_by_endpoint`, `run_msw_cleanup`), and the ID of the tool's own object is `id`; see [TOOL_NAMING.md](TOOL_NAMING.md). A guard checks every tool. A renamed tool or argument stays in the server's `replaced-tools.ts`: a call under the old name doesn't run and answers with its replacement.
 - No new type-defeating casts (`scripts/check-new-casts.sh`); generated API types are used in handlers (REQ-QA-002).
 - Every setting is read through the core and documented in [CONFIGURATION.md](CONFIGURATION.md); a guard checks it.
 
@@ -125,7 +125,7 @@ The strategy: thin domain servers on one shared core, with every rule derived fr
 
 | Quality goal | Approach | Decision |
 | --- | --- | --- |
-| Context efficiency | Split the API into 13 domain servers by spec, so a user loads only the domains they need. One tool per operation, with type arguments instead of one tool per route variant. Write tools are left out of `tools/list` while writes are off. Compact JSON results; `countOnly` on paged lists. | ADR-0000, ADR-0015, ADR-0012, ADR-0011, ADR-0013 |
+| Context efficiency | Split the API into 13 domain servers by spec, so a user loads only the domains they need. One tool per operation, with type arguments instead of one tool per route variant. Write tools are left out of `tools/list` while writes are off. Compact JSON results; `countOnly` on paged lists. Several domains can still be served as one server (`bconnect-mcp endpoints,jobs`, the gateway's `/mcp`). | ADR-0000, ADR-0015, ADR-0012, ADR-0011, ADR-0013 |
 | Maintainability | One shared library `@bconnect/mcp-core` in an npm-workspaces monorepo: HTTP client, config, startup, validation, errors, results, audit. A server holds only its tool definitions and handlers. A template scaffolds new servers. | ADR-0002, ADR-0007, ADR-0010 |
 | Correctness against the API | Types, query tables and error meanings are generated from the specs and committed; guards in CI regenerate and compare. Each tool declares its operation, and a traffic guard checks every call against the spec of the selected release. | ADR-0006, REQ-QA-001, REQ-QA-005 |
 | Release awareness | The core reads the bMS version once at startup and selects the release in one place; every release-dependent decision asks it. | ADR-0014 |
@@ -133,11 +133,11 @@ The strategy: thin domain servers on one shared core, with every rule derived fr
 | Security (gateway) | No first-party authentication: an operator's TLS-terminating, authenticating proxy owns identity. The gateway keeps write and secret gates closed and refuses a non-loopback bind without `MCP_ALLOW_NO_AUTH=true`. | ADR-0001, ADR-0003 |
 | Answer integrity | bConnect errors are tool results with the API's documented meaning, not protocol errors. Writes are never retried; an unanswered write is reported as "outcome unknown". | ADR-0008, REQ-XC-003, REQ-XC-005 |
 
-Technology: TypeScript on Node.js with the official MCP SDK, rather than Python FastMCP (decided 2026-10-06). One codebase serves stdio, the single-server HTTP mode and the gateway.
+Technology: TypeScript on Node.js with the official MCP SDK, rather than Python FastMCP (decided 2026-10-06). One codebase serves stdio, the single-server HTTP mode, the `bconnect-mcp` command and the gateway.
 
 ## 5. Building Block View
 
-The repository is an npm-workspaces monorepo: `@bconnect/mcp-core` plus 13 domain servers and a template as workspace members. The gateway builds separately and bundles them all.
+The repository is an npm-workspaces monorepo: `@bconnect/mcp-core`, the `bconnect-mcp` command package, 13 domain servers and a template are workspace members. The gateway builds separately and bundles them all.
 
 ```mermaid
 flowchart TB
@@ -145,6 +145,7 @@ flowchart TB
     app["Express app<br/>host check, limits, health"]
     combined["combined /mcp (optional)"]
   end
+  cmd["bconnect-mcp command<br/>(packages/bconnect-mcp)"]
   subgraph servers["13 domain servers · bconnect-&lt;domain&gt;-mcp"]
     idx["index.ts<br/>catalogue + handler"]
     cli["bconnect-client.ts<br/>+ modules/"]
@@ -154,6 +155,7 @@ flowchart TB
     rt["server-runtime<br/>(startup)"]
     rel["release"]
     wrap["tool-call wrappers"]
+    comb["combined server<br/>+ domainList"]
     base["BConnectClientBase<br/>(HTTP, gates, audit)"]
     res["results + error meanings"]
   end
@@ -161,6 +163,7 @@ flowchart TB
   scripts["scripts/ generators"]
 
   gateway --> servers
+  cmd --> servers
   servers --> core
   specs --> scripts --> gen
   scripts --> res
@@ -173,7 +176,8 @@ A fix in the core applies to all 13 servers at once; a server holds only what is
 | Building block | Responsibility | Location |
 | --- | --- | --- |
 | Domain server (×13) | Declares its tools (name, description, input schema, operation), maps arguments to bConnect calls, applies domain rules (e.g. maintenance-window intervals) | `bconnect-<domain>-mcp/src/` |
-| `@bconnect/mcp-core` | Everything shared: HTTP client, config, startup, gates, validation, results, errors, release selection, audit | `packages/mcp-core/src/` |
+| `@bconnect/mcp-core` | Everything shared: HTTP client, config, startup, gates, validation, results, errors, release selection, audit, the combined server and its domain-list parser (`domainList`, used by the command and `MCP_GATEWAY_COMBINED`) | `packages/mcp-core/src/` |
+| `bconnect-mcp` command | `bconnect-mcp <domain>`, `<domain>,<domain>` or `all`: one or several domains as one stdio (or HTTP) server, with the same startup as a domain server; package `@baramundi/bconnect-mcp`, still private | `packages/bconnect-mcp/` |
 | Gateway | Hosts all servers in one Express process over Streamable HTTP; health check, limits, `*_FILE` secrets, closed gates | `bconnect-mcp-gateway/src/` |
 | Server template | Starting point for a new domain server | `bconnect-server-template/` |
 | Specs + generators | Per-release OpenAPI specs; scripts that generate types, query tables and error meanings | `openapi-specs/`, `scripts/` |
@@ -193,7 +197,7 @@ A fix in the core applies to all 13 servers at once; a server holds only what is
 
 ### 5.3 Level 2: the core's tool-call wrappers
 
-A server's `tools/list` and `tools/call` handlers are composed from core wrappers, each adding one concern: `withReleaseTools` (only the release's tools), `withWriteToolsHidden`, `withToolVariants` (selector → route), `withCountOnly`, `withQueryProperties`, `withUnverifiedWriteMarker`, `withToolAnnotations` and `declaredArgumentsOnly` (refuse unknown arguments).
+A server's `tools/list` and `tools/call` handlers are composed from core wrappers, each adding one concern: `withReleaseTools` (only the release's tools), `withWriteToolsHidden`, `withToolVariants` (selector → route), `withCountOnly` (which also adds the empty-list hint, `withEmptyListHint`), `withQueryProperties`, `withUnverifiedWriteMarker`, `withToolAnnotations` and `declaredArgumentsOnly` (refuse unknown arguments).
 
 ### 5.4 How a tool is implemented
 
@@ -219,9 +223,9 @@ The handler stays thin because the core wraps it. List tools send only the param
 
 1. Add the `operationId` line to `operations.ts`.
 2. Run `node scripts/generate-query-parameters.mjs` to regenerate methods, releases, query tables and variants. Run `scripts/generate-api-types.mjs` if the specs changed.
-3. Add the client method, the catalogue entry, the validation rule and the handler case.
+3. Add the client method, the catalogue entry (named by [TOOL_NAMING.md](TOOL_NAMING.md)), the validation rule and the handler case.
 4. For a write tool, add it to `WRITE_TOOLS`. A destructive write without DELETE also goes into the core's `DESTRUCTIVE_WRITE_TOOLS`, with its reason. If the answer carries a credential, add it to the secret-gate lists.
-5. Run the suite. The guards fail until everything is consistent: spec conformance, tool annotations, write tools hidden, `countOnly`, release tools, README tool counts and secret gate.
+5. Run the suite. The guards fail until everything is consistent: spec conformance, tool names, tool annotations, write tools hidden, `countOnly`, release tools, README tool counts and secret gate.
 6. Test through the mock tier for every release; a write tool counts as done only after a recorded live run.
 
 ## 6. Runtime View
@@ -259,22 +263,25 @@ Every refusal keeps its own wording and sends nothing to the bMS. A bConnect err
 
 ### 6.2 Server startup
 
+The same routine starts a domain server and the `bconnect-mcp` command.
+
 1. Load the env file (`node --env-file`, or `.env` in the working directory) and, in the gateway, the `*_FILE` secrets.
 2. Validate every setting; an invalid one stops the server and names the variable.
 3. Build the one client for this process: credentials, CA, keep-alive agent, rate limiter, audit logger.
 4. Detect the release: `GET /servermanagement/v2.0/ManagementServer`, one try within 10 s. The log says e.g. `bMS 26.2.147.11 → release 26R2`. If it fails, use `BCONNECT_RELEASE`, else the default `26R2`, with a warning that says why.
 5. Stop a server that needs a later release (compliance and UDG on 25R2) with "needs bMS 26R1 or 26R2".
-6. Check the connection; on failure stop with `cannot reach bConnect API (<cause>)`.
+6. For the command: list the chosen domains once; a domain named on its own that has no tools in the release stops the start, and no two domains may list the same tool. Check the connection; on failure stop with `cannot reach bConnect API (<cause>)`.
 7. Connect the transport: stdio, or Streamable HTTP in HTTP mode or the gateway.
 
 ### 6.3 Gateway request
 
-The proxy authenticates the caller and forwards `POST /<domain>/mcp`. The gateway checks Host and Origin, the rate limit and the body size, then creates a stateless Streamable HTTP transport for the request (`sessionIdGenerator: undefined`) and hands it to that domain's server, which runs the path above. With `MCP_GATEWAY_COMBINED`, `POST /mcp` serves the chosen domains as one server: `tools/list` merges their catalogues, and `tools/call` goes to the domain that lists the tool. `GET /health` answers `{"status":"ok"}`.
+The proxy authenticates the caller and forwards `POST /<domain>/mcp`. The gateway checks Host and Origin, the rate limit and the body size, then creates a stateless Streamable HTTP transport for the request (`sessionIdGenerator: undefined`) and hands it to that domain's server, which runs the path above. With `MCP_GATEWAY_COMBINED`, `POST /mcp` serves the chosen domains as one server: `tools/list` merges their catalogues, and `tools/call` goes to the domain that lists the tool; the `bconnect-mcp` command uses the same combined server over stdio. `GET /health` answers `{"status":"ok"}`.
 
 ### 6.4 Special paths
 
 - **`countOnly`:** the wrapper sends the same filters with `PageSize=1` and returns `{"totalItems":…,"filters":{…}}`, or says the count is unavailable.
-- **404 or empty answer on a per-object list:** for example `list_detected_vulnerabilities_for_endpoint` or `list_kiosk_releases_by_job_definition`. The tool checks whether the parent object exists, then says which case applies; it never reports "no findings" without a confirmed parent.
+- **404 or empty answer on a per-object list:** for example `list_detected_vulnerabilities_by_endpoint` or `list_kiosk_releases_by_job_definition`. The tool checks whether the parent object exists, then says which case applies; it never reports "no findings" without a confirmed parent.
+- **Empty, unfiltered list:** when a `list_*` tool returns no entries (or a count of 0) and the caller gave no filter and asked for the first page, the result gets a second text after the JSON: bMS also returns an empty list when the account has no rights on these objects. The JSON stays as it was; filtered lists get no hint.
 - **Unknown write outcome:** a write that times out, loses its connection or gets 502/504 is not retried. The result tells the model to read the object back first.
 
 ## 7. Deployment View
@@ -339,7 +346,7 @@ One function in the core builds the client config from the environment (ADR-0007
 
 ### 8.4 Results and context budget
 
-Results are compact JSON (`BCONNECT_PRETTY_JSON=true` for debugging). Paging follows the API contract: `Page` 0-based, `PageSize` up to 1000. `countOnly: true` answers "how many?" with one `PageSize=1` call. Incomplete results say so: the first page only, sub-groups not included, existence not confirmed.
+Results are compact JSON (`BCONNECT_PRETTY_JSON=true` for debugging). Paging follows the API contract: `Page` 0-based, `PageSize` up to 1000. `countOnly: true` answers "how many?" with one `PageSize=1` call. Incomplete results say so: the first page only, sub-groups not included, existence not confirmed, or an empty list that missing rights can explain.
 
 ### 8.5 Resilience
 
@@ -359,7 +366,7 @@ Audit goes to stderr, never to stdout, which carries JSON-RPC in stdio mode. `BC
 | --- | --- | --- |
 | Unit + guard tests (vitest) | Handlers, the core, and about 40 suite-wide guards: spec conformance, secret gate, security routes, generated types, error meanings, README and env docs, tool names | CI on Linux and Windows, every PR |
 | Mock tier (`scripts/mock-tier.mjs`) | Every tool through the real MCP servers against bConnect-Mock, for each release (25R2, 26R1, 26R2), profile `standard-readwrite` | CI, every PR |
-| Live tier (`vitest.live.config.ts`) | Read-only calls and selected writes against a real bMS | By hand, Windows test VM |
+| Live tier (`vitest.live.config.ts`) | Read-only calls and selected writes against a real bMS | By hand, against a test bMS |
 | Combined check (`scripts/check-combined.mjs`) | The gateway's combined endpoint | With the live run |
 
 Type-defeating casts are blocked by `scripts/check-new-casts.sh`; CodeQL scans `main` (REQ-QA-008). See [MOCK_INTEGRATION_TESTING.md](MOCK_INTEGRATION_TESTING.md) and [LIVE_BMS_TESTING.md](LIVE_BMS_TESTING.md).
@@ -415,7 +422,7 @@ The quality goals in section 1.2 become the testable scenarios below. Most are e
 | QS-5 | Correctness | Any tool is called on any supported release | The request matches the operation's method, path and parameters in that release's spec | `spec-conformance.guard.test.ts`, mock tier |
 | QS-6 | Correctness | A server starts against a 25R2 bMS | It logs the detected release and lists only 25R2 tools; compliance and UDG servers stop with "needs bMS 26R1 or 26R2" | Release tests, live tier |
 | QS-7 | Answer integrity | A write times out after 30 s | The result says the outcome is unknown and to read the object back before repeating | Unit tests (REQ-XC-003 AC 6) |
-| QS-8 | Answer integrity | `list_detected_vulnerabilities_for_endpoint` gets a 404 | The tool checks whether the endpoint exists and says which case applies | Unit tests (REQ-XC-005 AC 4) |
+| QS-8 | Answer integrity | `list_detected_vulnerabilities_by_endpoint` gets a 404 | The tool checks whether the endpoint exists and says which case applies | Unit tests (REQ-XC-005 AC 4) |
 | QS-9 | Context efficiency | A client connects with writes off on 26R1 | 130 tools instead of 211; about 66 KB (≈ 19,000 tokens) less | `readme-tools.guard.test.ts` |
 | QS-10 | Context efficiency | The model asks "how many Windows endpoints?" | One `PageSize=1` call; a 54-byte answer instead of 8.8 KB | `count-only.guard.test.ts` |
 | QS-11 | Maintainability | Someone edits a generated type file by hand | CI fails until it matches the generator's output | `generated-types.guard.test.ts` |
@@ -429,10 +436,10 @@ The largest open risk is the gateway's missing built-in authentication: its secu
 
 | Risk | Impact | Mitigation today | Open |
 | --- | --- | --- | --- |
-| Gateway has no authentication (ADR-0003, decision D11) | Anyone who reaches the port can call every read tool with the service credential | Refuses a non-loopback bind without `MCP_ALLOW_NO_AUTH=true`; write and secret gates forced off; Host/Origin check; docs require an authenticating proxy | D11: own auth, possibly OAuth for a hosted offering; Pomerium + Entra tutorial postponed (#332) |
-| One service credential for all gateway callers | No per-user bMS RBAC; the audit can't name the bMS user | Least-privilege account recommended; proxy access log | Per-user credentials (D11) |
-| bMS RBAC answers with filtered lists, not 403 | A restricted account looks like a smaller estate | Results say when rights may limit them (REQ-XC-005 AC 3) | API-level signal (upstream request) |
-| Write tools not verified live | A write may behave differently on a real bMS than on the mock | "Not yet verified against a live bMS." in the description; live run list (`LIVE_VERIFIED_WRITE_TOOLS`) | Writable test bMS; 26R2 Intune and threshold writes blocked on the test system |
+| Gateway has no authentication (ADR-0003) | Anyone who reaches the port can call every read tool with the service credential | Refuses a non-loopback bind without `MCP_ALLOW_NO_AUTH=true`; write and secret gates forced off; Host/Origin check; docs require an authenticating proxy | Built-in authentication is not decided yet |
+| One service credential for all gateway callers | No per-user bMS RBAC; the audit can't name the bMS user | Least-privilege account recommended; proxy access log | Per-user credentials |
+| bMS RBAC answers with filtered lists, not 403 | A restricted account looks like a smaller estate | An empty, unfiltered list says that missing rights can be the cause; [TROUBLESHOOTING.md](TROUBLESHOOTING.md) describes the check | API-level signal (upstream request) |
+| Write tools not verified live | A write may behave differently on a real bMS than on the mock | "Not yet verified against a live bMS." in the description; live run list (`LIVE_VERIFIED_WRITE_TOOLS`) | Live runs for the remaining write tools |
 | Prompt injection through bMS data | Text in bMS fields steers the model | Hidden characters removed; writes and secrets gated; destructive hints | Client-side confirmation is the client's job |
 | New bMS release changes routes or schemas | Tools 404 or send invalid bodies | Release detection, per-release specs, spec-conformance guard, mock tier per release | Specs must be fetched for every release |
 | Paging signal (`totalPages` nullable) | An internal pager stops too early or too late | REQ-XC-005 AC 2: the pager stops on the API's signal and reports an early stop | — |
@@ -440,12 +447,11 @@ The largest open risk is the gateway's missing built-in authentication: its secu
 
 ### 11.2 Technical debt
 
-- Live verification is manual on a Windows VM; each run costs a round trip (REQ-QA-004).
+- Live verification against a real bMS is manual and doesn't run in CI (REQ-QA-004).
 - ADRs live in two folders.
 - The gateway is not an npm-workspaces member; it bundles the core and all servers in its own build.
-- Credentials at rest are plaintext env files or Docker secrets (#60, no milestone).
-- The response cache has had known gaps (ADR-0010 context); check whether it is enabled in practice.
-- Not on the npm registry or MCP Registry yet (#297, v26.2.0).
+- Credentials at rest are plaintext env files or Docker secrets (#60).
+- Not on the npm registry or MCP Registry yet: `@baramundi/bconnect-mcp` exists as a private workspace; publishing follows (#297).
 
 ## 12. Glossary
 
@@ -457,6 +463,7 @@ The largest open risk is the gateway's missing built-in authentication: its secu
 | MCP | Model Context Protocol: JSON-RPC protocol through which AI clients discover and call tools |
 | Tool | One MCP function; here, one bConnect operation (with type variants) |
 | Domain server | One of the 13 `bconnect-<domain>-mcp` processes |
+| `bconnect-mcp` | The command that serves one, several or all domains as one MCP server (`packages/bconnect-mcp`) |
 | `@bconnect/mcp-core` | The shared library every server and the gateway build on |
 | Gateway | `bconnect-mcp-gateway`: serves all domain servers over HTTP at `/<domain>/mcp`, optionally combined at `/mcp` |
 | stdio | Transport in which the client starts the server as a child process and talks over stdin/stdout |
@@ -467,7 +474,7 @@ The largest open risk is the gateway's missing built-in authentication: its secu
 | Variant / selector | A type argument that picks one of a tool's route variants, written `tool[type=…]` (ADR-0015) |
 | `countOnly` | List option that returns only the total, from one `PageSize=1` call |
 | Mock tier | Tests through the real servers against bConnect-Mock, per release |
-| Live tier | Tests against a real bMS on the Windows test VM |
+| Live tier | Tests against a real bMS, run by hand |
 | Live-verified write | A write tool with a recorded check against a real bMS; others carry the "not yet verified" note |
 | UDG | Universal Dynamic Group (26R1 and later) |
 | LAPS | Local administrator password solution: managed local admin accounts (defensecontrol) |
