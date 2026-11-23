@@ -246,14 +246,15 @@ export const CommonRules = {
     message: 'PageSize must be between 1 and 1000'
   }),
 
-  // Search query (non-empty string)
+  // Search query (non-empty string). No length cap of its own: where the selected release's
+  // spec declares one, the query-parameter table carries it and the core refuses a longer
+  // value (#358); the 1000 used here before isn't in any spec (26R2 allows 2000).
   searchQuery: (): ValidationRule => ({
     name: 'SearchQuery',
     required: false,
     type: 'string',
     minLength: 1,
-    maxLength: 1000,
-    message: 'SearchQuery must be between 1 and 1000 characters'
+    message: 'SearchQuery must not be empty'
   }),
 
   // Order by clause
@@ -262,7 +263,7 @@ export const CommonRules = {
     required: false,
     type: 'string',
     minLength: 1,
-    maxLength: 200,
+    // No length cap of its own, as for SearchQuery (#358).
     message: 'OrderBy must be a valid sort expression (e.g., "DisplayName asc")'
   }),
 

@@ -186,7 +186,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_assets: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, InventoryNumber, Contact and CostCenter."},
-      DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
+      DisplayName: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
@@ -194,7 +194,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_asset_stock_assets: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, InventoryNumber, Contact and CostCenter."},
-      DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
+      DisplayName: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
@@ -202,7 +202,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_assets_by_logical_group: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, InventoryNumber, Contact and CostCenter."},
-      DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
+      DisplayName: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
@@ -210,7 +210,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_assets_by_windows_endpoint: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, InventoryNumber, Contact and CostCenter."},
-      DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
+      DisplayName: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
@@ -218,7 +218,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_asset_stock_folders: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
-      Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
@@ -226,7 +226,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_asset_stock_subfolders: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
-      Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubfolders: {"type":"boolean","description":"If true, items in sub-folders are also returned (default false)."},
@@ -235,7 +235,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_asset_type_folders: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
-      Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
@@ -243,7 +243,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_asset_type_subfolders: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is Name."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
-      Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
+      Name: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against Name."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       includeSubfolders: {"type":"boolean","description":"If true, items in sub-folders are also returned (default false)."},
@@ -262,7 +262,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_assets_by_org_unit: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, InventoryNumber, Contact and CostCenter."},
-      DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
+      DisplayName: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
@@ -270,7 +270,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
     list_assets_by_ad_object: {
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are AssetId, OwnerId, OwnerType, etc (e.g. OwnerId asc)."},
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, InventoryNumber, Contact and CostCenter."},
-      DisplayName: {"type":"string","description":"Filters result by matching the exact value against DisplayName."},
+      DisplayName: {"type":"string","maxLength":255,"description":"Filters result by matching the exact value against DisplayName."},
       Page: PAGE_PROPERTY,
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,

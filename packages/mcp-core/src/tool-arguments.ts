@@ -83,6 +83,24 @@ const isDeclaredTool = (tool: object): tool is DeclaredTool =>
 const declaredNames = (tool: DeclaredTool): string[] =>
   isRecord(tool.inputSchema.properties) ? Object.keys(tool.inputSchema.properties) : [];
 
+/**
+ * The first string argument longer than its property's `maxLength` (#358), as a message.
+ * The query-parameter tables carry the limits the selected release's spec declares.
+ * Length in UTF-16 code units, as bMS (.NET) counts a string.
+ */
+function tooLong(tool: DeclaredTool, args: Record<string, unknown>): string | undefined {
+  const properties = isRecord(tool.inputSchema.properties) ? tool.inputSchema.properties : {};
+  for (const [arg, value] of Object.entries(args)) {
+    const property: unknown = properties[arg];
+    const max = isRecord(property) ? property.maxLength : undefined;
+    if (typeof value === "string" && typeof max === "number" && value.length > max) {
+      // Worded as the servers' own length rules: "comment must be at most 4000 characters".
+      return `${arg} must be at most ${max} characters (${tool.name}; it has ${value.length}).`;
+    }
+  }
+  return undefined;
+}
+
 /** The message for a call with arguments the tool doesn't declare. */
 function undeclaredMessage(tool: string, unknown: string[], accepted: string[]): string {
   const head = `Unknown argument${unknown.length > 1 ? "s" : ""} for ${tool}: ${unknown.join(", ")}.`;
@@ -92,7 +110,10 @@ function undeclaredMessage(tool: string, unknown: string[], accepted: string[]):
 export interface DeclaredArgumentsOnly<Result> {
   /** The tool list, each input schema with `additionalProperties: false`. */
   list: () => Promise<Result>;
-  /** Throws InvalidParams when `args` holds an argument the tool's schema doesn't declare. */
+  /**
+   * Throws InvalidParams when `args` holds an argument the tool's schema doesn't declare,
+   * or a string longer than its property's `maxLength` (#358).
+   */
   refuseUndeclared: (name: string, args: Record<string, unknown> | undefined) => Promise<void>;
 }
 
@@ -101,7 +122,8 @@ export interface DeclaredArgumentsOnly<Result> {
  *
  * Wraps a server's list-tools function. `list` advertises closed input
  * schemas; `refuseUndeclared` checks a call against the same list, so no tool
- * needs its own list of names. An unknown tool name is left to the server.
+ * needs its own list of names. It also refuses a string longer than the
+ * `maxLength` its property declares (#358). An unknown tool name is left to the server.
  */
 export function declaredArgumentsOnly<Result extends { tools: object[] }>(
   listTools: () => Result | Promise<Result>,
@@ -125,6 +147,10 @@ export function declaredArgumentsOnly<Result extends { tools: object[] }>(
       const unknown = Object.keys(args).filter((arg) => !accepted.includes(arg));
       if (unknown.length > 0) {
         throw protocolError(ErrorCode.InvalidParams, undeclaredMessage(name, unknown, accepted));
+      }
+      const long = tooLong(tool, args);
+      if (long !== undefined) {
+        throw protocolError(ErrorCode.InvalidParams, long);
       }
     },
   };

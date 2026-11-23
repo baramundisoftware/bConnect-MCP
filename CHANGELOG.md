@@ -89,6 +89,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from outside GitHub Actions or under a tag other than `next`. Nothing is published yet: the
   first publish (step 4) needs a separate approval.
 
+- **Over-long query parameters are refused before the request** (#358). The bMS 26R2 spec limits
+  the length of about 150 query parameters (names, host names and the like 40 to 256 characters, a
+  vulnerability search 2000). The limits are generated into each tool's schema as `maxLength`, so
+  a model sees them, and a longer value is refused with the parameter and the limit
+  (`HostName must be at most 80 characters (list_endpoints; it has 300).`) instead of bMS's 400.
+  Only where the selected release's spec declares a limit: 25R2 and 26R1 declare none. A merged
+  tool keeps a limit only where all its routes agree. The hand-written caps on `SearchQuery`
+  (1000) and `OrderBy` (200), which no spec declares, are gone.
 ### Changed
 - **The default release is 26R2** (was 26R1), now that 26R2 passed the live run (bMS 26.2.147.11,
   #280). It applies only when the servers can't read the release from the bMS (most often: the
