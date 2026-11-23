@@ -1,7 +1,8 @@
 /**
  * API key management, bMS 26R2 (#357).
  *
- * get_api_key reads one key; create_api_key, update_api_key and delete_api_key write, behind
+ * list_api_keys and get_api_key read the keys (no secret, but their security profiles), behind
+ * ALLOW_SECRET_READ; create_api_key, update_api_key and delete_api_key write, behind
  * ALLOW_WRITE_OPERATIONS. create_api_key answers with the new key's secret, so it also needs
  * ALLOW_SECRET_READ (and the shared client refuses its route on its own). The secret is in the
  * tool result only: never in the audit log or an error text. On 26R1 the tools are refused by name.
@@ -69,13 +70,31 @@ const refusal = async (name: string, args: Record<string, unknown>): Promise<str
 const tool = async (name: string) => (await client.listTools()).tools.find((t) => t.name === name);
 const routes = () => sent.map((s) => [s.method, s.path]);
 
-describe('get_api_key (#357)', () => {
-  it('reads GET /ApiKeys/{id}, without any gate', async () => {
-    Object.assign(process.env, { ALLOW_WRITE_OPERATIONS: 'false', ALLOW_SECRET_READ: 'false' });
-    const r = await call('get_api_key', { id: KEY });
+describe('list_api_keys and get_api_key: behind ALLOW_SECRET_READ', () => {
+  // No secret in the answer, but the keys with their security profiles: who can reach bMS
+  // with which rights. Behind the same gate as the key secrets; no write gate.
+  it.for([
+    ['list_api_keys', {}, `${BASE}/ApiKeys`],
+    ['get_api_key', { id: KEY }, `${BASE}/ApiKeys/${KEY}`],
+  ] as const)('%s reads with ALLOW_SECRET_READ=true, writes off', async ([name, args, path]) => {
+    Object.assign(process.env, { ALLOW_WRITE_OPERATIONS: 'false', ALLOW_SECRET_READ: 'true' });
+    const r = await call(name, args);
     expect(r.isError).toBe(false);
-    expect(routes()).toEqual([['GET', `${BASE}/ApiKeys/${KEY}`]]);
-    expect((await tool('get_api_key'))!.annotations).toMatchObject({ readOnlyHint: true });
+    expect(routes()).toEqual([['GET', path]]);
+    expect((await tool(name))!.annotations).toMatchObject({ readOnlyHint: true });
+    expect((await tool(name))!.description).toContain('Needs ALLOW_SECRET_READ=true.');
+  });
+
+  it.for([
+    ['list_api_keys', {}, 'it lists the API keys with their security profiles (who can reach bMS with which rights)'],
+    ['get_api_key', { id: KEY }, 'it reads an API key with its security profiles (who can reach bMS with which rights)'],
+  ] as const)('%s without ALLOW_SECRET_READ is refused with why, sending nothing', async ([name, args, reason]) => {
+    process.env.ALLOW_SECRET_READ = 'false';
+    const r = await call(name, args);
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain(`Operation '${name}' is disabled because ${reason}.`);
+    expect(r.text).not.toContain('Secret-returning');
+    expect(sent).toEqual([]);
   });
 });
 

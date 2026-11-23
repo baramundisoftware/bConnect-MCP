@@ -217,8 +217,10 @@ applications, not installer packages.
 **Default:** off. `true` lets the tools that return live credentials run: in defensecontrol
 `get_bitlocker_secrets` and `update_bitlocker_pin` (BitLocker recovery keys and startup PIN),
 `get_local_admin_accounts` and `update_local_admin_credentials` (cleartext LAPS password); in
-servermanagement `create_api_key` (bMS 26R2: the new API key's secret). Off, those secrets can't
-land in a model's context or transcript by accident. It is independent of
+servermanagement `create_api_key` (bMS 26R2: the new API key's secret). It also lets
+`list_api_keys` and `get_api_key` run: they return no secret, but the API keys with their security
+profiles, so who can reach bMS with which rights. Off, those secrets can't land in a model's context
+or transcript by accident. It is independent of
 `ALLOW_WRITE_OPERATIONS`: the write tools among them (the two defensecontrol ones and
 `create_api_key`) need both. Every server reads it (the shared client checks it), but only
 defensecontrol and servermanagement have tools that use it. Set it only on a server where

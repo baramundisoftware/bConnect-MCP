@@ -77,12 +77,12 @@ been checked against a real bMS yet.
 | `update_object_permission` | Update object permissions via JSON Patch |
 | `restart_management_server` | Restart the baramundi Management Server |
 | `cancel_scheduled_restart` | Cancel a scheduled server restart |
-| `list_api_keys` | **(26R1)** List all API keys configured in baramundi |
+| `list_api_keys` | **(26R1)** List all API keys configured in baramundi, with their security profiles (never their secrets). Needs `ALLOW_SECRET_READ` |
 | `simulate_msw_cleanup` | **(26R1)** Simulate an MSW cleanup operation (dry run) |
 | `run_msw_cleanup` | **(26R1)** Clean up managed software files on the master DIP; reports `wasSuccessful` |
 | `list_download_jobs` | **(26R1)** List all download jobs |
 | `get_download_job` | **(26R1)** Get details of a specific download job |
-| `get_api_key` | **(26R2)** Get one API key by GUID (never its secret) |
+| `get_api_key` | **(26R2)** Get one API key by GUID (never its secret). Needs `ALLOW_SECRET_READ` |
 | `create_api_key` | **(26R2)** Create an API key (`name`; optional `expirationDate`, `comment`, `isActive`, `isAvailableViaGateway`, `securityProfiles`); returns its secret once. Needs `ALLOW_SECRET_READ` as well as `ALLOW_WRITE_OPERATIONS` |
 | `update_api_key` | **(26R2)** Change an API key's name, expiration date, comment, active/gateway flags or security profiles (JSON Patch with only the given fields) |
 | `delete_api_key` | **(26R2)** Delete (revoke) an API key |
@@ -110,7 +110,7 @@ The variables this server reads (a test checks the list). Each is described, wit
 | [`BCONNECT_ALLOW_INSECURE_HTTP`](../docs/CONFIGURATION.md#bconnect_allow_insecure_http) |  |
 | [`BCONNECT_RELEASE`](../docs/CONFIGURATION.md#bconnect_release) | On 25R2 the tools marked **(26R1)** aren't listed; on 26R2 `list_cloud_connectors` isn't (bMS 26R2 removed its API). |
 | [`ALLOW_WRITE_OPERATIONS`](../docs/CONFIGURATION.md#allow_write_operations) |  |
-| [`ALLOW_SECRET_READ`](../docs/CONFIGURATION.md#allow_secret_read) | Gates `create_api_key` (26R2: the answer carries the new key's secret), together with `ALLOW_WRITE_OPERATIONS`. |
+| [`ALLOW_SECRET_READ`](../docs/CONFIGURATION.md#allow_secret_read) | Gates `create_api_key` (with `ALLOW_WRITE_OPERATIONS`: the answer carries the new key's secret) and the reads `list_api_keys` and `get_api_key`. |
 | [`BCONNECT_AUDIT_LEVEL`](../docs/CONFIGURATION.md#bconnect_audit_level) |  |
 | [`BCONNECT_PRETTY_JSON`](../docs/CONFIGURATION.md#bconnect_pretty_json) |  |
 | [`BCONNECT_RATE_LIMIT_ENABLED`](../docs/CONFIGURATION.md#bconnect_rate_limit_enabled) |  |

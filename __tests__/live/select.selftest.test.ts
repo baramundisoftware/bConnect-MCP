@@ -29,6 +29,11 @@ describe('tool selection', () => {
     expect(readOperations('26R1', 'bconnect-defensecontrol-mcp', table, 'get_bitlocker_secrets')).toBe('returns credentials (secret gate)');
   });
 
+  it('skips a read whose description says it needs ALLOW_SECRET_READ (the API key reads)', () => {
+    expect(readOperations('26R1', 'bconnect-endpoints-mcp', table, 'list_endpoints', 'List the API keys. Needs ALLOW_SECRET_READ=true. Available …'))
+      .toBe('behind ALLOW_SECRET_READ (secret gate)');
+  });
+
   it('looks the operation up in the server\'s own spec', () => {
     // GetFolder exists in the jobs, operatingsystems and universaldynamicgroups specs.
     const ops = readOperations('26R1', 'bconnect-universaldynamicgroups-mcp', table, 'get_folder');
