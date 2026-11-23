@@ -17,6 +17,7 @@ export * from "./tool-errors.js";
 export * from "./protocol-errors.js";
 export * from "./tool-results.js";
 export * from "./count-only.js";
+export * from "./empty-list-hint.js";
 export * from "./lazy-client.js";
 export * from "./paging.js";
 export * from "./group-scope.js";
