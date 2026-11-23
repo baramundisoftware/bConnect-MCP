@@ -16,12 +16,14 @@ import type { JsonPatchOperation, Release } from "@bconnect/mcp-core";
 
 /** The window types the tools offer per release (bundled specs), the default first. */
 export const WINDOW_TYPES: Readonly<Record<Release, readonly string[]>> = {
+  "26R2": ["Anytime", "Never", "Everyday", "WorkdayWeekend", "IndividualWeekday"],
   "26R1": ["Anytime", "Never", "Everyday", "WorkdayWeekend", "IndividualWeekday"],
   "25R2": ["Unrestricted", "Everyday", "WorkdayWeekend", "IndividualWeekday"],
 };
 
 /** The types that take no intervals, per release. */
 const NO_INTERVALS_IN: Readonly<Record<Release, readonly string[]>> = {
+  "26R2": ["Anytime", "Never"],
   "26R1": ["Anytime", "Never"],
   "25R2": ["Unrestricted"],
 };
@@ -48,8 +50,8 @@ export function checkIntervalRule(args: Record<string, unknown>, release: Releas
     return;
   }
   if (!WINDOW_TYPES[release].includes(type)) {
-    throw protocolError(ErrorCode.InvalidParams, release === "26R1" && type === "Unrestricted"
-      ? "'Unrestricted' is deprecated in bMS 26R1 and not offered: use Anytime for a window without restriction."
+    throw protocolError(ErrorCode.InvalidParams, release !== "25R2" && type === "Unrestricted"
+      ? "'Unrestricted' is deprecated since bMS 26R1 and not offered: use Anytime for a window without restriction."
       : `'${type}' isn't a maintenance window type of bMS ${release}: use ${WINDOW_TYPES[release].join(", ")}.`);
   }
   if (NO_INTERVALS_IN[release].includes(type)) {

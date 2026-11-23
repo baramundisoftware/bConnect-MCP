@@ -169,12 +169,12 @@ jobs:
     # the tests with MOCK_REQUIRED=true and fails a server whose passed tests fall
     # short of the tests it declares for the release (#336). The mock's rate limit
     # is off: a 429 on /health would read as "not reachable". On 25r2 the runner
-    # leaves out the servers whose APIs are 26R1 only;
+    # leaves out the servers whose APIs exist from 26R1 on;
     # `__tests__/mock-tier.guard.test.ts` checks this job.
     strategy:
       fail-fast: false
       matrix:
-        release: ["26r1", "25r2"]
+        release: ["26r2", "26r1", "25r2"]
     env:
       # The one place the mock version is pinned; raising it is this line.
       BCONNECT_MOCK_IMAGE: ghcr.io/baramundisoftware/bconnect-mock:0.12.0

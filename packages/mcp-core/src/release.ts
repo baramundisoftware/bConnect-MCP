@@ -23,8 +23,8 @@ export interface ReleaseLog {
   warn: (line: string) => void;
 }
 
-/** Major.minor of the bMS version → release. 26R2 joins here with #280. */
-const VERSION_RELEASES: Readonly<Record<string, Release>> = { "26.1": "26R1", "25.2": "25R2" };
+/** Major.minor of the bMS version → release. */
+const VERSION_RELEASES: Readonly<Record<string, Release>> = { "26.2": "26R2", "26.1": "26R1", "25.2": "25R2" };
 
 let detected: { release: Release; version: string } | undefined;
 
@@ -57,10 +57,11 @@ export function releaseFromVersion(version: unknown): Release | undefined {
 const quoted = (value: string): string => JSON.stringify(value.length > 32 ? `${value.slice(0, 32)}…` : value);
 
 /**
- * BCONNECT_RELEASE as the servers have always read it: unset or 26R1 is 26R1,
- * anything else 25R2. Only 26R1 and 25R2 get past the settings check.
+ * BCONNECT_RELEASE: one of RELEASES as set; unset is 26R1. Only those values get
+ * past the settings check, so the fallback to 26R1 is for unset only.
  */
-const settingRelease = (env: NodeJS.ProcessEnv): Release => (env.BCONNECT_RELEASE === undefined || env.BCONNECT_RELEASE === "26R1" ? "26R1" : "25R2");
+const settingRelease = (env: NodeJS.ProcessEnv): Release =>
+  RELEASES.find((release) => release === env.BCONNECT_RELEASE) ?? "26R1";
 
 /** The release every release-dependent decision uses; read on every call. */
 export function selectedRelease(env: NodeJS.ProcessEnv = process.env): Release {

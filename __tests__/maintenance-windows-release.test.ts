@@ -97,7 +97,7 @@ describe.each(['endpoint', 'logical_group'])('%s', (target) => {
     for (const args of [{}, { intervals: INTERVALS }]) {
       const r = await conn.call(create, { id: ID, maintenanceWindowDefinitionType: 'Unrestricted', ...args });
       expect(r.isError).toBe(true);
-      expect(r.text).toContain("'Unrestricted' is deprecated in bMS 26R1 and not offered: use Anytime");
+      expect(r.text).toContain("'Unrestricted' is deprecated since bMS 26R1 and not offered: use Anytime");
     }
     expect(recorder.take()).toEqual([]);
     expect((await conn.call(create, { id: ID, maintenanceWindowDefinitionType: 'Anytime' })).isError).toBe(false);

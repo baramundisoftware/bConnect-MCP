@@ -23,7 +23,7 @@
  *   `$ref`/`allOf`; an inline `enum` also gets `null`. The wrapper's own
  *   errors (`must be null`, `anyOf`) are dropped from findings; the errors of
  *   the non-null branch remain.
- * Formats: ajv-formats, plus `guid` and `time`. `time` is not an OpenAPI 3.0
+ * Formats: ajv-formats, plus `guid`, `time` and `Enumeration` (26R2, no rule of its own). `time` is not an OpenAPI 3.0
  * format; the bMS sends .NET text such as `02:58` or `02:58:00.5`, so it
  * accepts `hh:mm`, optional seconds with up to 7 fraction digits, and an
  * optional offset (ajv-formats requires seconds and an offset). A leap second
@@ -169,6 +169,9 @@ function newAjv(): AjvInstance {
   addFormats(ajv);
   ajv.addFormat('guid', GUID);
   ajv.addFormat('time', TIME);
+  // 26R2 marks enum-typed properties with format "Enumeration" next to the $ref to the enum
+  // schema, which ajv checks; the format itself adds no rule (.NET annotation).
+  ajv.addFormat('Enumeration', true);
   return ajv;
 }
 

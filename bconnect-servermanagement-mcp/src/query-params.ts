@@ -56,4 +56,32 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
   },
+  "26R2": {
+    list_security_groups: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Only Name is supported (e. g. Name asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
+      Name: {"type":"string","description":"Filters results by exactly matching name."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_security_profiles: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Only Name is supported (e. g. Name asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and Comment."},
+      Name: {"type":"string","description":"Filters results by exactly matching name."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_download_jobs: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name or LastExecution (e. g. Name asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name and LocalPathName."},
+      Name: {"type":"string","description":"Filters result by matching the exact value against Name."},
+      StateValue: {"type":"string","enum":["Unknown","Running","Success","Error","RescheduledSuccess","RescheduledError"],"description":"Filters result by matching StateValue."},
+      LastExecution: {"type":"string","description":"Filters on lastExecution. Date values have to be specified in ISO 8601 format. They can be filtered by adding the prefix 'lt' or 'gt' (e.g. gt 2023-07-28T08:01:03.375Z)."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+  },
 };

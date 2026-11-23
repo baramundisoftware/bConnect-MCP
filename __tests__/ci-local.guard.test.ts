@@ -48,9 +48,9 @@ describe('scripts/ci-local.sh runs what CI runs', () => {
     expect(local).toContain(command);
   });
 
-  it('runs the mock tier for both releases against the image CI pins', () => {
+  it('runs the mock tier for every release against the image CI pins', () => {
     expect(runsOf('mock').join('\n')).toContain('node scripts/mock-tier.mjs');
-    expect(local).toMatch(/for release in 26r1 25r2/);
+    expect(local).toMatch(/for release in 26r2 26r1 25r2/);
     expect(local).toContain("sed -n 's/^ *BCONNECT_MOCK_IMAGE: *//p' .github/workflows/ci.yml");
   });
 });

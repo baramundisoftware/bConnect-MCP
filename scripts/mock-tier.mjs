@@ -1,7 +1,7 @@
 /**
  * Runs the mock-integration tier against a running bConnect-Mock (REQ-CI-002).
  *
- *   node scripts/mock-tier.mjs <26r1|25r2>
+ *   node scripts/mock-tier.mjs <26r2|26r1|25r2>
  *
  * Expects the servers to be built (`npm run build`) and the mock to listen on
  * BCONNECT_MOCK_URL (default http://127.0.0.1:13433), started for that release
@@ -12,7 +12,7 @@
  *   (default 30 s) and serve the release asked for.
  * - Runs `npm run test:mock` in each server that lists a tool in that
  *   release. On 25R2, compliance and universaldynamicgroups list none (their
- *   APIs are 26R1 only); __tests__/mock-tier.guard.test.ts checks this list
+ *   APIs exist from 26R1 on); __tests__/mock-tier.guard.test.ts checks this list
  *   against the generated release tables. Then in the gateway, on both
  *   releases: its combined endpoint against the mock (#131).
  * - Runs the tests with MOCK_REQUIRED=true: a mock that isn't reachable fails
@@ -42,10 +42,10 @@ export const GATEWAY = "bconnect-mcp-gateway";
 /** Servers none of whose APIs exist in 25R2. */
 const ONLY_26R1 = ["bconnect-compliance-mcp", "bconnect-universaldynamicgroups-mcp"];
 
-const RELEASES = ["26r1", "25r2"];
+const RELEASES = ["26r2", "26r1", "25r2"];
 
 /** Tests skipped on purpose: their API doesn't exist in that release (software bundles: 26R1 on). */
-export const EXPECTED_SKIPS = { "25r2": { "bconnect-software-mcp": 3 }, "26r1": {} };
+export const EXPECTED_SKIPS = { "25r2": { "bconnect-software-mcp": 3 }, "26r1": {}, "26r2": {} };
 
 /** Settings the test client would prefer over the mock: never passed to the tests. */
 const NOT_PASSED = ["BCONNECT_BASE_URL", "BCONNECT_USERNAME", "BCONNECT_PASSWORD", "BCONNECT_API_KEY"];
@@ -77,10 +77,10 @@ export function testEnv(env, baseUrl) {
   return out;
 }
 
-/** The servers the tier runs for `release` (`26r1` or `25r2`). */
+/** The servers the tier runs for `release` (`26r2`, `26r1` or `25r2`). */
 export function serversFor(release) {
   if (!RELEASES.includes(release)) {
-    throw new Error(`unknown release "${release}": use ${RELEASES.join(" or ")}`);
+    throw new Error(`unknown release "${release}": use ${RELEASES.join(", ")}`);
   }
   const servers = readdirSync(ROOT)
     .filter((name) => name.startsWith("bconnect-") && name.endsWith("-mcp"))

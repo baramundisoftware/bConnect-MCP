@@ -61,7 +61,7 @@ been checked against a real bMS yet.
 | `start_microservice` | Ask bMS to start a microservice (the request is accepted; check with `get_microservice`) |
 | `stop_microservice` | Stop a specific microservice |
 | `restart_microservice` | Ask bMS to restart a microservice (the request is accepted; check with `get_microservice`) |
-| `list_cloud_connectors` | List all configured Cloud Connectors |
+| `list_cloud_connectors` | **(up to 26R1)** List all configured Cloud Connectors |
 | `list_pxe_relays` | List all configured PXE Relay servers |
 | `list_security_groups` | List all security groups in baramundi |
 | `get_security_group` | Get details of a specific security group |
@@ -83,7 +83,8 @@ been checked against a real bMS yet.
 | `list_download_jobs` | **(26R1)** List all download jobs |
 | `get_download_job` | **(26R1)** Get details of a specific download job |
 
-> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1.
+> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later.
+> The tool marked **(up to 26R1)** is gone in 2026 R2: its API was removed, so the server doesn't list it there.
 
 ---
 
@@ -101,9 +102,9 @@ The variables this server reads (a test checks the list). Each is described, wit
 | [`BCONNECT_CA_CERT_PATH`](../docs/CONFIGURATION.md#bconnect_ca_cert_path) |  |
 | [`NODE_TLS_REJECT_UNAUTHORIZED`](../docs/CONFIGURATION.md#node_tls_reject_unauthorized) |  |
 | [`BCONNECT_ALLOW_INSECURE_HTTP`](../docs/CONFIGURATION.md#bconnect_allow_insecure_http) |  |
-| [`BCONNECT_RELEASE`](../docs/CONFIGURATION.md#bconnect_release) | On 25R2 the tools marked **(26R1)** aren't listed. |
+| [`BCONNECT_RELEASE`](../docs/CONFIGURATION.md#bconnect_release) | On 25R2 the tools marked **(26R1)** aren't listed; on 26R2 `list_cloud_connectors` isn't (bMS 26R2 removed its API). |
 | [`ALLOW_WRITE_OPERATIONS`](../docs/CONFIGURATION.md#allow_write_operations) |  |
-| [`ALLOW_SECRET_READ`](../docs/CONFIGURATION.md#allow_secret_read) | No effect: this server has no tool that returns secrets. |
+| [`ALLOW_SECRET_READ`](../docs/CONFIGURATION.md#allow_secret_read) | Gates creating an API key (26R2: the answer carries its secret); no tool does that yet (#357). |
 | [`BCONNECT_AUDIT_LEVEL`](../docs/CONFIGURATION.md#bconnect_audit_level) |  |
 | [`BCONNECT_PRETTY_JSON`](../docs/CONFIGURATION.md#bconnect_pretty_json) |  |
 | [`BCONNECT_RATE_LIMIT_ENABLED`](../docs/CONFIGURATION.md#bconnect_rate_limit_enabled) |  |

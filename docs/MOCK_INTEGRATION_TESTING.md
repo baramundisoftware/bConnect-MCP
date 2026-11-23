@@ -24,7 +24,7 @@ The tests expect the mock at `http://127.0.0.1:13433`, version **0.8.1 or later*
 asset's `assetId` and an endpoint's `type`, which the tests read; 0.8.1 runs on
 Node.js 22.23.4, the fix for CVE-2026-111497). Start it with
 its rate limit off: under the limit, `/health` can answer 429 and the tests act
-as if the mock weren't there. Start it for the bMS release to test, `26r1` or
+as if the mock weren't there. Start it for the bMS release to test, `26r2`, `26r1` or
 `25r2` (`BCONNECT_BMS_VERSION`; the mock's default is 25R2). On 25R2,
 compliance and universaldynamicgroups have no API at all and aren't run, and the
 software tests skip Bundles, which exist from 26R1 on. The mock listens on 3433
@@ -40,7 +40,7 @@ node scripts/mock-tier.mjs 26r1                      # every server, as CI runs 
 cd bconnect-<domain>-mcp && npm run test:mock        # or one server's tier
 ```
 
-`scripts/mock-tier.mjs <26r1|25r2>` checks that the mock answers `/health` for
+`scripts/mock-tier.mjs <26r2|26r1|25r2>` checks that the mock answers `/health` for
 that release and runs each applicable server's tier with `MOCK_REQUIRED=true`. It
 fails when a server's tests fail, and when fewer tests passed than the server
 declares for the release: vitest's summary line must show every test passed,
@@ -50,8 +50,8 @@ exist there.
 ## In CI
 
 The `mock` job in `.github/workflows/ci.yml` runs `scripts/mock-tier.mjs` on
-every pull request and on `main`, once per release (26r1: 13 servers, 25r2: 11, then the
-gateway on both),
+every pull request and on `main`, once per release (26r2 and 26r1: 13 servers, 25r2: 11, then the
+gateway on each),
 against the mock image pinned in the job's `env` (to move to a newer mock, change
 that one line). The job log names the image digest.
 It isn't a required check.
@@ -102,7 +102,7 @@ bconnect-<domain>-mcp/
 
 **The gateway** (#131) has one mock test, `bconnect-mcp-gateway/src/__tests__/mock-integration/combined.mock.test.ts`,
 run by `npm run test:mock` in `bconnect-mcp-gateway` and by `scripts/mock-tier.mjs` after the
-servers, on both releases. It starts the gateway app in-process (the CI job builds the servers,
+servers, on every release. It starts the gateway app in-process (the CI job builds the servers,
 not the gateway) with the mock as its bMS and `MCP_GATEWAY_COMBINED` on, and runs the checks of
 `scripts/check-combined.mjs`: `/mcp` lists exactly the tools of the domain endpoints, and one list
 tool per domain answers the same on `/mcp` as on its own endpoint. The same script checks a gateway
@@ -177,7 +177,7 @@ universal dynamic groups comes from `fixtures/standard-26r1/`.
 
 - It doesn't run during `npm test`: it needs a running mock. CI runs it in its own
   job (see "In CI"), and `npm run ci` starts the pinned mock in Docker and runs it
-  for both releases.
+  for every release.
 - It doesn't replace the unit tier. Argument-validation, dispatch wiring,
   and tool-name coverage are all unit concerns.
 - It doesn't try to be exhaustive. 2–5 tests per server is enough to catch

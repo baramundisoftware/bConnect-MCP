@@ -2,7 +2,7 @@
 /**
  * Writes packages/mcp-core/src/error-meanings.ts from openapi-specs/ (REQ-XC-001
  * AC 3, ADR-0008 D3): the meaning each operation documents for each error
- * status, for both bMS releases. The specs aren't shipped with the servers, so
+ * status, for every bMS release. The specs aren't shipped with the servers, so
  * the table is generated and committed; __tests__/error-meanings.guard.test.ts
  * derives it again and fails when it drifts.
  *
@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
-const RELEASES = ["25R2", "26R1"];
+const RELEASES = ["25R2", "26R1", "26R2"];
 const OUT = join(ROOT, "packages", "mcp-core", "src", "error-meanings.ts");
 
 const letters = (s) => s.toLowerCase().replace(/[^a-z]/g, "");
@@ -95,7 +95,7 @@ export interface ErrorMeaning {
   meaning: string;
 }
 
-/** Every operation of both specs; a request is matched to its route before its meaning is looked up. */
+/** Every operation of every release's specs; a request is matched to its route before its meaning is looked up. */
 export const DOCUMENTED_ROUTES: readonly DocumentedRoute[] = Object.freeze([
 ${routeLines.join("\n")}
 ]);

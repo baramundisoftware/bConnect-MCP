@@ -104,20 +104,20 @@ function auditLevelOf(value: string | undefined): AuditLevel {
   return level;
 }
 
-/** The bMS releases the servers know, spelt as the servers compare them. */
-export const RELEASES = ["26R1", "25R2"] as const;
+/** The bMS releases the servers know, newest first, spelt as the servers compare them. */
+export const RELEASES = ["26R2", "26R1", "25R2"] as const;
 
 /**
- * BCONNECT_RELEASE: unset means 26R1. The servers compare the value exactly
- * (`=== "26R1"`), so anything else, even `26r1` or an empty value, would quietly
- * give the 25R2 tool set; it stops the server instead.
+ * BCONNECT_RELEASE: unset means 26R1. The servers compare the value exactly, so
+ * anything else, even `26r1` or an empty value, stops the server instead of
+ * quietly picking a tool set.
  */
 export function checkRelease(value: string | undefined): void {
   if (value === undefined || (RELEASES as readonly string[]).includes(value)) {
     return;
   }
   const shown = JSON.stringify(value.length > 64 ? `${value.slice(0, 64)}…` : value);
-  throw new ClientConfigError(`BCONNECT_RELEASE ${shown} isn't valid. Use 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.`);
+  throw new ClientConfigError(`BCONNECT_RELEASE ${shown} isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.`);
 }
 
 /**

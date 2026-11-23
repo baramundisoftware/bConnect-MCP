@@ -93,7 +93,7 @@ failed or disconnected; the reason is in the client's MCP log.
 | `BCONNECT_TIMEOUT_MS="…" isn't valid. Use a whole number from 1000 to 600000.` (same for `BCONNECT_MAX_RETRIES`, 0 to 5) | Not a whole number, or out of range | Fix the value |
 | `BCONNECT_AUDIT_LEVEL "…" isn't valid. Use one of: none, security, write, all.` | Misspelt audit level | Fix the value; the server refuses to run with auditing in an unknown state |
 | `BCONNECT_PRETTY_JSON "…" isn't valid. Use true or false, or leave it unset for compact JSON.` | A value other than `true`/`false` (e.g. `yes`, `1`) | Fix the value, or remove the line for compact results |
-| `BCONNECT_RELEASE "…" isn't valid. Use 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.` | A release other than `26R1`/`25R2` (also `26r1` or an empty value) | Fix the value, or remove the line for 26R1 |
+| `BCONNECT_RELEASE "…" isn't valid. Use 26R2, 26R1 or 25R2, spelt exactly so, or leave it unset for 26R1.` | A release other than `26R2`/`26R1`/`25R2` (also `26r1` or an empty value) | Fix the value, or remove the line for 26R1 |
 | `BCONNECT_CA_CERT_PATH can't be read: <path> (<code>)` or `… points to an empty file` | CA file missing, unreadable or empty | Fix the path or the file |
 | `<server>: cannot reach bConnect API at <url> (<cause>). Check BCONNECT_BASE_URL, credentials, and network.` | The startup call failed. The cause in brackets: 401, TLS, timeout, unreachable | See [Authentication Errors](#authentication-errors), [TLS Certificate Errors](#tls-certificate-errors) or [Network & Connection Errors](#network--connection-errors) |
 | `<server>: needs bMS <release>; this server uses <release in use>. None of its APIs exist in that release.` | A server whose APIs the bMS release doesn't have (compliance, universaldynamicgroups on 25R2) | Use it with a 26R1 bMS, or remove it from your config; see [Wrong bMS Release](#wrong-bms-release) |
@@ -376,9 +376,9 @@ cp .env.example .env
 
 ### Wrong bMS Release
 
-`bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` are **26R1 only**. A 25R2 bMS
+`bconnect-compliance-mcp` and `bconnect-universaldynamicgroups-mcp` need **26R1 or later**. A 25R2 bMS
 doesn't have their APIs, so on 25R2 they stop at startup, before the connectivity check, with
-`bconnect-compliance-mcp: needs bMS 26R1; this server uses 25R2 (detected: bMS 25.2.…). None of its
+`bconnect-compliance-mcp: needs bMS 26R1 or 26R2; this server uses 25R2 (detected: bMS 25.2.…). None of its
 APIs exist in that release.` (the brackets say whether the release was detected or comes from
 `BCONNECT_RELEASE`). Don't configure them for a 25R2 bMS. In the HTTP gateway they don't stop: their
 tool lists are empty on 25R2. If the version can't be read (for example, the account has no read

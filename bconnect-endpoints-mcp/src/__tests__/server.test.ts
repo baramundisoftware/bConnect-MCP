@@ -261,6 +261,25 @@ describe('bconnect-endpoints-mcp server — tool registration', () => {
       }
     });
 
+    it('offers the AMAPI Android profile types on 26R2 only (#280)', async () => {
+      vi.stubEnv('ALLOW_WRITE_OPERATIONS', 'true'); // the full list (REQ-SRV-026)
+      const profileTypes = async (release: string): Promise<unknown> => {
+        process.env.BCONNECT_RELEASE = release;
+        const { server } = createServer();
+        const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+        const client = new Client({ name: 'test-client', version: '1.0.0' });
+        await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+        const { tools } = await client.listTools();
+        await client.close();
+        const tool = tools.find((t) => t.name === 'create_android_endpoint');
+        return (tool?.inputSchema.properties as Record<string, { enum?: string[] }>).androidEnterpriseProfileType.enum;
+      };
+      const classic = ['None', 'DeviceOwner', 'WorkProfile', 'DedicatedDevice'];
+      expect(await profileTypes('26R2')).toEqual([...classic, 'DeviceOwnerAMAPI', 'WorkProfileAMAPI', 'DeviceOwnerWorkProfileAMAPI']);
+      expect(await profileTypes('26R1')).toEqual(classic);
+      expect(await profileTypes('25R2')).toEqual(classic);
+    });
+
     it('does not contain any activedirectory module tools', async () => {
       const toolNames = await getToolNames();
 

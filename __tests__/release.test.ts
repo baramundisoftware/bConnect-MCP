@@ -36,19 +36,19 @@ const versionAnswer = (version: unknown) => () => HttpResponse.json({ name: 'bMS
 describe('releaseFromVersion', () => {
   it.each([
     ['26.1.161.0', '26R1'], ['26.1', '26R1'], ['26.1.0.5678', '26R1'],
-    ['25.2.0.0', '25R2'], ['25.2', '25R2'],
+    ['25.2.0.0', '25R2'], ['25.2', '25R2'], ['26.2.137.0', '26R2'], ['26.2', '26R2'],
   ])('%s → %s', (version, release) => {
     expect(releaseFromVersion(version)).toBe(release);
   });
 
-  it.each([['26.2.0.0'], ['27.1.0.0'], ['25.1.3.0'], ['26'], ['26.1garbage'], ['v26.1.161.0'], [' 26.1.161.0'], [''], [261], [null], [undefined], [{ major: 26 }]])(
+  it.each([['26.3.0.0'], ['27.1.0.0'], ['25.1.3.0'], ['26'], ['26.1garbage'], ['v26.1.161.0'], [' 26.1.161.0'], [''], [261], [null], [undefined], [{ major: 26 }]])(
     '%j → no supported release', (version) => {
       expect(releaseFromVersion(version)).toBeUndefined();
     });
 });
 
 describe('selectedRelease without detection: the setting, else 26R1', () => {
-  it.each([[undefined, '26R1', '26R1 (default)'], ['26R1', '26R1', '26R1 (from BCONNECT_RELEASE)'], ['25R2', '25R2', '25R2 (from BCONNECT_RELEASE)']])(
+  it.each([[undefined, '26R1', '26R1 (default)'], ['26R1', '26R1', '26R1 (from BCONNECT_RELEASE)'], ['25R2', '25R2', '25R2 (from BCONNECT_RELEASE)'], ['26R2', '26R2', '26R2 (from BCONNECT_RELEASE)']])(
     'BCONNECT_RELEASE=%s → %s', (setting, release, description) => {
       const env = { ...(setting && { BCONNECT_RELEASE: setting }) };
       expect(selectedRelease(env)).toBe(release);
@@ -103,7 +103,7 @@ describe('detectRelease', () => {
       ['a network error', () => HttpResponse.error(), /could not detect/],
       ['a timeout', async () => { await delay('infinite'); return HttpResponse.json({}); }, /could not detect/],
       ['no version', () => HttpResponse.json({ name: 'bMS' }), /no version/],
-      ['an unknown version', versionAnswer('26.2.0.0'), /"26\.2\.0\.0" is not a supported release/],
+      ['an unknown version', versionAnswer('26.3.0.0'), /"26\.3\.0\.0" is not a supported release/],
       ['a version that is not a string', versionAnswer(26), /no version/],
     ])('%s', async (_case, respond, reason) => {
       answer = respond;

@@ -86,4 +86,42 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
   },
+  "26R2": {
+    list_bitlocker_windows_endpoints: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointId or EndpointName (e.g. EndpointName asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_defender_threats: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Severity or EndpointName (e.g. Name asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_defender_threats_by_endpoint: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Severity or EndpointName (e.g. Name asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_defender_threats_by_logical_group: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Name, Severity or EndpointName (e.g. Name asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are Name, DomainUser, ProcessName, FileNames or EndpointName."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      includeSubfolders: INCLUDE_SUBFOLDERS_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_defender_windows_endpoints: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointId or EndpointName (e.g. EndpointName asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+  },
 };

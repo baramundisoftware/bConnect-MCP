@@ -6,6 +6,7 @@
  */
 import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { protocolError } from "./protocol-errors.js";
+import { RELEASES } from "./client-config.js";
 
 /**
  * One RFC 6902 operation. The generated spec types declare `value` as
@@ -132,13 +133,18 @@ export function declaredArgumentsOnly<Result extends { tools: object[] }>(
 /** Per bMS release, per tool: the query parameters the tool offers and sends, as schema properties (#179). */
 export type QueryParameterTable = Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, object>>>>>>;
 
-/** 25R2 only when set so; unset or anything else is 26R1, as the servers treat it. */
-const releaseKey = (release: string | undefined): "25R2" | "26R1" => (release === "25R2" ? "25R2" : "26R1");
-
-/** The table entry for the selected release, else the other release's; undefined when neither lists the tool. */
-function findQueryEntry(table: QueryParameterTable, release: string | undefined, tool: string): Readonly<Record<string, object>> | undefined {
-  const key = releaseKey(release);
-  return table[key]?.[tool] ?? table[key === "25R2" ? "26R1" : "25R2"]?.[tool];
+/**
+ * The table entry for the selected release (unset is 26R1), else the newest other release's
+ * that lists the tool; undefined when none does.
+ */
+export function findQueryEntry(table: QueryParameterTable, release: string | undefined, tool: string): Readonly<Record<string, object>> | undefined {
+  const key = release ?? "26R1";
+  const own = table[key]?.[tool];
+  if (own) {
+    return own;
+  }
+  const other = RELEASES.find((candidate) => candidate !== key && table[candidate]?.[tool]);
+  return other === undefined ? undefined : table[other][tool];
 }
 
 /** Whether `tool` offers the table entry `name` in `release` (false for a tool the table doesn't list). */

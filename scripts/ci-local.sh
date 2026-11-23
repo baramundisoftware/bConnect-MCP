@@ -8,7 +8,7 @@
 #
 # Blocking, as in CI (`gate`, `coverage`, `mock`):
 #   build, lint, the tests' type check, no new casts, the root test suite, the coverage floors, and the
-#   mock tier for 26r1 and 25r2 against the bConnect-Mock image ci.yml pins
+#   mock tier for 26r2, 26r1 and 25r2 against the bConnect-Mock image ci.yml pins
 #   (started here in its own containers, rate limit off).
 # Reported, not blocking, as in CI (`strict`): npm audit --audit-level=high.
 # Local extras, not in CI: jscpd duplication check (blocking), Semgrep (reported).
@@ -47,14 +47,14 @@ npx vitest run >/dev/null 2>&1; check $? "npx vitest run"
 section "Coverage floors"
 npm run test:coverage >/dev/null 2>&1; check $? "npm run test:coverage"
 
-section "Mock tier (26r1, 25r2)"
+section "Mock tier (26r2, 26r1, 25r2)"
 if [ "$MOCK" -eq 0 ]; then
   echo "  skipped (--no-mock / --fast)"
 elif ! command -v docker >/dev/null 2>&1; then
   echo "  ✗ docker not found: install it, or run with --no-mock"; fail=1
 else
   image=$(sed -n 's/^ *BCONNECT_MOCK_IMAGE: *//p' .github/workflows/ci.yml | head -1)
-  for release in 26r1 25r2; do
+  for release in 26r2 26r1 25r2; do
     name="bconnect-mock-ci-local-$release"
     docker rm -f "$name" >/dev/null 2>&1
     # Docker picks a free port on 127.0.0.1: a fixed one may be taken by another mock.

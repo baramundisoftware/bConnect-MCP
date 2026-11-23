@@ -57,4 +57,48 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
   },
+  "26R2": {
+    list_detected_rule_violations: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointName or RuleName (e.g. RuleName asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName or RuleName."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_detected_rule_violations_for_endpoint: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointName or RuleName (e.g. RuleName asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName or RuleName."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_detected_vulnerabilities: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointName or CveId (e.g. EndpointName asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName or CveId."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_detected_vulnerabilities_for_endpoint: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible value is CveId (e.g. CveId asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable value is CveId."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_mobile_device_rules: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are RuleName or Description (e.g. RuleName asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are RuleName or Description."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+    list_vulnerabilities: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are CveId or CvssScore (e.g. CveId asc)."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are CveId, AffectedProducts or AffectedOperatingSystems."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+  },
 };

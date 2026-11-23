@@ -6,11 +6,11 @@
  *   query parameters of the tool's GET operation, in spec order, each as the
  *   JSON-schema property the tool offers;
  * - src/tool-methods.ts (#296, REQ-SRV-024): per tool, the HTTP methods of its
- *   operations in either release, from which the core derives the tool's MCP
+ *   operations in any release, from which the core derives the tool's MCP
  *   annotations;
  * - src/tool-releases.ts (#159, REQ-SRV-028): per tool, the releases in which
  *   each of its operations exists with the route the tool calls (the newest
- *   release's: 26R1's, else 25R2's); a release lists only those tools;
+ *   release's that has the operation); a release lists only those tools;
  * - src/tool-variants.ts (#174, REQ-SRV-029), only in a server with merged tools:
  *   per merged tool, its variants and their selector values.
  * A merged tool is written in operations.ts as one line per route (variant):
@@ -49,7 +49,8 @@ import { fileURLToPath } from "node:url";
 
 const ROOT_ARG = process.argv.find((a) => a.startsWith("--root="));
 const ROOT = ROOT_ARG ? ROOT_ARG.slice("--root=".length) : join(dirname(fileURLToPath(import.meta.url)), "..");
-const RELEASES = ["25R2", "26R1"];
+/** Oldest first; the last is the newest. */
+const RELEASES = ["25R2", "26R1", "26R2"];
 const CHECK = process.argv.includes("--check");
 
 const FALLBACK = {
@@ -197,15 +198,23 @@ function operationsOf(specs, release, domain, id) {
   return own.length ? own : all;
 }
 
+/** The operations behind `id` as the tool calls them: the newest release's that has it. */
+function calledOperations(specs, domain, id) {
+  for (const release of [...RELEASES].reverse()) {
+    const found = operationsOf(specs, release, domain, id);
+    if (found.length) {return found;}
+  }
+  return [];
+}
+
 /**
  * Per release and key: the releases in which every operation of the key exists with the
- * method and path the tool calls (the newest release's route: 26R1's, else 25R2's).
+ * method and path the tool calls (the route of the newest release that has the operation).
  */
 function releasesOf(server, specs, ids) {
   const domain = server.replace(/^bconnect-|-mcp$/g, "");
   return RELEASES.filter((release) => ids.every((id) => {
-    const newest = operationsOf(specs, "26R1", domain, id);
-    const called = newest.length ? newest : operationsOf(specs, "25R2", domain, id);
+    const called = calledOperations(specs, domain, id);
     // Spec paths carry no domain segment: compare it too, so another domain's identical path doesn't count.
     return called.length > 0 && operationsOf(specs, release, domain, id).some((o) => called.some((c) => c.domain === o.domain && c.method === o.method && c.path === o.path));
   }));
@@ -320,7 +329,7 @@ ${RELEASES.map((r) => `  "${r}": {\n${releases[r].join("\n")}\n  },`).join("\n")
 `;
 }
 
-/** The sorted HTTP methods of one key's operations in either release. */
+/** The sorted HTTP methods of one key's operations in any release. */
 function methodsOf(server, specs, ids) {
   const domain = server.replace(/^bconnect-|-mcp$/g, "");
   return [...new Set(RELEASES.flatMap((release) => ids.flatMap((id) => operationsOf(specs, release, domain, id).map((o) => o.method))))].sort();
@@ -339,7 +348,7 @@ function checkEffects(server, specs) {
   }
 }
 
-/** src/tool-methods.ts: per tool, the sorted HTTP methods of its operations in either release; a merged tool's are its variants'. */
+/** src/tool-methods.ts: per tool, the sorted HTTP methods of its operations in any release; a merged tool's are its variants'. */
 function methodTable(server, specs) {
   const tools = toolsOf(server);
   const rows = [];
@@ -356,7 +365,7 @@ function methodTable(server, specs) {
  * src/operations.ts — do not edit. Regenerate after a spec or operations.ts
  * change; __tests__/query-params.guard.test.ts fails when this table drifts.
  *
- * Per tool: the HTTP methods of the operations it calls, in either bMS release.
+ * Per tool: the HTTP methods of the operations it calls, in any bMS release.
  * The tool's MCP annotations (read-only, destructive) are derived from these
  * (REQ-SRV-024).
  */
@@ -370,8 +379,8 @@ ${rows.join("\n")}
 
 /**
  * src/tool-releases.ts: per tool (and per variant of a merged tool), the releases in which
- * every operation exists with the method and path the tool calls. The tools call the newest
- * release's route (26R1's, else 25R2's): an operation whose route differs in a release (e.g.
+ * every operation exists with the method and path the tool calls. The tools call the route of
+ * the newest release that has the operation: an operation whose route differs in a release (e.g.
  * PUT there, PATCH in 26R1) is missing there. A merged tool is in every release one of its
  * variants is in.
  */

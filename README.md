@@ -153,7 +153,7 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 Each server reads the release from the bMS at startup and logs it (for example
 `bMS 26.1.161.0 → release 26R1`); `BCONNECT_RELEASE` is only the fallback. Compliance and universal
 dynamic groups don't exist in 2025 R2: don't configure those two servers for a 25R2 bMS. Started on
-one, they stop at once and say so (`needs bMS 26R1; this server uses 25R2 …`).
+one, they stop at once and say so (`needs bMS 26R1 or 26R2; this server uses 25R2 …`).
 
 Install only the servers you need. Most users start with `bconnect-endpoints-mcp`.
 
@@ -273,7 +273,7 @@ against a real bMS).
 | **"The bConnect API didn't answer within 30 s" on vulnerability or installed-software lists** | These lists are slow on a large or busy bMS (30 to 50 s on a test bMS 26R1). Set `BCONNECT_TIMEOUT_MS=90000`; see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md). |
 | **Server exits at startup with "cannot reach bConnect API"** | The startup call failed; the cause is in brackets (credentials, certificate, timeout, address). Check that `BCONNECT_BASE_URL` ends in `/bconnect`. See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md#server-exits-at-startup). |
 | **404 only on some tools** | They may need 26R1. Check the release the server logged at startup; if it says it could not detect the release, set `BCONNECT_RELEASE=25R2` for a 25R2 bMS, which hides them. |
-| **compliance / universaldynamicgroups stop with "needs bMS 26R1"** | These servers need 26R1; on a 25R2 bMS they stop at startup and name the release in use. Remove them from your config. |
+| **compliance / universaldynamicgroups stop with "needs bMS 26R1 or 26R2"** | These servers need 26R1 or later; on a 25R2 bMS they stop at startup and name the release in use. Remove them from your config. |
 | **"BCONNECT_BASE_URL uses http://"** | Use `https://`. `http://` is allowed only for this machine or with `BCONNECT_ALLOW_INSECURE_HTTP=true` (credentials unencrypted). |
 | **"Redirects are not followed"** | bConnect or a proxy redirected the call. Set `BCONNECT_BASE_URL` to the final address. |
 | **"Unknown argument(s) for …"** | The tool doesn't have that argument (often a misspelt filter); the message lists the ones it accepts. |
@@ -316,8 +316,8 @@ AI Assistant (Claude, VS Code, etc.)
     ├── bconnect-variables-mcp              → Variables and instances
     ├── bconnect-defensecontrol-mcp         → BitLocker, Defender, local admins
     ├── bconnect-operatingsystems-mcp       → OS folders, Windows endpoints' OS settings
-    ├── bconnect-compliance-mcp             → CVE vulnerabilities (26R1 only)
-    ├── bconnect-universaldynamicgroups-mcp → Dynamic groups (26R1 only)
+    ├── bconnect-compliance-mcp             → CVE vulnerabilities (26R1 and later)
+    ├── bconnect-universaldynamicgroups-mcp → Dynamic groups (26R1 and later)
     └── bconnect-updatemanagement-mcp       → Windows Update management
 ```
 

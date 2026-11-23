@@ -2,7 +2,7 @@
  * Security-relevant routes (REQ-XC-006 AC 3; #168): audited at every
  * BCONNECT_AUDIT_LEVEL except none, and flagged as security audit entries.
  *
- * The rule, checked against both specs by __tests__/security-routes.guard.test.ts:
+ * The rule, checked against every release's specs by __tests__/security-routes.guard.test.ts:
  * every operation tagged ApiKeys, LocalAdministrativeAccounts, Objects,
  * SecurityGroups or SecurityProfiles; every write tagged ManagementServer,
  * Microservices, VariableDefinitions or VariableInstances; every operation
@@ -32,6 +32,11 @@ export const SECURITY_ROUTES: readonly SecretRoute[] = Object.freeze([
   { method: "POST", domain: "endpoints", path: "/v2.0/IndustrialEndpoints" },
   // API keys (26R1)
   { method: "GET", domain: "servermanagement", path: "/v2.0/ApiKeys" },
+  // API keys (26R2): one key, create (its answer carries the secret), change, revoke
+  { method: "POST", domain: "servermanagement", path: "/v2.0/ApiKeys" },
+  { method: "GET", domain: "servermanagement", path: "/v2.0/ApiKeys/{id}" },
+  { method: "PATCH", domain: "servermanagement", path: "/v2.0/ApiKeys/{id}" },
+  { method: "DELETE", domain: "servermanagement", path: "/v2.0/ApiKeys/{id}" },
   // Object rights
   { method: "PATCH", domain: "servermanagement", path: "/v2.0/Objects/{id}" },
   { method: "GET", domain: "servermanagement", path: "/v2.0/Objects/{id}/Rights" },

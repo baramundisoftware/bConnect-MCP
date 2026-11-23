@@ -23,7 +23,7 @@ beforeAll(async () => {
   if (!available) {return;}
   client = new BConnectClient(mockClientConfig());
   const version = (await getMockHealth())?.bmsVersion?.toLowerCase();
-  bundles = TOOL_RELEASES.list_software_bundles.includes(version === '25r2' ? '25R2' : '26R1');
+  bundles = TOOL_RELEASES.list_software_bundles.includes(version === '25r2' ? '25R2' : version === '26r2' ? '26R2' : '26R1');
 });
 
 describe('Software — list InstalledWindowsSoftware', () => {

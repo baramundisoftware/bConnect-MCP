@@ -28,4 +28,13 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       countOnly: COUNT_ONLY_PROPERTY,
     },
   },
+  "26R2": {
+    list_update_management_endpoints: {
+      OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are EndpointName, LastInventory, LastSuccessfulUpdate, OSUpdateVersion, OSUpdateReleaseDate and RequiredOSUpdateInstalled."},
+      SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable values are EndpointName and UpdateProfileName."},
+      Page: PAGE_PROPERTY,
+      PageSize: PAGE_SIZE_PROPERTY,
+      countOnly: COUNT_ONLY_PROPERTY,
+    },
+  },
 };
