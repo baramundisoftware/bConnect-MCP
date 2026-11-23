@@ -58,4 +58,8 @@ export const TOOL_VARIANTS: ToolVariantTable = {
     "list_endpoints_by_logical_group[type=]": {"type": null},
     "list_endpoints_by_logical_group[type=WindowsEndpoint]": {"type": "WindowsEndpoint"},
   },
+  get_entra_id_data: {
+    "get_entra_id_data[deviceId=*,endpointId=]": {"deviceId": "*", "endpointId": null},
+    "get_entra_id_data[deviceId=,endpointId=*]": {"deviceId": null, "endpointId": "*"},
+  },
 };

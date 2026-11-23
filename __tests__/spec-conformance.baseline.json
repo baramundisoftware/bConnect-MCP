@@ -3,7 +3,6 @@
   "body-invalid 26R2 bconnect-endpoints-mcp start_enrollment[type=IOSEndpoint] -": 358,
   "body-invalid 26R2 bconnect-endpoints-mcp start_enrollment[type=MacEndpoint] -": 358,
   "body-invalid 26R2 bconnect-endpoints-mcp start_enrollment[type=WindowsEndpoint] -": 358,
-  "coverage 26R2 endpoints - GetEntraIdEndpointDataByEndpointId": 353,
   "coverage 26R2 endpoints - IntuneRemoteActionFreshRestart": 356,
   "coverage 26R2 endpoints - IntuneRemoteActionReboot": 356,
   "coverage 26R2 endpoints - IntuneRemoteActionRetire": 356,

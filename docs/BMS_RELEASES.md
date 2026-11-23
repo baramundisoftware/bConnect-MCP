@@ -40,7 +40,8 @@ request enum gains values. Most other changes add `maxLength` to existing parame
   there and are refused by name (see [25R2 → 26R1](#25r2--26r1)).
 - **`list_cloud_connectors`** isn't listed on 26R2; called by name, it's refused naming the release.
 - **`create_android_endpoint`** offers the three AMAPI profile types on 26R2 only.
-- **The 17 new operations** have no tools yet; each has its own issue (#353 to #357). The
+- **`get_entra_id_data`** takes `endpointId` instead of `deviceId` on 26R2 (#353).
+- **The other 16 new operations** have no tools yet; each has its own issue (#354 to #357). The
   spec-conformance baseline lists them with those issues.
 - **`maxLength`** isn't checked by the tools yet; bMS refuses an over-long value itself (#358).
 - **Security:** creating an API key answers with its secret, so that route is behind

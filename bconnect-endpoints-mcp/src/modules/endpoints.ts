@@ -851,6 +851,14 @@ export class EndpointsModule {
   }
 
   /**
+   * Get EntraID data by the bMS endpoint id (26R2: GetEntraIdEndpointDataByEndpointId, #353)
+   */
+  async getEntraIdDataByEndpointId(endpointId: string): Promise<unknown> {
+    const response = await this.client.get(`${this.basePath}/Endpoints/${endpointId}/EntraIdData`);
+    return response.data;
+  }
+
+  /**
    * Link EntraID data to an endpoint (26R1 only)
    */
   async linkEntraIdData(endpointId: string, entraIdData: Record<string, unknown>): Promise<unknown> {

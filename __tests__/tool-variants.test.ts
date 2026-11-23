@@ -330,3 +330,73 @@ describe('a tool with two selectors names whole slices (REQ-SRV-029 part 2)', ()
     expect(e.message).toContain('Sub is not available for list_members with kind "B" without member (only with kind "A").');
   });
 });
+
+describe('a selector that chooses by whether its argument is given (value *, #353, #354)', () => {
+  // get_data: by deviceId everywhere, by endpointId only in 26R2; list_limits: all, or one group's.
+  const PRESENCE: ToolVariantTable = {
+    get_data: {
+      'get_data[deviceId=*,endpointId=]': { deviceId: '*', endpointId: null },
+      'get_data[deviceId=,endpointId=*]': { deviceId: null, endpointId: '*' },
+    },
+    list_limits: {
+      'list_limits[groupId=]': { groupId: null },
+      'list_limits[groupId=*]': { groupId: '*' },
+    },
+  };
+  const AT: ToolReleaseTable = {
+    get_data: ['26R1', '26R2'],
+    'get_data[deviceId=*,endpointId=]': ['26R1', '26R2'],
+    'get_data[deviceId=,endpointId=*]': ['26R2'],
+    list_limits: ['26R2'],
+    'list_limits[groupId=]': ['26R2'],
+    'list_limits[groupId=*]': ['26R2'],
+  };
+  const TAKES: Record<string, string[]> = { 'list_limits[groupId=]': ['Page'], 'list_limits[groupId=*]': ['Page'] };
+  const argumentsOf = (key: string): string[] => TAKES[key] ?? [];
+  const id = '00000000-0000-4000-8000-000000000001';
+  const listed = async () => {
+    const list = async () => ({ tools: [{ name: 'get_data', inputSchema: { type: 'object', properties: { deviceId: { type: 'string', description: 'Device ID.' }, endpointId: { type: 'string', description: 'Endpoint ID.' } } } }] });
+    return (await withVariantSelectors(PRESENCE, AT, argumentsOf, list)()).tools[0].inputSchema.properties as Props;
+  };
+  const handler = withToolVariants(PRESENCE, AT, argumentsOf, async (request: { params: { name: string; arguments?: Record<string, unknown> } }) => variantKey(PRESENCE, request.params.name, request.params.arguments));
+
+  it('variantKey: any value selects the route that takes the argument; left out (or null), the one without', () => {
+    expect(variantKey(PRESENCE, 'list_limits', {})).toBe('list_limits[groupId=]');
+    expect(variantKey(PRESENCE, 'list_limits', { groupId: null })).toBe('list_limits[groupId=]');
+    expect(variantKey(PRESENCE, 'list_limits', { groupId: id })).toBe('list_limits[groupId=*]');
+    expect(variantKey(PRESENCE, 'get_data', { endpointId: id })).toBe('get_data[deviceId=,endpointId=*]');
+    expect(variantKey(PRESENCE, 'get_data', { deviceId: id, endpointId: id })).toBeUndefined();
+  });
+
+  it('the listing keeps such a selector as declared (no enum), and only in a release with a route that takes it', async () => {
+    process.env.BCONNECT_RELEASE = '26R2';
+    expect(await listed()).toEqual({ deviceId: { type: 'string', description: 'Device ID.' }, endpointId: { type: 'string', description: 'Endpoint ID.' } });
+    process.env.BCONNECT_RELEASE = '26R1';
+    expect(await listed()).toEqual({ deviceId: { type: 'string', description: 'Device ID.' } });
+  });
+
+  it('a call runs the route its arguments choose', async () => {
+    process.env.BCONNECT_RELEASE = '26R2';
+    expect(await handler(call('get_data', { deviceId: id }))).toBe('get_data[deviceId=*,endpointId=]');
+    expect(await handler(call('get_data', { endpointId: id }))).toBe('get_data[deviceId=,endpointId=*]');
+    expect(await handler(call('list_limits', { groupId: id, Page: 1 }))).toBe('list_limits[groupId=*]');
+    expect(await handler(call('list_limits', {}))).toBe('list_limits[groupId=]');
+  });
+
+  it('both or neither of two such selectors is refused, naming the routes; another release\'s route names that release', async () => {
+    process.env.BCONNECT_RELEASE = '26R2';
+    const both = await refusal(() => handler(call('get_data', { deviceId: id, endpointId: id })));
+    expect(both.code).toBe(ErrorCode.InvalidParams);
+    expect(both.message).toContain('get_data has no route for with deviceId with endpointId. Valid on bMS 26R2: with deviceId without endpointId');
+    const neither = await refusal(() => handler(call('get_data', {})));
+    expect(neither.message).toContain('get_data has no route for without deviceId without endpointId. Valid on bMS 26R2: with deviceId without endpointId; without deviceId with endpointId');
+    process.env.BCONNECT_RELEASE = '26R1';
+    const other = await refusal(() => handler(call('get_data', { endpointId: id })));
+    expect(other.message).toContain('get_data without deviceId with endpointId is only available in bMS 26R2');
+  });
+
+  it('describeVariant says "with" for such a selector', () => {
+    expect(describeVariant({ groupId: '*' })).toBe('with groupId');
+    expect(describeVariant({ deviceId: null, endpointId: '*' })).toBe('without deviceId with endpointId');
+  });
+});

@@ -89,7 +89,7 @@ type doesn't have is refused before anything is sent.
 | `list_unmanaged_endpoints` | **(26R1)** List all unmanaged detected endpoints |
 | `get_unmanaged_endpoint` | **(26R1)** Get details of an unmanaged endpoint |
 | `delete_unmanaged_endpoint` | **(26R1)** Delete an unmanaged endpoint record |
-| `get_entra_id_data` | **(26R1)** Get Microsoft Entra ID data by its Entra ID device ID (not the bMS endpoint ID) |
+| `get_entra_id_data` | **(26R1)** Get Microsoft Entra ID data by its Entra ID device ID (`deviceId`) or, on bMS 26R2, by the bMS endpoint ID (`endpointId`): exactly one of the two |
 | `link_entra_id_data` | **(26R1)** Link an EntraID device to a baramundi endpoint |
 | `unlink_entra_id_data` | **(26R1)** Unlink EntraID data from an endpoint |
 

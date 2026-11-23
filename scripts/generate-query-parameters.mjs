@@ -142,9 +142,9 @@ function variantOf(key) {
   })) };
 }
 
-/** `type "WindowsEndpoint"` / `without type`, as the core says it. */
-const describeVariant = (select) => Object.entries(select).map(([n, v]) => (v === null ? `without ${n}` : `${n} "${v}"`))
-  .reduce((text, part) => (text === "" ? part : `${text}${part.startsWith("without ") ? " " : " and "}${part}`), "");
+/** `type "WindowsEndpoint"` / `without type` / `with dynamicGroupId` (value `*`: given, any value), as the core says it. */
+const describeVariant = (select) => Object.entries(select).map(([n, v]) => (v === null ? `without ${n}` : v === "*" ? `with ${n}` : `${n} "${v}"`))
+  .reduce((text, part) => (text === "" ? part : `${text}${/^with(out)? /.test(part) ? " " : " and "}${part}`), "");
 
 /**
  * Variants of a merged tool, named as briefly as the tool's variants in the release

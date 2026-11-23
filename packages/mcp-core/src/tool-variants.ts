@@ -11,12 +11,21 @@
  * - refuses, before anything is sent, a call no variant of the release takes
  *   (`withToolVariants`); the server's dispatch reads the variant with `variantKey`;
  * - answers a removed tool name with its replacement (`refuseReplacedTool`).
+ *
+ * A selector usually takes fixed values (`type=WindowsEndpoint`). One whose value
+ * is `*` selects by whether its argument is given, whatever its value: an ID
+ * (`list_thresholds[dynamicGroupId=*]` vs `list_thresholds[dynamicGroupId=]`, #354).
+ * Such a selector keeps its own schema (no enum) and is listed only in a release
+ * with a route that takes it.
  */
 import { ErrorCode } from "@modelcontextprotocol/sdk/types.js";
 import { protocolError } from "./protocol-errors.js";
 import { releaseDescription, releaseRefusal, selectedRelease, type ToolReleaseTable } from "./release.js";
 
-/** A variant's selector values; null means the argument is left out. */
+/** A selector value that means "the argument is given", whatever its value (an ID). */
+export const GIVEN = "*";
+
+/** A variant's selector values; null means the argument is left out, GIVEN that it is given. */
 export type VariantSelect = Readonly<Record<string, string | null>>;
 
 /** Per merged tool: its variant keys and their selector values (generated into src/tool-variants.ts). */
@@ -38,12 +47,20 @@ export type ReplacedToolTable = Readonly<Record<string, ReplacedTool>>;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
-/** `type "WindowsEndpoint"`, `without type`, `kind "Static" and member "Red"`, `kind "Static" without member`. */
+/** `type "WindowsEndpoint"`, `without type`, `with dynamicGroupId`, `kind "Static" and member "Red"`, `kind "Static" without member`. */
 export function describeVariant(select: VariantSelect): string {
   return Object.entries(select)
-    .map(([name, value]) => (value === null ? `without ${name}` : `${name} "${value}"`))
-    .reduce((text, part) => (text === "" ? part : `${text}${part.startsWith("without ") ? " " : " and "}${part}`), "");
+    .map(([name, value]) => (value === null ? `without ${name}` : value === GIVEN ? `with ${name}` : `${name} "${value}"`))
+    .reduce((text, part) => (text === "" ? part : `${text}${/^with(out)? /.test(part) ? " " : " and "}${part}`), "");
 }
+
+/** Whether `value` is what `select` (a selector's value in one variant) asks for. */
+const matches = (select: string | null, value: unknown): boolean =>
+  select === GIVEN ? value !== undefined && value !== null : (value ?? null) === select;
+
+/** A selector whose variants choose by whether it is given (GIVEN), not by its value. */
+const isPresence = (variants: Array<[string, VariantSelect]>, name: string): boolean =>
+  variants.some(([, select]) => select[name] === GIVEN);
 
 const sameVariant = (names: readonly string[], a: VariantSelect, b: VariantSelect): boolean => names.every((n) => a[n] === b[n]);
 
@@ -119,7 +136,7 @@ const selectorsOf = (variants: Array<[string, VariantSelect]>): string[] =>
 
 /** The variant `args` select for `tool` (an omitted selector is null); undefined for no match or a tool without variants. */
 export function variantKey(table: ToolVariantTable, tool: string, args: Record<string, unknown> | undefined): string | undefined {
-  return variantsOf(table, tool).find(([, select]) => Object.entries(select).every(([name, value]) => (args?.[name] ?? null) === value))?.[0];
+  return variantsOf(table, tool).find(([, select]) => Object.entries(select).every(([name, value]) => matches(value, args?.[name])))?.[0];
 }
 
 /**
@@ -152,6 +169,11 @@ export function withVariantSelectors<Result extends { tools: object[] }>(
         const anyTakes = new Set(variants.flatMap(([key]) => argumentsOf(key)));
         const properties: Record<string, unknown> = {};
         for (const [name, property] of Object.entries(tool.inputSchema.properties)) {
+          if (selectors.includes(name) && isPresence(variants, name)) {
+            // Listed as declared (an ID), and only when a route of the release takes it.
+            if (here.some(([, select]) => select[name] === GIVEN)) {properties[name] = property;}
+            continue;
+          }
           if (selectors.includes(name)) {
             const values = [...new Set(here.map(([, select]) => select[name]).filter((v): v is string => typeof v === "string"))];
             properties[name] = { ...(isRecord(property) ? property : {}), enum: values };
@@ -190,7 +212,7 @@ function checkVariant(table: ToolVariantTable, releases: ToolReleaseTable, argum
   const refuse = (message: string): never => {
     throw protocolError(ErrorCode.InvalidParams, message);
   };
-  for (const name of selectors) {
+  for (const name of selectors.filter((n) => !isPresence(variants, n))) {
     const value = args[name];
     if (value === undefined) {
       if (!variants.some(([, select]) => select[name] === null)) {
@@ -206,15 +228,17 @@ function checkVariant(table: ToolVariantTable, releases: ToolReleaseTable, argum
   }
   const key = variantKey(table, tool, args);
   if (key === undefined) {
-    const given = Object.fromEntries(selectors.map((name) => [name, typeof args[name] === "string" ? args[name] : null]));
+    const given = Object.fromEntries(selectors.map((name) => [name, isPresence(variants, name) ? (matches(GIVEN, args[name]) ? GIVEN : null) : typeof args[name] === "string" ? args[name] : null]));
     const first = selectors[0];
-    const same = here.filter(([, select]) => select[first] === given[first]);
+    // A value selector narrows the list to its value's routes; a presence one names them all.
+    const same = isPresence(variants, first) ? [] : here.filter(([, select]) => select[first] === given[first]);
     return refuse(`${tool} has no route for ${describeVariant(given)}. Valid on bMS ${release}: ${(same.length > 0 ? same : here).map(([, select]) => describeVariant(select)).join("; ")}.`);
   }
   const chosen = key;
   const select = table[tool][chosen];
   if (!inRelease(releases, chosen, release)) {
-    refuse(releaseRefusal(`${tool} with ${describeVariant(select)}`, (releases[chosen] ?? []).join(" or ")));
+    const label = describeVariant(select);
+    refuse(releaseRefusal(`${tool} ${/^with(out)? /.test(label) ? "" : "with "}${label}`, (releases[chosen] ?? []).join(" or ")));
   }
   // An argument another variant takes and this one doesn't; one no variant declares is left to the
   // declared-arguments check, which names what the tool accepts (REQ-SRV-022).
@@ -257,7 +281,7 @@ export function withToolVariants<Request extends { params: { name: string; argum
 
 /** `with type "X"` / `without type`, joined with "and": how to call a variant. */
 const howToCall = (select: VariantSelect): string =>
-  Object.entries(select).map(([name, value]) => (value === null ? `without ${name}` : `with ${name} "${value}"`)).join(" and ");
+  Object.entries(select).map(([name, value]) => (value === null ? `without ${name}` : value === GIVEN ? `with ${name}` : `with ${name} "${value}"`)).join(" and ");
 
 /**
  * A removed tool name is refused with its replacement and the arguments to use

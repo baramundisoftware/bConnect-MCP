@@ -78,6 +78,8 @@ export const TOOL_RELEASES: ToolReleaseTable = {
   get_unmanaged_endpoint: ["26R1", "26R2"],
   delete_unmanaged_endpoint: ["26R1", "26R2"],
   get_entra_id_data: ["26R1", "26R2"],
+  "get_entra_id_data[deviceId=*,endpointId=]": ["26R1", "26R2"],
+  "get_entra_id_data[deviceId=,endpointId=*]": ["26R2"],
   link_entra_id_data: ["26R1", "26R2"],
   unlink_entra_id_data: ["26R1", "26R2"],
 };

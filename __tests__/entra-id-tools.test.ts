@@ -1,7 +1,8 @@
 /**
  * Entra ID tools call the routes and send the fields the 26R1 spec declares (#173).
  *
- * Reading is keyed by the Entra ID device id (GET /EntraIdData/{deviceId}),
+ * Reading is keyed by the Entra ID device id (GET /EntraIdData/{deviceId}) or,
+ * on 26R2, by the bMS endpoint id (GET /Endpoints/{endpointId}/EntraIdData, #353),
  * linking sends entraIdDeviceId, entraIdTenantId and entraIdUserId, and every
  * description says the API marks these operations as temporary and meant for
  * mobile devices.
@@ -39,6 +40,15 @@ beforeAll(async () => {
 afterEach(() => { sent = []; });
 afterAll(async () => { await client.close(); msw.close(); process.env = saved; });
 
+/** A refused call (protocol error) as its message: what the model reads. */
+const refusal = async (name: string, args: Record<string, unknown>): Promise<string> => {
+  try {
+    await client.callTool({ name, arguments: args });
+  } catch (error) {
+    return (error as Error).message;
+  }
+  throw new Error(`${name} was not refused`);
+};
 const call = async (name: string, args: Record<string, unknown>) => {
   const r = await client.callTool({ name, arguments: args });
   return { isError: r.isError === true, text: (r.content as Array<{ text?: string }>).map((c) => c.text ?? '').join('\n') };
@@ -52,11 +62,54 @@ describe('get_entra_id_data', () => {
     expect(sent.map((s) => [s.method, s.path])).toEqual([['GET', `/endpoints/v2.0/EntraIdData/${DEVICE}`]]);
   });
 
-  it('asks for the Entra ID device id, not a bMS endpoint id', async () => {
+  it('asks for the Entra ID device id, not a bMS endpoint id (26R1: by endpoint ID is 26R2 only, #353)', async () => {
     const t = await tool('get_entra_id_data');
-    expect(t.inputSchema.required).toEqual(['deviceId']);
     expect(JSON.stringify(t.inputSchema.properties)).toMatch(/Entra ID device ID/);
-    expect(Object.keys(t.inputSchema.properties ?? {})).not.toContain('endpointId');
+    expect(Object.keys(t.inputSchema.properties ?? {})).toEqual(['deviceId']);
+  });
+
+  it('without deviceId it is refused, naming the route, and sends nothing', async () => {
+    expect(await refusal('get_entra_id_data', {})).toContain('Valid on bMS 26R1: with deviceId without endpointId');
+    expect(sent).toEqual([]);
+  });
+
+  it('by endpoint ID is refused on 26R1, naming 26R2, and sends nothing', async () => {
+    expect(await refusal('get_entra_id_data', { endpointId: ENDPOINT })).toContain('get_entra_id_data without deviceId with endpointId is only available in bMS 26R2');
+    expect(sent).toEqual([]);
+  });
+
+  describe('on bMS 26R2 (#353)', () => {
+    beforeAll(() => { process.env.BCONNECT_RELEASE = '26R2'; });
+    afterAll(() => { process.env.BCONNECT_RELEASE = '26R1'; });
+
+    it('offers deviceId and endpointId, neither required', async () => {
+      const t = await tool('get_entra_id_data');
+      expect(Object.keys(t.inputSchema.properties ?? {})).toEqual(['deviceId', 'endpointId']);
+      expect(t.inputSchema.required ?? []).toEqual([]);
+    });
+
+    it('reads by bMS endpoint id from GET /Endpoints/{endpointId}/EntraIdData', async () => {
+      const r = await call('get_entra_id_data', { endpointId: ENDPOINT });
+      expect(r.isError).toBe(false);
+      expect(sent.map((s) => [s.method, s.path])).toEqual([['GET', `/endpoints/v2.0/Endpoints/${ENDPOINT}/EntraIdData`]]);
+    });
+
+    it('still reads by Entra ID device id', async () => {
+      expect((await call('get_entra_id_data', { deviceId: DEVICE })).isError).toBe(false);
+      expect(sent.map((s) => s.path)).toEqual([`/endpoints/v2.0/EntraIdData/${DEVICE}`]);
+    });
+
+    it('both or neither is refused, naming both routes, and sends nothing', async () => {
+      const valid = 'Valid on bMS 26R2: with deviceId without endpointId; without deviceId with endpointId';
+      expect(await refusal('get_entra_id_data', { deviceId: DEVICE, endpointId: ENDPOINT })).toContain(valid);
+      expect(await refusal('get_entra_id_data', {})).toContain(valid);
+      expect(sent).toEqual([]);
+    });
+
+    it('an endpointId that is no GUID is refused before anything is sent', async () => {
+      expect(await refusal('get_entra_id_data', { endpointId: 'nope' })).toContain('endpointId must be a valid GUID');
+      expect(sent).toEqual([]);
+    });
   });
 });
 

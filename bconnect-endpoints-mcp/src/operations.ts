@@ -10,7 +10,8 @@
  * A tool that differs only by endpoint type is one tool with a `type` argument
  * (REQ-SRV-029, #174): one line per route, `'tool[type=WindowsEndpoint]'`, and
  * `'tool[type=]'` for the call without a type. The values are the API's
- * EndpointType names; which ones a release offers comes from the specs.
+ * EndpointType names; which ones a release offers comes from the specs. A
+ * selector value `*` chooses by whether the argument is given (an ID).
  */
 export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   'list_endpoints[type=]': ['GetEndpoints'],
@@ -74,7 +75,9 @@ export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   list_unmanaged_endpoints: ['GetAllUnmanagedEndpoints'],
   get_unmanaged_endpoint: ['GetUnmanagedEndpoint'],
   delete_unmanaged_endpoint: ['DeleteUnmanagedEndpoint'],
-  get_entra_id_data: ['GetEntraIdEndpointDataByDeviceId'],
+  // By Entra ID device ID, or (26R2) by bMS endpoint ID: exactly one of the two (`*`: given, #353).
+  'get_entra_id_data[deviceId=*,endpointId=]': ['GetEntraIdEndpointDataByDeviceId'],
+  'get_entra_id_data[deviceId=,endpointId=*]': ['GetEntraIdEndpointDataByEndpointId'],
   link_entra_id_data: ['SetEntraIdEndpointData'],
   unlink_entra_id_data: ['DeleteEntraIdEndpointData'],
 };
