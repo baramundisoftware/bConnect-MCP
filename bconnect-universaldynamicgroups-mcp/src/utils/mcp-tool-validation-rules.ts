@@ -54,5 +54,19 @@ export const UdgRules = {
   listUdgFoldersByFolder: (): ValidationRule[] => [
     CommonRules.guid('folderId'),
     ...listRules()
+  ],
+
+  // GET /v2.0/Thresholds (26R2, #354)
+  listThresholds: (): ValidationRule[] => [CommonRules.page(), CommonRules.pageSize(), CommonRules.searchQuery(), CommonRules.orderBy()],
+
+  // GET /v2.0/UniversalDynamicGroups/{dynamicGroupId}/Thresholds (26R2, #354)
+  listThresholdsForGroup: (): ValidationRule[] => [
+    CommonRules.guid('dynamicGroupId'),
+    CommonRules.page(), CommonRules.pageSize(), CommonRules.searchQuery(), CommonRules.orderBy()
+  ],
+
+  // GET /v2.0/Thresholds/{id} (26R2, #354)
+  getThreshold: (): ValidationRule[] => [
+    CommonRules.guid('id')
   ]
 };

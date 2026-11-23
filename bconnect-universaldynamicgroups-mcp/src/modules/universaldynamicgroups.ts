@@ -62,6 +62,26 @@ export class UniversalDynamicGroupsModule {
     return response.data;
   }
 
+  // ── Thresholds (26R2, #354): not in the generated 26R1 types, so typed by their use ──
+
+  /** GET /Thresholds: every threshold (paged). */
+  async getThresholds(params: Record<string, unknown> = {}): Promise<unknown> {
+    const response = await this.httpClient.get(`${this.basePath}/Thresholds`, { params });
+    return response.data;
+  }
+
+  /** GET /UniversalDynamicGroups/{dynamicGroupId}/Thresholds: one group's thresholds (paged). */
+  async getThresholdsForGroup(dynamicGroupId: string, params: Record<string, unknown> = {}): Promise<unknown> {
+    const response = await this.httpClient.get(`${this.basePath}/UniversalDynamicGroups/${dynamicGroupId}/Thresholds`, { params });
+    return response.data;
+  }
+
+  /** GET /Thresholds/{id}. */
+  async getThreshold(id: string): Promise<unknown> {
+    const response = await this.httpClient.get(`${this.basePath}/Thresholds/${id}`);
+    return response.data;
+  }
+
   async getFoldersByFolder(
     folderId: string,
     params: GetFoldersByFolderIdParams = {}

@@ -26,7 +26,7 @@ import { ROOT, SERVERS, connect, createRecorder, domainOf, guardEnv, requiredArg
  * since #174 one tool per endpoint operation: 26R1 −29 (15 reads), 25R2 −33 (17 reads); and per groups
  * operation: 26R1 30 → 2, 25R2 33 → 2 (all reads)); 26R2 is 26R1 without list_cloud_connectors (−1, a read).
  */
-const COUNTS = { '26R2': { on: 210, off: 129 }, '26R1': { on: 211, off: 130 }, '25R2': { on: 166, off: 100 } } as const;
+const COUNTS = { '26R2': { on: 212, off: 131 }, '26R1': { on: 211, off: 130 }, '25R2': { on: 166, off: 100 } } as const;
 
 /** Read tools per server on 26R1 (listed with writes off); the 4 servers without write tools are absent. */
 const READS_26R1: Record<string, number> = {

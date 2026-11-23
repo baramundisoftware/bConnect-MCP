@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Server management — management server info, microservices, security groups/profiles, object permissions, and infrastructure components  
-**Tools:** 30 (25 on bMS 25R2)
+**Tools:** 30 (29 on bMS 26R2; 25 on bMS 25R2)
 
 ---
 

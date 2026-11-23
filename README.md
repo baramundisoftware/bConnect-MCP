@@ -131,24 +131,24 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 
 ## Available servers
 
-| Server | Tools on 26R1 | Tools on 25R2 | What It Does |
-|--------|------|------|--------------|
-| `bconnect-endpoints-mcp` | 32 | 25 | Windows/Linux/Mac/Android/iOS/network/industrial endpoints (one tool per operation, type as argument), logical groups, maintenance windows |
-| `bconnect-groups-mcp` | 2 | 2 | Members of logical/static/dynamic/universal dynamic groups and endpoints of an AD user (group kind and member type as arguments) |
-| `bconnect-jobs-mcp` | 34 | 34 | Job definitions, instances, folders, kiosk releases |
-| `bconnect-servermanagement-mcp` | 30 | 25 | Management server, microservices, security groups, API keys |
-| `bconnect-assets-mcp` | 26 | 24 | Asset inventory, asset types, stock folders |
-| `bconnect-software-mcp` | 19 | 4 | Installed software inventory, software bundles |
-| `bconnect-activedirectory-mcp` | 16 | 16 | AD groups, users, objects, organizational units |
-| `bconnect-variables-mcp` | 13 | 13 | Variable definitions and instances |
-| `bconnect-defensecontrol-mcp` | 13 | 11 | BitLocker, local admin accounts, Defender threats |
-| `bconnect-operatingsystems-mcp` | 9 | 9 | OS folders and the OS deployment settings of Windows endpoints |
-| `bconnect-compliance-mcp` | 8 | — | Compliance violations, CVE vulnerabilities (needs 26R1) |
-| `bconnect-universaldynamicgroups-mcp` | 6 | — | Universal Dynamic Group definitions (needs 26R1) |
-| `bconnect-updatemanagement-mcp` | 3 | 3 | Windows Update management |
-| **Total** | **211** | **166** | |
+| Server | Tools on 26R2 | Tools on 26R1 | Tools on 25R2 | What It Does |
+|--------|------|------|------|--------------|
+| `bconnect-endpoints-mcp` | 32 | 32 | 25 | Windows/Linux/Mac/Android/iOS/network/industrial endpoints (one tool per operation, type as argument), logical groups, maintenance windows |
+| `bconnect-groups-mcp` | 2 | 2 | 2 | Members of logical/static/dynamic/universal dynamic groups and endpoints of an AD user (group kind and member type as arguments) |
+| `bconnect-jobs-mcp` | 34 | 34 | 34 | Job definitions, instances, folders, kiosk releases |
+| `bconnect-servermanagement-mcp` | 29 | 30 | 25 | Management server, microservices, security groups, API keys |
+| `bconnect-assets-mcp` | 26 | 26 | 24 | Asset inventory, asset types, stock folders |
+| `bconnect-software-mcp` | 19 | 19 | 4 | Installed software inventory, software bundles |
+| `bconnect-activedirectory-mcp` | 16 | 16 | 16 | AD groups, users, objects, organizational units |
+| `bconnect-variables-mcp` | 13 | 13 | 13 | Variable definitions and instances |
+| `bconnect-defensecontrol-mcp` | 13 | 13 | 11 | BitLocker, local admin accounts, Defender threats |
+| `bconnect-operatingsystems-mcp` | 9 | 9 | 9 | OS folders and the OS deployment settings of Windows endpoints |
+| `bconnect-compliance-mcp` | 8 | 8 | — | Compliance violations, CVE vulnerabilities (needs 26R1) |
+| `bconnect-universaldynamicgroups-mcp` | 8 | 6 | — | Universal Dynamic Group definitions (needs 26R1), thresholds (26R2) |
+| `bconnect-updatemanagement-mcp` | 3 | 3 | 3 | Windows Update management |
+| **Total** | **212** | **211** | **166** | |
 
-— means the server needs 26R1 and lists no tools on 25R2. Each release lists only the tools whose API routes it has: 26R1 has no industrial-endpoint tools, 25R2 no 26R1-only tools.
+— means the server needs 26R1 and lists no tools on 25R2. Each release lists only the tools whose API routes it has: 26R1 and 26R2 have no industrial-endpoint tools, 25R2 no 26R1-only tools, 26R1 no 26R2-only tools, and 26R2 no `list_cloud_connectors` (its API is gone).
 
 Each server reads the release from the bMS at startup and logs it (for example
 `bMS 26.1.161.0 → release 26R1`); `BCONNECT_RELEASE` is only the fallback. Compliance and universal

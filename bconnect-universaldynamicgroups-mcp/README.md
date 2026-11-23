@@ -2,10 +2,10 @@
 
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
-**Domain:** Universal Dynamic Groups — UDG definitions and folder hierarchy (requires baramundi 2026 R1)  
-**Tools:** 6 (none on bMS 25R2)
+**Domain:** Universal Dynamic Groups — UDG definitions, folder hierarchy and (bMS 2026 R2) thresholds (requires baramundi 2026 R1)  
+**Tools:** 6 (8 on bMS 26R2; none on bMS 25R2)
 
-> **Note:** This server is only functional on a bMS 2026 R1. Universal Dynamic Groups do not exist in baramundi 25R2; on a 25R2 bMS (detected at startup, or `BCONNECT_RELEASE=25R2` as the fallback), the server stops at startup with `needs bMS 26R1; this server uses 25R2 (…)`. In the HTTP gateway it lists no tools there.
+> **Note:** This server needs a bMS 2026 R1 or later. Universal Dynamic Groups do not exist in baramundi 25R2; on a 25R2 bMS (detected at startup, or `BCONNECT_RELEASE=25R2` as the fallback), the server stops at startup with `needs bMS 26R1; this server uses 25R2 (…)`. In the HTTP gateway it lists no tools there.
 
 ---
 
@@ -49,7 +49,7 @@ Claude Desktop (`claude_desktop_config.json`) and other clients: see
 
 All tools are read-only.
 
-All tools require bMS 2026 R1.
+All tools require bMS 2026 R1; the threshold tools require 2026 R2.
 
 | Tool | Description |
 |------|-------------|
@@ -59,8 +59,10 @@ All tools require bMS 2026 R1.
 | `list_udg_folders` | **(26R1)** List all UDG folders in baramundi |
 | `get_udg_folder` | **(26R1)** Get details of a specific UDG folder |
 | `list_udg_folders_by_folder` | **(26R1)** List sub-folders within a UDG folder |
+| `list_thresholds` | **(26R2)** List the thresholds on UDGs (endpoint count against an upper or lower limit, with a notification severity): all, or one group's with `dynamicGroupId` |
+| `get_threshold` | **(26R2)** Get one threshold by GUID |
 
-> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later.
+> Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later. Tools marked **(26R2)** need 2026 R2; on 26R1 they aren't listed and are refused by name.
 
 ---
 

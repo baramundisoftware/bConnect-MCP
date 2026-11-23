@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `deviceId` (exactly one of the two). On 26R1 the tool offers `deviceId` only, as before; a call
   without it is refused naming the route, as is `endpointId` (naming 26R2). `deviceId` is no
   longer marked required in the schema, since on 26R2 either argument will do.
+- **Universal dynamic group thresholds, read** (#354, bMS 26R2): `list_thresholds` (all, or one
+  group's with `dynamicGroupId`; paging, `OrderBy`, `SearchQuery`, `countOnly`) and
+  `get_threshold`. Not listed on 26R1, and refused by name there.
+- **READMEs give the 26R2 tool counts** (#354): the root table has a 26R2 column, server READMEs
+  mark 26R2-only tools **(26R2)**, and the README guard checks all three releases.
 
 ### Security
 - **26R2 API keys** (#280): creating an API key answers with its secret, so that route is behind

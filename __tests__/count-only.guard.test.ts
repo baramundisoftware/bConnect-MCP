@@ -28,7 +28,7 @@ import { ID, ROOT, SERVERS, callsOf, connect, createRecorder, domainOf, guardEnv
  * variants each count (REQ-SRV-029); search_endpoints and list_group_endpoints are gone (−2),
  * their routes stay reachable through list_endpoints and list_endpoints_by_logical_group.
  */
-const COUNTABLE = { '25R2': 103, '26R1': 117, '26R2': 117 } as const;
+const COUNTABLE = { '25R2': 103, '26R1': 117, '26R2': 119 } as const;
 const TOTAL = 4242;
 const INVALID_PARAMS = -32602;
 /** Arguments that page or sort; everything else the caller gives is a filter. */

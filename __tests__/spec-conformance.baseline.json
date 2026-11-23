@@ -15,8 +15,5 @@
   "coverage 26R2 servermanagement - UpdateApiKey": 357,
   "coverage 26R2 universaldynamicgroups - CreateThreshold": 355,
   "coverage 26R2 universaldynamicgroups - DeleteThreshold": 355,
-  "coverage 26R2 universaldynamicgroups - GetThreshold": 354,
-  "coverage 26R2 universaldynamicgroups - GetThresholds": 354,
-  "coverage 26R2 universaldynamicgroups - GetThresholdsForUniversalDynamicGroup": 354,
   "coverage 26R2 universaldynamicgroups - UpdateThreshold": 355
 }
