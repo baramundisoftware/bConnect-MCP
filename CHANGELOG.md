@@ -82,6 +82,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tarball holds that file, a README, the licence and `package.json`. CI packs it on every run,
   installs it into an empty folder and starts the installed command on Linux and Windows, Node 22
   and 24 (`scripts/check-package.mjs`).
+  Publishing is prepared (step 3): `.github/workflows/npm.yml` runs the package check on Node 22,
+  24 and 26 and `npm publish --dry-run --tag next` on every change to the package and on version
+  tags, where the tag must equal the package version. The package is no longer private;
+  `publishConfig` sets public access and provenance. A `prepublishOnly` guard refuses a publish
+  from outside GitHub Actions or under a tag other than `next`. Nothing is published yet: the
+  first publish (step 4) needs a separate approval.
 
 ### Changed
 - **The default release is 26R2** (was 26R1), now that 26R2 passed the live run (bMS 26.2.147.11,
