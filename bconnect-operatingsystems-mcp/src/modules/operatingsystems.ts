@@ -1,4 +1,5 @@
 import type { AxiosInstance } from 'axios';
+import type { JsonPatchOperation } from '@bconnect/mcp-core';
 import type { components, operations } from '../generated/operatingsystems-types.js';
 
 // Type aliases
@@ -15,7 +16,6 @@ type GetWindowsEndpointsParams = operations['GetWindowsEndpoints']['parameters']
 // Write operation types - Phase 3
 type FolderForCreation = components['schemas']['FolderForCreation'];
 type FolderUpdate = operations['UpdateFolder']['requestBody']['content']['application/json-patch+json'];
-type WindowsEndpointUpdate = operations['UpdateWindowsEndpoint']['requestBody']['content']['application/json-patch+json'];
 
 export class OperatingSystemsModule {
   private basePath = '/operatingsystems/v2.0';
@@ -91,7 +91,7 @@ export class OperatingSystemsModule {
   /**
    * Update Windows endpoint OS install configuration
    */
-  async updateWindowsEndpoint(id: string, updateData: WindowsEndpointUpdate): Promise<WindowsEndpoint> {
+  async updateWindowsEndpoint(id: string, updateData: JsonPatchOperation[]): Promise<WindowsEndpoint> {
     const response = await this.httpClient.patch<WindowsEndpoint>(`${this.basePath}/WindowsEndpoints/${id}`, updateData);
     return response.data;
   }

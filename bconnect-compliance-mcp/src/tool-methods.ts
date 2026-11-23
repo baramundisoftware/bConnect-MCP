@@ -11,9 +11,9 @@ import type { ToolMethodTable } from "@bconnect/mcp-core";
 
 export const TOOL_METHODS: ToolMethodTable = {
   list_detected_rule_violations: ["GET"],
-  list_detected_rule_violations_for_endpoint: ["GET"],
+  list_detected_rule_violations_by_endpoint: ["GET"],
   list_detected_vulnerabilities: ["GET"],
-  list_detected_vulnerabilities_for_endpoint: ["GET"],
+  list_detected_vulnerabilities_by_endpoint: ["GET"],
   list_mobile_device_rules: ["GET"],
   get_mobile_device_rule: ["GET"],
   list_vulnerabilities: ["GET"],

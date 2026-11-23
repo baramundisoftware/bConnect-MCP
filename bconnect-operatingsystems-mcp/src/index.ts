@@ -18,7 +18,8 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, protocolError } from "@bconnect/mcp-core";
+import { refuseReplacedTool, refuseRenamedArguments, jsonPatchArgument, validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, protocolError } from "@bconnect/mcp-core";
+import { REPLACED_TOOLS, RENAMED_ARGUMENTS } from "./replaced-tools.js";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_METHODS } from "./tool-methods.js";
 
@@ -110,9 +111,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve OS installation configuration for." }
+            id: { type: "string", description: "GUID of the Windows endpoint to retrieve OS installation configuration for." }
           },
-          required: ["endpointId"]
+          required: ["id"]
         }
       },
 
@@ -164,13 +165,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            endpointId: { type: "string", description: "GUID of the Windows endpoint to update OS installation configuration for." },
+            id: { type: "string", description: "GUID of the Windows endpoint to update OS installation configuration for." },
             patchOperations: {
               type: "array",
               description: "JSON Patch operations array. Each item has op (replace/add/remove), path (JSON path), and value fields."
             }
           },
-          required: ["endpointId", "patchOperations"]
+          required: ["id", "patchOperations"]
         }
       },
     ];
@@ -220,6 +221,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // countOnly (#165): count with one 1-row request instead of loading a page.
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
+    // A renamed tool or argument answers with its new name; it never runs (#342).
+    refuseReplacedTool(REPLACED_TOOLS, TOOL_RELEASES, name);
+    refuseRenamedArguments(RENAMED_ARGUMENTS, name, args);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
     await toolCatalog.refuseUndeclared(name, args);
 
@@ -273,7 +277,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "get_os_windows_endpoint": {
-          const result = await os.getWindowsEndpoint(args!.endpointId as string);
+          const result = await os.getWindowsEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
@@ -297,7 +301,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "update_os_windows_endpoint": {
-          const result = await os.updateWindowsEndpoint(args!.endpointId as string, args!.patchOperations as never);
+          const result = await os.updateWindowsEndpoint(args!.id as string, jsonPatchArgument(args!.patchOperations, "patchOperations"));
           return toolJsonResult(result);
         }
 

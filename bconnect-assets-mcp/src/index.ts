@@ -17,7 +17,8 @@ import {
   ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { refuseReplacedTool, refuseRenamedArguments, validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { REPLACED_TOOLS, RENAMED_ARGUMENTS } from "./replaced-tools.js";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -187,7 +188,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
 
       {
-        name: "list_assets_in_asset_stock",
+        name: "list_asset_stock_assets",
         description: "List all assets located in the Asset Stock (the well-known stock container, GUID: D4E3C25B-A3AB-4204-9D26-08ECC6237DC6). Returns a paged list of assets not currently assigned to an endpoint or user.",
         inputSchema: {
           type: "object",
@@ -490,7 +491,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         validateOrThrow(args, AssetsRules.updateAsset()); return;
       case "delete_asset":
         validateOrThrow(args, AssetsRules.deleteAsset()); return;
-      case "list_assets_in_asset_stock":
+      case "list_asset_stock_assets":
         validateOrThrow(args, AssetsRules.listAssetsInAssetStock()); return;
       case "list_assets_by_logical_group":
         validateOrThrow(args, AssetsRules.listAssetsByLogicalGroup()); return;
@@ -543,6 +544,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
     // A tool the selected release lacks is refused by name first, before its arguments are
+    // A renamed tool or argument answers with its new name; it never runs (#342).
+    refuseReplacedTool(REPLACED_TOOLS, TOOL_RELEASES, name);
+    refuseRenamedArguments(RENAMED_ARGUMENTS, name, args);
     // checked against a schema the release doesn't list, and before anything is sent (#159).
     refuseUnavailableTool(TOOL_RELEASES, name);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
@@ -603,8 +607,8 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult({ success: true, id: args!.id });
         }
 
-        case "list_assets_in_asset_stock": {
-          const result = await assets.getAssetsAssetStock(pickArguments(args ?? {}, sends("list_assets_in_asset_stock")));
+        case "list_asset_stock_assets": {
+          const result = await assets.getAssetsAssetStock(pickArguments(args ?? {}, sends("list_asset_stock_assets")));
           return toolJsonResult(result);
         }
 

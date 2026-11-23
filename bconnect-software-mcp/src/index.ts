@@ -18,7 +18,8 @@ import {
   ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { refuseReplacedTool, refuseRenamedArguments, validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, pickArguments, declaredArgumentsOnly, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { REPLACED_TOOLS, RENAMED_ARGUMENTS } from "./replaced-tools.js";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -101,7 +102,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
       },
       {
-        name: "list_installed_software_by_dynamic_group",
+        name: "list_installed_software_by_universal_dynamic_group",
         description: "List the installed Windows software on the endpoints of a universal dynamic group (not a classic dynamic group), identified by its GUID. Returns a paged list of installed applications across the group's members with software name, vendor, version and endpoint.",
         inputSchema: {
           type: "object",
@@ -132,9 +133,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            bundleId: { type: "string", description: "GUID of the software bundle to retrieve." }
+            id: { type: "string", description: "GUID of the software bundle to retrieve." }
           },
-          required: ["bundleId"]
+          required: ["id"]
         }
       },
       {
@@ -158,9 +159,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            bundleId: { type: "string", description: "GUID of the software bundle to delete." }
+            id: { type: "string", description: "GUID of the software bundle to delete." }
           },
-          required: ["bundleId"]
+          required: ["id"]
         }
       },
 
@@ -316,7 +317,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         validateOrThrow(args, SoftwareRules.listInstalledSoftwareByEndpoint()); return;
       case "list_installed_software_by_logical_group":
         validateOrThrow(args, SoftwareRules.listInstalledSoftwareByLogicalGroup()); return;
-      case "list_installed_software_by_dynamic_group":
+      case "list_installed_software_by_universal_dynamic_group":
         validateOrThrow(args, SoftwareRules.listInstalledSoftwareByDynamicGroup()); return;
       // Software Bundles (26R1)
       case "list_software_bundles":
@@ -359,6 +360,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
     // A tool the selected release lacks is refused by name first, before its arguments are
+    // A renamed tool or argument answers with its new name; it never runs (#342).
+    refuseReplacedTool(REPLACED_TOOLS, TOOL_RELEASES, name);
+    refuseRenamedArguments(RENAMED_ARGUMENTS, name, args);
     // checked against a schema the release doesn't list, and before anything is sent (#159).
     refuseUnavailableTool(TOOL_RELEASES, name);
     // Refuse arguments the tool doesn't declare, before anything else (REQ-SRV-022).
@@ -410,9 +414,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "list_installed_software_by_dynamic_group": {
+        case "list_installed_software_by_universal_dynamic_group": {
           const { universalDynamicGroupId, ...params } = args as Record<string, unknown>;
-          const result = await sw.getInstalledSoftwareByUniversalDynamicGroup(universalDynamicGroupId as string, pickArguments(params, sends("list_installed_software_by_dynamic_group")));
+          const result = await sw.getInstalledSoftwareByUniversalDynamicGroup(universalDynamicGroupId as string, pickArguments(params, sends("list_installed_software_by_universal_dynamic_group")));
           return toolJsonResult(result);
         }
 
@@ -423,7 +427,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "get_software_bundle": {
-          const result = await sw.getSoftwareBundle(args!.bundleId as string);
+          const result = await sw.getSoftwareBundle(args!.id as string);
           return toolJsonResult(result);
         }
 
@@ -436,7 +440,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "delete_software_bundle": {
-          await sw.deleteSoftwareBundle(args!.bundleId as string);
+          await sw.deleteSoftwareBundle(args!.id as string);
           return toolJsonResult({ success: true });
         }
 

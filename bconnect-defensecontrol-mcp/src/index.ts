@@ -19,7 +19,8 @@ import {
   ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { refuseReplacedTool, refuseRenamedArguments, validateOrThrow, toolErrorResult, lazyClient, withUnverifiedWriteMarker, declaredArgumentsOnly, pickArguments, queryParameters, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, withWriteToolsHidden, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError } from "@bconnect/mcp-core";
+import { REPLACED_TOOLS, RENAMED_ARGUMENTS } from "./replaced-tools.js";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -62,7 +63,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   // until their live check is recorded (REQ-XC-003 AC 5).
   const WRITE_TOOLS = new Set<string>([
   "update_bitlocker_pin",
-  "patch_local_admin_user_credentials",
+  "update_local_admin_credentials",
   "refresh_local_admin_account_expiry",
   ]);
 
@@ -85,9 +86,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve BitLocker status for." }
+            id: { type: "string", description: "GUID of the Windows endpoint to retrieve BitLocker status for." }
           },
-          required: ["endpointId"]
+          required: ["id"]
         }
       },
 
@@ -104,7 +105,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
       },
       {
-        name: "patch_local_admin_user_credentials",
+        name: "update_local_admin_credentials",
         description: "Set the requested expiration date of the managed local administrator account on a Windows endpoint. This is the only thing the operation can change: it can't set a password or user name. A date in the past makes the client generate new credentials. The requested date applies once the client acknowledges it (then the account's expiration date holds the new value); use refresh_local_admin_account_expiry to ask an online client to apply it now. Returns the current local administrator account, which includes its credentials.",
         inputSchema: {
           type: "object",
@@ -121,7 +122,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       },
       {
         name: "refresh_local_admin_account_expiry",
-        description: "Ask a Windows endpoint's client to apply the requested expiration date of its managed local administrator account now (set it with patch_local_admin_user_credentials). Only works while the client is online. Returns true if the client changed its expiration date, false if it couldn't be reached. It does not refresh any other client data.",
+        description: "Ask a Windows endpoint's client to apply the requested expiration date of its managed local administrator account now (set it with update_local_admin_credentials). Only works while the client is online. Returns true if the client changed its expiration date, false if it couldn't be reached. It does not refresh any other client data.",
         inputSchema: {
           type: "object",
           properties: {
@@ -148,9 +149,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            threatId: { type: "string", description: "GUID of the Microsoft Defender threat to retrieve details for." }
+            id: { type: "string", description: "GUID of the Microsoft Defender threat to retrieve details for." }
           },
-          required: ["threatId"]
+          required: ["id"]
         }
       },
       {
@@ -192,9 +193,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         inputSchema: {
           type: "object",
           properties: {
-            endpointId: { type: "string", description: "GUID of the Windows endpoint to retrieve Microsoft Defender status for." }
+            id: { type: "string", description: "GUID of the Windows endpoint to retrieve Microsoft Defender status for." }
           },
-          required: ["endpointId"]
+          required: ["id"]
         }
       },
     ];
@@ -255,7 +256,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       case "get_local_admin_accounts":
         validateOrThrow(args, DefenseControlRules.getLocalAdminAccounts());
         return;
-      case "patch_local_admin_user_credentials":
+      case "update_local_admin_credentials":
         validateOrThrow(args, DefenseControlRules.patchLocalAdminUserCredentials());
         return;
       case "refresh_local_admin_account_expiry":
@@ -287,6 +288,9 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
   server.setRequestHandler(CallToolRequestSchema, withCountOnly(QUERY_PARAMETERS, () => selectedRelease(), async (request) => {
     const { name, arguments: args } = request.params;
     // A tool the selected release lacks is refused by name first, before its arguments are
+    // A renamed tool or argument answers with its new name; it never runs (#342).
+    refuseReplacedTool(REPLACED_TOOLS, TOOL_RELEASES, name);
+    refuseRenamedArguments(RENAMED_ARGUMENTS, name, args);
     // checked against a schema the release doesn't list, and before anything is sent (#159).
     refuseUnavailableTool(TOOL_RELEASES, name);
     // A renamed tool answers with its new name (#177).
@@ -321,7 +325,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       "get_bitlocker_secrets",
       "get_local_admin_accounts",
       "update_bitlocker_pin",
-      "patch_local_admin_user_credentials",
+      "update_local_admin_credentials",
     ]);
     if (SECRET_READ_TOOLS.has(name) && process.env.ALLOW_SECRET_READ !== "true") {
       return {
@@ -357,7 +361,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "get_bitlocker_windows_endpoint": {
-          const result = await dc.getBitLockerWindowsEndpoint(args!.endpointId as string);
+          const result = await dc.getBitLockerWindowsEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 
@@ -376,7 +380,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
           return toolJsonResult(result);
         }
 
-        case "patch_local_admin_user_credentials": {
+        case "update_local_admin_credentials": {
           const result = await dc.patchLocalAdminUserCredentials(args!.endpointId as string, args!.requestedExpirationDate as string);
           return toolJsonResult(result);
         }
@@ -393,7 +397,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "get_defender_threat": {
-          const result = await dc.getMicrosoftDefenderThreat(args!.threatId as string);
+          const result = await dc.getMicrosoftDefenderThreat(args!.id as string);
           return toolJsonResult(result);
         }
 
@@ -415,7 +419,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         }
 
         case "get_defender_windows_endpoint": {
-          const result = await dc.getMicrosoftDefenderWindowsEndpoint(args!.endpointId as string);
+          const result = await dc.getMicrosoftDefenderWindowsEndpoint(args!.id as string);
           return toolJsonResult(result);
         }
 

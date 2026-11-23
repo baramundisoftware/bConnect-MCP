@@ -15,7 +15,7 @@ export const TOOL_METHODS: ToolMethodTable = {
   get_asset: ["GET"],
   update_asset: ["PATCH"],
   delete_asset: ["DELETE"],
-  list_assets_in_asset_stock: ["GET"],
+  list_asset_stock_assets: ["GET"],
   list_assets_by_logical_group: ["GET"],
   list_assets_by_windows_endpoint: ["GET"],
   list_asset_stock_folders: ["GET"],

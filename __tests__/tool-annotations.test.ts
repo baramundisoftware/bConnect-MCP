@@ -29,7 +29,7 @@ describe('toolEffect', () => {
   });
 
   it('is destructive for a write listed with a reason', () => {
-    expect(toolEffect('msw_cleanup', ['POST'])).toBe('destructive');
+    expect(toolEffect('run_msw_cleanup', ['POST'])).toBe('destructive');
     expect(toolEffect('update_bitlocker_pin', ['PATCH'])).toBe('destructive');
   });
 
@@ -58,7 +58,7 @@ describe('toolTitle', () => {
     expect(toolTitle('list_ios_endpoints_by_ad_user')).toBe('List iOS endpoints by AD user');
     expect(toolTitle('link_entra_id_data')).toBe('Link Entra ID data');
     expect(toolTitle('simulate_msw_cleanup')).toBe('Simulate MSW cleanup');
-    expect(toolTitle('msw_cleanup')).toBe('MSW cleanup');
+    expect(toolTitle('run_msw_cleanup')).toBe('Run MSW cleanup');
     expect(toolTitle('list_udg_folders')).toBe('List UDG folders');
     expect(toolTitle('get_os_windows_endpoint')).toBe('Get OS Windows endpoint');
     expect(toolTitle('list_api_keys')).toBe('List API keys');
@@ -122,7 +122,7 @@ describe('withToolAnnotations', () => {
 });
 
 describe('withWriteToolsHidden', () => {
-  const table = { list_things: ['GET'], create_thing: ['POST'], delete_thing: ['DELETE'], get_more: ['GET'], msw_cleanup: ['POST'] };
+  const table = { list_things: ['GET'], create_thing: ['POST'], delete_thing: ['DELETE'], get_more: ['GET'], run_msw_cleanup: ['POST'] };
   const result = () => ({
     nextCursor: 'c',
     tools: [
@@ -130,7 +130,7 @@ describe('withWriteToolsHidden', () => {
       { name: 'create_thing', description: 'd2' },
       { name: 'delete_thing', description: 'd3' },
       { name: 'get_more', description: 'd4', inputSchema: { type: 'object', required: ['id'] } },
-      { name: 'msw_cleanup', description: 'd5' },
+      { name: 'run_msw_cleanup', description: 'd5' },
     ],
   });
 

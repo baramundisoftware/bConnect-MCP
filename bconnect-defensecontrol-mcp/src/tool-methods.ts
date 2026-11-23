@@ -13,7 +13,7 @@ export const TOOL_METHODS: ToolMethodTable = {
   list_bitlocker_windows_endpoints: ["GET"],
   get_bitlocker_windows_endpoint: ["GET"],
   get_local_admin_accounts: ["GET"],
-  patch_local_admin_user_credentials: ["PATCH"],
+  update_local_admin_credentials: ["PATCH"],
   refresh_local_admin_account_expiry: ["POST"],
   list_defender_threats: ["GET"],
   get_defender_threat: ["GET"],

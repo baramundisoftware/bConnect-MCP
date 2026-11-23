@@ -56,7 +56,7 @@ been checked against a real bMS yet.
 | `get_job_definition` | Get details of a specific job definition by GUID |
 | `list_job_instances` | List all job instances (execution history) |
 | `get_job_instance` | Get details of a specific job instance by GUID |
-| `list_endpoint_job_instances` | List all job instances for a specific endpoint |
+| `list_job_instances_by_endpoint` | List all job instances for a specific endpoint |
 | `list_job_instances_by_definition` | List all instances of a specific job definition |
 | `list_job_instances_by_logical_group` | List job instances for a logical group's endpoints |
 | `list_job_definitions_by_folder` | List job definitions within a specific folder |

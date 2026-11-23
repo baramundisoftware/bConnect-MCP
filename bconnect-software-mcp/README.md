@@ -55,7 +55,7 @@ been checked against a real bMS yet.
 | `list_installed_windows_software` | List all installed Windows software across all endpoints |
 | `list_installed_software_by_endpoint` | List installed software on a specific endpoint |
 | `list_installed_software_by_logical_group` | List installed software for a logical group's endpoints |
-| `list_installed_software_by_dynamic_group` | List installed software for a Universal Dynamic Group |
+| `list_installed_software_by_universal_dynamic_group` | List installed software for a Universal Dynamic Group |
 | `list_software_bundles` | **(26R1)** List all software bundles in baramundi |
 | `get_software_bundle` | **(26R1)** Get details of a specific software bundle |
 | `create_software_bundle` | **(26R1)** Create a new software bundle |

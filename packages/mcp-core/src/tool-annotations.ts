@@ -24,8 +24,8 @@ export type ToolEffect = "read" | "write" | "destructive";
  * other write is not destructive. Add a tool only with its reason.
  */
 export const DESTRUCTIVE_WRITE_TOOLS: ReadonlyMap<string, string> = new Map<string, string>([
-  ["msw_cleanup", "Deletes managed-software files from the master DIP; no tool restores them."],
-  ["patch_local_admin_user_credentials", "A requested expiration date in the past makes the endpoint generate new local admin credentials; the current ones stop working."],
+  ["run_msw_cleanup", "Deletes managed-software files from the master DIP; no tool restores them."],
+  ["update_local_admin_credentials", "A requested expiration date in the past makes the endpoint generate new local admin credentials; the current ones stop working."],
   ["update_bitlocker_pin", "Replaces the BitLocker PIN; the old PIN can't be restored, and the device can't be unlocked without the new one."],
   ["create_job_instance", "Runs a job definition on an endpoint; a job can uninstall software, run any script or reinstall the OS."],
   ["start_job_instance", "Runs a job on an endpoint; a job can uninstall software, run any script or reinstall the OS."],

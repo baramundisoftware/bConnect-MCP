@@ -79,7 +79,7 @@ been checked against a real bMS yet.
 | `cancel_scheduled_restart` | Cancel a scheduled server restart |
 | `list_api_keys` | **(26R1)** List all API keys configured in baramundi |
 | `simulate_msw_cleanup` | **(26R1)** Simulate an MSW cleanup operation (dry run) |
-| `msw_cleanup` | **(26R1)** Clean up managed software files on the master DIP; reports `wasSuccessful` |
+| `run_msw_cleanup` | **(26R1)** Clean up managed software files on the master DIP; reports `wasSuccessful` |
 | `list_download_jobs` | **(26R1)** List all download jobs |
 | `get_download_job` | **(26R1)** Get details of a specific download job |
 | `get_api_key` | **(26R2)** Get one API key by GUID (never its secret) |

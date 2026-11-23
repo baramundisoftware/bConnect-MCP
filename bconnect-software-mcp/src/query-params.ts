@@ -36,7 +36,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_installed_software_by_dynamic_group: {
+    list_installed_software_by_universal_dynamic_group: {
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable value is Vendor, Name, Category."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Vendor, Name, Category (e.g. Name asc)."},
       Category: {"type":"string","description":"Filters results by exactly matching category."},
@@ -71,7 +71,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_installed_software_by_dynamic_group: {
+    list_installed_software_by_universal_dynamic_group: {
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable value is Vendor, Name, Category."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Vendor, Name, Category (e.g. Name asc)."},
       Category: {"type":"string","description":"Filters results by exactly matching category."},
@@ -145,7 +145,7 @@ export const QUERY_PARAMETERS: QueryParameterTable = {
       PageSize: PAGE_SIZE_PROPERTY,
       countOnly: COUNT_ONLY_PROPERTY,
     },
-    list_installed_software_by_dynamic_group: {
+    list_installed_software_by_universal_dynamic_group: {
       SearchQuery: {"type":"string","description":"Filters results by matching the given value against searchable properties. Searchable value is Vendor, Name, Category."},
       OrderBy: {"type":"string","description":"Sorts results by property name and with sort direction. Multiple properties are separated by comma. Possible values are Vendor, Name, Category (e.g. Name asc)."},
       Category: {"type":"string","description":"Filters results by exactly matching category."},

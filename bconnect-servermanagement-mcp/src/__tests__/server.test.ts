@@ -47,7 +47,7 @@ const EXPECTED_25R2_TOOLS = [
 const EXPECTED_26R1_ONLY_TOOLS = [
   'list_api_keys',
   'simulate_msw_cleanup',
-  'msw_cleanup',
+  'run_msw_cleanup',
   'list_download_jobs',
   'get_download_job',
 ];

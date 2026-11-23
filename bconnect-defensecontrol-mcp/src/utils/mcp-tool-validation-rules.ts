@@ -30,7 +30,7 @@ export const DefenseControlRules = {
   listBitlockerWindowsEndpoints: (): ValidationRule[] => paginationRules(),
 
   getBitlockerWindowsEndpoint: (): ValidationRule[] => [
-    CommonRules.guid('endpointId')
+    CommonRules.guid('id')
   ],
 
   // 26R1 only
@@ -78,7 +78,7 @@ export const DefenseControlRules = {
   listDefenderThreats: (): ValidationRule[] => paginationRules(),
 
   getDefenderThreat: (): ValidationRule[] => [
-    CommonRules.guid('threatId')
+    CommonRules.guid('id')
   ],
 
   listDefenderThreatsByEndpoint: (): ValidationRule[] => [
@@ -95,6 +95,6 @@ export const DefenseControlRules = {
   listDefenderWindowsEndpoints: (): ValidationRule[] => paginationRules(),
 
   getDefenderWindowsEndpoint: (): ValidationRule[] => [
-    CommonRules.guid('endpointId')
+    CommonRules.guid('id')
   ]
 };

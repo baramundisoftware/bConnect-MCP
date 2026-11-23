@@ -87,7 +87,7 @@ export const TOOL_RULES: Record<string, () => ValidationRule[]> = {
   get_job_folder: JobsRules.getJobFolder,
   get_job_instance: JobsRules.getJobInstance,
   get_kiosk_release: () => [CommonRules.guid('id')],
-  list_endpoint_job_instances: JobsRules.listEndpointJobInstances,
+  list_job_instances_by_endpoint: JobsRules.listEndpointJobInstances,
   list_job_definitions: JobsRules.listJobDefinitions,
   list_job_definitions_by_folder: JobsRules.listJobDefinitionsByFolder,
   list_job_folders: JobsRules.listJobFolders,

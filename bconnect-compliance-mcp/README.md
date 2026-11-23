@@ -52,9 +52,9 @@ All tools are read-only.
 | Tool | Description |
 |------|-------------|
 | `list_detected_rule_violations` | **(26R1)** List all compliance rule violations across endpoints |
-| `list_detected_rule_violations_for_endpoint` | **(26R1)** List compliance violations for a specific endpoint |
+| `list_detected_rule_violations_by_endpoint` | **(26R1)** List compliance violations for a specific endpoint |
 | `list_detected_vulnerabilities` | **(26R1)** List all detected CVE vulnerabilities across endpoints |
-| `list_detected_vulnerabilities_for_endpoint` | **(26R1)** List CVE vulnerabilities for a specific endpoint |
+| `list_detected_vulnerabilities_by_endpoint` | **(26R1)** List CVE vulnerabilities for a specific endpoint |
 | `list_mobile_device_rules` | **(26R1)** List all mobile device compliance rules |
 | `get_mobile_device_rule` | **(26R1)** Get details of a specific mobile device rule |
 | `list_vulnerabilities` | **(26R1)** List all CVEs in the baramundi vulnerability library |

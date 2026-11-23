@@ -44,6 +44,10 @@ OpenAPI spec file name (without extension, lowercase). Examples:
 - `activedirectory.json` → `bconnect-activedirectory-mcp`
 - `universaldynamicgroups.json` → `bconnect-universaldynamicgroups-mcp`
 
+Tools are named `<verb>_<object>[_by_<parent>]`, and the ID of the object a tool names is `id`:
+the rules, the verbs and how to rename a tool are in [docs/TOOL_NAMING.md](docs/TOOL_NAMING.md).
+`__tests__/tool-naming.guard.test.ts` checks every tool against them.
+
 ## Version Scheme
 
 Versions are `26.1.x`: `26.1` for the API generation (baramundi Management Suite 2026 R1), `x`

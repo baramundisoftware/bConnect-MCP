@@ -114,7 +114,7 @@ describe("POST /mcp with MCP_GATEWAY_COMBINED=all", () => {
   });
 
   it("answers a call as the domain's own endpoint does", async () => {
-    const call = { name: "get_vulnerability", arguments: { vulnerabilityId: VULNERABILITY } };
+    const call = { name: "get_vulnerability", arguments: { id: VULNERABILITY } };
     const own = await (await connect(`${gateway.baseUrl}/compliance/mcp`)).callTool(call) as CallToolResult;
     const combined = await (await connect(`${gateway.baseUrl}/mcp`)).callTool(call) as CallToolResult;
     expect(own.isError).not.toBe(true);

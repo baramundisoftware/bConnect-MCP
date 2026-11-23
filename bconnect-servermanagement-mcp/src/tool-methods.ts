@@ -41,7 +41,7 @@ export const TOOL_METHODS: ToolMethodTable = {
   update_api_key: ["PATCH"],
   delete_api_key: ["DELETE"],
   simulate_msw_cleanup: ["POST"],
-  msw_cleanup: ["POST"],
+  run_msw_cleanup: ["POST"],
   list_download_jobs: ["GET"],
   get_download_job: ["GET"],
 };

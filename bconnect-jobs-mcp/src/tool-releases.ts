@@ -14,7 +14,7 @@ export const TOOL_RELEASES: ToolReleaseTable = {
   get_job_definition: ["25R2", "26R1", "26R2"],
   list_job_instances: ["25R2", "26R1", "26R2"],
   get_job_instance: ["25R2", "26R1", "26R2"],
-  list_endpoint_job_instances: ["25R2", "26R1", "26R2"],
+  list_job_instances_by_endpoint: ["25R2", "26R1", "26R2"],
   list_job_instances_by_definition: ["25R2", "26R1", "26R2"],
   list_job_instances_by_logical_group: ["25R2", "26R1", "26R2"],
   list_job_definitions_by_folder: ["25R2", "26R1", "26R2"],

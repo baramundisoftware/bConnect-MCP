@@ -21,7 +21,7 @@ const EXPECTED_TOOLS_25R2 = [
   'get_bitlocker_windows_endpoint',
   // Local Admin
   'get_local_admin_accounts',
-  'patch_local_admin_user_credentials',
+  'update_local_admin_credentials',
   'refresh_local_admin_account_expiry',
   // Microsoft Defender Threats
   'list_defender_threats',
@@ -138,17 +138,17 @@ describe('bconnect-defensecontrol-mcp', () => {
 
   // Validator-migration regression tests (centralised validateOrThrow)
   describe('validator rejects bad arguments before reaching bConnect', () => {
-    it('get_bitlocker_windows_endpoint: missing endpointId', async () => {
+    it('get_bitlocker_windows_endpoint: missing id', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({ name: 'get_bitlocker_windows_endpoint', arguments: {} })
-      ).rejects.toThrow(/endpointId is required/i);
+      ).rejects.toThrow(/id is required/i);
     });
 
-    it('get_defender_threat: threatId not a GUID', async () => {
+    it('get_defender_threat: id not a GUID', async () => {
       const { client } = await startServer();
       await expect(
-        client.callTool({ name: 'get_defender_threat', arguments: { threatId: 'oops' } })
+        client.callTool({ name: 'get_defender_threat', arguments: { id: 'oops' } })
       ).rejects.toThrow(/guid/i);
     });
 
@@ -159,11 +159,11 @@ describe('bconnect-defensecontrol-mcp', () => {
       ).rejects.toThrow(/logicalGroupId is required/i);
     });
 
-    it('patch_local_admin_user_credentials: requestedExpirationDate not a date-time', async () => {
+    it('update_local_admin_credentials: requestedExpirationDate not a date-time', async () => {
       const { client } = await startServer();
       await expect(
         client.callTool({
-          name: 'patch_local_admin_user_credentials',
+          name: 'update_local_admin_credentials',
           arguments: { endpointId: 'd0000001-0001-0001-0001-000000000001', requestedExpirationDate: 'oops' }
         })
       ).rejects.toThrow(/requestedExpirationDate/i);
@@ -224,8 +224,8 @@ describe('bconnect-defensecontrol-mcp', () => {
     const ENDPOINT = 'd0000001-0001-0001-0001-000000000001';
     const SECRET_WRITES = [
       ['update_bitlocker_pin', '26R1', { endpointId: ENDPOINT, patchOperations: [{ op: 'replace', path: '/startupPin', value: '123456' }] }],
-      ['patch_local_admin_user_credentials', '26R1', { endpointId: ENDPOINT, requestedExpirationDate: '2027-01-01T00:00:00Z' }],
-      ['patch_local_admin_user_credentials', '25R2', { endpointId: ENDPOINT, requestedExpirationDate: '2027-01-01T00:00:00Z' }],
+      ['update_local_admin_credentials', '26R1', { endpointId: ENDPOINT, requestedExpirationDate: '2027-01-01T00:00:00Z' }],
+      ['update_local_admin_credentials', '25R2', { endpointId: ENDPOINT, requestedExpirationDate: '2027-01-01T00:00:00Z' }],
     ] as const;
 
     it.each(SECRET_WRITES)('blocks %s (%s) with ALLOW_WRITE_OPERATIONS=true but no ALLOW_SECRET_READ', async (name, release, args) => {
