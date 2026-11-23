@@ -107,7 +107,8 @@ const isWorkspaceName = (name: string) => name.startsWith('@bconnect/') || /^bco
 
 /** What a package's runtime needs from npm: its sources' imports, and for a bundle those of what it bundles. */
 function runtimeImports(dir: string): string[] {
-  const bundled = BUNDLES[dir];
+  // MANIFEST_DIRS joins with the platform separator: packages\\bconnect-mcp on Windows.
+  const bundled = BUNDLES[dir.replace(/\\/g, '/')];
   if (!bundled) {return [...sourceImports(dir)];}
   return [...new Set([dir, ...bundled].flatMap((d) => [...sourceImports(d)]))].filter((name) => !isWorkspaceName(name));
 }
