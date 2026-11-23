@@ -1,0 +1,111 @@
+# npm package @baramundi/bconnect-mcp: check on every change, publish dry run (#297).
+#
+# ── What it does ────────────────────────────────────────────────────────────
+# `check` packs the package, installs the tarball into an empty folder and
+# starts the installed command (scripts/check-package.mjs) on Node 22, 24 and
+# 26. The `gate` job of ci.yml runs the same check on Linux and Windows with 22
+# and 24; Node 26 is checked here, outside the ruleset's required checks.
+#
+# `publish` runs `npm publish --dry-run --tag next`: npm builds the tarball and
+# reports what it would publish, and uploads nothing. On a version tag it also
+# checks that the tag equals the package version. The first real publish is a
+# separate change (#297 step 4) that removes `--dry-run`, after approval: npm
+# lets a version be unpublished only within 72 hours.
+#
+# ── Tag rules ───────────────────────────────────────────────────────────────
+# - Only `v<major>.<minor>.<patch>`, as for the gateway image (image.yml).
+# - The tag must equal the version in packages/bconnect-mcp/package.json; the
+#   release-version guard keeps that equal to the root version.
+# - Dist-tag `next` while the project is a Technical Preview: `npm install
+#   @baramundi/bconnect-mcp` without a tag doesn't pick it up. The package's
+#   prepublishOnly guard (publish-guard.mjs) refuses any other tag, and any
+#   publish from outside GitHub Actions.
+#
+# ── Provenance ──────────────────────────────────────────────────────────────
+# publishConfig.provenance is set, so the real publish links the package to
+# this workflow run and commit (#297 AC 2). That needs `id-token: write`, on
+# the publish job only.
+
+name: npm package
+
+on:
+  push:
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']
+  pull_request:
+    paths:
+      - .github/workflows/npm.yml
+      - 'packages/**'
+      - 'bconnect-*-mcp/**'
+      - package.json
+      - package-lock.json
+      - scripts/check-package.mjs
+  workflow_dispatch:
+
+concurrency:
+  group: npm-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: package check (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ["22.23.4", "24", "26"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - run: node scripts/check-package.mjs
+
+  publish:
+    name: publish to npm (dry run)
+    needs: check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # Trusted publishing (OIDC) needs npm 11.5.1 or later.
+      - name: npm version
+        shell: bash
+        run: |
+          echo "npm $(npm --version)"
+          node -e 'const [a,b,c]=process.argv[1].split(".").map(Number);process.exit(a>11||(a===11&&(b>5||(b===5&&c>=1)))?0:1)' "$(npm --version)" \
+            || { echo "::error::npm $(npm --version) is older than 11.5.1, which trusted publishing needs."; exit 1; }
+
+      - name: Tag equals the package version
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        shell: bash
+        run: |
+          version=$(node -p "require('./packages/bconnect-mcp/package.json').version")
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match packages/bconnect-mcp/package.json version $version."
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: npm publish (dry run)
+        working-directory: packages/bconnect-mcp
+        run: npm publish --dry-run --tag next

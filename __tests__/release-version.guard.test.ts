@@ -6,7 +6,8 @@
  * server reports in its MCP handshake (hard-coded in src/index.ts) and the
  * compose image tag. A release once bumped the manifests and left all 14
  * handshake versions on the old number. Everything must match the root
- * package.json; `packages/mcp-core` is private and stays unversioned.
+ * package.json; `packages/mcp-core` is private and stays unversioned. The npm
+ * package `packages/bconnect-mcp` carries the release version too (#297 AC 2).
  */
 import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -27,7 +28,7 @@ describe('release version', () => {
     expect(SERVER_DIRS).toHaveLength(14);
   });
 
-  it.each([...SERVER_DIRS, 'bconnect-mcp-gateway'])('%s/package.json matches the root', (dir) => {
+  it.each([...SERVER_DIRS, 'bconnect-mcp-gateway', 'packages/bconnect-mcp'])('%s/package.json matches the root', (dir) => {
     expect(readJson(`${dir}/package.json`).version).toBe(VERSION);
   });
 
@@ -40,7 +41,7 @@ describe('release version', () => {
   it('root lockfile carries the root version for the root and every workspace', () => {
     const lock = readJson('package-lock.json');
     expect(lock.version).toBe(VERSION);
-    for (const key of ['', ...SERVER_DIRS]) {
+    for (const key of ['', ...SERVER_DIRS, 'packages/bconnect-mcp']) {
       expect(lock.packages[key]?.version, `package-lock.json packages["${key}"]`).toBe(VERSION);
     }
   });

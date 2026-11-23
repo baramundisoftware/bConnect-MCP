@@ -67,7 +67,9 @@ for each release of this project. One release line supports both bMS 2026 R1 and
    checks every route, parameter and body against the spec.
 6. Generate `src/query-params.ts` with `node scripts/generate-query-parameters.mjs`.
 7. Register the server in `bconnect-mcp-gateway/src/app.ts` and add it as a `file:` dependency
-   in `bconnect-mcp-gateway/package.json`.
+   in `bconnect-mcp-gateway/package.json`. Register it for the `bconnect-mcp` command too: in
+   `packages/bconnect-mcp/src/domains.ts` and as a devDependency in
+   `packages/bconnect-mcp/package.json` (the package test checks both against the servers on disk).
 8. Add tests (`src/__tests__/server.test.ts`, a `vitest.config.ts`), the README with its
    environment table and tool table (both checked by tests), and a `.env.example`.
 9. Build and test from the repo root as above.
