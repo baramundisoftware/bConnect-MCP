@@ -32,6 +32,12 @@ request enum gains values. Most other changes add `maxLength` to existing parame
 
 ### What that means for the tools
 
+- **Everything else 26R1 offers** is offered on 26R2 by the same code; only the generated tables
+  (list filters, error meanings) come from the 26R2 specifications.
+- **The industrial-endpoint tools stay 25R2-only:** 26R2 has no industrial-endpoint API either, so
+  `create_industrial_endpoint` and the `IndustrialEndpoint` type of `list_endpoints`,
+  `get_endpoint`, `update_endpoint`, `delete_endpoint` and `list_group_members` aren't offered
+  there and are refused by name (see [25R2 → 26R1](#25r2--26r1)).
 - **`list_cloud_connectors`** isn't listed on 26R2; called by name, it's refused naming the release.
 - **`create_android_endpoint`** offers the three AMAPI profile types on 26R2 only.
 - **The 17 new operations** have no tools yet; each has its own issue (#353 to #357). The

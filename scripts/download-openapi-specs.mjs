@@ -27,6 +27,22 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
+/** 26R1 added compliance and universal dynamic groups; 26R2 has the same modules and file names (#280). */
+const SPECS_26R1 = {
+  activedirectory: "bConnect_Activedirectory.json",
+  assets: "bConnect_Assets.json",
+  compliance: "bConnect_Compliance.json",
+  defensecontrol: "bConnect_Defensecontrol.json",
+  endpoints: "bConnect_Endpoints.json",
+  jobs: "bConnect_Jobs.json",
+  operatingsystems: "bConnect_Operatingsystems.json",
+  servermanagement: "bConnect_Servermanagement.json",
+  software: "bConnect_Software.json",
+  universaldynamicgroups: "bConnect_Universaldynamicgroups.json",
+  updatemanagement: "bConnect_Updatemanagement.json",
+  variables: "bConnect_Variables.json",
+};
+
 /** The module (URL segment) and file name of each specification, per release. */
 export const SPECS = {
   "25R2": {
@@ -41,23 +57,9 @@ export const SPECS = {
     updatemanagement: "bConnect_UpdateManagement.json",
     variables: "bConnect_Variables.json",
   },
-  "26R1": {
-    activedirectory: "bConnect_Activedirectory.json",
-    assets: "bConnect_Assets.json",
-    compliance: "bConnect_Compliance.json",
-    defensecontrol: "bConnect_Defensecontrol.json",
-    endpoints: "bConnect_Endpoints.json",
-    jobs: "bConnect_Jobs.json",
-    operatingsystems: "bConnect_Operatingsystems.json",
-    servermanagement: "bConnect_Servermanagement.json",
-    software: "bConnect_Software.json",
-    universaldynamicgroups: "bConnect_Universaldynamicgroups.json",
-    updatemanagement: "bConnect_Updatemanagement.json",
-    variables: "bConnect_Variables.json",
-  },
+  "26R1": SPECS_26R1,
+  "26R2": SPECS_26R1,
 };
-// 26R2 has the same modules, under 26R1's file names (#280).
-SPECS["26R2"] = { ...SPECS["26R1"] };
 
 /** The URL of one specification on the bMS. */
 export function specUrl(baseUrl, module, file) {

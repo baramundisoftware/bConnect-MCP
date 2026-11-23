@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **bMS 26R2** (#280). The servers detect a 26R2 bMS (version 26.2) and accept
-  `BCONNECT_RELEASE=26R2`; unset still means 26R1. On 26R2 every existing tool is offered except
-  `list_cloud_connectors`, whose API bMS 26R2 removed: it is refused by name there.
+  `BCONNECT_RELEASE=26R2`; unset still means 26R1. 26R2 gets the tools 26R1 has, with the same
+  code, except `list_cloud_connectors`, whose API bMS 26R2 removed: it is refused by name there.
+  The industrial-endpoint tools stay 25R2-only (26R1 removed that API, 26R2 doesn't bring it back).
   `create_android_endpoint` offers the three AMAPI profile types on 26R2. The tables per release
   (tools, list filters, error meanings) are generated from the bundled 26R2 specifications, and the
   unit, spec-conformance and mock tiers run for 25R2, 26R1 and 26R2. The 17 new 26R2 operations
