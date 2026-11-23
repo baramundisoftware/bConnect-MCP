@@ -3,7 +3,7 @@
 Part of the **bConnect MCP Suite** — exposes the baramundi bConnect V2.0 REST API to AI assistants via the Model Context Protocol.
 
 **Domain:** Universal Dynamic Groups — UDG definitions, folder hierarchy and (bMS 2026 R2) thresholds (requires baramundi 2026 R1)  
-**Tools:** 6 (8 on bMS 26R2; none on bMS 25R2)
+**Tools:** 6 (11 on bMS 26R2; none on bMS 25R2)
 
 > **Note:** This server needs a bMS 2026 R1 or later. Universal Dynamic Groups do not exist in baramundi 25R2; on a 25R2 bMS (detected at startup, or `BCONNECT_RELEASE=25R2` as the fallback), the server stops at startup with `needs bMS 26R1; this server uses 25R2 (…)`. In the HTTP gateway it lists no tools there.
 
@@ -47,7 +47,10 @@ Claude Desktop (`claude_desktop_config.json`) and other clients: see
 
 ## Available Tools
 
-All tools are read-only.
+Write tools (`create_threshold`, `update_threshold`, `delete_threshold`, bMS 26R2) are **off** unless
+`ALLOW_WRITE_OPERATIONS=true` is set. While they are off, the tool list leaves them out, which
+keeps their descriptions out of the model's context, and a call by name is refused. A write tool whose description ends with "Not yet verified against a live bMS." hasn't
+been checked against a real bMS yet.
 
 All tools require bMS 2026 R1; the threshold tools require 2026 R2.
 
@@ -61,6 +64,9 @@ All tools require bMS 2026 R1; the threshold tools require 2026 R2.
 | `list_udg_folders_by_folder` | **(26R1)** List sub-folders within a UDG folder |
 | `list_thresholds` | **(26R2)** List the thresholds on UDGs (endpoint count against an upper or lower limit, with a notification severity): all, or one group's with `dynamicGroupId` |
 | `get_threshold` | **(26R2)** Get one threshold by GUID |
+| `create_threshold` | **(26R2)** Create a threshold on a UDG (`dynamicGroupId`, `securityProfileId`; `value` ≥ 0, `type`, `severity`, `isActive`, `comment` up to 4000 characters) |
+| `update_threshold` | **(26R2)** Change a threshold's `value`, `type`, `severity`, `isActive` or `comment` (JSON Patch with only the given fields) |
+| `delete_threshold` | **(26R2)** Delete a threshold |
 
 > Tools marked **(26R1)** need baramundi Management Suite 2026 R1 or later; the server lists them only when the bMS release it detects (or `BCONNECT_RELEASE`, as fallback) is 26R1 or later. Tools marked **(26R2)** need 2026 R2; on 26R1 they aren't listed and are refused by name.
 
@@ -68,7 +74,7 @@ All tools require bMS 2026 R1; the threshold tools require 2026 R2.
 
 ## Environment Variables
 
-The variables this server reads (a test checks the list). Each is described, with its default, in [docs/CONFIGURATION.md](../docs/CONFIGURATION.md); the second column says only what is different in this server. When the HTTP gateway hosts the server, `MCP_TRANSPORT`, `MCP_PORT`, `MCP_BIND` and `MCP_ALLOWED_HOSTS` have no effect, `ALLOW_SECRET_READ` is ignored (always off), and the gateway's own settings apply ([Gateway](../docs/CONFIGURATION.md#gateway)).
+The variables this server reads (a test checks the list). Each is described, with its default, in [docs/CONFIGURATION.md](../docs/CONFIGURATION.md); the second column says only what is different in this server. When the HTTP gateway hosts the server, `MCP_TRANSPORT`, `MCP_PORT`, `MCP_BIND` and `MCP_ALLOWED_HOSTS` have no effect, `ALLOW_WRITE_OPERATIONS` and `ALLOW_SECRET_READ` are ignored (always off), and the gateway's own settings apply ([Gateway](../docs/CONFIGURATION.md#gateway)).
 
 <!-- env:start -->
 | Variable | In this server |
@@ -81,6 +87,7 @@ The variables this server reads (a test checks the list). Each is described, wit
 | [`NODE_TLS_REJECT_UNAUTHORIZED`](../docs/CONFIGURATION.md#node_tls_reject_unauthorized) |  |
 | [`BCONNECT_ALLOW_INSECURE_HTTP`](../docs/CONFIGURATION.md#bconnect_allow_insecure_http) |  |
 | [`BCONNECT_RELEASE`](../docs/CONFIGURATION.md#bconnect_release) | This server needs 26R1: on 25R2 it stops at startup. |
+| [`ALLOW_WRITE_OPERATIONS`](../docs/CONFIGURATION.md#allow_write_operations) | Only the threshold tools write (bMS 26R2). |
 | [`ALLOW_SECRET_READ`](../docs/CONFIGURATION.md#allow_secret_read) | No effect: this server has no tool that returns secrets. |
 | [`BCONNECT_AUDIT_LEVEL`](../docs/CONFIGURATION.md#bconnect_audit_level) |  |
 | [`BCONNECT_PRETTY_JSON`](../docs/CONFIGURATION.md#bconnect_pretty_json) |  |

@@ -20,4 +20,7 @@ export const TOOL_RELEASES: ToolReleaseTable = {
   "list_thresholds[dynamicGroupId=]": ["26R2"],
   "list_thresholds[dynamicGroupId=*]": ["26R2"],
   get_threshold: ["26R2"],
+  create_threshold: ["26R2"],
+  update_threshold: ["26R2"],
+  delete_threshold: ["26R2"],
 };

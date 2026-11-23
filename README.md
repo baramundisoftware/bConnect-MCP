@@ -144,9 +144,9 @@ The servers are not published to the npm registry, so `npx` / `npm install -g` d
 | `bconnect-defensecontrol-mcp` | 13 | 13 | 11 | BitLocker, local admin accounts, Defender threats |
 | `bconnect-operatingsystems-mcp` | 9 | 9 | 9 | OS folders and the OS deployment settings of Windows endpoints |
 | `bconnect-compliance-mcp` | 8 | 8 | — | Compliance violations, CVE vulnerabilities (needs 26R1) |
-| `bconnect-universaldynamicgroups-mcp` | 8 | 6 | — | Universal Dynamic Group definitions (needs 26R1), thresholds (26R2) |
+| `bconnect-universaldynamicgroups-mcp` | 11 | 6 | — | Universal Dynamic Group definitions (needs 26R1), thresholds (26R2) |
 | `bconnect-updatemanagement-mcp` | 3 | 3 | 3 | Windows Update management |
-| **Total** | **212** | **211** | **166** | |
+| **Total** | **215** | **211** | **166** | |
 
 — means the server needs 26R1 and lists no tools on 25R2. Each release lists only the tools whose API routes it has: 26R1 and 26R2 have no industrial-endpoint tools, 25R2 no 26R1-only tools, 26R1 no 26R2-only tools, and 26R2 no `list_cloud_connectors` (its API is gone).
 

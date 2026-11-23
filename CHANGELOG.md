@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Universal dynamic group thresholds, read** (#354, bMS 26R2): `list_thresholds` (all, or one
   group's with `dynamicGroupId`; paging, `OrderBy`, `SearchQuery`, `countOnly`) and
   `get_threshold`. Not listed on 26R1, and refused by name there.
+- **Universal dynamic group thresholds, write** (#355, bMS 26R2), behind `ALLOW_WRITE_OPERATIONS`:
+  `create_threshold` (needs `dynamicGroupId` and `securityProfileId`; `value` ≥ 0, `type`
+  UpperLimit/LowerLimit, `severity` Info/Warning/Error, `isActive`, `comment` up to 4000
+  characters), `update_threshold` (a JSON Patch with only the given fields among `value`, `type`,
+  `severity`, `isActive`, `comment`: the group and the security profile can't be changed) and
+  `delete_threshold`. The first write tools of the universaldynamicgroups server; not yet verified
+  against a live bMS.
 - **READMEs give the 26R2 tool counts** (#354): the root table has a 26R2 column, server READMEs
   mark 26R2-only tools **(26R2)**, and the README guard checks all three releases.
 

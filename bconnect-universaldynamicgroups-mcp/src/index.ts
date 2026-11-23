@@ -3,9 +3,10 @@
 /**
  * bconnect-universaldynamicgroups-mcp
  *
- * A Model Context Protocol server that provides read-only access to the
- * baramundi bConnect REST API for Universal Dynamic Groups — listing and
- * retrieving UDG definitions and their folder hierarchy.
+ * A Model Context Protocol server for the baramundi bConnect REST API's
+ * Universal Dynamic Groups: listing and retrieving UDG definitions and their
+ * folder hierarchy, and (bMS 26R2) reading and managing thresholds; the
+ * threshold write tools are behind ALLOW_WRITE_OPERATIONS (#355).
  *
  * This server is ONLY available for bConnect 26R1 and later.
  * Universal Dynamic Groups do not exist in 25R2.
@@ -18,7 +19,7 @@ import {
   ErrorCode
 } from "@modelcontextprotocol/sdk/types.js";
 import { BConnectClient } from "./bconnect-client.js";
-import { validateOrThrow, toolErrorResult, lazyClient, declaredArgumentsOnly, pickArguments, queryParameters, queryProperties, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError, withVariantSelectors, withToolVariants, variantKey } from "@bconnect/mcp-core";
+import { validateOrThrow, toolErrorResult, lazyClient, declaredArgumentsOnly, pickArguments, queryParameters, queryProperties, withQueryProperties, withCountOnly, serverClients, runServer, withToolAnnotations, toolJsonResult, selectedRelease, withReleaseTools, refuseUnavailableTool, protocolError, withVariantSelectors, withToolVariants, variantKey, withUnverifiedWriteMarker, withWriteToolsHidden } from "@bconnect/mcp-core";
 import { QUERY_PARAMETERS } from "./query-params.js";
 import { TOOL_RELEASES } from "./tool-releases.js";
 import { TOOL_METHODS } from "./tool-methods.js";
@@ -28,6 +29,10 @@ import { TOOL_VARIANTS } from "./tool-variants.js";
 const sends = (tool: string): string[] => queryParameters(QUERY_PARAMETERS, selectedRelease(), tool);
 import type { BConnectCredentials } from "@bconnect/mcp-core";
 import { UdgRules } from "./utils/mcp-tool-validation-rules.js";
+import { createThresholdBody, createThresholdRules, createThresholdSchema, updateThresholdPatch, updateThresholdRules, updateThresholdSchema, UPDATABLE_THRESHOLD_FIELDS } from "./threshold-fields.js";
+
+/** Write tools: gated by ALLOW_WRITE_OPERATIONS, hidden while it is off, marked unverified in tools/list (REQ-SRV-012, REQ-SRV-026). */
+const WRITE_TOOLS = new Set<string>(["create_threshold", "update_threshold", "delete_threshold"]);
 
 /**
  * The arguments a route of a merged tool takes besides its selectors (REQ-SRV-029): its query
@@ -61,7 +66,7 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
 
   // ── ListToolsRequestSchema handler ────────────────────────────────────────
 
-  const toolCatalog = declaredArgumentsOnly(withVariantSelectors(TOOL_VARIANTS, TOOL_RELEASES, routeArguments, withQueryProperties(QUERY_PARAMETERS, () => selectedRelease(), async () => {
+  const toolCatalog = declaredArgumentsOnly(withVariantSelectors(TOOL_VARIANTS, TOOL_RELEASES, routeArguments, withQueryProperties(QUERY_PARAMETERS, () => selectedRelease(), withUnverifiedWriteMarker(WRITE_TOOLS, async () => {
 
     return {
       tools: [
@@ -154,10 +159,33 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
             required: ["id"]
           }
         },
+        {
+          name: "create_threshold",
+          description: "[26R2] Create a threshold on a Universal Dynamic Group: bMS compares the group's endpoint count with value (type UpperLimit: notify above it; LowerLimit: below it) and raises a notification of the given severity for the security profile. Needs dynamicGroupId and securityProfileId; neither can be changed later. Returns the created threshold as bMS answers it. WARNING: Creates a new threshold. Available in bConnect 26R2 and later.",
+          inputSchema: createThresholdSchema
+        },
+        {
+          name: "update_threshold",
+          description: "[26R2] Change a threshold: value, type, severity, isActive or comment (at least one). The group and the security profile can't be changed. Sends a JSON Patch with only the given fields and returns the threshold as bMS answers it. WARNING: Modifies an existing threshold. Available in bConnect 26R2 and later.",
+          inputSchema: updateThresholdSchema
+        },
+        {
+          name: "delete_threshold",
+          description: "[26R2] Delete a threshold by its GUID. WARNING: Permanently removes the threshold; its notifications stop. Available in bConnect 26R2 and later.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              id: { type: "string", description: "GUID of the threshold to delete." }
+            },
+            required: ["id"]
+          }
+        },
       ]
     };
-  })));
-  server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withToolAnnotations(TOOL_METHODS, toolCatalog.list)));
+  }))));
+  // With writes off, tools/list leaves out the write tools; the gate still refuses them by name (REQ-SRV-026).
+  server.setRequestHandler(ListToolsRequestSchema, withReleaseTools(TOOL_RELEASES, withWriteToolsHidden(TOOL_METHODS, () => process.env.ALLOW_WRITE_OPERATIONS === "true",
+    withToolAnnotations(TOOL_METHODS, toolCatalog.list))));
 
   // ── CallToolRequestSchema handler ─────────────────────────────────────────
 
@@ -191,6 +219,18 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
       case "get_threshold":
         validateOrThrow(args, UdgRules.getThreshold());
         return;
+      case "create_threshold":
+        validateOrThrow(args, createThresholdRules());
+        return;
+      case "update_threshold":
+        validateOrThrow(args, updateThresholdRules());
+        if (updateThresholdPatch(args ?? {}).length === 0) {
+          throw protocolError(ErrorCode.InvalidParams, `update_threshold needs at least one field to change: ${UPDATABLE_THRESHOLD_FIELDS.join(", ")}.`);
+        }
+        return;
+      case "delete_threshold":
+        validateOrThrow(args, UdgRules.getThreshold());
+        return;
       // Unknown tool names are not validated here; dispatch handles MethodNotFound.
     }
   }
@@ -209,6 +249,13 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
     const route = variantKey(TOOL_VARIANTS, name, args) ?? name;
     // Validate arguments first — pure, no side effects, fails fast on bad input.
     validateToolArguments(route, args);
+    // ── Write-operation gate (REQ-SRV-012) ───────────────────────────────────
+    if (WRITE_TOOLS.has(name) && process.env.ALLOW_WRITE_OPERATIONS !== "true") {
+      return {
+        content: [{ type: "text" as const, text: `Write operation '${name}' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.` }],
+        isError: true
+      };
+    }
 
     const getBconnect = (): BConnectClient => {
       // The server's shared client (REQ-SRV-023). A ClientConfigError (e.g. missing
@@ -270,6 +317,21 @@ export function createServer(credentials?: BConnectCredentials): { server: Serve
         case "get_threshold": {
           const result = await udg.getThreshold(args!.id as string);
           return toolJsonResult(result);
+        }
+
+        case "create_threshold": {
+          const result = await udg.createThreshold(createThresholdBody(args ?? {}));
+          return toolJsonResult(result, { lead: "Threshold created:" });
+        }
+
+        case "update_threshold": {
+          const result = await udg.updateThreshold(args!.id as string, updateThresholdPatch(args ?? {}));
+          return toolJsonResult(result, { lead: `Threshold ${args!.id} updated:` });
+        }
+
+        case "delete_threshold": {
+          await udg.deleteThreshold(args!.id as string);
+          return { content: [{ type: "text" as const, text: `Threshold ${args!.id} deleted.` }] };
         }
 
         default:

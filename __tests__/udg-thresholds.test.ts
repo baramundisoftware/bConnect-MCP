@@ -20,7 +20,7 @@ const msw = setupServer(http.all('*', async ({ request }) => {
   const url = new URL(request.url);
   sent.push({ method: request.method, path: url.pathname.replace(/^\/bconnect/, ''), query: url.search, body: await request.text(), type: request.headers.get('content-type') ?? '' });
   if (request.method === 'DELETE') {return new HttpResponse(null, { status: 204 });}
-  if (url.pathname.endsWith('/Thresholds')) {return HttpResponse.json({ data: [{ id: THRESHOLD }], totalItems: 7 });}
+  if (request.method === 'GET' && url.pathname.endsWith('/Thresholds')) {return HttpResponse.json({ data: [{ id: THRESHOLD }], totalItems: 7 });}
   return HttpResponse.json({ id: THRESHOLD, dynamicGroupId: GROUP, value: 5, type: 'UpperLimit', severity: 'Warning' });
 }));
 
@@ -112,6 +112,119 @@ describe('on bMS 26R1 (#354)', () => {
 
   it.each([['get_threshold', { id: THRESHOLD }], ['list_thresholds', {}], ['list_thresholds', { dynamicGroupId: GROUP }]] as const)('%s %j is refused naming 26R2 and sends nothing', async (name, args) => {
     expect(await refusal(name, args)).toMatch(/only available in bMS 26R2; this server uses 26R1/);
+    expect(sent).toEqual([]);
+  });
+});
+
+describe('create_threshold (#355)', () => {
+  const PROFILE = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+  const base = { dynamicGroupId: GROUP, securityProfileId: PROFILE };
+
+  it('POSTs ThresholdForCreation with only the given fields and returns what bMS answered', async () => {
+    const r = await call('create_threshold', { ...base, value: 0, type: 'LowerLimit', severity: 'Error', isActive: true, comment: 'Lab' });
+    expect(r.isError).toBe(false);
+    expect(r.text).toContain('Threshold created:');
+    expect(routes()).toEqual([['POST', `${BASE}/Thresholds`]]);
+    expect(JSON.parse(sent[0].body)).toEqual({ ...base, value: 0, type: 'LowerLimit', severity: 'Error', isActive: true, comment: 'Lab' });
+    expect((await call('create_threshold', base)).text).toContain(THRESHOLD);
+    expect(JSON.parse(sent[1].body)).toEqual(base);
+  });
+
+  it('requires dynamicGroupId and securityProfileId, and offers the spec\'s types and severities', async () => {
+    const t = (await tool('create_threshold'))!;
+    expect(t.inputSchema.required).toEqual(['dynamicGroupId', 'securityProfileId']);
+    expect(t.inputSchema.properties?.type).toMatchObject({ enum: ['UpperLimit', 'LowerLimit'] });
+    expect(t.inputSchema.properties?.severity).toMatchObject({ enum: ['Info', 'Warning', 'Error'] });
+    expect(t.inputSchema.properties?.value).toMatchObject({ type: 'integer', minimum: 0 });
+    expect(t.inputSchema.properties?.comment).toMatchObject({ maxLength: 4000 });
+    expect(t.annotations).toMatchObject({ readOnlyHint: false });
+  });
+
+  it.each([
+    [{ securityProfileId: PROFILE }, 'dynamicGroupId'],
+    [{ ...base, dynamicGroupId: 'nope' }, 'dynamicGroupId must be a valid GUID'],
+    [{ ...base, value: -1 }, 'value must be at least 0'],
+    [{ ...base, value: 1.5 }, 'value must be a whole number'],
+    [{ ...base, type: 'Unknown' }, 'type'],
+    [{ ...base, severity: 'Critical' }, 'severity'],
+    [{ ...base, comment: 'x'.repeat(4001) }, 'comment must be at most 4000 characters'],
+  ])('%j is refused before anything is sent (%s)', async (args, message) => {
+    expect(await refusal('create_threshold', args)).toContain(message);
+    expect(sent).toEqual([]);
+  });
+
+  it('a comment of exactly 4000 characters is sent', async () => {
+    expect((await call('create_threshold', { ...base, comment: 'x'.repeat(4000) })).isError).toBe(false);
+    expect(JSON.parse(sent[0].body).comment).toHaveLength(4000);
+  });
+});
+
+describe('update_threshold (#355)', () => {
+  it('PATCHes application/json-patch+json with only the given fields, under the spec\'s paths', async () => {
+    const r = await call('update_threshold', { id: THRESHOLD, value: 50, severity: 'Info', isActive: false });
+    expect(r.isError).toBe(false);
+    expect(routes()).toEqual([['PATCH', `${BASE}/Thresholds/${THRESHOLD}`]]);
+    expect(sent[0].type).toContain('application/json-patch+json');
+    expect(JSON.parse(sent[0].body)).toEqual([
+      { op: 'replace', path: '/Value', value: 50 },
+      { op: 'replace', path: '/Severity', value: 'Info' },
+      { op: 'replace', path: '/IsActive', value: false },
+    ]);
+  });
+
+  it('offers only the modifiable fields: not the group or the security profile', async () => {
+    const t = (await tool('update_threshold'))!;
+    expect(Object.keys(t.inputSchema.properties ?? {}).sort()).toEqual(['comment', 'id', 'isActive', 'severity', 'type', 'value']);
+  });
+
+  it.each([
+    [{ id: THRESHOLD }, 'update_threshold needs at least one field to change: value, type, severity, isActive, comment'],
+    [{ id: THRESHOLD, dynamicGroupId: GROUP }, 'dynamicGroupId'],
+    [{ id: THRESHOLD, type: 'Unknown' }, 'type'],
+  ])('%j is refused before anything is sent', async (args, message) => {
+    expect(await refusal('update_threshold', args)).toContain(message);
+    expect(sent).toEqual([]);
+  });
+});
+
+describe('delete_threshold (#355)', () => {
+  it('DELETEs /Thresholds/{id} and says so', async () => {
+    const r = await call('delete_threshold', { id: THRESHOLD });
+    expect(r.isError).toBe(false);
+    expect(r.text).toBe(`Threshold ${THRESHOLD} deleted.`);
+    expect(routes()).toEqual([['DELETE', `${BASE}/Thresholds/${THRESHOLD}`]]);
+  });
+
+  it('is marked destructive', async () => {
+    expect((await tool('delete_threshold'))!.annotations).toMatchObject({ readOnlyHint: false, destructiveHint: true });
+  });
+});
+
+describe('threshold write tools with writes off (#355)', () => {
+  beforeEach(() => { process.env.ALLOW_WRITE_OPERATIONS = 'false'; });
+
+  it('are not listed; the read tools are', async () => {
+    const names = (await client.listTools()).tools.map((t) => t.name).filter((n) => n.includes('threshold'));
+    expect(names.sort()).toEqual(['get_threshold', 'list_thresholds']);
+  });
+
+  it.each([
+    ['create_threshold', { dynamicGroupId: GROUP, securityProfileId: GROUP }],
+    ['update_threshold', { id: THRESHOLD, value: 1 }],
+    ['delete_threshold', { id: THRESHOLD }],
+  ] as const)('%s is refused by the write gate and sends nothing', async (name, args) => {
+    const r = await call(name, args);
+    expect(r.isError).toBe(true);
+    expect(r.text).toBe(`Write operation '${name}' is disabled. Set ALLOW_WRITE_OPERATIONS=true to enable write operations.`);
+    expect(sent).toEqual([]);
+  });
+});
+
+describe('threshold write tools on bMS 26R1 (#355)', () => {
+  beforeEach(() => { process.env.BCONNECT_RELEASE = '26R1'; });
+
+  it.each(['create_threshold', 'update_threshold', 'delete_threshold'])('%s is refused naming 26R2 and sends nothing', async (name) => {
+    expect(await refusal(name, { id: THRESHOLD })).toMatch(/only available in bMS 26R2; this server uses 26R1/);
     expect(sent).toEqual([]);
   });
 });

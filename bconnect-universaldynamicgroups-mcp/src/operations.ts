@@ -18,4 +18,7 @@ export const TOOL_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
   'list_thresholds[dynamicGroupId=]': ['GetThresholds'],
   'list_thresholds[dynamicGroupId=*]': ['GetThresholdsForUniversalDynamicGroup'],
   get_threshold: ['GetThreshold'],
+  create_threshold: ['CreateThreshold'],
+  update_threshold: ['UpdateThreshold'],
+  delete_threshold: ['DeleteThreshold'],
 };
