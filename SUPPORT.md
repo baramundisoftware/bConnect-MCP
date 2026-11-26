@@ -22,7 +22,7 @@ have:
 
 In an issue or a mail to Support, please include:
 
-- bConnect MCP Suite release tag or commit (e.g. `v26.1.12`)
+- bConnect MCP Suite release tag or commit (e.g. `v26.2.0`)
 - baramundi Management Suite release (`BCONNECT_RELEASE` value)
 - Which server(s) are affected
 - Steps to reproduce

@@ -7,9 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [26.2.0] - 2026-11-26
+
+> **bMS 26R2, and one npm package.** The servers support bMS 26R2 (detected from the bMS, and the
+> default when it can't be), with tools for the 17 new 26R2 operations: thresholds, API key
+> management, Intune remote actions and Entra ID data by endpoint ID. `bconnect-mcp` runs one, several
+> or all domains as one server, packed for npm as `@baramundi/bconnect-mcp` (publishing prepared,
+> switched off until approved). Over-long query parameters are refused before the request, an empty
+> list says that missing rights can be the cause, and reads are retried without the deprecated
+> axios-retry. **Breaking:** 7 tools and 9 arguments renamed (#342), reading API keys needs
+> `ALLOW_SECRET_READ` (#421), `update_endpoint` for Android no longer takes `serialNumber` (#328).
+> See "Upgrading from 26.1.12" below.
+
 ### Added
 - **bMS 26R2** (#280). The servers detect a 26R2 bMS (version 26.2) and accept
-  `BCONNECT_RELEASE=26R2`; unset still means 26R1. 26R2 gets the tools 26R1 has, with the same
+  `BCONNECT_RELEASE=26R2` (the default when the release can't be detected: see "The default release
+  is 26R2" below). 26R2 gets the tools 26R1 has, with the same
   code, except `list_cloud_connectors`, whose API bMS 26R2 removed: it is refused by name there.
   The industrial-endpoint tools stay 25R2-only (26R1 removed that API, 26R2 doesn't bring it back).
   `create_android_endpoint` offers the three AMAPI profile types on 26R2. The tables per release
@@ -81,7 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   private: publishing as `@baramundi/bconnect-mcp` follows in the next steps. The gateway's
   `MCP_GATEWAY_COMBINED` and the command's argument share one parser in mcp-core (`domainList`).
   The package is built for npm (step 2): `dist/cli.js` bundles core and the 13 servers
-  (rolldown), so its only dependencies are the SDK, axios, axios-retry, dotenv and express; the
+  (rolldown), so its only dependencies are the SDK, axios, dotenv and express (axios-retry until #425); the
   tarball holds that file, a README, the licence and `package.json`. CI packs it on every run,
   installs it into an empty folder and starts the installed command on Linux and Windows, Node 22
   and 24 (`scripts/check-package.mjs`).
@@ -186,6 +199,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   bMS with which rights. They now sit behind the same gate as the key secrets; without it they are
   refused with the reason and send nothing. In the gateway, where the gate stays off, they are
   always refused. The live tier skips them, as it keeps the gate closed.
+
+### Upgrading from 26.1.12
+- **Renamed tools and arguments** (#342): update scripts, saved prompts and workflows with the table
+  above. An old name isn't run: it answers with the new one (`MethodNotFound` for a tool,
+  `InvalidParams` for an argument).
+- **`list_api_keys` and `get_api_key` need `ALLOW_SECRET_READ=true`** (#421); without it they are
+  refused, and in the gateway they are always refused.
+- **`update_endpoint` for Android** no longer takes `serialNumber` (#328).
+- **On a 26R1 bMS whose release the servers can't read** (the account has no read access to server
+  management), set `BCONNECT_RELEASE=26R1`: the default is now 26R2. A detected release is
+  unaffected; the log says `bMS 26.x… → release …` at startup.
+- **`SearchQuery` and `OrderBy`** no longer have the hand-written caps of 1000 and 200 characters; on
+  26R2 the spec's limits apply instead (#358), e.g. 2000 for a vulnerability search.
+- **Fresh installs print no axios-retry deprecation warning** (#425); `BCONNECT_MAX_RETRIES` works as
+  before.
+- **Gateway container:** pull `ghcr.io/baramundisoftware/bconnect-mcp-gateway:26.2.0` (or `latest`).
+- **npm package:** not on npm yet. Until it is, use the release zip, a source build or the gateway
+  image ([INSTALLATION.md](docs/INSTALLATION.md)).
+
+### Verified
+- CI on every merged pull request: Linux and Windows × Node.js 22.23.4 and 24, coverage floors, mock
+  tier 25R2, 26R1 and 26R2 (bConnect-Mock 0.12.0), the npm package check on Node.js 22, 24 and 26
+  and `npm publish --dry-run`.
+- Live, bMS 26R2 (26.2.147.11) on Windows 11, Node.js 24.22.1, TLS verified, on 2026-11-23 and
+  2026-11-26:
+  - read-only tier: 13/13 servers, read tools 72 ok, 1 expected answer, 0 failed, also with
+    `BCONNECT_MAX_RETRIES=2`; 3 not verified live (no MDM on the test bMS);
+  - the gateway's combined endpoint: `scripts/check-combined.mjs` all checks passed (132 tools);
+  - the 12 specifications downloaded from the bMS under the repository's file names, with the same
+    operations;
+  - the 26R2 write tools for thresholds and API keys (create → read → change → delete, the secret
+    gate);
+  - the packed npm package, installed into an empty folder and run against the bMS; the renames, the
+    API key gate, the length limits, the empty-list hint, the read retry and the `update_endpoint`
+    Windows fields, as listed in the entries above.
+- Not verified live: 25R2 and 26R1 (no test installation of either now; 26R1 was checked for
+  26.1.12), Intune remote actions (no Intune-managed endpoint), Android and iOS updates.
 
 ## [26.1.12] - 2026-11-19
 
@@ -1196,7 +1246,8 @@ providing 212 tools across endpoints, jobs, assets, software, compliance, and mo
 - Transport modes: stdio (local) and HTTP (network/Docker)
 - Unit tests and mock-integration tests across all servers
 
-[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.12...HEAD
+[Unreleased]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.2.0...HEAD
+[26.2.0]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.12...v26.2.0
 [26.1.12]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.11...v26.1.12
 [26.1.11]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.10...v26.1.11
 [26.1.10]: https://github.com/baramundisoftware/bConnect-MCP/compare/v26.1.9...v26.1.10
