@@ -1,4 +1,4 @@
-# npm package @baramundi/bconnect-mcp: check on every change, publish dry run (#297).
+# npm package @baramundi/bconnect-mcp: check on every change, publish on a version tag (#297).
 #
 # ── What it does ────────────────────────────────────────────────────────────
 # `check` packs the package, installs the tarball into an empty folder and
@@ -6,11 +6,31 @@
 # 26. The `gate` job of ci.yml runs the same check on Linux and Windows with 22
 # and 24; Node 26 is checked here, outside the ruleset's required checks.
 #
-# `publish` runs `npm publish --dry-run --tag next`: npm builds the tarball and
-# reports what it would publish, and uploads nothing. On a version tag it also
-# checks that the tag equals the package version. The first real publish is a
-# separate change (#297 step 4) that removes `--dry-run`, after approval: npm
-# lets a version be unpublished only within 72 hours.
+# `dry-run` runs on every pull request, manual run and tag:
+# `npm publish --dry-run --tag next` builds the tarball and reports what would
+# be published, and uploads nothing (`npm pack --dry-run` when the version is
+# already on npm and this isn't a tag run, e.g. a dependency bump between
+# releases). It needs no OIDC token and has read rights only.
+#
+# `publish` runs only on a version tag, and only when the repository variable
+# NPM_PUBLISH_ENABLED is `true`. Until then a tag runs the checks and the dry
+# run, warns, and stops: cutting a release doesn't publish by accident. The
+# job runs in the `npm` environment, whose required reviewers approve every
+# publish. npm lets a version be unpublished only within 72 hours.
+#
+# ── One-time setup (when publishing is approved) ───────────────────────────
+# 1. Settings → Environments → `npm`: required reviewers; deployment tags `v*`.
+# 2. npm authentication, one of:
+#    a) Trusted publishing (preferred, no secret): on npmjs.com, package
+#       settings → Trusted Publisher → GitHub Actions, owner
+#       `baramundisoftware`, repository `bConnect-MCP`, workflow `npm.yml`,
+#       environment `npm`. npm offers this only for a package that already
+#       exists, so the very first version needs b).
+#    b) Token: a granular npm access token with publish rights for
+#       @baramundi/bconnect-mcp (or the @baramundi scope), stored as the secret
+#       NPM_TOKEN in the `npm` environment. Delete it, and the token on npm,
+#       once a) is set up.
+# 3. Settings → Variables → Actions: NPM_PUBLISH_ENABLED = true.
 #
 # ── Tag rules ───────────────────────────────────────────────────────────────
 # - Only `v<major>.<minor>.<patch>`, as for the gateway image (image.yml).
@@ -22,9 +42,9 @@
 #   publish from outside GitHub Actions.
 #
 # ── Provenance ──────────────────────────────────────────────────────────────
-# publishConfig.provenance is set, so the real publish links the package to
-# this workflow run and commit (#297 AC 2). That needs `id-token: write`, on
-# the publish job only.
+# publishConfig.provenance is set, so the publish links the package to this
+# workflow run and commit (#297 AC 2). That needs `id-token: write`, on the
+# publish job only.
 
 name: npm package
 
@@ -41,12 +61,16 @@ on:
       - scripts/check-package.mjs
   workflow_dispatch:
 
+# Two runs for the same tag must not race each other to the registry.
 concurrency:
   group: npm-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
+
+env:
+  IS_TAG: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') }}
 
 jobs:
   check:
@@ -68,30 +92,21 @@ jobs:
       - run: npm run build
       - run: node scripts/check-package.mjs
 
-  publish:
-    name: publish to npm (dry run)
+  dry-run:
+    name: publish dry run
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
           registry-url: https://registry.npmjs.org
           cache: npm
           cache-dependency-path: package-lock.json
-
-      # Trusted publishing (OIDC) needs npm 11.5.1 or later.
-      - name: npm version
-        shell: bash
-        run: |
-          echo "npm $(npm --version)"
-          node -e 'const [a,b,c]=process.argv[1].split(".").map(Number);process.exit(a>11||(a===11&&(b>5||(b===5&&c>=1)))?0:1)' "$(npm --version)" \
-            || { echo "::error::npm $(npm --version) is older than 11.5.1, which trusted publishing needs."; exit 1; }
 
       - name: Tag equals the package version
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
@@ -106,6 +121,75 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      # `npm publish --dry-run` fails when the version is already on npm. That is right for
+      # a tag. A pull request or manual run between releases still carries the published
+      # version, so it packs instead: the same tarball check, no registry clash.
       - name: npm publish (dry run)
         working-directory: packages/bconnect-mcp
-        run: npm publish --dry-run --tag next
+        shell: bash
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          if [ "$IS_TAG" != "true" ] && npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "$name@$version is already on npm (not a tag run) → npm pack --dry-run"
+            npm pack --dry-run
+          else
+            npm publish --dry-run --tag next
+          fi
+
+      - name: Publishing disabled
+        if: env.IS_TAG == 'true' && vars.NPM_PUBLISH_ENABLED != 'true'
+        run: echo "::warning::Not published. NPM_PUBLISH_ENABLED is not 'true' (see the setup notes in npm.yml)."
+
+  publish:
+    name: publish to npm
+    needs: dry-run
+    if: >-
+      github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') &&
+      vars.NPM_PUBLISH_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/@baramundi/bconnect-mcp?activeTab=versions
+    permissions:
+      contents: read
+      # OIDC token for trusted publishing and the provenance statement.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          # No dependency cache in the job that holds publish rights.
+
+      # Trusted publishing (OIDC) needs npm 11.5.1 or later.
+      - name: npm version
+        shell: bash
+        run: |
+          echo "npm $(npm --version)"
+          node -e 'const [a,b,c]=process.argv[1].split(".").map(Number);process.exit(a>11||(a===11&&(b>5||(b===5&&c>=1)))?0:1)' "$(npm --version)" \
+            || { echo "::error::npm $(npm --version) is older than 11.5.1, which trusted publishing needs."; exit 1; }
+
+      - name: Tag equals the package version
+        shell: bash
+        run: |
+          version=$(node -p "require('./packages/bconnect-mcp/package.json').version")
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match packages/bconnect-mcp/package.json version $version."
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run build
+
+      # prepack bundles dist/cli.js from this checkout. Without NPM_TOKEN, npm authenticates
+      # through trusted publishing (OIDC).
+      - name: npm publish
+        working-directory: packages/bconnect-mcp
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --tag next

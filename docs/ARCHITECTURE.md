@@ -51,7 +51,7 @@ The bConnect REST API V2.0 is the only interface to the bMS. Its OpenAPI specs p
 | bConnect auth: API key or Basic (ASCII password only) | bConnect rejects non-ASCII passwords; each failed attempt counts toward the account lockout. |
 | bMS RBAC is not queryable per caller | A restricted user gets 200 with filtered or empty lists, not 403. The gateway uses one service credential. |
 | Container: `node:22-alpine` pinned by digest, non-root user, port 3001, linux/amd64 + arm64 | Published to GHCR with SBOM and provenance attestations. |
-| Not on the npm registry yet | Install from source, the release zip, or the container. The package `@baramundi/bconnect-mcp` is prepared as a private workspace; publishing follows (#297). |
+| npm: `@baramundi/bconnect-mcp` under the dist-tag `next`, from the npm workflow on a version tag, with provenance (#297) | Until the first publish: install from source, the release zip, or the container. |
 
 ### 2.2 Organizational constraints
 
@@ -177,7 +177,7 @@ A fix in the core applies to all 13 servers at once; a server holds only what is
 | --- | --- | --- |
 | Domain server (×13) | Declares its tools (name, description, input schema, operation), maps arguments to bConnect calls, applies domain rules (e.g. maintenance-window intervals) | `bconnect-<domain>-mcp/src/` |
 | `@bconnect/mcp-core` | Everything shared: HTTP client, config, startup, gates, validation, results, errors, release selection, audit, the combined server and its domain-list parser (`domainList`, used by the command and `MCP_GATEWAY_COMBINED`) | `packages/mcp-core/src/` |
-| `bconnect-mcp` command | `bconnect-mcp <domain>`, `<domain>,<domain>` or `all`: one or several domains as one stdio (or HTTP) server, with the same startup as a domain server; package `@baramundi/bconnect-mcp`, still private. Its tarball carries one bundle (`dist/cli.js`, rolldown) with core and the servers inside; only the third-party packages are npm dependencies | `packages/bconnect-mcp/` |
+| `bconnect-mcp` command | `bconnect-mcp <domain>`, `<domain>,<domain>` or `all`: one or several domains as one stdio (or HTTP) server, with the same startup as a domain server; package `@baramundi/bconnect-mcp`, published from `.github/workflows/npm.yml` under the dist-tag `next`. Its tarball carries one bundle (`dist/cli.js`, rolldown) with core and the servers inside; only the third-party packages are npm dependencies | `packages/bconnect-mcp/` |
 | Gateway | Hosts all servers in one Express process over Streamable HTTP; health check, limits, `*_FILE` secrets, closed gates | `bconnect-mcp-gateway/src/` |
 | Server template | Starting point for a new domain server | `bconnect-server-template/` |
 | Specs + generators | Per-release OpenAPI specs; scripts that generate types, query tables and error meanings | `openapi-specs/`, `scripts/` |
@@ -452,7 +452,7 @@ The largest open risk is the gateway's missing built-in authentication: its secu
 - ADRs live in two folders.
 - The gateway is not an npm-workspaces member; it bundles the core and all servers in its own build.
 - Credentials at rest are plaintext env files or Docker secrets (#60).
-- Not on the npm registry or MCP Registry yet: `@baramundi/bconnect-mcp` exists as a private workspace; publishing follows (#297).
+- Not in the MCP Registry yet. The npm package carries the registry name (`mcpName` `io.github.baramundisoftware/bconnect-mcp`); the registry entry follows the first npm release (#297).
 
 ## 12. Glossary
 

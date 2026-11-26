@@ -88,6 +88,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `publishConfig` sets public access and provenance. A `prepublishOnly` guard refuses a publish
   from outside GitHub Actions or under a tag other than `next`. Nothing is published yet: the
   first publish (step 4) needs a separate approval.
+  The publish is wired up (step 4): on a version tag, the workflow's `publish` job runs
+  `npm publish --tag next` with provenance, only when the repository variable
+  `NPM_PUBLISH_ENABLED` is `true` and only after a reviewer approves the `npm` environment. Pull
+  requests and manual runs stay a dry run (`npm pack --dry-run` once the version is on npm); a
+  tag with publishing off warns and stops. npm authentication is trusted publishing (OIDC), or a
+  one-time `NPM_TOKEN` in the `npm` environment for the very first version, since npm sets up
+  trusted publishing only for a package that exists. The package carries its MCP Registry name,
+  `mcpName` `io.github.baramundisoftware/bconnect-mcp`, so the registry entry (step 5) can follow
+  without a new npm version.
 
 - **Over-long query parameters are refused before the request** (#358). The bMS 26R2 spec limits
   the length of about 150 query parameters (names, host names and the like 40 to 256 characters, a
