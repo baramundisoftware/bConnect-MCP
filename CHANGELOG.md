@@ -68,7 +68,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   result gets a second text after the JSON: "No entries. bMS also returns an empty list when the
   account has no rights on these objects: …". The JSON stays as it was. No hint on a filtered list
   (search, filter or parent ID), where an empty answer is expected, or where the tool already
-  explains the empty result.
+  explains the empty result. Checked against bMS 26.2.147.11 (2026-11-26) with an account
+  restricted to jobs: all 32 empty unfiltered lists carried the hint; the 7 lists with entries and
+  a filtered empty list didn't. One list answered 404 to that account instead of an empty list
+  (`list_asset_stock_assets`); TROUBLESHOOTING.md says so.
 - **`bconnect-mcp` command: one or several domains as one server** (#297, step 1 of the npm
   package). `bconnect-mcp endpoints` starts that domain's server; `bconnect-mcp endpoints,jobs`
   starts several domains as one server, and `bconnect-mcp all` starts every domain. Settings come
@@ -101,6 +104,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and a new section in CLIENTS.md with entries for Claude Desktop, Claude Code and VS Code (the
   key in VS Code's secret storage), and a global install for a key kept in a file (`node
   --env-file` doesn't work through `npx`).
+  The packed package, installed into an empty folder on Windows, ran against bMS 26.2.147.11
+  (2026-11-26): `bconnect-mcp all` detected 26R2 and listed the 132 tools the gateway's combined
+  endpoint lists.
 
 - **Over-long query parameters are refused before the request** (#358). The bMS 26R2 spec limits
   the length of about 150 query parameters (names, host names and the like 40 to 256 characters, a
@@ -109,7 +115,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`HostName must be at most 80 characters (list_endpoints; it has 300).`) instead of bMS's 400.
   Only where the selected release's spec declares a limit: 25R2 and 26R1 declare none. A merged
   tool keeps a limit only where all its routes agree. The hand-written caps on `SearchQuery`
-  (1000) and `OrderBy` (200), which no spec declares, are gone.
+  (1000) and `OrderBy` (200), which no spec declares, are gone. Checked against bMS 26.2.147.11
+  (2026-11-26) for 8 list tools (limits 255 and 2000): bMS answers a value at the limit, and one
+  character more is refused before the request.
 ### Changed
 - **Read retries without axios-retry** (#425). `axios-retry` was deprecated on npm and archived on
   2026-11-10, so every fresh install (`npx`, `npm ci` from the release zip, the gateway image)
@@ -119,7 +127,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (#160), and none for the release detection. Settings and behaviour are unchanged; the npm package
   and the gateway have one dependency fewer (and `is-retry-allowed` with it). New tests cover the
   backoff, the number of tries for 0 to 5 retries, the stale-connection try against a real
-  loopback server, and the rate limiter counting every try.
+  loopback server, and the rate limiter counting every try. Checked against bMS 26.2.147.11
+  (2026-11-26): a read that gets no answer is sent once with `BCONNECT_MAX_RETRIES=0` and 3 times
+  with 2; the live tier passed with 2 retries on; installing the npm package prints no deprecation
+  warning.
 - **The default release is 26R2** (was 26R1), now that 26R2 passed the live run (bMS 26.2.147.11,
   #280). It applies only when the servers can't read the release from the bMS (most often: the
   account has no read access to server management) and `BCONNECT_RELEASE` is unset. **On a 26R1
@@ -138,11 +149,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `serialNumber`, which no example declares as patchable.
   - Android and iOS updates stay "Not yet verified against a live bMS". A test compares the offered
     fields of every route and release with the specs' PATCH examples.
+  - Windows checked against bMS 26.2.147.11 (2026-11-26): `customStateType` and
+    `customStateText` written and read back on a test endpoint, `clientAgentNetworkMode` accepted.
 - **Tool names follow one convention; one rename batch** (#342, **breaking**). The convention
   (`<verb>_<object>[_by_<parent>]`; the ID of the tool's own object is `id`) is in
   [docs/TOOL_NAMING.md](docs/TOOL_NAMING.md), and a guard checks every tool against it. An old
   name or argument doesn't run: it answers with its replacement (`MethodNotFound` for a tool,
-  `InvalidParams` for an argument), so a client finds out at once.
+  `InvalidParams` for an argument), so a client finds out at once. Checked against bMS 26.2.147.11
+  (2026-11-26): the live tier ran every read tool under its new name, and an old tool name and an
+  old argument answered with their replacements.
 
   | Before | Now |
   |---|---|

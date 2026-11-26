@@ -189,8 +189,14 @@ expected there.
 **Cause:** the account has no rights on those objects. bMS doesn't answer such a list with 403: it
 answers 200 and leaves out what the account may not see. Seen on bMS 26R1 (26.1.161, 2026-11-19): a
 user whose security profile had rights on jobs only got 0 endpoints, while the read-only account got
-20; all 13 startup checks answered 200 for that user. (Not checked on 26R2 yet.) The startup check
-only shows that bMS is reachable and accepted the credentials, not what the account may read.
+20; all 13 startup checks answered 200 for that user. The same on bMS 26R2 (26.2.147.11,
+2026-11-26): for that user 32 lists without a filter came back empty, each with the hint. The
+startup check only shows that bMS is reachable and accepted the credentials, not what the account
+may read.
+
+One list answers 404 instead: `list_asset_stock_assets` (`GET /v2.0/AssetStock/Assets`) answered
+that user 404, while the read-only account got a list from the same route (26R2, 2026-11-26). A
+404 from this tool without an ID can therefore mean missing rights on the asset stock as well.
 
 **How to check:**
 
@@ -326,7 +332,9 @@ says which of these the bConnect API documentation lists for that call (see
 ```
 "List all endpoints" → find the correct ID → "Show me endpoint <ID>"
 ```
-If the ID is right, check the rights of the bMS account the server uses.
+If the ID is right, check the rights of the bMS account the server uses. A list can answer 404
+for missing rights too, without any ID: `list_asset_stock_assets` does (see
+[A list is empty although bMS has the objects](#a-list-is-empty-although-bms-has-the-objects)).
 
 ### 429 Too Many Requests
 
