@@ -41,7 +41,20 @@ Connect your AI assistant to the **baramundi Management Suite** (bMS). This proj
 
 ## Quick start
 
-One server, from source, registered in Claude Code. [docs/INSTALLATION.md](docs/INSTALLATION.md) is
+**With npm** (from v26.2.0, under the npm tag `next`; needs only Node.js 22.23.4+ or 24.22.1+). The
+MCP client starts the package itself; the argument picks the domains (`endpoints`, several as
+`endpoints,jobs`, or `all`), and the settings come from the entry's environment:
+
+```bash
+claude mcp add bconnect --scope user \
+  -e BCONNECT_BASE_URL=https://bms.company.com:443/bconnect -e BCONNECT_API_KEY=your-api-key \
+  -- npx -y @baramundi/bconnect-mcp@next endpoints,jobs
+```
+
+Claude Desktop, VS Code and the other clients, and how to keep the key out of the client
+configuration: [docs/CLIENTS.md](docs/CLIENTS.md#with-the-npm-package-npx).
+
+**From source:** one server, registered in Claude Code, as below. [docs/INSTALLATION.md](docs/INSTALLATION.md) is
 the full guide (release download, checksums, Claude Desktop, the gateway, certificates).
 
 > This README describes the current `main` branch. The latest release may predate some of it; the changes since then are listed under [Unreleased] in [CHANGELOG.md](CHANGELOG.md).
@@ -100,20 +113,19 @@ VS Code / GitHub Copilot, Cursor, …) and registering all 13 servers at once:
 
 ## Ways to install
 
-There are three ways to get the suite. Pick one; the bMS settings are the same for all of them.
+There are four ways to get the suite. Pick one; the bMS settings are the same for all of them.
 
 | Way | What you get | Needs | Best for | How |
 | --- | --- | --- | --- | --- |
+| **npm package** (from v26.2.0) | `@baramundi/bconnect-mcp` under the npm tag `next`, started by the MCP client with `npx`: one command for one domain, several, or `all` | Node.js | one user on their own machine, no download or build | [Quick start](#quick-start), [CLIENTS.md](docs/CLIENTS.md#with-the-npm-package-npx) |
 | **Release download** | `bconnect-mcp-suite-<version>.zip` from the [Releases page](https://github.com/baramundisoftware/bConnect-MCP/releases), already built (with a `.sha256` checksum file) | Node.js | one user, a fixed version, no build tools | [INSTALLATION.md](docs/INSTALLATION.md#from-the-release-download-no-build) (`npm ci --omit=dev`, no build; then steps 2–4 of the [Quick start](#quick-start)) |
 | **From source** | a `git clone` of this repository, built locally | Node.js, Git | the newest changes on `main`, contributing | [Quick start](#quick-start), [INSTALLATION.md](docs/INSTALLATION.md#from-source) |
 | **Gateway container** | the image `ghcr.io/baramundisoftware/bconnect-mcp-gateway` from [GitHub Packages](https://github.com/orgs/baramundisoftware/packages?repo_name=bConnect-MCP) | Docker | several users or tools (e.g. n8n) sharing one HTTP endpoint | [Gateway](#gateway-http-multi-user) |
 
-The first two run the 13 servers as local processes that your AI assistant starts over stdio. The
+The first three run the servers as local processes that your AI assistant starts over stdio. The
 container runs the HTTP gateway, which serves all 13 servers to clients over the network; the gateway
 can also run without Docker from a source build; the release download doesn't include it (see
 [Gateway](#gateway-http-multi-user)).
-
-The servers are not published to the npm registry, so `npx` / `npm install -g` don't apply.
 
 ---
 

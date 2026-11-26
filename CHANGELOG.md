@@ -97,6 +97,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   trusted publishing only for a package that exists. The package carries its MCP Registry name,
   `mcpName` `io.github.baramundisoftware/bconnect-mcp`, so the registry entry (step 5) can follow
   without a new npm version.
+  The docs describe the npm route: the README's quick start and install table, INSTALLATION.md
+  and a new section in CLIENTS.md with entries for Claude Desktop, Claude Code and VS Code (the
+  key in VS Code's secret storage), and a global install for a key kept in a file (`node
+  --env-file` doesn't work through `npx`).
 
 - **Over-long query parameters are refused before the request** (#358). The bMS 26R2 spec limits
   the length of about 150 query parameters (names, host names and the like 40 to 256 characters, a

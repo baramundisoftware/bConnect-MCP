@@ -3,7 +3,8 @@
 How to register the bConnect MCP servers with each MCP client. All examples show
 `bconnect-endpoints-mcp`; add more servers by repeating the pattern (for Claude Code, see
 [All servers at once](#all-servers-at-once-switched-on-and-off-in-mcp)). Build the servers first
-([INSTALLATION.md](INSTALLATION.md)).
+([INSTALLATION.md](INSTALLATION.md)), or use the npm package, which needs no build:
+[With the npm package (npx)](#with-the-npm-package-npx).
 
 Back to the [suite README](../README.md).
 
@@ -47,6 +48,91 @@ BCONNECT_RELEASE=26R1                # 25R2 for a 2025 R2 bMS
 Then start the server with `node --env-file=/path/to/bconnect.env …/build/index.js`, as every
 example below does. See [SECURITY.md → Credentials at rest](../SECURITY.md#credentials-at-rest-env-and-client-config).
 Alternatively, put the variables in the entry's `env` block.
+
+## With the npm package (npx)
+
+From v26.2.0 the suite is also the npm package `@baramundi/bconnect-mcp`, under the npm tag
+`next` while the project is a Technical Preview. The client starts it with `npx`, which
+downloads it on first use; nothing is cloned or built. The argument picks the domains:
+
+| Argument | Starts |
+|----------|--------|
+| `endpoints` | one domain, like `bconnect-endpoints-mcp` |
+| `endpoints,jobs` | several domains as **one** server (one entry in the client) |
+| `all` | every domain the bMS release has |
+
+The domains are `activedirectory`, `assets`, `compliance`, `defensecontrol`, `endpoints`,
+`groups`, `jobs`, `operatingsystems`, `servermanagement`, `software`, `universaldynamicgroups`,
+`updatemanagement` and `variables`. Fewer domains mean fewer tools for the model to choose from.
+
+`node --env-file` doesn't work through `npx` (Node.js also refuses it in `NODE_OPTIONS`), so the
+settings go into the entry's `env` block:
+
+```json
+{
+  "mcpServers": {
+    "bconnect": {
+      "command": "npx",
+      "args": ["-y", "@baramundi/bconnect-mcp@next", "endpoints,jobs"],
+      "env": {
+        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
+        "BCONNECT_API_KEY": "your-api-key"
+      }
+    }
+  }
+}
+```
+
+The same entry works for Claude Desktop and Cursor (`mcpServers`, no `"type"`) and in Claude
+Code's `.mcp.json` (add `"type": "stdio"`). From Claude Code's CLI:
+
+```bash
+claude mcp add bconnect --scope user \
+  -e BCONNECT_BASE_URL=https://bms.company.com:443/bconnect -e BCONNECT_API_KEY=your-api-key \
+  -- npx -y @baramundi/bconnect-mcp@next endpoints,jobs
+```
+
+**VS Code** keeps the key out of the file: it asks for it once and stores it in its secret
+storage (`.vscode/mcp.json`):
+
+```json
+{
+  "inputs": [
+    { "id": "bconnect-key", "type": "promptString", "description": "bConnect API key", "password": true }
+  ],
+  "servers": {
+    "bconnect": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@baramundi/bconnect-mcp@next", "endpoints,jobs"],
+      "env": {
+        "BCONNECT_BASE_URL": "https://bms.company.com:443/bconnect",
+        "BCONNECT_API_KEY": "${input:bconnect-key}"
+      }
+    }
+  }
+}
+```
+
+**The key in a file instead of the client configuration:** install the package once and start
+it with `node --env-file`, as for a source build:
+
+```bash
+npm install -g @baramundi/bconnect-mcp@next
+claude mcp add bconnect --scope user \
+  -- node --env-file=/path/to/bconnect.env "$(npm root -g)/@baramundi/bconnect-mcp/dist/cli.js" endpoints,jobs
+```
+
+On Windows the file is under `%APPDATA%\npm\node_modules\@baramundi\bconnect-mcp\dist\cli.js`.
+Update with `npm install -g @baramundi/bconnect-mcp@next` again; `npx` picks up a new version by
+itself.
+
+The rest is as for the separate servers: writes and secret reads are off until
+`ALLOW_WRITE_OPERATIONS` / `ALLOW_SECRET_READ` are `true`, every setting is in
+[CONFIGURATION.md](CONFIGURATION.md), and the startup check stops the server with a message on
+stderr when the URL or the key is wrong ([TROUBLESHOOTING.md](TROUBLESHOOTING.md#server-exits-at-startup)).
+For several entries with different switches (e.g. a read-only `endpoints,software` and a `jobs`
+with writes on), add one entry per set.
 
 ## Claude Desktop (stdio)
 
