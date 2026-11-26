@@ -36,10 +36,15 @@
 # - Only `v<major>.<minor>.<patch>`, as for the gateway image (image.yml).
 # - The tag must equal the version in packages/bconnect-mcp/package.json; the
 #   release-version guard keeps that equal to the root version.
-# - Dist-tag `next` while the project is a Technical Preview: `npm install
-#   @baramundi/bconnect-mcp` without a tag doesn't pick it up. The package's
+# - Dist-tag `next` while the project is a Technical Preview. The package's
 #   prepublishOnly guard (publish-guard.mjs) refuses any other tag, and any
-#   publish from outside GitHub Actions.
+#   publish from outside GitHub Actions. npm sets `latest` too on a package's
+#   first version: since 26.2.0 (2026-11-26) both point to it. A later version
+#   moves only `next`; `latest` stays until it is moved on purpose
+#   (`npm dist-tag add @baramundi/bconnect-mcp@<version> latest`, with 2FA).
+# - The first publish showed a placeholder version `0.0.0-stage` for about
+#   two minutes while npm processed the new package (staged publishing); it
+#   stays in the version list, deprecated.
 #
 # ── Provenance ──────────────────────────────────────────────────────────────
 # publishConfig.provenance is set, so the publish links the package to this

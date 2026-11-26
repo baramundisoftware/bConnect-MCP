@@ -51,7 +51,7 @@ The bConnect REST API V2.0 is the only interface to the bMS. Its OpenAPI specs p
 | bConnect auth: API key or Basic (ASCII password only) | bConnect rejects non-ASCII passwords; each failed attempt counts toward the account lockout. |
 | bMS RBAC is not queryable per caller | A restricted user gets 200 with filtered or empty lists, not 403. The gateway uses one service credential. |
 | Container: `node:22-alpine` pinned by digest, non-root user, port 3001, linux/amd64 + arm64 | Published to GHCR with SBOM and provenance attestations. |
-| npm: `@baramundi/bconnect-mcp` under the dist-tag `next`, from the npm workflow on a version tag, with provenance (#297) | Until the first publish: install from source, the release zip, or the container. |
+| npm: `@baramundi/bconnect-mcp` under the dist-tag `next`, from the npm workflow on a version tag, with provenance (#297) | Published since 26.2.0 (2026-11-26); `latest` points to 26.2.0 as well, as npm sets it on a first version. |
 
 ### 2.2 Organizational constraints
 

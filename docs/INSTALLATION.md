@@ -22,7 +22,8 @@ trust store (see [TLS / SSL Configuration](#tls--ssl-configuration)).
 
 #### From npm (no download, no build)
 
-From v26.2.0: `@baramundi/bconnect-mcp` on npm, under the tag `next`. The MCP client starts it
+From v26.2.0: `@baramundi/bconnect-mcp` on npm, under the tag `next` (26.2.0 is also `latest`,
+but use `@next`: later Technical Preview versions move only `next`). The MCP client starts it
 with `npx -y @baramundi/bconnect-mcp@next <domains>` (`endpoints`, `endpoints,jobs` or `all`),
 with the settings from the client entry's environment. Client examples and how to keep the key
 in a file: [CLIENTS.md → With the npm package](CLIENTS.md#with-the-npm-package-npx).
@@ -74,7 +75,8 @@ npm run build                            # all servers (or -w bconnect-endpoints
 # 3. Configure credentials (see Configuration section below)
 ```
 
-The servers are not published to the npm registry, so `npx` / `npm install -g` don't apply.
+The single domain packages (`bconnect-endpoints-mcp`, …) aren't on npm; for `npx` use the one
+package `@baramundi/bconnect-mcp` ([From npm](#from-npm-no-download-no-build)).
 
 ### Option B — Docker (gateway only)
 
