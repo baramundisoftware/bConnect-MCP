@@ -27,8 +27,8 @@
       "schedule": ["at any time"]
     },
     {
-      "description": "Group axios + axios-retry across all manifests",
-      "matchPackageNames": ["axios", "axios-retry"],
+      "description": "Group axios across all manifests",
+      "matchPackageNames": ["axios"],
       "groupName": "axios"
     },
     {

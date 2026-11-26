@@ -6,13 +6,13 @@
  */
 
 import axios, { AxiosHeaders, AxiosInstance, AxiosError, CreateAxiosDefaults, InternalAxiosRequestConfig } from "axios";
-import axiosRetry from "axios-retry";
 import http from "http";
 import https from "https";
 import tls, { PeerCertificate } from "node:tls";
 import { BConnectApiError, BConnectConnectionError, BConnectRedirectError } from "./api-errors.js";
 import { cleanModelData, cleanModelText } from "./model-text.js";
 import { basicAuthHeader } from "./client-config.js";
+import { installReadRetry } from "./read-retry.js";
 
 /**
  * Build the default CA trust list when no explicit CA is configured.
@@ -283,12 +283,6 @@ function problemText(data: unknown, baseUrl: string): string | undefined {
   return cleanModelText(text);
 }
 
-/** A request that went out on a reused kept-alive connection which the server had already closed. */
-function staleReusedSocket(error: AxiosError): boolean {
-  const reused = (error.request as { reusedSocket?: boolean } | undefined)?.reusedSocket === true;
-  return reused && !error.response && (error.code === "ECONNRESET" || /socket hang up/i.test(error.message));
-}
-
 /** The longest the release detection waits for the bMS version (#159). */
 const DETECTION_TIMEOUT_MS = 10_000;
 
@@ -367,38 +361,9 @@ export class BConnectClientBase {
     // Setup Basic Authentication
     this.setupAuth();
 
-    // Setup retry logic with exponential backoff for V2.0 client
-    const maxRetries = config.maxRetries || 0; // Default: no retries (backward compatible)
-    axiosRetry(this.client, {
-      // One more than configured, used only for a read on a reused connection the
-      // server had already closed (see retryCondition).
-      retries: maxRetries + 1,
-      retryDelay: (retryCount) => {
-        // Exponential backoff: baseDelay * (2 ^ retryCount)
-        const baseDelay = config.retryDelay || 100;
-        return baseDelay * Math.pow(2, retryCount - 1);
-      },
-      // A retried request gets its own timeout window.
-      shouldResetTimeout: true,
-      // Only reads are retried, and only when the failure may be transient:
-      // no answer (network error, timeout) or 502/503/504. A write is never
-      // sent twice (REQ-XC-003 AC 2); 4xx, 429 and 500 aren't retried (#162).
-      retryCondition: (error: AxiosError) => {
-        if ((error.config?.method ?? "get").toUpperCase() !== "GET") {
-          return false;
-        }
-        const retried = (error.config as { "axios-retry"?: { retryCount?: number } } | undefined)?.["axios-retry"]?.retryCount ?? 0;
-        if (retried >= maxRetries) {
-          // Kept-alive connections (#160): a read that failed on a reused connection the
-          // server had closed in the meantime goes once more, on a new connection.
-          return retried === maxRetries && staleReusedSocket(error);
-        }
-        if (!error.response) {
-          return true;
-        }
-        return [502, 503, 504].includes(error.response.status);
-      },
-    });
+    // Reads are retried when the failure may be transient; writes never (read-retry.ts, #425).
+    // Registered before the response step below, so a retry's outcome reaches it.
+    installReadRetry(this.client, { maxRetries: config.maxRetries, retryDelay: config.retryDelay });
 
     // The server's shared rate limiter, or one of the client's own (REQ-SRV-023 AC 1).
     this.rateLimiter = options.rateLimiter ?? (config.rateLimit?.enabled
@@ -649,7 +614,7 @@ export class BConnectClientBase {
     if (error instanceof SecretRouteBlockedError || error instanceof RequestPathRefusedError) {
       throw error;
     }
-    // A retry (axios-retry) sends the request through this whole chain again,
+    // A retry (read-retry.ts) sends the request through this whole chain again,
     // so its failure arrives here already mapped and audited: pass it on as is.
     if (!(error instanceof AxiosError) && !(error instanceof RateLimitError)) {
       throw error;
@@ -819,7 +784,7 @@ export class BConnectClientBase {
   async managementServerVersion(): Promise<unknown> {
     const response = await this.client.get<unknown>("/servermanagement/v2.0/ManagementServer", {
       timeout: Math.min(this.config.timeout || 30000, DETECTION_TIMEOUT_MS),
-      "axios-retry": { retries: 0 },
+      noRetry: true,
     });
     const data: unknown = response.data;
     return typeof data === "object" && data !== null && "version" in data ? data.version : undefined;

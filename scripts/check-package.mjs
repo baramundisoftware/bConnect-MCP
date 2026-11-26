@@ -27,7 +27,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const PACKAGE_DIR = join(ROOT, "packages", "bconnect-mcp");
 const NAME = "@baramundi/bconnect-mcp";
 const FILES = ["LICENSE", "README.md", "dist/cli.js", "package.json"];
-const THIRD_PARTY = ["@modelcontextprotocol/sdk", "axios", "axios-retry", "dotenv", "express"];
+const THIRD_PARTY = ["@modelcontextprotocol/sdk", "axios", "dotenv", "express"];
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 
 const fail = (message) => {
