@@ -111,6 +111,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tool keeps a limit only where all its routes agree. The hand-written caps on `SearchQuery`
   (1000) and `OrderBy` (200), which no spec declares, are gone.
 ### Changed
+- **Read retries without axios-retry** (#425). `axios-retry` was deprecated on npm and archived on
+  2026-11-10, so every fresh install (`npx`, `npm ci` from the release zip, the gateway image)
+  printed a deprecation warning. mcp-core now retries reads itself (`read-retry.ts`), with the same
+  rules: only GET, only on no answer or 502/503/504, `BCONNECT_MAX_RETRIES` (0–5, default 0) with
+  backoff `retryDelay × 2^(retry − 1)`, the one extra try after a stale kept-alive connection
+  (#160), and none for the release detection. Settings and behaviour are unchanged; the npm package
+  and the gateway have one dependency fewer (and `is-retry-allowed` with it). New tests cover the
+  backoff, the number of tries for 0 to 5 retries, the stale-connection try against a real
+  loopback server, and the rate limiter counting every try.
 - **The default release is 26R2** (was 26R1), now that 26R2 passed the live run (bMS 26.2.147.11,
   #280). It applies only when the servers can't read the release from the bMS (most often: the
   account has no read access to server management) and `BCONNECT_RELEASE` is unset. **On a 26R1

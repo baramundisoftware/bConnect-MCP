@@ -45,7 +45,7 @@ The bConnect REST API V2.0 is the only interface to the bMS. Its OpenAPI specs p
 | Constraint | Background |
 | --- | --- |
 | TypeScript on Node.js `^22.23.4 \|\| ^24.22.1 \|\| >=26.12.1`, ESM | Patched Node floor everywhere (REQ-DEP-003); Node 22.15+ also trusts the OS CA store. ADR-0001 FastMCP question resolved 2026-10-06: stay on TypeScript. |
-| `@modelcontextprotocol/sdk` 1.32, axios + axios-retry, Express 5 | One Express major (REQ-DEP-002). |
+| `@modelcontextprotocol/sdk` 1.32, axios, Express 5 | One Express major (REQ-DEP-002). |
 | Transports: stdio (default) and Streamable HTTP | stdio for local clients; HTTP for the gateway and a loopback-only single-server mode. |
 | bMS releases 25R2, 26R1, 26R2 | Routes and schemas differ per release; default fallback `BCONNECT_RELEASE=26R2`. |
 | bConnect auth: API key or Basic (ASCII password only) | bConnect rejects non-ASCII passwords; each failed attempt counts toward the account lockout. |
@@ -351,7 +351,7 @@ Results are compact JSON (`BCONNECT_PRETTY_JSON=true` for debugging). Paging fol
 ### 8.5 Resilience
 
 - One client per server process, reused across calls with keep-alive (ADR-0010).
-- Reads are retried with exponential backoff (axios-retry); writes never are.
+- Reads are retried with exponential backoff (`read-retry.ts` in mcp-core); writes never are.
 - The default timeout is 30 s (`BCONNECT_TIMEOUT_MS`); slow lists such as vulnerabilities need about 90 s on a large bMS.
 - An optional token-bucket rate limiter caps the requests per server (`BCONNECT_RATE_LIMIT_ENABLED`); the gateway adds its own request limit and body-size cap.
 - An LRU response cache with TTL is available in the core.
