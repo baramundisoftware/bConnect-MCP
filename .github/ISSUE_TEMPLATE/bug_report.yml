@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: Release tag or commit (e.g. v26.1.12).
+      description: Release tag or commit (e.g. v26.2.0).
     validations:
       required: true
   - type: dropdown

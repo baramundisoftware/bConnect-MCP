@@ -1,6 +1,6 @@
 # bConnect-MCP — arc42 Architecture Documentation
 
-As of 2026-11-23 (v26.1.12 plus `main`). Structure: [arc42](https://arc42.org), sections 1–12.
+As of 2026-11-26 (v26.2.0). Structure: [arc42](https://arc42.org), sections 1–12.
 
 ## 1. Introduction and Goals
 

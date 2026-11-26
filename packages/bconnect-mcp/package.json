@@ -1,6 +1,6 @@
 {
   "name": "@baramundi/bconnect-mcp",
-  "version": "26.1.12",
+  "version": "26.2.0",
   "description": "MCP servers for baramundi Management Suite (bMS) via the bConnect API: one or several domains as one stdio server",
   "mcpName": "io.github.baramundisoftware/bconnect-mcp",
   "type": "module",
