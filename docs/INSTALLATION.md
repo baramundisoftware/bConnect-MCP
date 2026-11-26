@@ -20,6 +20,13 @@ tests; the packages' `engines` allow nothing older (earlier releases miss the No
 fixes of 2026-10-21, and Node.js 20 is end-of-life). These versions also honor the OS/Windows CA
 trust store (see [TLS / SSL Configuration](#tls--ssl-configuration)).
 
+#### From npm (no download, no build)
+
+From v26.2.0: `@baramundi/bconnect-mcp` on npm, under the tag `next`. The MCP client starts it
+with `npx -y @baramundi/bconnect-mcp@next <domains>` (`endpoints`, `endpoints,jobs` or `all`),
+with the settings from the client entry's environment. Client examples and how to keep the key
+in a file: [CLIENTS.md → With the npm package](CLIENTS.md#with-the-npm-package-npx).
+
 #### From the release download (no build)
 
 `bconnect-mcp-suite-<version>.zip` on the [Releases page](https://github.com/baramundisoftware/bConnect-MCP/releases)
