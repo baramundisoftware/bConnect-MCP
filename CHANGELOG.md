@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **`@baramundi/bconnect-mcp` 26.2.0 is on npm** (#297), published from the npm workflow for the
+  tag `v26.2.0` on 2026-11-26, with provenance. npm set `latest` as well as `next` to 26.2.0, as
+  it does for a package's first version; the docs said a tagless install wouldn't pick it up and
+  now say how the tags behave. Use `@next`: later versions move only `next`. The version list also
+  shows `0.0.0-stage`, a placeholder npm created while it processed the first publish.
+
 ## [26.2.0] - 2026-11-26
 
 > **bMS 26R2, and one npm package.** The servers support bMS 26R2 (detected from the bMS, and the
