@@ -1,0 +1,93 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.baramundisoftware/bconnect-mcp",
+  "title": "baramundi bConnect",
+  "description": "baramundi Management Suite (bMS) via the bConnect API: endpoints, jobs, software and more",
+  "repository": {
+    "url": "https://github.com/baramundisoftware/bConnect-MCP",
+    "source": "github",
+    "id": "1263941269",
+    "subfolder": "packages/bconnect-mcp"
+  },
+  "websiteUrl": "https://github.com/baramundisoftware/bConnect-MCP#readme",
+  "version": "26.2.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "@baramundi/bconnect-mcp",
+      "version": "26.2.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "valueHint": "domains",
+          "description": "all, or domain names separated by commas: activedirectory, assets, compliance, defensecontrol, endpoints, groups, jobs, operatingsystems, servermanagement, software, universaldynamicgroups, updatemanagement, variables",
+          "isRequired": true,
+          "default": "all",
+          "placeholder": "endpoints,jobs"
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "BCONNECT_BASE_URL",
+          "description": "bConnect URL of your bMS, with https:// and the port",
+          "isRequired": true,
+          "format": "string",
+          "placeholder": "https://bms.company.com:443/bconnect"
+        },
+        {
+          "name": "BCONNECT_API_KEY",
+          "description": "bConnect API key; or set BCONNECT_USERNAME and BCONNECT_PASSWORD instead",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "BCONNECT_USERNAME",
+          "description": "bMS user for Basic authentication, with BCONNECT_PASSWORD, if no API key is set",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "BCONNECT_PASSWORD",
+          "description": "Password for BCONNECT_USERNAME, ASCII characters only",
+          "isRequired": false,
+          "isSecret": true,
+          "format": "string"
+        },
+        {
+          "name": "BCONNECT_RELEASE",
+          "description": "Fallback when the bMS release can't be read at startup",
+          "isRequired": false,
+          "format": "string",
+          "default": "26R2",
+          "choices": ["26R2", "26R1", "25R2"]
+        },
+        {
+          "name": "BCONNECT_CA_CERT_PATH",
+          "description": "PEM file of the CA that signed the bMS certificate, if Node.js doesn't trust it",
+          "isRequired": false,
+          "format": "filepath"
+        },
+        {
+          "name": "ALLOW_WRITE_OPERATIONS",
+          "description": "true enables tools that change the bMS (off by default)",
+          "isRequired": false,
+          "format": "boolean",
+          "default": "false"
+        },
+        {
+          "name": "ALLOW_SECRET_READ",
+          "description": "true enables tools that read secrets such as BitLocker keys (off by default)",
+          "isRequired": false,
+          "format": "boolean",
+          "default": "false"
+        }
+      ]
+    }
+  ]
+}

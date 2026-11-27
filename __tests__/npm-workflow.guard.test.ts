@@ -6,7 +6,8 @@
  *
  * 1. Only a `vX.Y.Z` tag runs it with a push, as for the gateway image; on a tag
  *    the version must equal the package's.
- * 2. Write permissions sit on the publish job only (id-token for provenance).
+ * 2. Write permissions sit on the publish and registry jobs only (id-token, for
+ *    provenance and the MCP Registry login).
  * 3. Every `npm publish` uses the dist-tag `next`. Pull requests and manual runs
  *    only dry-run; the real publish runs on a tag alone, when NPM_PUBLISH_ENABLED
  *    is `true`, in the `npm` environment (its reviewers approve), without a
@@ -15,6 +16,10 @@
  *    prepublishOnly guard refuses a publish outside GitHub Actions or without
  *    `--tag next`, and its mcpName is the MCP Registry name.
  * 5. The package check runs on Node 22, 24 and 26.
+ * 6. The MCP Registry entry (#430) is sent only after npm published that version
+ *    on a tag, or on a manual run from main that asks for it, in the
+ *    `mcp-registry` environment (its reviewers approve), with a pinned and
+ *    checksum-verified mcp-publisher, logged in with OIDC and no secret.
  */
 import { describe, expect, it } from 'vitest';
 import { spawnSync } from 'node:child_process';
@@ -27,7 +32,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (path: string) => readFileSync(join(ROOT, path), 'utf8');
 
 interface Step { run?: string; if?: string; name?: string; uses?: string; with?: Record<string, string>; env?: Record<string, string>; 'working-directory'?: string }
-interface Job { if?: string; needs?: string; environment?: { name?: string }; permissions?: Record<string, string>; strategy?: { matrix?: { node?: string[] } }; steps?: Step[] }
+interface Job { if?: string; needs?: string | string[]; env?: Record<string, string>; environment?: { name?: string }; permissions?: Record<string, string>; strategy?: { matrix?: { node?: string[] } }; steps?: Step[] }
 interface Workflow { on: { push?: { tags?: string[] } } & Record<string, unknown>; permissions?: Record<string, string>; jobs: Record<string, Job> }
 const workflow = yaml.load(read('.github/workflows/npm.yml')) as Workflow;
 const image = yaml.load(read('.github/workflows/image.yml')) as Workflow;
@@ -49,11 +54,11 @@ describe('npm workflow', () => {
     for (const check of [...checks('dry-run'), ...checks('publish')]) {expect(check.run).toContain(`${PKG_DIR}/package.json`);}
   });
 
-  it('reads only at the top; id-token write on the publish job alone', () => {
+  it('reads only at the top; id-token write on the publish and registry jobs alone', () => {
     expect(workflow.permissions).toEqual({ contents: 'read' });
     for (const [name, job] of Object.entries(workflow.jobs)) {
       const writes = Object.entries(job.permissions ?? {}).filter(([, level]) => level === 'write').map(([scope]) => scope);
-      expect(writes, name).toEqual(name === 'publish' ? ['id-token'] : []);
+      expect(writes, name).toEqual(name === 'publish' || name === 'registry' ? ['id-token'] : []);
     }
   });
 
@@ -94,6 +99,49 @@ describe('npm workflow', () => {
   it('runs the package check on Node 22, 24 and 26', () => {
     expect(workflow.jobs.check?.strategy?.matrix?.node).toEqual(['22.23.4', '24', '26']);
     expect(workflow.jobs.check?.steps?.map((s) => s.run)).toContain('node scripts/check-package.mjs');
+  });
+});
+
+describe('MCP Registry job', () => {
+  const job = workflow.jobs.registry;
+  const run = (job?.steps ?? []).map((s) => s.run ?? '').join('\n');
+  const dispatch = workflow.on.workflow_dispatch as { inputs?: Record<string, { type?: string; default?: unknown }> } | undefined;
+
+  it('runs after npm published the tag, or on a manual run from main with register_existing', () => {
+    expect(job?.needs).toEqual(['dry-run', 'publish']);
+    const condition = job?.if?.replace(/\s+/g, ' ').trim();
+    expect(condition).toBe("!cancelled() && needs.dry-run.result == 'success' && ( " +
+      "(github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && needs.publish.result == 'success') || " +
+      "(github.event_name == 'workflow_dispatch' && inputs.register_existing && github.ref == 'refs/heads/main') )");
+    expect(dispatch?.inputs?.register_existing).toMatchObject({ type: 'boolean', default: false });
+  });
+
+  it('runs in the mcp-registry environment and checks out without credentials', () => {
+    expect(job?.environment?.name).toBe('mcp-registry');
+    expect(job?.steps?.find((s) => s.uses?.startsWith('actions/checkout@'))?.with).toMatchObject({ 'persist-credentials': false });
+  });
+
+  it('uses a pinned mcp-publisher, verified against its sha256 before unpacking', () => {
+    expect(job?.env?.MCP_PUBLISHER_VERSION).toMatch(/^v\d+\.\d+\.\d+$/);
+    expect(job?.env?.MCP_PUBLISHER_SHA256).toMatch(/^[0-9a-f]{64}$/);
+    expect(run).not.toMatch(/releases\/latest/);
+    const download = job?.steps?.find((s) => s.name?.startsWith('Download mcp-publisher'))?.run ?? '';
+    expect(download.indexOf('sha256sum -c')).toBeGreaterThan(-1);
+    expect(download.indexOf('sha256sum -c')).toBeLessThan(download.indexOf('tar xzf'));
+  });
+
+  it('logs in with OIDC, no secret, and publishes the package\'s server.json after checking npm', () => {
+    expect(run).toContain('./mcp-publisher login github-oidc');
+    expect(JSON.stringify(job)).not.toMatch(/secrets\./);
+    expect(run).toContain(`./mcp-publisher publish ${PKG_DIR}/server.json`);
+    expect(run.indexOf('npm view')).toBeLessThan(run.indexOf('./mcp-publisher publish'));
+  });
+
+  it('the dry run checks server.json with the registry validation on every run', () => {
+    const step = workflow.jobs['dry-run']?.steps?.find((s) => s.name === 'server.json passes the MCP Registry validation');
+    expect(step?.if).toBeUndefined();
+    expect(step?.run).toContain('https://registry.modelcontextprotocol.io/v0/validate');
+    expect(step?.run).toContain(`${PKG_DIR}/server.json`);
   });
 });
 
