@@ -52,7 +52,9 @@ claude mcp add bconnect --scope user \
 ```
 
 Claude Desktop, VS Code and the other clients, and how to keep the key out of the client
-configuration: [docs/CLIENTS.md](docs/CLIENTS.md#with-the-npm-package-npx).
+configuration: [docs/CLIENTS.md](docs/CLIENTS.md#with-the-npm-package-npx). The package is also
+listed in the official MCP Registry as `io.github.baramundisoftware/bconnect-mcp`, for clients
+that install from there ([docs/CLIENTS.md](docs/CLIENTS.md#from-the-mcp-registry)).
 
 **From source:** one server, registered in Claude Code, as below. [docs/INSTALLATION.md](docs/INSTALLATION.md) is
 the full guide (release download, checksums, Claude Desktop, the gateway, certificates).

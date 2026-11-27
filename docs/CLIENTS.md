@@ -127,6 +127,16 @@ On Windows the file is under `%APPDATA%\npm\node_modules\@baramundi\bconnect-mcp
 Update with `npm install -g @baramundi/bconnect-mcp@next` again; `npx` picks up a new version by
 itself.
 
+### From the MCP Registry
+
+The package is listed in the official MCP Registry (registry.modelcontextprotocol.io) as
+`io.github.baramundisoftware/bconnect-mcp`, one entry per version. A client that installs from the
+registry reads the argument and the settings from that entry: the domains (default `all`),
+`BCONNECT_BASE_URL`, the API key or user and password (marked secret), and the optional release,
+CA file and the two switches. It then starts the same npm package as above, at the version the
+entry names, not `@next`. The entry is published only from the npm workflow, after the same
+version is on npm; how to check it: [SECURITY.md](../SECURITY.md).
+
 The rest is as for the separate servers: writes and secret reads are off until
 `ALLOW_WRITE_OPERATIONS` / `ALLOW_SECRET_READ` are `true`, every setting is in
 [CONFIGURATION.md](CONFIGURATION.md), and the startup check stops the server with a message on

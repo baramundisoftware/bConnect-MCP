@@ -7,7 +7,8 @@
  * compose image tag. A release once bumped the manifests and left all 14
  * handshake versions on the old number. Everything must match the root
  * package.json; `packages/mcp-core` is private and stays unversioned. The npm
- * package `packages/bconnect-mcp` carries the release version too (#297 AC 2).
+ * package `packages/bconnect-mcp` carries the release version too (#297 AC 2),
+ * and so does its MCP Registry entry, `packages/bconnect-mcp/server.json` (#430).
  */
 import { describe, expect, it } from 'vitest';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -48,6 +49,11 @@ describe('release version', () => {
 
   it('the gateway has no lockfile whose version could drift: it runs on the root install (REQ-DEP-002)', () => {
     expect(existsSync(join(ROOT, 'bconnect-mcp-gateway', 'package-lock.json'))).toBe(false);
+  });
+
+  it('packages/bconnect-mcp/server.json names the root version, for the entry and its npm package', () => {
+    const server = readJson('packages/bconnect-mcp/server.json');
+    expect([server.version, ...server.packages.map((p: { version: string }) => p.version)]).toEqual([VERSION, VERSION]);
   });
 
   it('docker-compose.gateway.yml tags the image with the root version', () => {

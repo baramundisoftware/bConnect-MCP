@@ -452,7 +452,7 @@ The largest open risk is the gateway's missing built-in authentication: its secu
 - ADRs live in two folders.
 - The gateway is not an npm-workspaces member; it bundles the core and all servers in its own build.
 - Credentials at rest are plaintext env files or Docker secrets (#60).
-- Not in the MCP Registry yet. The npm package carries the registry name (`mcpName` `io.github.baramundisoftware/bconnect-mcp`); the registry entry follows the first npm release (#297).
+- The MCP Registry entry (`io.github.baramundisoftware/bconnect-mcp`, from `packages/bconnect-mcp/server.json`, #430) can't be changed once a version is registered: a wrong entry stays until the next release. The server-json guard checks it against the package and the configuration guide before that.
 
 ## 12. Glossary
 

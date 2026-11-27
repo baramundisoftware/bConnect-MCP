@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **MCP Registry entry** (#430): `@baramundi/bconnect-mcp` is listed in the official MCP Registry
+  as `io.github.baramundisoftware/bconnect-mcp`, from `packages/bconnect-mcp/server.json` (the
+  domains argument, the settings, the credentials marked secret). The npm workflow registers each
+  version after publishing it to npm, logged in with the run's GitHub OIDC token (no secret),
+  behind the reviewers of the new `mcp-registry` environment; a manual run registers a version
+  already on npm, as for 26.2.0. Every run checks the file with the registry's validation, and a
+  guard test keeps its name, version, domains and variables in step with the package and
+  docs/CONFIGURATION.md.
+
 ### Changed
 - **`@baramundi/bconnect-mcp` 26.2.0 is on npm** (#297), published from the npm workflow for the
   tag `v26.2.0` on 2026-11-26, with provenance. npm set `latest` as well as `next` to 26.2.0, as
